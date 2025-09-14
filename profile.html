@@ -491,7 +491,7 @@
         async function loadProfile() {
             const token = localStorage.getItem('authToken');
             if (!token) {
-                window.location.href = 'auth.html';
+                window.location.href = '/auth';
                 return;
             }
 
@@ -510,7 +510,7 @@
                     // Токен недействителен
                     localStorage.removeItem('authToken');
                     localStorage.removeItem('user');
-                    window.location.href = 'auth.html';
+                    window.location.href = '/auth';
                 } else {
                     console.error('Ошибка загрузки профиля');
                 }
@@ -643,7 +643,7 @@
             if (confirm('Вы уверены, что хотите выйти?')) {
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('user');
-                window.location.href = 'auth.html';
+                window.location.href = '/auth';
             }
         }
 

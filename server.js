@@ -343,9 +343,25 @@ app.post('/api/user/game-result', authenticateToken, async (req, res) => {
     }
 });
 
-// Статический файл для главной страницы
+// Маршруты для HTML страниц
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/table', (req, res) => {
+    res.sendFile(path.join(__dirname, 'table.html'));
+});
+
+app.get('/auth', (req, res) => {
+    res.sendFile(path.join(__dirname, 'auth.html'));
+});
+
+app.get('/profile', (req, res) => {
+    res.sendFile(path.join(__dirname, 'profile.html'));
+});
+
+app.get('/bank', (req, res) => {
+    res.sendFile(path.join(__dirname, 'bank.html'));
 });
 
 // Запуск сервера
