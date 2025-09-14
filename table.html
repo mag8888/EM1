@@ -233,6 +233,195 @@
             font-size: 28px;
         }
 
+        /* Центральный логотип */
+        .center-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 160px;
+            height: 160px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                0 8px 32px rgba(255, 215, 0, 0.4),
+                0 0 0 4px rgba(255, 215, 0, 0.2);
+            z-index: 20;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-inner {
+            width: 140px;
+            height: 140px;
+            background: radial-gradient(circle, #000000 0%, #1a1a1a 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .dice {
+            font-size: 48px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 
+                0 0 20px rgba(255, 215, 0, 0.8),
+                0 0 40px rgba(255, 165, 0, 0.6);
+            z-index: 3;
+            position: relative;
+        }
+
+        .dice.rolling {
+            animation: diceRoll 0.1s infinite;
+        }
+
+        @keyframes diceRoll {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.1); }
+            50% { transform: rotate(180deg) scale(0.9); }
+            75% { transform: rotate(270deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+
+        /* Энергетические линии */
+        .energy-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                transparent 0deg,
+                rgba(255, 215, 0, 0.3) 45deg,
+                transparent 90deg,
+                rgba(255, 165, 0, 0.3) 135deg,
+                transparent 180deg,
+                rgba(255, 140, 0, 0.3) 225deg,
+                transparent 270deg,
+                rgba(255, 215, 0, 0.3) 315deg,
+                transparent 360deg
+            );
+            animation: rotate 4s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Светящиеся точки */
+        .glow-dots {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        .glow-dot {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #FFD700;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .glow-dot:nth-child(1) {
+            transform: translate(-50%, -50%) rotate(0deg) translateY(-50px);
+            animation-delay: 0s;
+        }
+
+        .glow-dot:nth-child(2) {
+            transform: translate(-50%, -50%) rotate(60deg) translateY(-50px);
+            animation-delay: 0.3s;
+        }
+
+        .glow-dot:nth-child(3) {
+            transform: translate(-50%, -50%) rotate(120deg) translateY(-50px);
+            animation-delay: 0.6s;
+        }
+
+        .glow-dot:nth-child(4) {
+            transform: translate(-50%, -50%) rotate(180deg) translateY(-50px);
+            animation-delay: 0.9s;
+        }
+
+        .glow-dot:nth-child(5) {
+            transform: translate(-50%, -50%) rotate(240deg) translateY(-50px);
+            animation-delay: 1.2s;
+        }
+
+        .glow-dot:nth-child(6) {
+            transform: translate(-50%, -50%) rotate(300deg) translateY(-50px);
+            animation-delay: 1.5s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                opacity: 0.3;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            50% { 
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+        }
+
+        /* Внешние монеты */
+        .outer-coins {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        .coin {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: radial-gradient(circle, #FFD700 0%, #FFA500 100%);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.6);
+            border: 2px solid #FFD700;
+        }
+
+        .coin:nth-child(1) {
+            transform: translate(-50%, -50%) rotate(45deg) translateY(-70px);
+        }
+
+        .coin:nth-child(2) {
+            transform: translate(-50%, -50%) rotate(135deg) translateY(-70px);
+        }
+
+        .coin:nth-child(3) {
+            transform: translate(-50%, -50%) rotate(225deg) translateY(-70px);
+        }
+
+        .coin:nth-child(4) {
+            transform: translate(-50%, -50%) rotate(315deg) translateY(-70px);
+        }
+
+        .coin-symbol {
+            font-size: 12px;
+            font-weight: bold;
+            color: #000000;
+        }
+
         /* Фишки игроков */
         .player-token {
             position: absolute;
@@ -717,6 +906,34 @@
                     <div class="inner-squares" id="innerSquares"></div>
                 </div>
 
+                <!-- Центральный логотип -->
+                <div class="center-logo">
+                    <div class="logo-inner">
+                        <!-- Центральный результат броска кубика -->
+                        <div class="dice" id="dice">3</div>
+                        
+                        <!-- Энергетические линии -->
+                        <div class="energy-lines"></div>
+                        
+                        <!-- Дополнительные светящиеся точки -->
+                        <div class="glow-dots">
+                            <div class="glow-dot"></div>
+                            <div class="glow-dot"></div>
+                            <div class="glow-dot"></div>
+                            <div class="glow-dot"></div>
+                            <div class="glow-dot"></div>
+                            <div class="glow-dot"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Внешние монеты -->
+                    <div class="outer-coins">
+                        <div class="coin"><span class="coin-symbol">$</span></div>
+                        <div class="coin"><span class="coin-symbol">$</span></div>
+                        <div class="coin"><span class="coin-symbol">$</span></div>
+                        <div class="coin"><span class="coin-symbol">$</span></div>
+                    </div>
+                </div>
 
                 <!-- Фишки игроков -->
                 <div class="player-token player-1" id="player1" style="top: 50%; left: 50%;">1</div>
