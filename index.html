@@ -129,6 +129,21 @@
             </p>
         </div>
 
+        <div class="test-section" id="authSection">
+            <h3>👤 Пользователь</h3>
+            <div id="userInfo" style="display: none;">
+                <p style="color: #10b981; margin-bottom: 15px;">Добро пожаловать, <span id="userName"></span>!</p>
+                <button class="test-button" onclick="openProfile()">👤 Профиль</button>
+                <button class="test-button" onclick="logout()" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">🚪 Выйти</button>
+            </div>
+            <div id="loginPrompt">
+                <button class="test-button" onclick="openAuth()">🔐 Войти / Регистрация</button>
+                <p style="margin-top: 10px; color: #718096; font-size: 14px;">
+                    Войдите в систему для сохранения прогресса и участия в рейтингах
+                </p>
+            </div>
+        </div>
+
         <div class="features">
             <div class="feature">
                 <div class="feature-icon">📱</div>
@@ -187,10 +202,49 @@
             showStatus('Банк открыт в новой вкладке!', 'success');
         }
 
+        function openAuth() {
+            window.location.href = 'auth.html';
+        }
+
+        function openProfile() {
+            window.location.href = 'profile.html';
+        }
+
+        function logout() {
+            if (confirm('Вы уверены, что хотите выйти?')) {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
+                checkAuthStatus();
+                showStatus('Вы успешно вышли из системы', 'success');
+            }
+        }
+
+        function checkAuthStatus() {
+            const token = localStorage.getItem('authToken');
+            const user = localStorage.getItem('user');
+            
+            if (token && user) {
+                try {
+                    const userData = JSON.parse(user);
+                    document.getElementById('userName').textContent = userData.first_name;
+                    document.getElementById('userInfo').style.display = 'block';
+                    document.getElementById('loginPrompt').style.display = 'none';
+                } catch (error) {
+                    console.error('Error parsing user data:', error);
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                }
+            } else {
+                document.getElementById('userInfo').style.display = 'none';
+                document.getElementById('loginPrompt').style.display = 'block';
+            }
+        }
+
         // Показать время загрузки страницы
         window.addEventListener('load', function() {
             const loadTime = performance.now();
             showStatus(`Страница загружена за ${Math.round(loadTime)}мс`, 'info');
+            checkAuthStatus();
         });
     </script>
 </body>
