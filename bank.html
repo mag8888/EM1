@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Банковские операции - Денежный поток</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0c1445 100%);
+            color: white;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .bank-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .close-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            color: #ef4444;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+            transform: scale(1.05);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .bank-panel {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .bank-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .bank-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .status-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .balance-section {
+            margin-bottom: 24px;
+        }
+
+        .balance-amount {
+            font-size: 36px;
+            font-weight: 800;
+            color: #10b981;
+            margin-bottom: 8px;
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .balance-label {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .financial-summary {
+            margin-bottom: 24px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .summary-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .summary-label {
+            font-size: 14px;
+            color: #e2e8f0;
+        }
+
+        .summary-value {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .income { color: #10b981; }
+        .expenses { color: #ef4444; }
+        .payday { color: #fbbf24; }
+
+        .credit-section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        .credit-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+
+        .credit-label {
+            font-size: 14px;
+            color: #e2e8f0;
+        }
+
+        .credit-value {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .credit-amount { color: #10b981; }
+        .max-credit { color: #8b5cf6; }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+        }
+
+        .transfer-panel {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #e2e8f0;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #64748b;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            cursor: pointer;
+        }
+
+        .transfer-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(100, 116, 139, 0.2);
+            color: #94a3b8;
+            border: 1px solid rgba(100, 116, 139, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(100, 116, 139, 0.3);
+        }
+
+        .history-panel {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-top: 30px;
+        }
+
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .history-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .notification-badge {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .transaction-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .transaction-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .transaction-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .transaction-description {
+            font-size: 14px;
+            color: #e2e8f0;
+        }
+
+        .transaction-details {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .transaction-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .transaction-amount {
+            font-size: 16px;
+            font-weight: 600;
+            color: #10b981;
+        }
+
+        .transaction-status {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                padding: 16px;
+            }
+            
+            .header-title {
+                font-size: 20px;
+            }
+            
+            .balance-amount {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Заголовок -->
+        <div class="header">
+            <div class="header-left">
+                <div class="bank-icon">🏦</div>
+                <h1 class="header-title">Банковские операции</h1>
+            </div>
+            <button class="close-btn" onclick="closeBank()">×</button>
+        </div>
+
+        <!-- Основной контент -->
+        <div class="main-content">
+            <!-- Левая панель - Информация о банке -->
+            <div class="bank-panel">
+                <!-- Статус банка -->
+                <div class="bank-status">
+                    <div class="bank-icon">🏦</div>
+                    <h2 class="bank-title">Банк</h2>
+                    <span class="status-badge">Активен</span>
+                </div>
+
+                <!-- Баланс -->
+                <div class="balance-section">
+                    <div class="balance-amount" id="currentBalance">$3 000</div>
+                    <div class="balance-label">Доступно для операций</div>
+                </div>
+
+                <!-- Финансовая сводка -->
+                <div class="financial-summary">
+                    <div class="summary-item">
+                        <div class="summary-left">
+                            <div class="summary-icon">📈</div>
+                            <span class="summary-label">Доход:</span>
+                        </div>
+                        <span class="summary-value income">$6 000</span>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-left">
+                            <div class="summary-icon">📉</div>
+                            <span class="summary-label">Расходы:</span>
+                        </div>
+                        <span class="summary-value expenses">$2 500</span>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-left">
+                            <div class="summary-icon">💰</div>
+                            <span class="summary-label">$ PAYDAY:</span>
+                        </div>
+                        <span class="summary-value payday">$3 500/мес</span>
+                    </div>
+                </div>
+
+                <!-- Кредитная информация -->
+                <div class="credit-section">
+                    <h3 class="section-title">Кредит</h3>
+                    <div class="credit-item">
+                        <span class="credit-label">Кредит:</span>
+                        <span class="credit-value credit-amount">$0</span>
+                    </div>
+                    <div class="credit-item">
+                        <span class="credit-label">Макс. кредит:</span>
+                        <span class="credit-value max-credit">$10 000</span>
+                    </div>
+                </div>
+
+                <!-- Кнопки действий -->
+                <div class="action-buttons">
+                    <button class="btn btn-success" onclick="noCredits()">
+                        <span>✓</span>
+                        <span>Без кредитов</span>
+                    </button>
+                    <button class="btn btn-danger" onclick="takeCredit()">
+                        <span>💳</span>
+                        <span>Взять</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Правая панель - Переводы и история -->
+            <div class="transfer-panel">
+                <h3 class="section-title">Перевод средств</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">Получатель</label>
+                    <div class="input-group">
+                        <input type="text" class="form-input" placeholder="Выберите получателя" id="recipient">
+                        <span class="input-icon">▼</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Сумма ($)</label>
+                    <div class="input-group">
+                        <input type="number" class="form-input" placeholder="0" id="amount">
+                        <span class="input-icon">👁️</span>
+                    </div>
+                </div>
+
+                <div class="transfer-buttons">
+                    <button class="btn btn-primary" onclick="performTransfer()">
+                        <span>✈️</span>
+                        <span>Выполнить перевод</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetTransfer()">
+                        <span>Сбросить</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Панель истории операций -->
+        <div class="history-panel">
+            <div class="history-header">
+                <div class="history-title">
+                    <span>🕐</span>
+                    <span>История операций</span>
+                    <div class="notification-badge">1</div>
+                </div>
+            </div>
+
+            <div class="transaction-item">
+                <div class="transaction-left">
+                    <div class="transaction-icon">📄</div>
+                    <div class="transaction-info">
+                        <div class="transaction-description">Начальный баланс профессии</div>
+                        <div class="transaction-details">Банк -> Игрок</div>
+                    </div>
+                </div>
+                <div class="transaction-right">
+                    <div class="transaction-amount">+$3 000</div>
+                    <div class="transaction-status">Завершено</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Игровые данные
+        let gameData = {
+            balance: 3000,
+            income: 6000,
+            expenses: 2500,
+            payday: 3500,
+            credit: 0,
+            maxCredit: 10000
+        };
+
+        // Инициализация
+        function initBank() {
+            updateDisplay();
+        }
+
+        // Обновление отображения
+        function updateDisplay() {
+            document.getElementById('currentBalance').textContent = `$${gameData.balance.toLocaleString()}`;
+        }
+
+        // Функции банка
+        function noCredits() {
+            alert('У вас нет активных кредитов');
+        }
+
+        function takeCredit() {
+            const amount = prompt('Введите сумму кредита (максимум $10,000):');
+            if (amount && !isNaN(amount)) {
+                const creditAmount = parseInt(amount);
+                if (creditAmount > 0 && creditAmount <= gameData.maxCredit) {
+                    gameData.credit += creditAmount;
+                    gameData.balance += creditAmount;
+                    updateDisplay();
+                    alert(`Кредит на сумму $${creditAmount.toLocaleString()} одобрен!`);
+                } else {
+                    alert('Неверная сумма кредита');
+                }
+            }
+        }
+
+        function performTransfer() {
+            const recipient = document.getElementById('recipient').value;
+            const amount = parseInt(document.getElementById('amount').value);
+            
+            if (!recipient || !amount) {
+                alert('Заполните все поля');
+                return;
+            }
+            
+            if (amount > gameData.balance) {
+                alert('Недостаточно средств');
+                return;
+            }
+            
+            gameData.balance -= amount;
+            updateDisplay();
+            alert(`Перевод $${amount.toLocaleString()} выполнен успешно!`);
+            resetTransfer();
+        }
+
+        function resetTransfer() {
+            document.getElementById('recipient').value = '';
+            document.getElementById('amount').value = '';
+        }
+
+        function closeBank() {
+            if (confirm('Закрыть банк?')) {
+                window.close();
+            }
+        }
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', initBank);
+    </script>
+</body>
+</html>
