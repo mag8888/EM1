@@ -279,75 +279,150 @@
             opacity: 1;
         }
 
-        /* Центральная область с кубиком */
+        /* Центральная область с кубиком - премиум логотип */
         .center-area {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 132px;
-            height: 132px;
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+            width: 160px;
+            height: 160px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
             border-radius: 50%;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             box-shadow: 
-                0 0 40px rgba(251, 191, 36, 0.6),
-                0 0 80px rgba(251, 191, 36, 0.3),
-                inset 0 2px 0 rgba(255, 255, 255, 0.3);
+                0 8px 32px rgba(255, 215, 0, 0.4),
+                0 0 0 4px rgba(255, 215, 0, 0.2);
             z-index: 20;
-            border: 3px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
             position: relative;
             overflow: hidden;
         }
 
-        .center-area::before {
-            content: '';
+        .center-inner {
+            width: 140px;
+            height: 140px;
+            background: radial-gradient(circle, #000000 0%, #1a1a1a 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .dice {
+            font-size: 48px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 
+                0 0 20px rgba(255, 215, 0, 0.8),
+                0 0 40px rgba(255, 165, 0, 0.6);
+            z-index: 3;
+            position: relative;
+        }
+
+        .dice.rolling {
+            animation: diceRoll 0.1s infinite;
+        }
+
+        @keyframes diceRoll {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.1); }
+            50% { transform: rotate(180deg) scale(0.9); }
+            75% { transform: rotate(270deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+
+        .energy-lines {
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                transparent 0deg,
+                rgba(255, 215, 0, 0.3) 45deg,
+                transparent 90deg,
+                rgba(255, 165, 0, 0.3) 135deg,
+                transparent 180deg,
+                rgba(255, 140, 0, 0.3) 225deg,
+                transparent 270deg,
+                rgba(255, 215, 0, 0.3) 315deg,
+                transparent 360deg
+            );
+            animation: rotate 4s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .glow-dots {
+            position: absolute;
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
         }
 
-        .dice {
-            width: 44px;
-            height: 44px;
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            border-radius: 10px;
+        .glow-dot {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #FFD700;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .glow-dot:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg) translateY(-50px); animation-delay: 0s; }
+        .glow-dot:nth-child(2) { transform: translate(-50%, -50%) rotate(60deg) translateY(-50px); animation-delay: 0.3s; }
+        .glow-dot:nth-child(3) { transform: translate(-50%, -50%) rotate(120deg) translateY(-50px); animation-delay: 0.6s; }
+        .glow-dot:nth-child(4) { transform: translate(-50%, -50%) rotate(180deg) translateY(-50px); animation-delay: 0.9s; }
+        .glow-dot:nth-child(5) { transform: translate(-50%, -50%) rotate(240deg) translateY(-50px); animation-delay: 1.2s; }
+        .glow-dot:nth-child(6) { transform: translate(-50%, -50%) rotate(300deg) translateY(-50px); animation-delay: 1.5s; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .outer-coins {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        .coin {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: radial-gradient(circle, #FFD700 0%, #FFA500 100%);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 26px;
-            font-weight: 800;
-            color: #1f2937;
-            margin-bottom: 12px;
-            box-shadow: 
-                0 6px 12px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.8);
-            border: 2px solid rgba(0, 0, 0, 0.1);
-            position: relative;
-            z-index: 1;
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.6);
+            border: 2px solid #FFD700;
         }
 
-        .dollar-signs {
-            display: flex;
-            gap: 6px;
-            position: relative;
-            z-index: 1;
-        }
+        .coin:nth-child(1) { transform: translate(-50%, -50%) rotate(45deg) translateY(-70px); }
+        .coin:nth-child(2) { transform: translate(-50%, -50%) rotate(135deg) translateY(-70px); }
+        .coin:nth-child(3) { transform: translate(-50%, -50%) rotate(225deg) translateY(-70px); }
+        .coin:nth-child(4) { transform: translate(-50%, -50%) rotate(315deg) translateY(-70px); }
 
-        .dollar-sign {
-            color: #10b981;
-            font-size: 18px;
-            font-weight: 800;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.5));
+        .coin-symbol {
+            font-size: 12px;
+            font-weight: bold;
+            color: #000000;
         }
 
         /* Фишки игроков */
@@ -688,12 +763,37 @@
 
                 <!-- Центральная область -->
                 <div class="center-area">
-                    <div class="dice" id="dice">3</div>
-                    <div class="dollar-signs">
-                        <span class="dollar-sign">$</span>
-                        <span class="dollar-sign">$</span>
-                        <span class="dollar-sign">$</span>
-                        <span class="dollar-sign">$</span>
+                    <div class="center-inner">
+                        <div class="dice" id="dice">3</div>
+                        
+                        <!-- Энергетические линии -->
+                        <div class="energy-lines"></div>
+                        
+                        <!-- Светящиеся точки -->
+                        <div class="glow-dots">
+                            <div class="glow-dot"></div>
+                            <div class="glow-dot"></div>
+                            <div class="glow-dot"></div>
+                            <div class="glow-dot"></div>
+                            <div class="glow-dot"></div>
+                            <div class="glow-dot"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Внешние монеты -->
+                    <div class="outer-coins">
+                        <div class="coin">
+                            <span class="coin-symbol">$</span>
+                        </div>
+                        <div class="coin">
+                            <span class="coin-symbol">$</span>
+                        </div>
+                        <div class="coin">
+                            <span class="coin-symbol">$</span>
+                        </div>
+                        <div class="coin">
+                            <span class="coin-symbol">$</span>
+                        </div>
                     </div>
                 </div>
 
