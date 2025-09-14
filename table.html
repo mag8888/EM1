@@ -941,6 +941,126 @@
         .player-token.moving {
             animation: moveToken 0.5s ease-in-out;
         }
+
+        /* Модальное окно для информации о клетке */
+        .cell-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(20px);
+            margin: 5% auto;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover {
+            color: white;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .cell-info {
+            margin-bottom: 30px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            color: #94a3b8;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .value {
+            color: white;
+            font-weight: 500;
+            font-size: 14px;
+            text-align: right;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+
+        .btn-primary, .btn-secondary {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -1136,12 +1256,107 @@
         </div>
     </div>
 
+    <!-- Модальное окно для информации о клетке -->
+    <div class="cell-modal" id="cellModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="cellTitle">Информация о клетке</h3>
+                <span class="close" onclick="closeCellModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="cell-info">
+                    <div class="info-row">
+                        <span class="label">Тип:</span>
+                        <span class="value" id="cellType">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Стоимость:</span>
+                        <span class="value" id="cellCost">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Доход:</span>
+                        <span class="value" id="cellIncome">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Владелец:</span>
+                        <span class="value" id="cellOwner">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Описание:</span>
+                        <span class="value" id="cellDescription">-</span>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-primary" onclick="buyCell()" id="buyButton" style="display: none;">Купить</button>
+                    <button class="btn-secondary" onclick="closeCellModal()">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Данные о клетках внешнего круга (Fast Track)
+        const cellData = {
+            1: { name: "Доход от инвестиций", type: "Доход", cost: 0, income: "Все пассивные доходы", description: "Получить доход от всех активов", color: "yellow" },
+            2: { name: "Построить дом мечты для семьи", type: "Мечта", cost: 100000, income: 0, description: "Реализация мечты о собственном доме", color: "pink" },
+            3: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            4: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            5: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            6: { name: "Посетить Антарктиду", type: "Мечта", cost: 150000, income: 0, description: "Экстремальное путешествие на южный континент", color: "pink" },
+            7: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            8: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            9: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            10: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            11: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            12: { name: "Подняться на все высочайшие вершины мира", type: "Мечта", cost: 500000, income: 0, description: "Покорение семи высочайших вершин планеты", color: "pink" },
+            13: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            14: { name: "Объехать 100 стран", type: "Бонус", cost: 0, income: 500000, description: "Выплата за реализацию мечты о путешествиях", color: "yellow" },
+            15: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            16: { name: "Жить год на яхте в Средиземном море", type: "Мечта", cost: 300000, income: 0, description: "Годовая жизнь на роскошной яхте", color: "pink" },
+            17: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            18: { name: "Создать фонд поддержки талантов", type: "Мечта", cost: 300000, income: 0, description: "Основание благотворительного фонда", color: "pink" },
+            19: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            20: { name: "Организовать мировой фестиваль", type: "Мечта", cost: 200000, income: 0, description: "Проведение международного культурного события", color: "pink" },
+            21: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            22: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            23: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            24: { name: "Туристический комплекс (эко-ранчо)", type: "Мечта", cost: 1000000, income: 0, description: "Создание экологического туристического комплекса", color: "pink" },
+            25: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            26: { name: "Биржа (с бонусом)", type: "Инвестиция", cost: 50000, income: "500,000 (при 5-6)", description: "Инвестиции в биржу с возможностью большого выигрыша", color: "pink" },
+            27: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            28: { name: "NFT-платформа", type: "Мечта", cost: 400000, income: 0, description: "Создание платформы для торговли NFT", color: "pink" },
+            29: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            30: { name: "Полет на Марс", type: "Мечта", cost: 300000, income: 0, description: "Реализация мечты о космическом путешествии", color: "pink" },
+            31: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            32: { name: "Создать школу будущего для детей", type: "Мечта", cost: 300000, income: 0, description: "Создание инновационной школы", color: "pink" },
+            33: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            34: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            35: { name: "Кругосветное плавание на паруснике", type: "Мечта", cost: 200000, income: 0, description: "Кругосветное путешествие на парусном судне", color: "pink" },
+            36: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            37: { name: "Белоснежная Яхта", type: "Мечта", cost: 300000, income: 0, description: "Приобретение роскошной белоснежной яхты", color: "pink" },
+            38: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            39: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            40: { name: "Доход от инвестиций", type: "Доход", cost: 0, income: "Все пассивные доходы", description: "Получить доход от всех активов", color: "yellow" },
+            41: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            42: { name: "Белоснежная Яхта", type: "Мечта", cost: 300000, income: 0, description: "Приобретение роскошной белоснежной яхты", color: "pink" },
+            43: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            44: { name: "Организовать благотворительный фонд", type: "Мечта", cost: 200000, income: 0, description: "Создание благотворительного фонда", color: "pink" },
+            45: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            46: { name: "Полёт в космос", type: "Мечта", cost: 250000, income: 0, description: "Реализация мечты о космическом путешествии", color: "pink" },
+            47: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            48: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            49: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            50: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            51: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" },
+            52: { name: "Денежная клетка", type: "Деньги", cost: 0, income: 0, description: "Специальная денежная клетка", color: "yellow" }
+        };
+
         // Игровые переменные
         let currentPlayer = 1;
         let gameTimer = 120; // 2 минуты в секундах
         let timerInterval;
         let isRolling = false;
+        let cellOwners = {}; // Владельцы клеток
 
         // Инициализация игры
         function initGame() {
@@ -1164,6 +1379,8 @@
             for (let i = 1; i <= totalSquares; i++) {
                 const square = document.createElement('div');
                 square.className = `outer-square ${colors[(i - 1) % colors.length]}`;
+                square.dataset.cellNumber = i;
+                square.onclick = () => showCellInfo(i);
                 
                 // Позиционирование по квадратному периметру
                 let x, y;
@@ -1390,6 +1607,72 @@
 
         // Обработчики событий
         document.getElementById('rollDiceBtn').addEventListener('click', rollDice);
+
+        // Функции для работы с модальным окном клетки
+        function showCellInfo(cellNumber) {
+            const cell = cellData[cellNumber];
+            if (!cell) return;
+
+            document.getElementById('cellTitle').textContent = cell.name;
+            document.getElementById('cellType').textContent = cell.type;
+            document.getElementById('cellCost').textContent = cell.cost > 0 ? `$${cell.cost.toLocaleString()}` : 'Бесплатно';
+            document.getElementById('cellIncome').textContent = cell.income > 0 ? `$${cell.income.toLocaleString()}/мес` : (typeof cell.income === 'string' ? cell.income : 'Нет дохода');
+            document.getElementById('cellOwner').textContent = cellOwners[cellNumber] ? `Игрок ${cellOwners[cellNumber]}` : 'Свободно';
+            document.getElementById('cellDescription').textContent = cell.description;
+
+            // Показываем кнопку покупки только если клетка не куплена и имеет стоимость
+            const buyButton = document.getElementById('buyButton');
+            if (cell.cost > 0 && !cellOwners[cellNumber]) {
+                buyButton.style.display = 'inline-block';
+                buyButton.onclick = () => buyCell(cellNumber);
+            } else {
+                buyButton.style.display = 'none';
+            }
+
+            document.getElementById('cellModal').style.display = 'block';
+        }
+
+        function closeCellModal() {
+            document.getElementById('cellModal').style.display = 'none';
+        }
+
+        function buyCell(cellNumber) {
+            const cell = cellData[cellNumber];
+            if (!cell || cell.cost <= 0 || cellOwners[cellNumber]) return;
+
+            // Здесь можно добавить логику покупки клетки
+            // Например, проверка баланса игрока, списание средств и т.д.
+            cellOwners[cellNumber] = currentPlayer;
+            
+            // Обновляем отображение владельца
+            document.getElementById('cellOwner').textContent = `Игрок ${currentPlayer}`;
+            document.getElementById('buyButton').style.display = 'none';
+            
+            // Обновляем визуальное отображение клетки
+            updateCellDisplay(cellNumber);
+            
+            alert(`Игрок ${currentPlayer} купил клетку "${cell.name}" за $${cell.cost.toLocaleString()}`);
+        }
+
+        function updateCellDisplay(cellNumber) {
+            const square = document.querySelector(`[data-cell-number="${cellNumber}"]`);
+            if (!square) return;
+
+            const owner = cellOwners[cellNumber];
+            if (owner) {
+                // Добавляем индикатор владельца
+                square.style.border = '2px solid #10b981';
+                square.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.5)';
+            }
+        }
+
+        // Закрытие модального окна при клике вне его
+        window.onclick = function(event) {
+            const modal = document.getElementById('cellModal');
+            if (event.target === modal) {
+                closeCellModal();
+            }
+        }
 
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', initGame);
