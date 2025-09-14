@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(express.static('.'));
 
 // MongoDB connection
-const MONGODB_URI = 'mongodb+srv://xqrmedia_db_user:aInHJMSt5gFkf8uk@cluster0.mongodb.net/cashflow_game?retryWrites=true&w=majority';
+const MONGODB_URI = 'mongodb+srv://xqrmedia_db_user:aInHJMSt5gFkf8uk@cluster0.mongodb.net/energy_money_game?retryWrites=true&w=majority';
 
 mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,

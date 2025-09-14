@@ -1,7 +1,7 @@
 {
   "name": "test-page",
   "version": "1.0.0",
-  "description": "Простая тестовая веб-страница с современным дизайном",
+  "description": "Игра 'Энергия денег' - развивающая финансовая грамотность",
   "main": "index.html",
   "scripts": {
     "start": "node server.js",
