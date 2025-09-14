@@ -856,6 +856,59 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
+        /* Анимация кубика под кнопкой */
+        .dice-animation-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 12px;
+            padding: 8px;
+        }
+
+        .mini-dice {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #000;
+            box-shadow: 
+                0 4px 12px rgba(255, 215, 0, 0.4),
+                0 0 0 2px rgba(255, 215, 0, 0.2);
+            transition: all 0.3s ease;
+            animation: miniDiceIdle 2s ease-in-out infinite;
+        }
+
+        .mini-dice.rolling {
+            animation: miniDiceRoll 0.1s infinite;
+        }
+
+        @keyframes miniDiceIdle {
+            0%, 100% { 
+                transform: rotate(0deg) scale(1);
+                box-shadow: 
+                    0 4px 12px rgba(255, 215, 0, 0.4),
+                    0 0 0 2px rgba(255, 215, 0, 0.2);
+            }
+            50% { 
+                transform: rotate(5deg) scale(1.05);
+                box-shadow: 
+                    0 6px 16px rgba(255, 215, 0, 0.6),
+                    0 0 0 3px rgba(255, 215, 0, 0.3);
+            }
+        }
+
+        @keyframes miniDiceRoll {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.1); }
+            50% { transform: rotate(180deg) scale(0.9); }
+            75% { transform: rotate(270deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+
         /* Цвета квадратов */
         .square-green { background: #10b981; color: white; }
         .square-pink { background: #ec4899; color: white; }
@@ -944,91 +997,7 @@
 
         <!-- Боковая панель -->
         <div class="sidebar">
-            <!-- Активы -->
-            <div class="section">
-                <div class="section-title">Активы</div>
-                <button class="assets-button">
-                    <span>💰</span>
-                    <span>Мои активы</span>
-                </button>
-            </div>
-
-            <!-- Действия -->
-            <div class="section">
-                <div class="section-title">Действия</div>
-                <button class="roll-dice-button" id="rollDiceBtn">
-                    <span>🎲</span>
-                    <span>Бросить кубик</span>
-                </button>
-            </div>
-
-            <!-- Время хода -->
-            <div class="section">
-                <div class="section-title">Время хода</div>
-                <div class="turn-timer">
-                    <div class="timer-bar">
-                        <div class="timer-fill" id="timerFill" style="width: 100%;"></div>
-                    </div>
-                    <div class="timer-text" id="timerText">2:00 / 2:00</div>
-                </div>
-            </div>
-
-            <!-- Очередность игроков -->
-            <div class="section">
-                <div class="section-title">Очередность игроков</div>
-                <div class="players-list">
-                    <div class="player-item current" id="player1Item">
-                        <div class="player-avatar player-1">1</div>
-                        <div class="player-info">
-                            <div class="player-name">Игрок 1</div>
-                            <div class="player-role">Врач</div>
-                        </div>
-                        <div class="player-status">
-                            <span>✓</span>
-                            <span>Готов</span>
-                        </div>
-                    </div>
-                    <div class="player-item" id="player2Item">
-                        <div class="player-avatar player-2">2</div>
-                        <div class="player-info">
-                            <div class="player-name">Игрок 2</div>
-                            <div class="player-role">Инвестор</div>
-                        </div>
-                        <div class="player-status">
-                            <span>✓</span>
-                            <span>Готов</span>
-                        </div>
-                    </div>
-                    <div class="player-item" id="player3Item">
-                        <div class="player-avatar player-3">3</div>
-                        <div class="player-info">
-                            <div class="player-name">Игрок 3</div>
-                            <div class="player-role">Финансист</div>
-                        </div>
-                        <div class="player-status">
-                            <span>✓</span>
-                            <span>Готов</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Текущий игрок -->
-            <div class="section current-player">
-                <div class="current-player-title">Текущий игрок</div>
-                <div class="current-player-info" id="currentPlayerInfo">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                        <div class="player-avatar player-1" style="width: 20px; height: 20px; font-size: 10px;">1</div>
-                        <div>
-                            <div style="font-weight: bold;">Игрок 1</div>
-                            <div style="font-size: 12px; color: #94a3b8;">Врач</div>
-                        </div>
-                    </div>
-                    <div style="font-size: 14px; font-weight: bold; color: #10b981;">$10000</div>
-                </div>
-            </div>
-
-            <!-- Превью банка -->
+            <!-- 1. Банк -->
             <div class="bank-preview" onclick="openBank()">
                 <div class="bank-header">
                     <div class="bank-title">
@@ -1076,6 +1045,94 @@
                         <span>🏦</span>
                         <span>Открыть</span>
                     </button>
+                </div>
+            </div>
+
+            <!-- 2. Активы -->
+            <div class="section">
+                <div class="section-title">Активы</div>
+                <button class="assets-button">
+                    <span>💰</span>
+                    <span>Мои активы</span>
+                </button>
+            </div>
+
+            <!-- 3. Очередность игроков -->
+            <div class="section">
+                <div class="section-title">Очередность игроков</div>
+                <div class="players-list">
+                    <div class="player-item current" id="player1Item">
+                        <div class="player-avatar player-1">1</div>
+                        <div class="player-info">
+                            <div class="player-name">Игрок 1</div>
+                            <div class="player-role">Врач</div>
+                        </div>
+                        <div class="player-status">
+                            <span>✓</span>
+                            <span>Готов</span>
+                        </div>
+                    </div>
+                    <div class="player-item" id="player2Item">
+                        <div class="player-avatar player-2">2</div>
+                        <div class="player-info">
+                            <div class="player-name">Игрок 2</div>
+                            <div class="player-role">Инвестор</div>
+                        </div>
+                        <div class="player-status">
+                            <span>✓</span>
+                            <span>Готов</span>
+                        </div>
+                    </div>
+                    <div class="player-item" id="player3Item">
+                        <div class="player-avatar player-3">3</div>
+                        <div class="player-info">
+                            <div class="player-name">Игрок 3</div>
+                            <div class="player-role">Финансист</div>
+                        </div>
+                        <div class="player-status">
+                            <span>✓</span>
+                            <span>Готов</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Бросить кубик -->
+            <div class="section">
+                <div class="section-title">Действия</div>
+                <button class="roll-dice-button" id="rollDiceBtn">
+                    <span>🎲</span>
+                    <span>Бросить кубик</span>
+                </button>
+                <!-- Анимация кубика под кнопкой -->
+                <div class="dice-animation-container">
+                    <div class="mini-dice" id="miniDice">3</div>
+                </div>
+            </div>
+
+            <!-- 5. Шкала тайминга -->
+            <div class="section">
+                <div class="section-title">Время хода</div>
+                <div class="turn-timer">
+                    <div class="timer-bar">
+                        <div class="timer-fill" id="timerFill" style="width: 100%;"></div>
+                    </div>
+                    <div class="timer-text" id="timerText">2:00 / 2:00</div>
+                </div>
+            </div>
+
+            <!-- Текущий игрок -->
+            <div class="section current-player">
+                <div class="current-player-title">Текущий игрок</div>
+                <div class="current-player-info" id="currentPlayerInfo">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <div class="player-avatar player-1" style="width: 20px; height: 20px; font-size: 10px;">1</div>
+                        <div>
+                            <div style="font-weight: bold;">Игрок 1</div>
+                            <div style="font-size: 12px; color: #94a3b8;">Врач</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 14px; font-weight: bold; color: #10b981;">$10000</div>
                 </div>
             </div>
         </div>
@@ -1193,23 +1250,28 @@
             
             isRolling = true;
             const dice = document.getElementById('dice');
+            const miniDice = document.getElementById('miniDice');
             const rollDiceBtn = document.getElementById('rollDiceBtn');
             
             rollDiceBtn.disabled = true;
             dice.classList.add('rolling');
+            miniDice.classList.add('rolling');
             
             // Анимация броска
             let rollCount = 0;
             const rollInterval = setInterval(() => {
                 const randomValue = Math.floor(Math.random() * 6) + 1;
                 dice.textContent = randomValue;
+                miniDice.textContent = randomValue;
                 rollCount++;
                 
                 if (rollCount >= 10) {
                     clearInterval(rollInterval);
                     const finalValue = Math.floor(Math.random() * 6) + 1;
                     dice.textContent = finalValue;
+                    miniDice.textContent = finalValue;
                     dice.classList.remove('rolling');
+                    miniDice.classList.remove('rolling');
                     
                     // Перемещение фишки
                     movePlayerToken(finalValue);
