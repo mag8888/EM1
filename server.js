@@ -25,7 +25,7 @@ mongoose.connect(MONGODB_URI, {
 
 // User Schema
 const userSchema = new mongoose.Schema({
-    telegram_id: { type: Number, unique: true, required: true },
+    telegram_id: { type: Number, unique: true, required: false },
     username: { type: String, default: '' },
     first_name: { type: String, required: true },
     last_name: { type: String, required: true },
@@ -81,15 +81,15 @@ const authenticateToken = (req, res, next) => {
 // Регистрация
 app.post('/api/auth/register', async (req, res) => {
     try {
-        const { firstName, lastName, email, telegramId, username, password, referralCode } = req.body;
+        const { firstName, lastName, email, password, referralCode } = req.body;
 
         // Проверка существования пользователя
         const existingUser = await User.findOne({
-            $or: [{ email }, { telegram_id: telegramId }]
+            email
         });
 
         if (existingUser) {
-            return res.status(400).json({ message: 'Пользователь с таким email или Telegram ID уже существует' });
+            return res.status(400).json({ message: 'Пользователь с таким email уже существует' });
         }
 
         // Хеширование пароля
@@ -109,8 +109,6 @@ app.post('/api/auth/register', async (req, res) => {
             first_name: firstName,
             last_name: lastName,
             email,
-            telegram_id: telegramId,
-            username: username || '',
             password: hashedPassword,
             referred_by: referredBy
         });
@@ -138,7 +136,7 @@ app.post('/api/auth/login', async (req, res) => {
 
         // Поиск пользователя
         const user = await User.findOne({
-            $or: [{ email }, { telegram_id: parseInt(email) }]
+            email
         });
 
         if (!user) {

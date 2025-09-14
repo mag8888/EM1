@@ -368,8 +368,8 @@
             <!-- Форма входа -->
             <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
                 <div class="form-group">
-                    <label class="form-label">Email или Telegram ID</label>
-                    <input type="text" class="form-input" id="loginEmail" placeholder="Введите email или Telegram ID" required>
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="loginEmail" placeholder="Введите email" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Пароль</label>
@@ -398,14 +398,6 @@
                 <div class="form-group">
                     <label class="form-label">Email</label>
                     <input type="email" class="form-input" id="registerEmail" placeholder="Введите email" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Telegram ID</label>
-                    <input type="number" class="form-input" id="registerTelegramId" placeholder="Введите Telegram ID" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Имя пользователя</label>
-                    <input type="text" class="form-input" id="registerUsername" placeholder="Введите username">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Пароль</label>
@@ -553,8 +545,6 @@
             const firstName = document.getElementById('registerFirstName').value;
             const lastName = document.getElementById('registerLastName').value;
             const email = document.getElementById('registerEmail').value;
-            const telegramId = parseInt(document.getElementById('registerTelegramId').value);
-            const username = document.getElementById('registerUsername').value;
             const password = document.getElementById('registerPassword').value;
             const confirmPassword = document.getElementById('registerConfirmPassword').value;
             const referralCode = document.getElementById('referralCode').value;
@@ -582,8 +572,6 @@
                         firstName,
                         lastName,
                         email,
-                        telegramId,
-                        username,
                         password,
                         referralCode
                     })
