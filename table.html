@@ -67,7 +67,7 @@
             filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.1));
         }
 
-        /* Внешний трек - прямоугольное поле с закругленными углами */
+        /* Внешний трек - квадратное поле */
         .outer-track {
             position: absolute;
             top: 0;
@@ -75,7 +75,7 @@
             width: 100%;
             height: 100%;
             border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
+            border-radius: 0;
             background: rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(10px);
             box-shadow: 
@@ -279,60 +279,7 @@
             opacity: 1;
         }
 
-        /* Центральный логотип */
-        .center-logo {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 
-                0 4px 20px rgba(255, 215, 0, 0.4),
-                0 0 0 3px rgba(255, 215, 0, 0.2);
-            z-index: 20;
-            position: relative;
-            overflow: hidden;
-        }
 
-        .logo-inner {
-            width: 60px;
-            height: 60px;
-            background: radial-gradient(circle, #000000 0%, #1a1a1a 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .dice {
-            font-size: 24px;
-            font-weight: bold;
-            color: #FFD700;
-            text-shadow: 
-                0 0 10px rgba(255, 215, 0, 0.8),
-                0 0 20px rgba(255, 165, 0, 0.6);
-            z-index: 3;
-            position: relative;
-        }
-
-        .dice.rolling {
-            animation: diceRoll 0.1s infinite;
-        }
-
-        @keyframes diceRoll {
-            0% { transform: rotate(0deg) scale(1); }
-            25% { transform: rotate(90deg) scale(1.1); }
-            50% { transform: rotate(180deg) scale(0.9); }
-            75% { transform: rotate(270deg) scale(1.1); }
-            100% { transform: rotate(360deg) scale(1); }
-        }
 
         /* Цифры в углу клеток */
         .square-number {
@@ -344,6 +291,14 @@
             color: rgba(255, 255, 255, 0.8);
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
             z-index: 2;
+        }
+
+        /* Цифры в левом нижнем углу для клеток 11-24 */
+        .square-number.bottom-left {
+            top: auto;
+            right: auto;
+            bottom: 4px;
+            left: 4px;
         }
 
         /* Крупные однотонные иконки */
@@ -693,12 +648,6 @@
                     <div class="inner-squares" id="innerSquares"></div>
                 </div>
 
-                <!-- Центральный логотип -->
-                <div class="center-logo">
-                    <div class="logo-inner">
-                        <div class="dice" id="dice">3</div>
-                    </div>
-                </div>
 
                 <!-- Фишки игроков -->
                 <div class="player-token player-1" id="player1" style="top: 50%; left: 50%;">1</div>
@@ -810,13 +759,13 @@
             updateCurrentPlayer();
         }
 
-        // Создание внешнего трека (52 квадрата) - прямоугольное поле
+        // Создание внешнего трека (52 квадрата) - квадратное поле
         function createOuterTrack() {
             const outerSquares = document.getElementById('outerSquares');
             const colors = ['square-green', 'square-pink', 'square-yellow'];
             const icons = ['📊', '💰', '🏠', '❤️', '🚗', '🎓', '☕', '🔧', '👤', '🎁', '💳', '📈'];
             
-            // Прямоугольное поле: 13 квадратов на верх/низ, 13 на лево/право
+            // Квадратное поле: 13 квадратов на каждую сторону
             const squaresPerSide = 13;
             const totalSquares = 52;
             
@@ -824,7 +773,7 @@
                 const square = document.createElement('div');
                 square.className = `outer-square ${colors[(i - 1) % colors.length]}`;
                 
-                // Позиционирование по прямоугольному периметру
+                // Позиционирование по квадратному периметру
                 let x, y;
                 
                 if (i <= squaresPerSide) {
@@ -887,7 +836,7 @@
                 
                 // Добавляем цифру в угол
                 const number = document.createElement('div');
-                number.className = 'square-number';
+                number.className = i >= 11 ? 'square-number bottom-left' : 'square-number';
                 number.textContent = i;
                 square.appendChild(number);
                 
