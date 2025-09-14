@@ -93,13 +93,13 @@
 
         .outer-square {
             position: absolute;
-            width: 44px;
-            height: 44px;
+            width: 88px;
+            height: 88px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 14px;
             font-weight: 600;
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 8px;
@@ -235,13 +235,13 @@
 
         .inner-square {
             position: absolute;
-            width: 33px;
-            height: 33px;
+            width: 66px;
+            height: 66px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 9px;
+            font-size: 12px;
             font-weight: 600;
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 6px;
@@ -423,6 +423,29 @@
             font-size: 12px;
             font-weight: bold;
             color: #000000;
+        }
+
+        /* Цифры в углу клеток */
+        .square-number {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            z-index: 2;
+        }
+
+        /* Крупные однотонные иконки */
+        .square-icon {
+            font-size: 32px;
+            filter: grayscale(100%) brightness(1.2);
+            opacity: 0.9;
+        }
+
+        .inner-square .square-icon {
+            font-size: 28px;
         }
 
         /* Фишки игроков */
@@ -798,9 +821,9 @@
                 </div>
 
                 <!-- Фишки игроков -->
-                <div class="player-token player-1" id="player1" style="top: 45%; left: 48%;">1</div>
-                <div class="player-token player-2" id="player2" style="top: 45%; left: 52%;">2</div>
-                <div class="player-token player-3" id="player3" style="top: 55%; left: 50%;">3</div>
+                <div class="player-token player-1" id="player1" style="top: 50%; left: 50%;">1</div>
+                <div class="player-token player-2" id="player2" style="top: 50%; left: 50%;">2</div>
+                <div class="player-token player-3" id="player3" style="top: 50%; left: 50%;">3</div>
             </div>
         </div>
 
@@ -911,7 +934,7 @@
         function createOuterTrack() {
             const outerSquares = document.getElementById('outerSquares');
             const colors = ['square-green', 'square-pink', 'square-yellow'];
-            const icons = ['🎯', '🏢', '📊', '💰', '💼', '❤️', '🚗', '🎓', '☕', '💳', '📈', '🏠'];
+            const icons = ['📊', '💰', '🏠', '❤️', '🚗', '🎓', '☕', '🔧', '👤', '🎁', '💳', '📈'];
             
             // Прямоугольное поле: 13 квадратов на верх/низ, 13 на лево/право
             const squaresPerSide = 13;
@@ -920,8 +943,6 @@
             for (let i = 1; i <= totalSquares; i++) {
                 const square = document.createElement('div');
                 square.className = `outer-square ${colors[(i - 1) % colors.length]}`;
-                square.textContent = i;
-                square.style.fontSize = '10px';
                 
                 // Позиционирование по прямоугольному периметру
                 let x, y;
@@ -948,32 +969,35 @@
                 square.style.top = `${y}%`;
                 square.style.transform = 'translate(-50%, -50%)';
                 
-                // Добавляем иконку
+                // Добавляем цифру в угол
+                const number = document.createElement('div');
+                number.className = 'square-number';
+                number.textContent = i;
+                square.appendChild(number);
+                
+                // Добавляем крупную иконку
                 const icon = document.createElement('div');
+                icon.className = 'square-icon';
                 icon.textContent = icons[(i - 1) % icons.length];
-                icon.style.fontSize = '8px';
-                icon.style.marginTop = '2px';
                 square.appendChild(icon);
                 
                 outerSquares.appendChild(square);
             }
         }
 
-        // Создание внутреннего трека (24 квадрата)
+        // Создание внутреннего трека (24 квадрата) - ровный круг
         function createInnerTrack() {
             const innerSquares = document.getElementById('innerSquares');
             const colors = ['square-light-blue', 'square-pink', 'square-orange', 'square-yellow', 'square-green'];
-            const icons = ['🎯', '🏢', '💰', '🛍️', '❤️', '👤'];
+            const icons = ['📊', '💰', '🏠', '❤️', '👤', '🎁'];
             
             for (let i = 1; i <= 24; i++) {
                 const square = document.createElement('div');
                 square.className = `inner-square ${colors[(i - 1) % colors.length]}`;
-                square.textContent = i;
-                square.style.fontSize = '8px';
                 
-                // Спиральное позиционирование
+                // Ровное круговое позиционирование
                 const angle = (i - 1) * (360 / 24) * (Math.PI / 180);
-                const radius = 25 + (i * 0.5); // увеличиваем радиус
+                const radius = 35; // фиксированный радиус для ровного круга
                 const x = 50 + radius * Math.cos(angle);
                 const y = 50 + radius * Math.sin(angle);
                 
@@ -981,11 +1005,16 @@
                 square.style.top = `${y}%`;
                 square.style.transform = 'translate(-50%, -50%)';
                 
-                // Добавляем иконку
+                // Добавляем цифру в угол
+                const number = document.createElement('div');
+                number.className = 'square-number';
+                number.textContent = i;
+                square.appendChild(number);
+                
+                // Добавляем крупную иконку
                 const icon = document.createElement('div');
+                icon.className = 'square-icon';
                 icon.textContent = icons[(i - 1) % icons.length];
-                icon.style.fontSize = '6px';
-                icon.style.marginTop = '1px';
                 square.appendChild(icon);
                 
                 innerSquares.appendChild(square);
@@ -1034,10 +1063,10 @@
             const playerToken = document.getElementById(`player${currentPlayer}`);
             playerToken.classList.add('moving');
             
-            // Простое перемещение по кругу
+            // Перемещение по ровному кругу внутреннего трека
             const currentAngle = (currentPlayer - 1) * 120; // 120 градусов между игроками
-            const newAngle = currentAngle + (steps * 30);
-            const radius = 40;
+            const newAngle = currentAngle + (steps * 15); // 15 градусов на шаг
+            const radius = 35; // тот же радиус, что и у внутреннего трека
             const x = 50 + radius * Math.cos(newAngle * Math.PI / 180);
             const y = 50 + radius * Math.sin(newAngle * Math.PI / 180);
             
