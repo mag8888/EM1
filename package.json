@@ -1,0 +1,37 @@
+{
+  "name": "test-page",
+  "version": "1.0.0",
+  "description": "Простая тестовая веб-страница с современным дизайном",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve . -p $PORT",
+    "dev": "npx serve . -p 3000",
+    "build": "echo 'No build step required for static HTML'",
+    "deploy": "echo 'Deploying to Railway...'"
+  },
+  "keywords": [
+    "html",
+    "css",
+    "javascript",
+    "test",
+    "static",
+    "railway"
+  ],
+  "author": "EM1",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "serve": "^14.2.1"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-username/EM1.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/EM1/issues"
+  },
+  "homepage": "https://github.com/your-username/EM1#readme"
+}
