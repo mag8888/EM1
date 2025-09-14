@@ -14,14 +14,30 @@ app.use(express.json());
 app.use(express.static('.'));
 
 // MongoDB connection
-const MONGODB_URI = 'mongodb+srv://xqrmedia_db_user:aInHJMSt5gFkf8uk@cluster0.mongodb.net/energy_money_game?retryWrites=true&w=majority';
+const MONGODB_URI = 'mongodb+srv://xqrmedia_db_user:9URuHWBY9lUQPOsj@cluster0.wvumcaj.mongodb.net/energy_money_game?retryWrites=true&w=majority&appName=Cluster0';
 
+// Добавляем более детальную обработку ошибок подключения
 mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+    socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
 })
-.then(() => console.log('MongoDB connected successfully'))
-.catch(err => console.error('MongoDB connection error:', err));
+.then(() => {
+    console.log('MongoDB connected successfully');
+    console.log('Database:', mongoose.connection.db.databaseName);
+})
+.catch(err => {
+    console.error('MongoDB connection error:', err);
+    console.error('Error details:', {
+        name: err.name,
+        message: err.message,
+        code: err.code
+    });
+    
+    // Если не удается подключиться к MongoDB, продолжаем работу без базы данных
+    console.log('Continuing without database connection...');
+});
 
 // User Schema
 const userSchema = new mongoose.Schema({
@@ -81,6 +97,11 @@ const authenticateToken = (req, res, next) => {
 // Регистрация
 app.post('/api/auth/register', async (req, res) => {
     try {
+        // Проверяем подключение к базе данных
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(503).json({ message: 'База данных недоступна. Попробуйте позже.' });
+        }
+
         const { firstName, lastName, email, password, referralCode } = req.body;
 
         // Проверка существования пользователя
@@ -132,6 +153,11 @@ app.post('/api/auth/register', async (req, res) => {
 // Авторизация
 app.post('/api/auth/login', async (req, res) => {
     try {
+        // Проверяем подключение к базе данных
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(503).json({ message: 'База данных недоступна. Попробуйте позже.' });
+        }
+
         const { email, password } = req.body;
 
         // Поиск пользователя
