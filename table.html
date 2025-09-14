@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игровой стол - Денежный поток</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #1a1a2e;
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .game-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Игровое поле */
+        .game-board {
+            flex: 1;
+            background: #16213e;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .board-wrapper {
+            position: relative;
+            width: 80vh;
+            height: 80vh;
+            max-width: 800px;
+            max-height: 800px;
+        }
+
+        /* Внешний трек */
+        .outer-track {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 3px solid #4a5568;
+            border-radius: 20px;
+        }
+
+        .outer-squares {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .outer-square {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .outer-square:hover {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        /* Специальные квадраты */
+        .special-square {
+            position: absolute;
+            width: 80px;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .special-square:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        .big-deal {
+            top: 20px;
+            left: 20px;
+            background: #fbbf24;
+            color: #1f2937;
+        }
+
+        .small-deal {
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+        }
+
+        .expenses {
+            bottom: 20px;
+            left: 20px;
+            background: #ef4444;
+            color: white;
+        }
+
+        .market {
+            bottom: 20px;
+            right: 20px;
+            background: #3b82f6;
+            color: white;
+        }
+
+        /* Внутренний спиральный трек */
+        .inner-track {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60%;
+            height: 60%;
+        }
+
+        .inner-squares {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .inner-square {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .inner-square:hover {
+            transform: scale(1.2);
+            z-index: 10;
+        }
+
+        /* Центральная область с кубиком */
+        .center-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px rgba(251, 191, 36, 0.5);
+            z-index: 20;
+        }
+
+        .dice {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .dollar-signs {
+            display: flex;
+            gap: 5px;
+        }
+
+        .dollar-sign {
+            color: #10b981;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* Фишки игроков */
+        .player-token {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            border: 2px solid white;
+            z-index: 15;
+            transition: all 0.3s ease;
+        }
+
+        .player-token:hover {
+            transform: scale(1.2);
+        }
+
+        .player-1 { background: #ef4444; }
+        .player-2 { background: #3b82f6; }
+        .player-3 { background: #10b981; }
+
+        /* Боковая панель */
+        .sidebar {
+            width: 300px;
+            background: #0f172a;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section {
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #94a3b8;
+        }
+
+        .assets-button {
+            width: 100%;
+            padding: 12px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .assets-button:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .roll-dice-button {
+            width: 100%;
+            padding: 15px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .roll-dice-button:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .roll-dice-button:disabled {
+            background: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .turn-timer {
+            margin-bottom: 15px;
+        }
+
+        .timer-bar {
+            width: 100%;
+            height: 8px;
+            background: #374151;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .timer-fill {
+            height: 100%;
+            background: #10b981;
+            transition: width 1s linear;
+        }
+
+        .timer-text {
+            font-size: 12px;
+            color: #94a3b8;
+            text-align: center;
+        }
+
+        .players-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .player-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: #374151;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .player-item:hover {
+            background: #4b5563;
+        }
+
+        .player-item.current {
+            background: #1e40af;
+        }
+
+        .player-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .player-role {
+            font-size: 10px;
+            color: #94a3b8;
+        }
+
+        .player-status {
+            font-size: 10px;
+            color: #10b981;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .current-player {
+            margin-top: 15px;
+        }
+
+        .current-player-title {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+
+        .current-player-info {
+            padding: 10px;
+            background: #374151;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 12px;
+            color: #e5e7eb;
+        }
+
+        /* Цвета квадратов */
+        .square-green { background: #10b981; color: white; }
+        .square-pink { background: #ec4899; color: white; }
+        .square-yellow { background: #fbbf24; color: #1f2937; }
+        .square-red { background: #ef4444; color: white; }
+        .square-blue { background: #3b82f6; color: white; }
+        .square-orange { background: #f97316; color: white; }
+        .square-light-blue { background: #06b6d4; color: white; }
+        .square-black { background: #1f2937; color: white; }
+
+        /* Анимации */
+        @keyframes rollDice {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(90deg); }
+            50% { transform: rotate(180deg); }
+            75% { transform: rotate(270deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .dice.rolling {
+            animation: rollDice 0.5s ease-in-out;
+        }
+
+        @keyframes moveToken {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .player-token.moving {
+            animation: moveToken 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Игровое поле -->
+        <div class="game-board">
+            <div class="board-wrapper">
+                <!-- Внешний трек -->
+                <div class="outer-track">
+                    <div class="outer-squares" id="outerSquares"></div>
+                </div>
+
+                <!-- Специальные квадраты -->
+                <div class="special-square big-deal">
+                    <div>💰</div>
+                    <div>Большая сделка</div>
+                </div>
+                <div class="special-square small-deal">
+                    <div>💼</div>
+                    <div>Малая сделка</div>
+                </div>
+                <div class="special-square expenses">
+                    <div>🐷</div>
+                    <div>Расходы</div>
+                </div>
+                <div class="special-square market">
+                    <div>🏢</div>
+                    <div>Рынок</div>
+                </div>
+
+                <!-- Внутренний трек -->
+                <div class="inner-track">
+                    <div class="inner-squares" id="innerSquares"></div>
+                </div>
+
+                <!-- Центральная область -->
+                <div class="center-area">
+                    <div class="dice" id="dice">3</div>
+                    <div class="dollar-signs">
+                        <span class="dollar-sign">$</span>
+                        <span class="dollar-sign">$</span>
+                        <span class="dollar-sign">$</span>
+                        <span class="dollar-sign">$</span>
+                    </div>
+                </div>
+
+                <!-- Фишки игроков -->
+                <div class="player-token player-1" id="player1" style="top: 45%; left: 48%;">1</div>
+                <div class="player-token player-2" id="player2" style="top: 45%; left: 52%;">2</div>
+                <div class="player-token player-3" id="player3" style="top: 55%; left: 50%;">3</div>
+            </div>
+        </div>
+
+        <!-- Боковая панель -->
+        <div class="sidebar">
+            <!-- Активы -->
+            <div class="section">
+                <div class="section-title">Активы</div>
+                <button class="assets-button">
+                    <span>📊</span>
+                    <span>📈</span>
+                </button>
+            </div>
+
+            <!-- Действия -->
+            <div class="section">
+                <div class="section-title">Действия</div>
+                <button class="roll-dice-button" id="rollDiceBtn">
+                    <span>🎲</span>
+                    <span>Бросить кубик</span>
+                </button>
+            </div>
+
+            <!-- Время хода -->
+            <div class="section">
+                <div class="section-title">Время хода</div>
+                <div class="turn-timer">
+                    <div class="timer-bar">
+                        <div class="timer-fill" id="timerFill" style="width: 100%;"></div>
+                    </div>
+                    <div class="timer-text" id="timerText">2:00 / 2:00</div>
+                </div>
+            </div>
+
+            <!-- Очередность игроков -->
+            <div class="section">
+                <div class="section-title">Очередность игроков</div>
+                <div class="players-list">
+                    <div class="player-item current" id="player1Item">
+                        <div class="player-avatar player-1">1</div>
+                        <div class="player-info">
+                            <div class="player-name">MAG Менеджер</div>
+                            <div class="player-role">Менеджер</div>
+                        </div>
+                        <div class="player-status">
+                            <span>✓</span>
+                            <span>Готов</span>
+                        </div>
+                    </div>
+                    <div class="player-item" id="player2Item">
+                        <div class="player-avatar player-2">2</div>
+                        <div class="player-info">
+                            <div class="player-name">Игрок 2 Инвестор</div>
+                            <div class="player-role">Инвестор</div>
+                        </div>
+                        <div class="player-status">
+                            <span>✓</span>
+                            <span>Готов</span>
+                        </div>
+                    </div>
+                    <div class="player-item" id="player3Item">
+                        <div class="player-avatar player-3">3</div>
+                        <div class="player-info">
+                            <div class="player-name">Игрок 3 Финансист</div>
+                            <div class="player-role">Финансист</div>
+                        </div>
+                        <div class="player-status">
+                            <span>✓</span>
+                            <span>Готов</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Текущий игрок -->
+            <div class="section current-player">
+                <div class="current-player-title">Текущий игрок</div>
+                <div class="current-player-info" id="currentPlayerInfo">
+                    MAG Менеджер
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Игровые переменные
+        let currentPlayer = 1;
+        let gameTimer = 120; // 2 минуты в секундах
+        let timerInterval;
+        let isRolling = false;
+
+        // Инициализация игры
+        function initGame() {
+            createOuterTrack();
+            createInnerTrack();
+            startTimer();
+            updateCurrentPlayer();
+        }
+
+        // Создание внешнего трека (52 квадрата)
+        function createOuterTrack() {
+            const outerSquares = document.getElementById('outerSquares');
+            const colors = ['square-green', 'square-pink', 'square-yellow'];
+            const icons = ['C', '🏢', '📊', '📈', '💰', '💼'];
+            
+            for (let i = 1; i <= 52; i++) {
+                const square = document.createElement('div');
+                square.className = `outer-square ${colors[(i - 1) % colors.length]}`;
+                square.textContent = i;
+                square.style.fontSize = '10px';
+                
+                // Позиционирование квадратов по периметру
+                const angle = (i - 1) * (360 / 52) * (Math.PI / 180);
+                const radius = 45; // процент от размера контейнера
+                const x = 50 + radius * Math.cos(angle);
+                const y = 50 + radius * Math.sin(angle);
+                
+                square.style.left = `${x}%`;
+                square.style.top = `${y}%`;
+                square.style.transform = 'translate(-50%, -50%)';
+                
+                // Добавляем иконку
+                const icon = document.createElement('div');
+                icon.textContent = icons[(i - 1) % icons.length];
+                icon.style.fontSize = '8px';
+                icon.style.marginTop = '2px';
+                square.appendChild(icon);
+                
+                outerSquares.appendChild(square);
+            }
+        }
+
+        // Создание внутреннего трека (24 квадрата)
+        function createInnerTrack() {
+            const innerSquares = document.getElementById('innerSquares');
+            const colors = ['square-light-blue', 'square-pink', 'square-orange', 'square-yellow', 'square-green'];
+            
+            for (let i = 1; i <= 24; i++) {
+                const square = document.createElement('div');
+                square.className = `inner-square ${colors[(i - 1) % colors.length]}`;
+                square.textContent = i;
+                square.style.fontSize = '8px';
+                
+                // Спиральное позиционирование
+                const angle = (i - 1) * (360 / 24) * (Math.PI / 180);
+                const radius = 25 + (i * 0.5); // увеличиваем радиус
+                const x = 50 + radius * Math.cos(angle);
+                const y = 50 + radius * Math.sin(angle);
+                
+                square.style.left = `${x}%`;
+                square.style.top = `${y}%`;
+                square.style.transform = 'translate(-50%, -50%)';
+                
+                // Добавляем иконку
+                const icon = document.createElement('div');
+                icon.textContent = 'C';
+                icon.style.fontSize = '6px';
+                icon.style.marginTop = '1px';
+                square.appendChild(icon);
+                
+                innerSquares.appendChild(square);
+            }
+        }
+
+        // Бросок кубика
+        function rollDice() {
+            if (isRolling) return;
+            
+            isRolling = true;
+            const dice = document.getElementById('dice');
+            const rollDiceBtn = document.getElementById('rollDiceBtn');
+            
+            rollDiceBtn.disabled = true;
+            dice.classList.add('rolling');
+            
+            // Анимация броска
+            let rollCount = 0;
+            const rollInterval = setInterval(() => {
+                const randomValue = Math.floor(Math.random() * 6) + 1;
+                dice.textContent = randomValue;
+                rollCount++;
+                
+                if (rollCount >= 10) {
+                    clearInterval(rollInterval);
+                    const finalValue = Math.floor(Math.random() * 6) + 1;
+                    dice.textContent = finalValue;
+                    dice.classList.remove('rolling');
+                    
+                    // Перемещение фишки
+                    movePlayerToken(finalValue);
+                    
+                    // Смена игрока через 2 секунды
+                    setTimeout(() => {
+                        nextPlayer();
+                        rollDiceBtn.disabled = false;
+                        isRolling = false;
+                    }, 2000);
+                }
+            }, 100);
+        }
+
+        // Перемещение фишки игрока
+        function movePlayerToken(steps) {
+            const playerToken = document.getElementById(`player${currentPlayer}`);
+            playerToken.classList.add('moving');
+            
+            // Простое перемещение по кругу
+            const currentAngle = (currentPlayer - 1) * 120; // 120 градусов между игроками
+            const newAngle = currentAngle + (steps * 30);
+            const radius = 40;
+            const x = 50 + radius * Math.cos(newAngle * Math.PI / 180);
+            const y = 50 + radius * Math.sin(newAngle * Math.PI / 180);
+            
+            playerToken.style.left = `${x}%`;
+            playerToken.style.top = `${y}%`;
+            
+            setTimeout(() => {
+                playerToken.classList.remove('moving');
+            }, 500);
+        }
+
+        // Смена игрока
+        function nextPlayer() {
+            // Убираем выделение с текущего игрока
+            document.getElementById(`player${currentPlayer}Item`).classList.remove('current');
+            
+            // Переходим к следующему игроку
+            currentPlayer = currentPlayer === 3 ? 1 : currentPlayer + 1;
+            
+            // Выделяем нового игрока
+            document.getElementById(`player${currentPlayer}Item`).classList.add('current');
+            
+            updateCurrentPlayer();
+            resetTimer();
+        }
+
+        // Обновление информации о текущем игроке
+        function updateCurrentPlayer() {
+            const playerNames = ['MAG Менеджер', 'Игрок 2 Инвестор', 'Игрок 3 Финансист'];
+            document.getElementById('currentPlayerInfo').textContent = playerNames[currentPlayer - 1];
+        }
+
+        // Таймер хода
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                gameTimer--;
+                updateTimerDisplay();
+                
+                if (gameTimer <= 0) {
+                    // Время вышло, автоматически переходим к следующему игроку
+                    nextPlayer();
+                }
+            }, 1000);
+        }
+
+        function resetTimer() {
+            gameTimer = 120;
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(gameTimer / 60);
+            const seconds = gameTimer % 60;
+            const percentage = (gameTimer / 120) * 100;
+            
+            document.getElementById('timerText').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')} / 2:00`;
+            document.getElementById('timerFill').style.width = `${percentage}%`;
+        }
+
+        // Обработчики событий
+        document.getElementById('rollDiceBtn').addEventListener('click', rollDice);
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
