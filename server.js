@@ -41,7 +41,7 @@ mongoose.connect(MONGODB_URI, {
 
 // User Schema
 const userSchema = new mongoose.Schema({
-    telegram_id: { type: Number, unique: true, required: false },
+    telegram_id: { type: Number, required: false, sparse: true }, // sparse: true позволяет множественные null значения
     username: { type: String, default: '' },
     first_name: { type: String, required: true },
     last_name: { type: String, required: true },
@@ -97,23 +97,32 @@ const authenticateToken = (req, res, next) => {
 // Регистрация
 app.post('/api/auth/register', async (req, res) => {
     try {
+        console.log('Registration request received:', req.body);
+        
         // Проверяем подключение к базе данных
         if (mongoose.connection.readyState !== 1) {
+            console.log('Database connection state:', mongoose.connection.readyState);
             return res.status(503).json({ message: 'База данных недоступна. Попробуйте позже.' });
         }
 
         const { firstName, lastName, email, password, referralCode } = req.body;
+        console.log('Registration data:', { firstName, lastName, email, referralCode });
+
+        // Валидация данных
+        if (!firstName || !lastName || !email || !password) {
+            return res.status(400).json({ message: 'Все поля обязательны для заполнения' });
+        }
 
         // Проверка существования пользователя
-        const existingUser = await User.findOne({
-            email
-        });
+        const existingUser = await User.findOne({ email });
+        console.log('Existing user check:', existingUser ? 'User exists' : 'User not found');
 
         if (existingUser) {
             return res.status(400).json({ message: 'Пользователь с таким email уже существует' });
         }
 
         // Хеширование пароля
+        console.log('Hashing password...');
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Поиск реферера
@@ -122,10 +131,12 @@ app.post('/api/auth/register', async (req, res) => {
             const referrer = await User.findOne({ referral_code: referralCode });
             if (referrer) {
                 referredBy = referrer._id;
+                console.log('Referrer found:', referrer._id);
             }
         }
 
         // Создание пользователя
+        console.log('Creating user...');
         const user = new User({
             first_name: firstName,
             last_name: lastName,
@@ -135,18 +146,26 @@ app.post('/api/auth/register', async (req, res) => {
         });
 
         await user.save();
+        console.log('User created successfully:', user._id);
 
         // Обновление статистики реферера
         if (referredBy) {
             await User.findByIdAndUpdate(referredBy, {
                 $inc: { referrals_count: 1, referral_earnings: 100 }
             });
+            console.log('Referrer stats updated');
         }
 
         res.status(201).json({ message: 'Пользователь успешно зарегистрирован' });
     } catch (error) {
-        console.error('Registration error:', error);
-        res.status(500).json({ message: 'Ошибка сервера при регистрации' });
+        console.error('Registration error details:', error);
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        res.status(500).json({ 
+            message: 'Ошибка сервера при регистрации',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
