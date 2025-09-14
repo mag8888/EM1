@@ -93,13 +93,13 @@
 
         .outer-square {
             position: absolute;
-            width: 88px;
-            height: 88px;
+            width: 44px;
+            height: 44px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 11px;
             font-weight: 600;
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 8px;
@@ -285,8 +285,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 160px;
-            height: 160px;
+            width: 120px;
+            height: 120px;
             background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
             border-radius: 50%;
             display: flex;
@@ -301,8 +301,8 @@
         }
 
         .center-inner {
-            width: 140px;
-            height: 140px;
+            width: 100px;
+            height: 100px;
             background: radial-gradient(circle, #000000 0%, #1a1a1a 100%);
             border-radius: 50%;
             display: flex;
@@ -312,7 +312,7 @@
         }
 
         .dice {
-            font-size: 48px;
+            font-size: 36px;
             font-weight: bold;
             color: #FFD700;
             text-shadow: 
@@ -401,8 +401,8 @@
 
         .coin {
             position: absolute;
-            width: 24px;
-            height: 24px;
+            width: 18px;
+            height: 18px;
             background: radial-gradient(circle, #FFD700 0%, #FFA500 100%);
             border-radius: 50%;
             top: 50%;
@@ -414,13 +414,13 @@
             border: 2px solid #FFD700;
         }
 
-        .coin:nth-child(1) { transform: translate(-50%, -50%) rotate(45deg) translateY(-70px); }
-        .coin:nth-child(2) { transform: translate(-50%, -50%) rotate(135deg) translateY(-70px); }
-        .coin:nth-child(3) { transform: translate(-50%, -50%) rotate(225deg) translateY(-70px); }
-        .coin:nth-child(4) { transform: translate(-50%, -50%) rotate(315deg) translateY(-70px); }
+        .coin:nth-child(1) { transform: translate(-50%, -50%) rotate(45deg) translateY(-55px); }
+        .coin:nth-child(2) { transform: translate(-50%, -50%) rotate(135deg) translateY(-55px); }
+        .coin:nth-child(3) { transform: translate(-50%, -50%) rotate(225deg) translateY(-55px); }
+        .coin:nth-child(4) { transform: translate(-50%, -50%) rotate(315deg) translateY(-55px); }
 
         .coin-symbol {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: bold;
             color: #000000;
         }
@@ -997,7 +997,7 @@
                 
                 // Ровное круговое позиционирование
                 const angle = (i - 1) * (360 / 24) * (Math.PI / 180);
-                const radius = 35; // фиксированный радиус для ровного круга
+                const radius = 40.25; // расширенный радиус на 15% (35 * 1.15)
                 const x = 50 + radius * Math.cos(angle);
                 const y = 50 + radius * Math.sin(angle);
                 
@@ -1066,7 +1066,7 @@
             // Перемещение по ровному кругу внутреннего трека
             const currentAngle = (currentPlayer - 1) * 120; // 120 градусов между игроками
             const newAngle = currentAngle + (steps * 15); // 15 градусов на шаг
-            const radius = 35; // тот же радиус, что и у внутреннего трека
+            const radius = 40.25; // расширенный радиус на 15%
             const x = 50 + radius * Math.cos(newAngle * Math.PI / 180);
             const y = 50 + radius * Math.sin(newAngle * Math.PI / 180);
             
