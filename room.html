@@ -391,6 +391,19 @@
             border: 1px solid rgba(251, 191, 36, 0.3);
         }
 
+        .status-your-turn {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        .status-waiting-turn {
+            background: rgba(107, 114, 128, 0.2);
+            color: #6b7280;
+            border: 1px solid rgba(107, 114, 128, 0.3);
+        }
+
         .dream-selection {
             background: rgba(30, 41, 59, 0.8);
             backdrop-filter: blur(20px);
@@ -851,11 +864,33 @@
             
             const playersList = document.getElementById('playersList');
             
-            playersList.innerHTML = currentRoom.players.map(player => {
+            playersList.innerHTML = currentRoom.players.map((player, index) => {
                 const isCurrentUser = player.user_id.toString() === currentUser.id;
                 const isReady = player.is_ready;
                 const selectedDream = player.selected_dream ? 
                     dreamsData.find(dream => dream.id === player.selected_dream) : null;
+                
+                // Определяем статус в зависимости от состояния игры
+                let statusClass, statusText;
+                if (currentRoom.game_started) {
+                    // Если игра началась, показываем статус хода
+                    if (index === currentRoom.current_player) {
+                        statusClass = 'status-your-turn';
+                        statusText = 'Ваш ход';
+                    } else {
+                        statusClass = 'status-waiting-turn';
+                        statusText = 'Ожидание';
+                    }
+                } else {
+                    // Если игра не началась, показываем статус готовности
+                    if (isReady) {
+                        statusClass = 'status-ready';
+                        statusText = 'Готов';
+                    } else {
+                        statusClass = 'status-waiting';
+                        statusText = 'Ожидает';
+                    }
+                }
                 
                 return `
                     <div class="player-item ${isCurrentUser ? 'current-user' : ''}">
@@ -870,8 +905,8 @@
                                 </div>
                             ` : ''}
                         </div>
-                        <div class="player-status ${isReady ? 'status-ready' : 'status-waiting'}">
-                            ${isReady ? 'Готов' : 'Ожидает'}
+                        <div class="player-status ${statusClass}">
+                            ${statusText}
                         </div>
                     </div>
                 `;
@@ -905,15 +940,22 @@
                     fullRoomData: currentRoom
                 });
                 
-                if (currentPlayer.is_ready) {
-                    readyBtn.textContent = 'Отменить готовность';
-                    readyBtn.disabled = false;
-                } else if (hasDream) {
-                    readyBtn.textContent = 'Готов к игре';
-                    readyBtn.disabled = false;
+                if (currentRoom.game_started) {
+                    // Если игра началась, скрываем кнопку готовности
+                    readyBtn.style.display = 'none';
                 } else {
-                    readyBtn.textContent = 'Выберите мечту';
-                    readyBtn.disabled = true;
+                    // Если игра не началась, показываем кнопку готовности
+                    readyBtn.style.display = 'inline-block';
+                    if (currentPlayer.is_ready) {
+                        readyBtn.textContent = 'Отменить готовность';
+                        readyBtn.disabled = false;
+                    } else if (hasDream) {
+                        readyBtn.textContent = 'Готов к игре';
+                        readyBtn.disabled = false;
+                    } else {
+                        readyBtn.textContent = 'Выберите мечту';
+                        readyBtn.disabled = true;
+                    }
                 }
                 
                 readyBtn.classList.toggle('ready', currentPlayer.is_ready);
@@ -1101,15 +1143,22 @@
             if (currentPlayer && readyBtn) {
                 const hasDream = selectedDream !== null && selectedDream !== undefined;
                 
-                if (currentPlayer.is_ready) {
-                    readyBtn.textContent = 'Отменить готовность';
-                    readyBtn.disabled = false;
-                } else if (hasDream) {
-                    readyBtn.textContent = 'Готов к игре';
-                    readyBtn.disabled = false;
+                if (currentRoom.game_started) {
+                    // Если игра началась, скрываем кнопку готовности
+                    readyBtn.style.display = 'none';
                 } else {
-                    readyBtn.textContent = 'Выберите мечту';
-                    readyBtn.disabled = true;
+                    // Если игра не началась, показываем кнопку готовности
+                    readyBtn.style.display = 'inline-block';
+                    if (currentPlayer.is_ready) {
+                        readyBtn.textContent = 'Отменить готовность';
+                        readyBtn.disabled = false;
+                    } else if (hasDream) {
+                        readyBtn.textContent = 'Готов к игре';
+                        readyBtn.disabled = false;
+                    } else {
+                        readyBtn.textContent = 'Выберите мечту';
+                        readyBtn.disabled = true;
+                    }
                 }
                 
                 readyBtn.classList.toggle('disabled', !hasDream && !currentPlayer.is_ready);
