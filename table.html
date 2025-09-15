@@ -3106,6 +3106,9 @@
                 
                 const data = await response.json();
                 
+                // Сохраняем данные комнаты в глобальную переменную
+                roomData = data;
+                
                 // Обновляем баланс
                 const playerIndex = data.players.findIndex(p => p.user_id === user.id);
                 
@@ -4105,6 +4108,7 @@
         let maxCredit = 10000;
         let isLoading = false;
         let lastUpdateTime = 0;
+        let roomData = null; // Данные комнаты
         
         // Конфигурация
         const BANK_CONFIG = {
@@ -4899,7 +4903,12 @@
             const currentPlayerIndex = getCurrentPlayerIndex();
             
             // Получаем данные игрока из глобальных переменных
-            const currentPlayerName = players?.[currentPlayerIndex]?.name || 'Unknown';
+            let currentPlayerName = `Player ${currentPlayerIndex}`;
+            
+            // Пытаемся получить имя игрока из roomData
+            if (roomData?.players?.[currentPlayerIndex]?.name) {
+                currentPlayerName = roomData.players[currentPlayerIndex].name;
+            }
             
             console.log(`🔍 Filtering transfers for current player: ${currentPlayerName} (index: ${currentPlayerIndex})`);
             console.log(`📋 Total transfers available: ${transfersHistory.length}`);
