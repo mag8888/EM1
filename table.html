@@ -3121,6 +3121,11 @@
                 // Обновляем баланс
                 const playerIndex = data.players.findIndex(p => p.id === user.id);
                 
+                console.log('=== LOADING BALANCE ===');
+                console.log('Player index:', playerIndex);
+                console.log('Game data:', data.game_data);
+                console.log('Player balances:', data.game_data?.player_balances);
+                
                 if (playerIndex !== -1 && data.game_data?.player_balances) {
                     currentBalance = data.game_data.player_balances[playerIndex] || 0;
                     console.log(`Loaded balance for player ${playerIndex} (${user.name}): $${currentBalance}`);
@@ -4098,7 +4103,12 @@
                 await loadBankData();
                 
                 // Принудительно обновляем баланс из истории переводов
+                console.log('=== BEFORE updateBalanceFromHistory ===');
+                console.log('Current balance:', currentBalance);
+                console.log('Transfers history:', transfersHistory);
                 updateBalanceFromHistory();
+                console.log('=== AFTER updateBalanceFromHistory ===');
+                console.log('Current balance:', currentBalance);
                 
                 // Принудительно обновляем UI
                 updateBankUI();
@@ -4362,6 +4372,8 @@
         }
         
         function updateBalanceDisplay() {
+            console.log('updateBalanceDisplay called with currentBalance:', currentBalance);
+            
             const balanceElements = [
                 document.getElementById('currentBalance'),
                 document.querySelector('.bank-preview .balance-amount')
@@ -4370,9 +4382,12 @@
             balanceElements.forEach(el => {
                 if (el) {
                     el.textContent = `$${currentBalance.toLocaleString()}`;
+                    console.log(`Updated element ${el.id || el.className} to $${currentBalance.toLocaleString()}`);
                     // Анимация обновления
                     el.classList.add('balance-updated');
                     setTimeout(() => el.classList.remove('balance-updated'), 500);
+                } else {
+                    console.log('Balance element not found');
                 }
             });
         }
@@ -4948,19 +4963,21 @@
         function updateBalanceFromHistory() {
             try {
                 const user = JSON.parse(localStorage.getItem('user'));
-                if (!user) return;
+                if (!user) {
+                    console.log('No user found in localStorage');
+                    return;
+                }
                 
                 let calculatedBalance = 0;
                 
-                console.log('Calculating balance from history:', {
-                    user: user.name,
-                    transfersCount: transfersHistory.length,
-                    transfers: transfersHistory
-                });
+                console.log('=== CALCULATING BALANCE FROM HISTORY ===');
+                console.log('User:', user.name);
+                console.log('Transfers count:', transfersHistory.length);
+                console.log('Transfers:', transfersHistory);
                 
                 // Проходим по истории переводов и рассчитываем баланс
-                transfersHistory.forEach(transfer => {
-                    console.log('Processing transfer:', transfer);
+                transfersHistory.forEach((transfer, index) => {
+                    console.log(`Processing transfer ${index + 1}:`, transfer);
                     
                     if (transfer.sender === user.name) {
                         // Исходящий перевод - уменьшаем баланс
@@ -4970,12 +4987,15 @@
                         // Входящий перевод - увеличиваем баланс
                         calculatedBalance += transfer.amount;
                         console.log(`Incoming transfer: +$${transfer.amount}, new balance: $${calculatedBalance}`);
+                    } else {
+                        console.log(`Transfer not for this user: ${transfer.sender} → ${transfer.recipient}`);
                     }
                 });
                 
                 // Обновляем баланс
+                const oldBalance = currentBalance;
                 currentBalance = calculatedBalance;
-                console.log(`Final calculated balance: $${currentBalance}`);
+                console.log(`Balance updated: $${oldBalance} → $${currentBalance}`);
                 
                 // Принудительно обновляем UI
                 updateBalanceDisplay();
