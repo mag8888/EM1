@@ -928,10 +928,15 @@ app.post('/api/rooms/:id/start', async (req, res) => {
         
         console.log('Starting game with turn_time:', room.turn_time, 'type:', typeof room.turn_time);
         console.log('Game start time set to:', room.game_start_time);
+        console.log('Turn start time set to:', room.turn_start_time);
         
         await room.save();
         
         console.log('Room saved successfully, ID:', room._id);
+        
+        // Проверяем, что turn_start_time сохранился
+        const savedRoom = await Room.findById(room._id);
+        console.log('Saved room turn_start_time:', savedRoom.turn_start_time);
         
         res.json({ message: 'Игра началась!' });
     } catch (error) {
@@ -1109,6 +1114,8 @@ app.get('/api/rooms/:id/turn', async (req, res) => {
             roomId: req.params.id,
             turn_time: room.turn_time,
             turn_start_time: room.turn_start_time,
+            turnStartTime: turnStartTime,
+            now: now,
             turnDuration: turnDuration,
             elapsedSeconds: elapsedSeconds,
             remainingSeconds: remainingSeconds,
