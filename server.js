@@ -1000,6 +1000,12 @@ app.post('/api/rooms/:id/start', async (req, res) => {
 // Transfer funds between players
 app.post('/api/rooms/:id/transfer', async (req, res) => {
     try {
+        // Check database connection
+        if (mongoose.connection.readyState !== 1) {
+            console.error('Database not connected during transfer');
+            return res.status(503).json({ message: 'База данных недоступна' });
+        }
+
         const { user_id, recipient_index, amount } = req.body;
         
         console.log('Transfer request:', { user_id, recipient_index, amount, room_id: req.params.id });
@@ -1052,6 +1058,24 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
                 }),
                 transfers_history: []
             };
+
+            // Начисляем стартовые сбережения 3000$ каждому игроку
+            for (let i = 0; i < room.players.length; i++) {
+                room.game_data.player_balances[i] = 3000;
+                
+                // Добавляем запись в историю переводов
+                const savingsTransfer = {
+                    sender: 'Банк',
+                    recipient: room.players[i].name || `Игрок ${i + 1}`,
+                    amount: 3000,
+                    timestamp: new Date(),
+                    sender_index: -1, // -1 означает банк
+                    recipient_index: i,
+                    type: 'savings',
+                    description: 'Стартовые сбережения'
+                };
+                room.game_data.transfers_history.push(savingsTransfer);
+            }
         }
         
         console.log('Game data:', {
@@ -1059,6 +1083,12 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
             sender_index: senderIndex,
             recipient_index: recipient_index
         });
+        
+        // Ensure player_balances array exists and has correct length
+        if (!room.game_data.player_balances || room.game_data.player_balances.length !== room.players.length) {
+            console.error('Invalid player_balances array:', room.game_data.player_balances);
+            return res.status(500).json({ message: 'Ошибка данных игроков' });
+        }
         
         // Check sufficient funds
         if (room.game_data.player_balances[senderIndex] < amount) {
@@ -1097,8 +1127,21 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
         console.error('Error details:', {
             message: error.message,
             stack: error.stack,
-            name: error.name
+            name: error.name,
+            code: error.code
         });
+        
+        // More specific error handling
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ message: 'Ошибка валидации данных' });
+        }
+        if (error.name === 'CastError') {
+            return res.status(400).json({ message: 'Неверный формат данных' });
+        }
+        if (error.code === 11000) {
+            return res.status(409).json({ message: 'Конфликт данных' });
+        }
+        
         res.status(500).json({ message: 'Ошибка сервера при выполнении перевода' });
     }
 });
