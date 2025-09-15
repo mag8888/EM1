@@ -2828,10 +2828,17 @@
                     // Находим индекс текущего игрока
                     const playerIndex = data.players.findIndex(p => p.user_id.toString() === userData.id);
                     
+                    console.log('Player lookup:', {
+                        userDataId: userData.id,
+                        players: data.players.map(p => ({ id: p.user_id.toString(), name: p.name })),
+                        foundPlayerIndex: playerIndex
+                    });
+                    
                     // Загружаем все финансовые данные с сервера
                     if (playerIndex !== -1) {
                         // Баланс игрока
                         if (data.game_data.player_balances) {
+                            console.log('All player balances:', data.game_data.player_balances);
                             currentBalance = data.game_data.player_balances[playerIndex] || 0;
                             console.log('Loaded balance from server:', currentBalance, 'for player', playerIndex);
                         }
@@ -4174,6 +4181,13 @@
                     status: response.status,
                     ok: response.ok,
                     data: data
+                });
+                
+                // Детальная информация о ответе сервера
+                console.log('Server response details:', {
+                    message: data.message,
+                    new_balance: data.new_balance,
+                    transfer: data.transfer
                 });
                 
                 if (response.ok) {
