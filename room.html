@@ -680,6 +680,17 @@
             
             try {
                 currentUser = JSON.parse(user);
+                
+                // Проверяем, что у пользователя есть ID
+                if (!currentUser.id) {
+                    console.error('User ID not found, redirecting to auth');
+                    window.location.href = '/auth';
+                    return;
+                }
+                
+                // Логируем данные пользователя для отладки
+                console.log('Current user data:', currentUser);
+                console.log('User ID:', currentUser.id);
             } catch (error) {
                 console.error('Error parsing user data:', error);
                 window.location.href = '/auth';
