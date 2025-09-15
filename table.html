@@ -3080,6 +3080,12 @@
         // Загрузка данных игры с сервера
         async function loadBankData(forceUpdate = false) {
             try {
+                // Проверяем, нужно ли загружать данные
+                if (!forceUpdate && !shouldLoadBankData()) {
+                    console.log('⏭️ Пропускаем загрузку данных - недавно обновлялись');
+                    return;
+                }
+                
                 const roomId = getRoomIdFromURL();
                 if (!roomId) {
                     console.log('Room ID not found, skipping bank data load');
@@ -4584,13 +4590,11 @@
                     // Показываем успех
                     showSuccess('Перевод выполнен успешно!');
                     
-                    // Принудительно перезагружаем данные с сервера с задержкой
+                    // Синхронизируем с сервером через 2 секунды (только для проверки)
                     setTimeout(async () => {
-                        await loadBankData(true); // Принудительное обновление после перевода
-                    }, 1000);
-                    
-                    // Обновляем UI
-                    updateBankUI();
+                        console.log('🔄 Синхронизация с сервером после перевода...');
+                        await loadBankData(true); // Принудительное обновление для синхронизации
+                    }, 2000);
                     
                     // Очищаем форму
                     resetTransferForm();
@@ -4712,6 +4716,38 @@
                 transfersHistory.unshift(responseData.transfer);
             }
         }
+        
+        // Функция для локального обновления баланса
+        function updateLocalBalance(amount, description = '') {
+            const oldBalance = currentBalance;
+            currentBalance += amount; // amount может быть отрицательным для списания
+            
+            // Обновляем время последнего изменения баланса
+            window.lastBalanceUpdate = Date.now();
+            
+            console.log(`💰 Локальное обновление баланса: ${oldBalance} ${amount > 0 ? '+' : ''}${amount} = ${currentBalance} (${description})`);
+            
+            // Обновляем UI сразу
+            updateBankUI();
+            
+            return currentBalance;
+        }
+        
+        // Функция для проверки изменений баланса перед загрузкой с сервера
+        function shouldLoadBankData() {
+            const now = Date.now();
+            const timeSinceLastUpdate = now - (window.lastBalanceUpdate || 0);
+            
+            // Загружаем данные только если:
+            // 1. Прошло больше 5 секунд с последнего обновления
+            // 2. Или это первая загрузка (lastBalanceUpdate не установлен)
+            return timeSinceLastUpdate > 5000 || !window.lastBalanceUpdate;
+        }
+        
+        // Пример использования для других операций:
+        // updateLocalBalance(-100, 'Списание за покупку'); // Списание 100$
+        // updateLocalBalance(500, 'Выигрыш в лотерее'); // Пополнение 500$
+        // updateLocalBalance(-50, 'Комиссия банка'); // Списание 50$
         function resetTransferForm() {
             document.getElementById('recipientSelect').value = '';
             document.getElementById('transferAmount').value = '';
