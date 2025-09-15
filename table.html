@@ -3289,6 +3289,10 @@
                     </div>
                 `;
                 
+                // Открываем карточку игрока по клику
+                playerItem.style.cursor = 'pointer';
+                playerItem.onclick = () => openPlayerProfile(index, player);
+
                 playersList.appendChild(playerItem);
             });
             
@@ -3326,6 +3330,68 @@
         let monthlyIncome = 0;
         let currentCredit = 0;
         let maxCredit = 10000;
+
+        // Профиль игрока (модалка)
+        function openPlayerProfile(index, playerData) {
+            try {
+                const modal = document.createElement('div');
+                modal.className = 'bank-modal';
+                modal.onclick = () => document.body.removeChild(modal);
+                
+                const card = document.createElement('div');
+                card.className = 'modal-content bank-modal-content';
+                card.onclick = (e) => e.stopPropagation();
+                
+                const finance = playerData.profession_data || {};
+                const salary = finance.salary || 10000;
+                const expenses = finance.expenses || 6200;
+                const cashFlow = finance.cash_flow || (salary - expenses);
+                const debts = Array.isArray(finance.debts) ? finance.debts : [];
+                const totalPrincipal = debts.reduce((sum, d) => sum + (d.principal || 0), 0);
+                
+                card.innerHTML = `
+                    <div class="modal-header">
+                        <div class="header-left">
+                            <span class="bank-icon">🧾</span>
+                            <h3>${playerData.name} — ${playerData.profession || 'Предприниматель'}</h3>
+                        </div>
+                        <span class="close" onclick="this.closest('.bank-modal').remove()">&times;</span>
+                    </div>
+                    <div class="modal-body" style="padding: 24px;">
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">
+                            <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:16px;">
+                                <div style="color:#a7f3d0;font-weight:700;">$${salary.toLocaleString()}</div>
+                                <div style="color:#94a3b8;">Зарплата</div>
+                            </div>
+                            <div style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:12px;padding:16px;">
+                                <div style="color:#fcd34d;font-weight:700;">$${expenses.toLocaleString()}</div>
+                                <div style="color:#94a3b8;">Расходы</div>
+                            </div>
+                            <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.4);border-radius:12px;padding:16px;">
+                                <div style="color:#10b981;font-weight:800;">$${cashFlow.toLocaleString()}</div>
+                                <div style="color:#94a3b8;">Денежный поток</div>
+                            </div>
+                        </div>
+                        <div style="margin-top:20px;">
+                            ${debts.length ? debts.map(d => `
+                                <div style="display:flex;justify-content:space-between;color:#e5e7eb;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.1)">
+                                    <div>${d.name || 'Платеж'}: $${(d.monthly_payment||0).toLocaleString()}</div>
+                                    <div style="color:#a78bfa">$${(d.principal||0).toLocaleString()} (тело)</div>
+                                </div>
+                            `).join('') : '<div style="color:#94a3b8;">Долгов нет</div>'}
+                            <div style="display:flex;justify-content:space-between;margin-top:8px;font-weight:700;color:#e5e7eb;">
+                                <div>Итого тело кредитов</div>
+                                <div>$${totalPrincipal.toLocaleString()}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                modal.appendChild(card);
+                document.body.appendChild(modal);
+            } catch (e) {
+                console.error('openPlayerProfile error:', e);
+            }
+        }
 
         async function openBank() {
             // Загружаем актуальные данные с сервера
