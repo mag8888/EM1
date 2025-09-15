@@ -1341,6 +1341,8 @@ app.get('/api/rooms/:id/player/:playerIndex/profession', async (req, res) => {
                 expenses: 6200,
                 cashFlow: 3800,
                 totalCredits: 0,
+                currentCredit: 0,
+                creditHistory: [],
                 loans: []
             };
             await room.save();
@@ -1351,6 +1353,147 @@ app.get('/api/rooms/:id/player/:playerIndex/profession', async (req, res) => {
         res.json(professionData);
     } catch (error) {
         console.error('Error getting player profession:', error);
+        res.status(500).json({ message: 'Ошибка сервера' });
+    }
+});
+
+// Взятие кредита
+app.post('/api/rooms/:id/take-credit', async (req, res) => {
+    try {
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+
+        const { player_index, amount } = req.body;
+
+        if (!room.game_data) {
+            return res.status(400).json({ message: 'Игра не начата' });
+        }
+
+        // Инициализируем player_professions если не существует
+        if (!room.game_data.player_professions) {
+            room.game_data.player_professions = [];
+        }
+        if (!room.game_data.player_professions[player_index]) {
+            room.game_data.player_professions[player_index] = {
+                name: 'Предприниматель',
+                description: 'Владелец успешного бизнеса',
+                salary: 10000,
+                expenses: 6200,
+                cashFlow: 3800,
+                totalCredits: 0,
+                currentCredit: 0,
+                creditHistory: [],
+                loans: []
+            };
+        }
+
+        const profession = room.game_data.player_professions[player_index];
+        
+        // Валидация
+        if (!amount || amount < 1000 || amount % 1000 !== 0) {
+            return res.status(400).json({ message: 'Сумма должна быть кратной 1000$' });
+        }
+
+        const monthlyPayment = Math.floor(amount / 1000) * 100;
+        const newCashFlow = profession.cashFlow - monthlyPayment;
+
+        if (newCashFlow < 0) {
+            return res.status(400).json({ message: 'Недостаточно денежного потока для такого кредита' });
+        }
+
+        // Обновляем данные
+        profession.currentCredit += amount;
+        profession.cashFlow = newCashFlow;
+        profession.creditHistory.push({
+            type: 'take',
+            amount: amount,
+            timestamp: new Date(),
+            description: `Взят кредит на $${amount.toLocaleString()}`
+        });
+
+        // Добавляем деньги на баланс
+        addBalance(room, player_index, amount, `Кредит на $${amount.toLocaleString()}`);
+
+        await room.save();
+
+        res.json({
+            success: true,
+            new_balance: room.game_data.player_balances[player_index],
+            new_cash_flow: profession.cashFlow,
+            new_credit: profession.currentCredit,
+            monthly_payment: monthlyPayment
+        });
+
+    } catch (error) {
+        console.error('Error taking credit:', error);
+        res.status(500).json({ message: 'Ошибка сервера' });
+    }
+});
+
+// Погашение кредита
+app.post('/api/rooms/:id/payoff-credit', async (req, res) => {
+    try {
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+
+        const { player_index, amount } = req.body;
+
+        if (!room.game_data) {
+            return res.status(400).json({ message: 'Игра не начата' });
+        }
+
+        const profession = room.game_data.player_professions[player_index];
+        if (!profession) {
+            return res.status(400).json({ message: 'Данные профессии не найдены' });
+        }
+
+        const currentCredit = profession.currentCredit || 0;
+        if (currentCredit <= 0) {
+            return res.status(400).json({ message: 'У вас нет кредита для погашения' });
+        }
+
+        const payoffAmount = amount || currentCredit;
+        if (payoffAmount > currentCredit) {
+            return res.status(400).json({ message: 'Сумма погашения превышает текущий кредит' });
+        }
+
+        if (payoffAmount > room.game_data.player_balances[player_index]) {
+            return res.status(400).json({ message: 'Недостаточно средств для погашения' });
+        }
+
+        // Рассчитываем возврат денежного потока
+        const monthlyPayment = Math.floor(payoffAmount / 1000) * 100;
+        const newCashFlow = profession.cashFlow + monthlyPayment;
+
+        // Обновляем данные
+        profession.currentCredit -= payoffAmount;
+        profession.cashFlow = newCashFlow;
+        profession.creditHistory.push({
+            type: 'payoff',
+            amount: payoffAmount,
+            timestamp: new Date(),
+            description: `Погашен кредит на $${payoffAmount.toLocaleString()}`
+        });
+
+        // Списываем деньги с баланса
+        subtractBalance(room, player_index, payoffAmount, `Погашение кредита на $${payoffAmount.toLocaleString()}`);
+
+        await room.save();
+
+        res.json({
+            success: true,
+            new_balance: room.game_data.player_balances[player_index],
+            new_cash_flow: profession.cashFlow,
+            new_credit: profession.currentCredit,
+            paid_amount: payoffAmount
+        });
+
+    } catch (error) {
+        console.error('Error paying off credit:', error);
         res.status(500).json({ message: 'Ошибка сервера' });
     }
 });
