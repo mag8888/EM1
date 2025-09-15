@@ -4085,6 +4085,7 @@
                 recipientSelect.innerHTML = '<option value="">Выберите игрока...</option>';
                 
                 if (response.ok && data.players) {
+                    console.log('Loading recipients:', data.players.map((p, i) => ({ index: i, name: p.name, userId: p.user_id })));
                     data.players.forEach((player, index) => {
                         // Не добавляем себя в список получателей
                         if (player.user_id.toString() !== userData.id) {
@@ -4092,6 +4093,7 @@
                             option.value = index;
                             option.textContent = player.name || `Игрок ${index + 1}`;
                             recipientSelect.appendChild(option);
+                            console.log('Added recipient option:', { index, name: option.textContent });
                         }
                     });
                 }
@@ -4134,6 +4136,14 @@
                     return;
                 }
                 
+                console.log('Transfer request:', {
+                    roomId,
+                    userId: currentUser.id,
+                    recipientIndex: parseInt(recipientIndex),
+                    amount,
+                    currentBalance
+                });
+                
                 const response = await fetch(`/api/rooms/${roomId}/transfer`, {
                     method: 'POST',
                     headers: {
@@ -4147,6 +4157,12 @@
                 });
                 
                 const data = await response.json();
+                
+                console.log('Transfer response:', {
+                    status: response.status,
+                    ok: response.ok,
+                    data: data
+                });
                 
                 if (response.ok) {
                     console.log('Transfer successful, reloading data...');
