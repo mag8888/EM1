@@ -2053,13 +2053,7 @@
                                 updateCurrentPlayer();
                                 updateTimerDisplay();
                                 
-                                // Если ход истек, автоматически переходим к следующему
-                                if (data.is_turn_expired) {
-                                    const playerIndex = playersData.players.findIndex(p => p.user_id.toString() === userData.id);
-                                    if (playerIndex === data.current_player) {
-                                        await nextTurn();
-                                    }
-                                }
+                                // Сервер автоматически управляет переходами хода при истечении времени
                             } else {
                                 console.warn('Server current_player out of bounds:', data.current_player, 'Players count:', playersData.players.length);
                             }

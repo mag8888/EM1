@@ -1044,6 +1044,15 @@ app.get('/api/rooms/:id/turn', async (req, res) => {
         const elapsedSeconds = Math.floor((now - turnStartTime) / 1000);
         const turnDuration = room.turn_time * 60; // Конвертируем минуты в секунды
         const remainingSeconds = Math.max(0, turnDuration - elapsedSeconds);
+        const isTurnExpired = remainingSeconds <= 0;
+
+        // Если ход истек, автоматически переходим к следующему игроку
+        if (isTurnExpired) {
+            room.current_player = (room.current_player + 1) % room.players.length;
+            room.turn_start_time = new Date();
+            room.updated_at = new Date();
+            await room.save();
+        }
 
         res.json({
             current_player: room.current_player,
@@ -1051,7 +1060,7 @@ app.get('/api/rooms/:id/turn', async (req, res) => {
             elapsed_seconds: elapsedSeconds,
             remaining_seconds: remainingSeconds,
             turn_duration: turnDuration,
-            is_turn_expired: remainingSeconds <= 0
+            is_turn_expired: isTurnExpired
         });
     } catch (error) {
         console.error('Get turn info error:', error);
