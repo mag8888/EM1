@@ -1969,8 +1969,74 @@
             createOuterTrack();
             createInnerTrack();
             initializePlayerTokens(); // Инициализируем фишки игроков
+            loadGameData(); // Загружаем данные игры с сервера
             startTimer();
             updateCurrentPlayer();
+            
+            // Запускаем периодическое обновление данных
+            setInterval(loadGameData, 5000); // Обновляем каждые 5 секунд
+        }
+
+        // Загрузка данных игры с сервера
+        async function loadGameData() {
+            try {
+                const roomId = getRoomIdFromURL();
+                if (!roomId) return;
+
+                const user = localStorage.getItem('user');
+                if (!user) return;
+                
+                const userData = JSON.parse(user);
+                const response = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
+                const data = await response.json();
+                
+                if (response.ok && data.game_data) {
+                    // Находим индекс текущего игрока
+                    const playerIndex = data.players.findIndex(p => p.user_id.toString() === userData.id);
+                    
+                    if (playerIndex !== -1 && data.game_data.player_balances) {
+                        currentBalance = data.game_data.player_balances[playerIndex] || 10000;
+                    }
+                    
+                    // Обновляем историю переводов
+                    if (data.game_data.transfers_history) {
+                        transfersHistory = data.game_data.transfers_history;
+                    }
+                    
+                    // Обновляем позиции игроков
+                    if (data.game_data.player_positions) {
+                        playerPositions = data.game_data.player_positions;
+                    }
+                    
+                    // Обновляем UI
+                    updateBankData();
+                    updateTransfersHistory();
+                }
+            } catch (error) {
+                console.error('Error loading game data:', error);
+            }
+        }
+
+        // Получение ID комнаты из URL
+        function getRoomIdFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('room');
+        }
+
+        // Получение индекса текущего игрока
+        function getCurrentPlayerIndex() {
+            try {
+                const user = localStorage.getItem('user');
+                if (user) {
+                    const userData = JSON.parse(user);
+                    // Нужно найти индекс игрока в комнате
+                    // Пока возвращаем 0, но это нужно будет исправить
+                    return 0;
+                }
+            } catch (error) {
+                console.error('Error getting current player index:', error);
+            }
+            return 0;
         }
 
         // Инициализация фишек игроков в центре стартовой клетки
@@ -2573,7 +2639,10 @@
         let currentCredit = 0;
         let maxCredit = 10000;
 
-        function openBank() {
+        async function openBank() {
+            // Загружаем актуальные данные с сервера
+            await loadGameData();
+            
             const bankModal = document.getElementById('bankModal');
             bankModal.style.display = 'block';
             
@@ -2611,19 +2680,35 @@
             document.getElementById('maxCredit').textContent = `$${maxCredit.toLocaleString()}`;
         }
 
-        function loadRecipients() {
-            const recipientSelect = document.getElementById('recipientSelect');
-            recipientSelect.innerHTML = '<option value="">Выберите игрока...</option>';
-            
-            // Получаем список игроков из комнаты
-            const playersList = document.querySelectorAll('.player-item');
-            playersList.forEach((playerItem, index) => {
-                const playerName = playerItem.querySelector('.player-name').textContent;
-                const option = document.createElement('option');
-                option.value = index;
-                option.textContent = playerName;
-                recipientSelect.appendChild(option);
-            });
+        async function loadRecipients() {
+            try {
+                const roomId = getRoomIdFromURL();
+                if (!roomId) return;
+
+                const user = localStorage.getItem('user');
+                if (!user) return;
+                
+                const userData = JSON.parse(user);
+                const response = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
+                const data = await response.json();
+                
+                const recipientSelect = document.getElementById('recipientSelect');
+                recipientSelect.innerHTML = '<option value="">Выберите игрока...</option>';
+                
+                if (response.ok && data.players) {
+                    data.players.forEach((player, index) => {
+                        // Не добавляем себя в список получателей
+                        if (player.user_id.toString() !== userData.id) {
+                            const option = document.createElement('option');
+                            option.value = index;
+                            option.textContent = player.name || `Игрок ${index + 1}`;
+                            recipientSelect.appendChild(option);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading recipients:', error);
+            }
         }
 
         async function processTransfer() {
