@@ -437,10 +437,13 @@ app.get('/api/rooms', async (req, res) => {
     try {
         const { user_id } = req.query;
         
-        const rooms = await Room.find({ 
-            game_started: false,
-            'players.0': { $exists: true } // Только комнаты с игроками
-        })
+        // Удаляем старые комнаты (старше 6 часов)
+        const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
+        await Room.deleteMany({ 
+            created_at: { $lt: sixHoursAgo }
+        });
+        
+        const rooms = await Room.find({ game_started: false })
             .populate('creator_id', 'first_name last_name')
             .sort({ created_at: -1 })
             .limit(20);
@@ -1326,8 +1329,30 @@ app.get('/api/admin/all-rooms', async (req, res) => {
     }
 });
 
+// Функция очистки старых комнат
+async function cleanupOldRooms() {
+    try {
+        const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
+        const deletedRooms = await Room.deleteMany({ 
+            created_at: { $lt: sixHoursAgo }
+        });
+        
+        if (deletedRooms.deletedCount > 0) {
+            console.log(`Очищено ${deletedRooms.deletedCount} старых комнат`);
+        }
+    } catch (error) {
+        console.error('Ошибка при очистке старых комнат:', error);
+    }
+}
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`MongoDB URI: ${MONGODB_URI}`);
     console.log('Room cleanup scheduled every 30 minutes');
+    
+    // Очищаем старые комнаты при запуске
+    cleanupOldRooms();
+    
+    // Очищаем старые комнаты каждые 30 минут
+    setInterval(cleanupOldRooms, 30 * 60 * 1000);
 });
