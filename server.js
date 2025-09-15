@@ -919,6 +919,9 @@ app.post('/api/rooms/:id/start', async (req, res) => {
         room.game_start_time = new Date(); // Время начала игры
         room.current_player = 0;
         room.turn_start_time = new Date(); // Время начала хода
+        
+        // Принудительно устанавливаем turn_start_time
+        console.log('Setting turn_start_time to:', room.turn_start_time);
         room.game_data = {
             player_positions: new Array(room.players.length).fill(0),
             player_balances: new Array(room.players.length).fill(10000), // Начальный баланс
@@ -1102,6 +1105,7 @@ app.get('/api/rooms/:id/turn', async (req, res) => {
             console.log('turn_start_time is null, initializing...');
             room.turn_start_time = new Date();
             await room.save();
+            console.log('turn_start_time initialized and saved:', room.turn_start_time);
         }
         
         const turnStartTime = new Date(room.turn_start_time);
@@ -1250,6 +1254,32 @@ app.post('/api/admin/cleanup-rooms', async (req, res) => {
     } catch (error) {
         console.error('Manual cleanup error:', error);
         res.status(500).json({ message: 'Ошибка при очистке комнат' });
+    }
+});
+
+// API для исправления turn_start_time в существующих комнатах
+app.post('/api/admin/fix-turn-start-time', async (req, res) => {
+    try {
+        const rooms = await Room.find({ 
+            game_started: true, 
+            turn_start_time: null 
+        });
+        
+        console.log(`Found ${rooms.length} rooms with null turn_start_time`);
+        
+        for (const room of rooms) {
+            room.turn_start_time = room.game_start_time || new Date();
+            await room.save();
+            console.log(`Fixed turn_start_time for room ${room._id}: ${room.turn_start_time}`);
+        }
+        
+        res.json({ 
+            message: `Fixed turn_start_time for ${rooms.length} rooms`,
+            fixed_rooms: rooms.length
+        });
+    } catch (error) {
+        console.error('Fix turn_start_time error:', error);
+        res.status(500).json({ message: 'Ошибка при исправлении turn_start_time' });
     }
 });
 
