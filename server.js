@@ -1100,9 +1100,9 @@ app.get('/api/rooms/:id/turn', async (req, res) => {
 
         const now = new Date();
         
-        // Проверяем и инициализируем turn_start_time если его нет
-        if (!room.turn_start_time) {
-            console.log('turn_start_time is null, initializing...');
+        // Проверяем и инициализируем turn_start_time только если игра только что началась
+        if (!room.turn_start_time && room.game_started) {
+            console.log('turn_start_time is null for started game, initializing...');
             room.turn_start_time = room.game_start_time || new Date();
             await room.save();
             console.log('turn_start_time initialized and saved:', room.turn_start_time);
@@ -1128,10 +1128,12 @@ app.get('/api/rooms/:id/turn', async (req, res) => {
 
         // Если ход истек, автоматически переходим к следующему игроку
         if (isTurnExpired) {
+            console.log('Turn expired, transitioning to next player');
             room.current_player = (room.current_player + 1) % room.players.length;
             room.turn_start_time = new Date();
             room.updated_at = new Date();
             await room.save();
+            console.log('Turn transitioned to player', room.current_player, 'at', room.turn_start_time);
         }
 
         res.json({
@@ -1182,11 +1184,13 @@ app.post('/api/rooms/:id/next-turn', async (req, res) => {
         }
 
         // Переходим к следующему игроку
+        console.log('Manual turn transition from player', room.current_player, 'to next player');
         room.current_player = (room.current_player + 1) % room.players.length;
         room.turn_start_time = new Date();
         room.updated_at = new Date();
 
         await room.save();
+        console.log('Turn manually transitioned to player', room.current_player, 'at', room.turn_start_time);
 
         res.json({ 
             message: 'Ход передан следующему игроку',
