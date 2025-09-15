@@ -4641,28 +4641,39 @@
             const recipientSelect = document.getElementById('recipientSelect');
             const amountInput = document.getElementById('transferAmount');
             
-            return {
+            const transferData = {
                 roomId,
                 userId: user.id,
                 recipientIndex: parseInt(recipientSelect.value),
                 amount: parseInt(amountInput.value)
             };
+            
+            console.log('Prepared transfer data:', transferData);
+            return transferData;
         }
         
         async function sendTransferRequest(transferData) {
+            const requestBody = {
+                userId: transferData.userId,
+                recipientIndex: transferData.recipientIndex,
+                amount: transferData.amount
+            };
+            
+            console.log('Sending transfer request:', {
+                url: `/api/rooms/${transferData.roomId}/transfer`,
+                body: requestBody
+            });
+            
             const response = await fetch(`/api/rooms/${transferData.roomId}/transfer`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    userId: transferData.userId,
-                    recipientIndex: transferData.recipientIndex,
-                    amount: transferData.amount
-                })
+                body: JSON.stringify(requestBody)
             });
             
             const data = await response.json();
+            console.log('Transfer response:', { status: response.status, data });
             return { ok: response.ok, data };
         }
         
