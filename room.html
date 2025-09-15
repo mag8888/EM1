@@ -49,6 +49,7 @@
             background: rgba(30, 41, 59, 0.8);
             backdrop-filter: blur(20px);
             border-radius: 20px;
+            transition: all 0.3s ease;
             padding: 20px 30px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             margin-bottom: 20px;
@@ -190,6 +191,7 @@
             font-size: 12px;
             color: #94a3b8;
             margin-top: 5px;
+            transition: opacity 0.3s ease;
         }
 
         .update-dot {
@@ -560,6 +562,7 @@
         let currentRoom = null;
         let roomId = null;
         let selectedDream = null;
+        let updateTimeout = null; // Debounce timer for updates
 
         // Dreams data from the big circle
         const dreamsData = [
@@ -615,8 +618,25 @@
             roomId = pathParts[pathParts.length - 1];
         }
 
-        // Load room data
+        // Load room data with debouncing
         async function loadRoomData(showLoadingIndicator = true) {
+            // Clear previous timeout to debounce rapid calls
+            if (updateTimeout) {
+                clearTimeout(updateTimeout);
+            }
+            
+            // Debounce auto-refresh calls
+            if (!showLoadingIndicator) {
+                updateTimeout = setTimeout(async () => {
+                    await performLoadRoomData(showLoadingIndicator);
+                }, 1000); // 1 second debounce
+                return;
+            }
+            
+            await performLoadRoomData(showLoadingIndicator);
+        }
+        
+        async function performLoadRoomData(showLoadingIndicator = true) {
             try {
                 if (showLoadingIndicator) {
                     showLoading(true);
@@ -644,13 +664,21 @@
                     // Check if data has changed to avoid unnecessary re-renders
                     const hasChanged = !currentRoom || 
                         currentRoom.players.length !== data.players.length ||
+                        currentRoom.game_started !== data.game_started ||
                         JSON.stringify(currentRoom.players.map(p => ({id: p.user_id, ready: p.is_ready, dream: p.selected_dream}))) !== 
                         JSON.stringify(data.players.map(p => ({id: p.user_id, ready: p.is_ready, dream: p.selected_dream})));
                     
-                    currentRoom = data;
-                    
-                    if (hasChanged || showLoadingIndicator) {
+                    // Only update if there are actual changes
+                    if (hasChanged) {
+                        currentRoom = data;
                         renderRoom();
+                    } else if (showLoadingIndicator) {
+                        // Only update for manual refresh
+                        currentRoom = data;
+                        renderRoom();
+                    } else {
+                        // For auto-refresh without changes, just update the data silently
+                        currentRoom = data;
                     }
                 } else {
                     showError(data.message || 'Ошибка загрузки комнаты');
@@ -684,6 +712,34 @@
                 window.location.href = `/table?room=${roomId}`;
                 return;
             }
+            
+            // Store previous state to avoid unnecessary DOM updates
+            if (!window.lastRoomState) {
+                window.lastRoomState = {};
+            }
+            
+            const currentState = {
+                roomName: currentRoom.name,
+                readyPlayers: currentRoom.players.filter(p => p.is_ready).length,
+                totalPlayers: currentRoom.players.length,
+                turnTime: currentRoom.turn_time,
+                professionMode: currentRoom.assign_professions,
+                creatorName: currentRoom.creator_name,
+                playersData: currentRoom.players.map(p => ({
+                    id: p.user_id,
+                    name: p.name,
+                    ready: p.is_ready,
+                    dream: p.selected_dream
+                }))
+            };
+            
+            // Check if state has actually changed
+            const stateChanged = JSON.stringify(window.lastRoomState) !== JSON.stringify(currentState);
+            if (!stateChanged) {
+                return; // No changes, skip rendering
+            }
+            
+            window.lastRoomState = currentState;
             
             // Update header
             document.getElementById('roomName').textContent = currentRoom.name;
@@ -1041,12 +1097,12 @@
             document.getElementById('loading').style.display = show ? 'block' : 'none';
         }
 
-        // Check for game start every 3 seconds
+        // Check for game start every 5 seconds (reduced frequency to prevent flickering)
         setInterval(() => {
             if (roomId && currentRoom && !currentRoom.game_started) {
                 loadRoomData(false); // Don't show loading indicator for auto-refresh
             }
-        }, 3000);
+        }, 5000);
     </script>
 </body>
 </html>
