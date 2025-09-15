@@ -1556,27 +1556,63 @@
             padding: 12px 0;
             border-bottom: 1px solid #f3f4f6;
         }
-
+        
         .expense-item:last-child {
             border-bottom: none;
         }
-
+        
         .expense-label {
             color: #374151;
             font-size: 14px;
             font-weight: 500;
+            min-width: 140px;
         }
-
+        
+        .expense-amounts {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+        
         .expense-amount {
-            color: #1f2937;
+            color: #ef4444;
             font-size: 14px;
             font-weight: 600;
         }
-
+        
         .expense-principal {
-            color: #8b5cf6;
+            color: #6b7280;
             font-size: 12px;
-            font-weight: 500;
+        }
+        
+        .payoff-btn {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 70px;
+        }
+        
+        .payoff-btn:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        
+        .payoff-btn:active {
+            transform: translateY(0);
+        }
+        
+        .payoff-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            opacity: 0.5;
             margin-left: 8px;
         }
 
@@ -2509,37 +2545,49 @@
                     </div>
                 </div>
 
-                <!-- Детальные расходы и кредиты -->
-                <div class="player-expenses-details">
-                    <div class="expense-item">
-                        <span class="expense-label">Налоги:</span>
-                        <span class="expense-amount" id="playerTaxes">$1,300 (13%)</span>
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Прочие расходы:</span>
-                        <span class="expense-amount" id="playerOtherExpenses">$1,500</span>
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Кредит на авто:</span>
-                        <span class="expense-amount" id="playerCarLoan">$700</span>
-                        <span class="expense-principal" id="playerCarLoanPrincipal">$14,000 (тело)</span>
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Образовательный кредит:</span>
-                        <span class="expense-amount" id="playerEduLoan">$500</span>
-                        <span class="expense-principal" id="playerEduLoanPrincipal">$10,000 (тело)</span>
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Ипотека:</span>
-                        <span class="expense-amount" id="playerMortgage">$1,200</span>
-                        <span class="expense-principal" id="playerMortgagePrincipal">$240,000 (тело)</span>
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Кредитные карты:</span>
-                        <span class="expense-amount" id="playerCreditCards">$1,000</span>
-                        <span class="expense-principal" id="playerCreditCardsPrincipal">$20,000 (тело)</span>
-                    </div>
-                </div>
+                   <!-- Детальные расходы и кредиты -->
+                   <div class="player-expenses-details">
+                       <div class="expense-item">
+                           <span class="expense-label">Налоги:</span>
+                           <span class="expense-amount" id="playerTaxes">$1,300 (13%)</span>
+                       </div>
+                       <div class="expense-item">
+                           <span class="expense-label">Прочие расходы:</span>
+                           <span class="expense-amount" id="playerOtherExpenses">$1,500</span>
+                       </div>
+                       <div class="expense-item">
+                           <span class="expense-label">Кредит на авто:</span>
+                           <div class="expense-amounts">
+                               <span class="expense-amount" id="playerCarLoan">$700</span>
+                               <span class="expense-principal" id="playerCarLoanPrincipal">$14,000 (тело)</span>
+                           </div>
+                           <button class="payoff-btn" onclick="payOffLoan('car')">Погасить</button>
+                       </div>
+                       <div class="expense-item">
+                           <span class="expense-label">Образовательный кредит:</span>
+                           <div class="expense-amounts">
+                               <span class="expense-amount" id="playerEduLoan">$500</span>
+                               <span class="expense-principal" id="playerEduLoanPrincipal">$10,000 (тело)</span>
+                           </div>
+                           <button class="payoff-btn" onclick="payOffLoan('edu')">Погасить</button>
+                       </div>
+                       <div class="expense-item">
+                           <span class="expense-label">Ипотека:</span>
+                           <div class="expense-amounts">
+                               <span class="expense-amount" id="playerMortgage">$1,200</span>
+                               <span class="expense-principal" id="playerMortgagePrincipal">$240,000 (тело)</span>
+                           </div>
+                           <button class="payoff-btn" onclick="payOffLoan('mortgage')">Погасить</button>
+                       </div>
+                       <div class="expense-item">
+                           <span class="expense-label">Кредитные карты:</span>
+                           <div class="expense-amounts">
+                               <span class="expense-amount" id="playerCreditCards">$1,000</span>
+                               <span class="expense-principal" id="playerCreditCardsPrincipal">$20,000 (тело)</span>
+                           </div>
+                           <button class="payoff-btn" onclick="payOffLoan('credit')">Погасить</button>
+                       </div>
+                   </div>
 
                 <!-- Итого кредитов -->
                 <div class="player-total-credits">
@@ -4094,10 +4142,7 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    // Обновляем локальные данные
-                    currentBalance = data.new_balance;
-                    
-                    // Перезагружаем данные с сервера для синхронизации истории
+                    // Перезагружаем данные с сервера для синхронизации
                     await loadGameData();
                     
                     // Обновляем интерфейс
@@ -4198,6 +4243,57 @@
             if (event.target === event.currentTarget) {
                 closePlayerProfileModal();
             }
+        }
+        
+        // Функция погашения кредита
+        async function payOffLoan(loanType) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomId = urlParams.get('room');
+            
+            if (!roomId) {
+                alert('Ошибка: не найдена комната');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/rooms/${roomId}/payoff-loan`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        player_index: currentPlayer,
+                        loan_type: loanType
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Обновляем данные
+                    await loadGameData();
+                    await loadPlayerProfileData(currentPlayer);
+                    updateBankData();
+                    
+                    alert(`Кредит "${getLoanName(loanType)}" успешно погашен!`);
+                } else {
+                    alert(`Ошибка: ${data.message}`);
+                }
+            } catch (error) {
+                console.error('Error paying off loan:', error);
+                alert('Ошибка при погашении кредита');
+            }
+        }
+        
+        // Получение названия кредита
+        function getLoanName(loanType) {
+            const names = {
+                'car': 'Кредит на авто',
+                'edu': 'Образовательный кредит',
+                'mortgage': 'Ипотека',
+                'credit': 'Кредитные карты'
+            };
+            return names[loanType] || loanType;
         }
 
         async function loadPlayerProfileData(playerIndex) {

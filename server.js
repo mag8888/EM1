@@ -1269,6 +1269,132 @@ app.get('/api/rooms/:id/player/:playerIndex/profession', async (req, res) => {
     }
 });
 
+// Погашение кредита
+app.post('/api/rooms/:id/payoff-loan', async (req, res) => {
+    try {
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+
+        const { player_index, loan_type } = req.body;
+        
+        if (player_index < 0 || player_index >= room.players.length) {
+            return res.status(400).json({ message: 'Неверный индекс игрока' });
+        }
+
+        if (!room.game_data) {
+            return res.status(400).json({ message: 'Игра не начата' });
+        }
+
+        const profession = room.game_data.player_professions[player_index];
+        if (!profession) {
+            return res.status(400).json({ message: 'Данные профессии не найдены' });
+        }
+
+        let principalAmount = 0;
+        let monthlyPayment = 0;
+        let loanName = '';
+
+        // Определяем параметры кредита
+        switch (loan_type) {
+            case 'car':
+                principalAmount = profession.carLoanPrincipal || 0;
+                monthlyPayment = profession.carLoan || 0;
+                loanName = 'Кредит на авто';
+                break;
+            case 'edu':
+                principalAmount = profession.eduLoanPrincipal || 0;
+                monthlyPayment = profession.eduLoan || 0;
+                loanName = 'Образовательный кредит';
+                break;
+            case 'mortgage':
+                principalAmount = profession.mortgagePrincipal || 0;
+                monthlyPayment = profession.mortgage || 0;
+                loanName = 'Ипотека';
+                break;
+            case 'credit':
+                principalAmount = profession.creditCardsPrincipal || 0;
+                monthlyPayment = profession.creditCards || 0;
+                loanName = 'Кредитные карты';
+                break;
+            default:
+                return res.status(400).json({ message: 'Неверный тип кредита' });
+        }
+
+        // Проверяем, есть ли кредит для погашения
+        if (principalAmount <= 0) {
+            return res.status(400).json({ message: 'Кредит уже погашен' });
+        }
+
+        // Проверяем баланс игрока
+        const playerBalance = room.game_data.player_balances[player_index] || 0;
+        if (playerBalance < principalAmount) {
+            return res.status(400).json({ 
+                message: `Недостаточно средств. Требуется: $${principalAmount.toLocaleString()}, доступно: $${playerBalance.toLocaleString()}` 
+            });
+        }
+
+        // Списываем сумму с баланса игрока
+        room.game_data.player_balances[player_index] -= principalAmount;
+
+        // Обнуляем кредит
+        switch (loan_type) {
+            case 'car':
+                profession.carLoanPrincipal = 0;
+                profession.carLoan = 0;
+                break;
+            case 'edu':
+                profession.eduLoanPrincipal = 0;
+                profession.eduLoan = 0;
+                break;
+            case 'mortgage':
+                profession.mortgagePrincipal = 0;
+                profession.mortgage = 0;
+                break;
+            case 'credit':
+                profession.creditCardsPrincipal = 0;
+                profession.creditCards = 0;
+                break;
+        }
+
+        // Пересчитываем общие расходы и кредиты
+        profession.expenses = (profession.taxes || 0) + (profession.otherExpenses || 0) + 
+                            (profession.carLoan || 0) + (profession.eduLoan || 0) + 
+                            (profession.mortgage || 0) + (profession.creditCards || 0);
+        
+        profession.cashFlow = (profession.salary || 0) - profession.expenses;
+        profession.totalCredits = (profession.carLoanPrincipal || 0) + (profession.eduLoanPrincipal || 0) + 
+                                (profession.mortgagePrincipal || 0) + (profession.creditCardsPrincipal || 0);
+
+        // Добавляем запись в историю
+        const transferRecord = {
+            sender: room.players[player_index].name || `Игрок ${player_index + 1}`,
+            recipient: 'Банк',
+            amount: principalAmount,
+            timestamp: new Date(),
+            sender_index: player_index,
+            recipient_index: -1, // -1 означает банк
+            type: 'loan_payoff',
+            description: `Погашение ${loanName}`
+        };
+        room.game_data.transfers_history.push(transferRecord);
+
+        room.updated_at = new Date();
+        await room.save();
+
+        res.json({ 
+            message: 'Кредит успешно погашен',
+            new_balance: room.game_data.player_balances[player_index],
+            paid_amount: principalAmount
+        });
+
+    } catch (error) {
+        console.error('Error paying off loan:', error);
+        res.status(500).json({ message: 'Ошибка сервера' });
+    }
+});
+
 // Запуск сервера
 // Get current turn info
 app.get('/api/rooms/:id/turn', async (req, res) => {
