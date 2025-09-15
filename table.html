@@ -2623,7 +2623,7 @@
                                     <span class="btn-icon">🔄</span>
                                     Сбросить
                                 </button>
-                                <button class="modern-btn credit" onclick="openCreditModal()">
+                                <button class="modern-btn credit" onclick="openCreditModal()" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: 1px solid rgba(245, 158, 11, 0.3);">
                                     <span class="btn-icon">💳</span>
                                     Кредит
                                 </button>
@@ -4236,6 +4236,9 @@
         }
         
         function updateBankUI() {
+            console.log('=== UPDATING BANK UI ===');
+            console.log('Current data:', { currentBalance, totalIncome, totalExpenses, monthlyIncome, currentCredit });
+            
             // Обновляем баланс
             updateBalanceDisplay();
             
@@ -4247,6 +4250,8 @@
             
             // Обновляем кредитную информацию
             updateCreditInfo();
+            
+            console.log('=== BANK UI UPDATE COMPLETE ===');
         }
         
         function updateBalanceDisplay() {
@@ -4284,6 +4289,12 @@
                 totalIncome,
                 totalExpenses,
                 monthlyIncome
+            });
+            
+            console.log('Found elements:', {
+                totalIncome: !!elements.totalIncome,
+                totalExpenses: !!elements.totalExpenses,
+                monthlyIncome: !!elements.monthlyIncome
             });
             
             Object.entries(elements).forEach(([key, el]) => {
@@ -4415,11 +4426,11 @@
             const recipientIndex = recipientSelect.value;
             const amount = parseInt(amountInput.value);
             
-            if (!recipientIndex) {
+            if (!recipientIndex || recipientIndex === '') {
                 return { valid: false, message: 'Выберите получателя' };
             }
             
-            if (!amount || amount < BANK_CONFIG.minTransferAmount) {
+            if (!amount || isNaN(amount) || amount < BANK_CONFIG.minTransferAmount) {
                 return { valid: false, message: `Минимальная сумма: $${BANK_CONFIG.minTransferAmount}` };
             }
             
