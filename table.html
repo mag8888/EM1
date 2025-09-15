@@ -3809,10 +3809,12 @@
         }
 
         async function openBank() {
-            console.log('Opening bank modal');
+            console.log('=== OPENING BANK MODAL ===');
             
-            // Загружаем актуальные данные с сервера
-            await loadGameData();
+            try {
+                // Загружаем актуальные данные с сервера
+                console.log('Loading game data...');
+                await loadGameData();
             
             const bankModal = document.getElementById('bankModal');
             bankModal.style.display = 'flex'; // Используем flex для центрирования
@@ -3826,6 +3828,12 @@
             
             // Обновляем историю переводов
             updateTransfersHistory();
+            
+            console.log('=== BANK MODAL OPENED SUCCESSFULLY ===');
+            } catch (error) {
+                console.error('Error opening bank modal:', error);
+                alert('Ошибка при открытии банка: ' + error.message);
+            }
         }
 
         function closeBankModal() {
@@ -4111,8 +4119,13 @@
                             option.textContent = player.name || `Игрок ${index + 1}`;
                             recipientSelect.appendChild(option);
                             console.log('Added recipient option:', { index, name: option.textContent });
+                        } else {
+                            console.log('Skipping self:', { index, name: player.name, userId: player.user_id });
                         }
                     });
+                    console.log('Final recipient options count:', recipientSelect.options.length);
+                } else {
+                    console.log('Failed to load recipients:', { responseOk: response.ok, hasPlayers: !!data.players });
                 }
             } catch (error) {
                 console.error('Error loading recipients:', error);
