@@ -4223,6 +4223,12 @@
                     currentBalance = data.new_balance;
                     updateBankData();
                     
+                    // Добавляем перевод в историю локально
+                    if (data.transfer) {
+                        transfersHistory.unshift(data.transfer);
+                        updateTransfersHistory();
+                    }
+                    
                     console.log('Data reloaded, updating UI...');
                     console.log('Current balance:', currentBalance);
                     console.log('Transfers history:', transfersHistory);
