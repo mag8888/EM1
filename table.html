@@ -3119,12 +3119,19 @@
                         console.log('No balance data found, playerIndex:', playerIndex, 'player data:', data.players[playerIndex]);
                     }
                     
-                    // Обновляем баланс только если новый баланс больше текущего (пополнение) или если текущий баланс равен 0
-                    if (newBalance > currentBalance || currentBalance === 0) {
+                    // Обновляем баланс только если:
+                    // 1. Новый баланс больше текущего (пополнение)
+                    // 2. Текущий баланс равен 0 (первая загрузка)
+                    // 3. Прошло больше 5 секунд с последнего обновления (защита от сброса после переводов)
+                    const now = Date.now();
+                    const timeSinceLastUpdate = now - (window.lastBalanceUpdate || 0);
+                    
+                    if (newBalance > currentBalance || currentBalance === 0 || timeSinceLastUpdate > 5000) {
                         currentBalance = newBalance;
-                        console.log('Balance updated to:', currentBalance);
+                        window.lastBalanceUpdate = now;
+                        console.log('Balance updated to:', currentBalance, 'timeSinceLastUpdate:', timeSinceLastUpdate + 'ms');
                     } else {
-                        console.log('Keeping current balance:', currentBalance, '(new:', newBalance, ')');
+                        console.log('Keeping current balance:', currentBalance, '(new:', newBalance, ')', 'timeSinceLastUpdate:', timeSinceLastUpdate + 'ms');
                     }
                 } else {
                     console.log('Player not found in room, user.id:', user.id, 'players:', data.players.map(p => p.user_id));
@@ -4695,6 +4702,9 @@
         function updateLocalData(responseData) {
             // Обновляем баланс
             currentBalance = responseData.new_balance;
+            
+            // Обновляем время последнего изменения баланса
+            window.lastBalanceUpdate = Date.now();
             
             // Добавляем перевод в историю
             if (responseData.transfer) {
