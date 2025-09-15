@@ -990,6 +990,7 @@
             const roomsList = document.getElementById('roomsList');
             
             console.log('Rendering rooms:', rooms.length, 'rooms');
+            console.log('Rooms data:', rooms);
             console.log('Current user:', currentUser);
             
             if (rooms.length === 0) {
@@ -1003,8 +1004,10 @@
                 return;
             }
             
-            roomsList.innerHTML = rooms.map(room => {
+            roomsList.innerHTML = rooms.map((room, index) => {
                 const isUserInRoom = currentUser && room.players.some(player => player.user_id.toString() === currentUser.id);
+                
+                console.log(`Rendering room ${index + 1}:`, room.name, 'isUserInRoom:', isUserInRoom);
                 
                 return `
                 <div class="room-card ${isUserInRoom ? 'user-in-room' : ''}" onclick="selectRoom('${room.id}')">
@@ -1044,8 +1047,11 @@
                         </button>
                     </div>
                 </div>
-            `;
+                `;
             }).join('');
+            
+            console.log('Finished rendering', rooms.length, 'rooms');
+            console.log('roomsList.innerHTML length:', roomsList.innerHTML.length);
         }
 
         // Get room status class
