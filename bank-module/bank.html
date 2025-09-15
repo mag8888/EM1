@@ -1,90 +1,108 @@
-<!-- МОДУЛЬ БАНКА - HTML РАЗМЕТКА -->
-<!-- Все элементы интерфейса, связанные с банковскими операциями -->
-
-<!-- Банковское модальное окно -->
+<!-- БАНКОВСКОЕ МОДАЛЬНОЕ ОКНО -->
 <div id="bankModal" class="bank-modal">
     <div class="bank-modal-content">
         <!-- Заголовок -->
         <div class="bank-header">
-            <h2 class="bank-title">🏦 Банк</h2>
-            <p class="bank-subtitle">Управление финансами и переводами</p>
-            <button onclick="closeBankModal()" class="btn btn-primary" style="position: absolute; top: 20px; right: 20px; padding: 10px 15px; font-size: 0.9rem;">✕ Закрыть</button>
+            <div class="bank-title">
+                <span>🏦</span>
+                <span>Банк</span>
+                <span style="font-size: 16px; opacity: 0.8;">Финансовые операции</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="bank-status">Активен</div>
+                <button class="bank-close" onclick="closeBankModal()">×</button>
+            </div>
         </div>
-        
+
         <!-- Основной контент -->
         <div class="bank-content">
-            <!-- Левая колонка - Баланс и финансы -->
-            <div class="bank-left">
-                <!-- Карточка баланса -->
-                <div class="balance-card">
-                    <div class="balance-label">Текущий баланс</div>
-                    <div class="balance-amount" data-balance="0">$0</div>
+            <!-- Левая панель - финансовая информация -->
+            <div class="bank-left-panel">
+                <!-- Текущий баланс -->
+                <div class="bank-card">
+                    <div class="bank-card-title">
+                        <span>💰</span>
+                        <span>Текущий баланс</span>
+                    </div>
+                    <div class="balance-amount" id="currentBalance">$0</div>
+                    <div class="balance-subtitle">Доступно для операций</div>
                 </div>
-                
+
                 <!-- Финансовая сводка -->
-                <div class="finance-card">
-                    <h3 class="finance-title">💰 Финансовая сводка</h3>
-                    <div class="finance-item">
-                        <span class="finance-label">Доходы:</span>
-                        <span class="finance-value" id="totalIncome">$0</span>
+                <div class="bank-card">
+                    <div class="bank-card-title">
+                        <span>📊</span>
+                        <span>Финансовая сводка</span>
                     </div>
                     <div class="finance-item">
-                        <span class="finance-label">Расходы:</span>
-                        <span class="finance-value" id="totalExpenses">$0</span>
+                        <div class="finance-label">
+                            <span>📈</span>
+                            <span>Доход</span>
+                        </div>
+                        <div class="finance-value income" id="totalIncome">$0</div>
                     </div>
                     <div class="finance-item">
-                        <span class="finance-label">Денежный поток:</span>
-                        <span class="finance-value" id="monthlyIncome">$0</span>
-                    </div>
-                </div>
-                
-                <!-- Информация о кредите -->
-                <div class="finance-card">
-                    <h3 class="finance-title">💳 Кредитная информация</h3>
-                    <div class="finance-item">
-                        <span class="finance-label">Текущий кредит:</span>
-                        <span class="finance-value" id="currentCredit">$0</span>
+                        <div class="finance-label">
+                            <span>📉</span>
+                            <span>Расходы</span>
+                        </div>
+                        <div class="finance-value expense" id="totalExpenses">$0</div>
                     </div>
                     <div class="finance-item">
-                        <span class="finance-label">Макс. кредит:</span>
-                        <span class="finance-value" id="maxCredit">$0</span>
+                        <div class="finance-label">
+                            <span>💵</span>
+                            <span>PAYDAY</span>
+                        </div>
+                        <div class="finance-value neutral" id="monthlyIncome">$0</div>
                     </div>
-                    <button onclick="openCreditModal()" class="btn btn-credit" style="width: 100%; margin-top: 15px;">
-                        💳 Взять кредит
-                    </button>
                 </div>
             </div>
-            
-            <!-- Правая колонка - Операции -->
-            <div class="bank-right">
-                <!-- Форма перевода -->
-                <div class="operations-card">
-                    <h3 class="operations-title">💸 Перевод средств</h3>
-                    <form id="transferForm" class="transfer-form">
+
+            <!-- Правая панель - операции -->
+            <div class="bank-right-panel">
+                <!-- Перевод средств -->
+                <div class="bank-card">
+                    <div class="bank-card-title">
+                        <span>✈️</span>
+                        <span>Перевод средств</span>
+                    </div>
+                    <form class="transfer-form" onsubmit="event.preventDefault(); processTransfer();">
                         <div class="form-group">
-                            <label for="recipientSelect" class="form-label">Получатель:</label>
-                            <select id="recipientSelect" class="form-select" required>
-                                <option value="">Выберите получателя</option>
+                            <label class="form-label">Получатель</label>
+                            <select class="form-input" id="recipientSelect" required>
+                                <option value="">Выберите игрока...</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="transferAmount" class="form-label">Сумма:</label>
-                            <input type="number" id="transferAmount" class="form-input" placeholder="Введите сумму" min="1" required>
+                            <label class="form-label">Сумма ($)</label>
+                            <input type="number" class="form-input" id="transferAmount" placeholder="0" min="1" required>
                         </div>
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">
-                            💸 Отправить перевод
-                        </button>
+                        <div class="bank-buttons">
+                            <button type="submit" class="bank-btn primary">
+                                <span>✈️</span>
+                                <span>Выполнить перевод</span>
+                            </button>
+                            <button type="button" class="bank-btn secondary" onclick="resetTransferForm()">
+                                <span>🔄</span>
+                                <span>Сбросить</span>
+                            </button>
+                            <button type="button" class="bank-btn credit" onclick="openCreditModal()">
+                                <span>💳</span>
+                                <span>Кредит</span>
+                            </button>
+                        </div>
                     </form>
                 </div>
-                
-                <!-- История переводов -->
-                <div class="history-card">
-                    <h3 class="history-title">📜 История переводов</h3>
-                    <div id="transfersHistory" class="transfers-list">
-                        <!-- Переводы будут добавлены динамически -->
+
+                <!-- История операций -->
+                <div class="bank-card">
+                    <div class="bank-card-title">
+                        <span>🕐</span>
+                        <span>История операций</span>
+                        <span id="historyCount" style="background: #3b82f6; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; margin-left: auto;">0</span>
                     </div>
-                    <div style="text-align: center; margin-top: 15px; color: #666;">
-                        Всего переводов: <span id="transfersCount">0</span>
+                    <div class="transfers-history" id="transfersHistory">
+                        <div class="no-transfers">История операций пуста</div>
                     </div>
                 </div>
             </div>
@@ -92,91 +110,69 @@
     </div>
 </div>
 
-<!-- Модальное окно кредита -->
-<div id="creditModal" class="bank-modal">
-    <div class="bank-modal-content" style="max-width: 500px; margin: 50px auto;">
+<!-- Кредитное модальное окно -->
+<div id="creditModal" class="bank-modal" style="display: none;">
+    <div class="bank-modal-content" style="max-width: 600px; height: auto;">
         <div class="bank-header">
-            <h2 class="bank-title">💳 Кредитные операции</h2>
-            <button onclick="closeCreditModal()" class="btn btn-primary" style="position: absolute; top: 20px; right: 20px; padding: 10px 15px; font-size: 0.9rem;">✕ Закрыть</button>
+            <div class="bank-title">
+                <span>💳</span>
+                <span>Кредитные операции</span>
+            </div>
+            <button class="bank-close" onclick="closeCreditModal()">×</button>
         </div>
-        
-        <div style="padding: 20px;">
-            <!-- Информация о кредите -->
-            <div class="finance-card" style="margin-bottom: 20px;">
-                <h3 class="finance-title">📊 Текущее состояние</h3>
-                <div class="finance-item">
-                    <span class="finance-label">Денежный поток:</span>
-                    <span class="finance-value" id="currentCashFlow">$0</span>
+        <div style="padding: 30px;">
+            <div class="bank-card">
+                <div class="bank-card-title">
+                    <span>📊</span>
+                    <span>Кредитная информация</span>
                 </div>
                 <div class="finance-item">
-                    <span class="finance-label">Макс. кредит:</span>
-                    <span class="finance-value" id="maxCreditAmount">$0</span>
+                    <div class="finance-label">Текущий денежный поток</div>
+                    <div class="finance-value" id="currentCashFlow">$0</div>
                 </div>
                 <div class="finance-item">
-                    <span class="finance-label">Текущий кредит:</span>
-                    <span class="finance-value" id="currentCreditAmount">$0</span>
+                    <div class="finance-label">Максимальный кредит</div>
+                    <div class="finance-value" id="maxCreditAmount">$0</div>
+                </div>
+                <div class="finance-item">
+                    <div class="finance-label">Текущий кредит</div>
+                    <div class="finance-value" id="currentCreditAmount">$0</div>
                 </div>
             </div>
             
-            <!-- Форма кредита -->
-            <div class="operations-card">
-                <h3 class="operations-title">💳 Взять кредит</h3>
-                <form id="creditForm">
-                    <div class="form-group">
-                        <label for="creditAmount" class="form-label">Сумма кредита:</label>
-                        <input type="number" id="creditAmount" class="form-input" placeholder="Введите сумму" min="1000" step="1000" required>
-                        <div style="margin-top: 10px;">
-                            <button type="button" onclick="setCreditAmount(1000)" class="btn btn-primary" style="margin-right: 10px; padding: 8px 15px;">$1,000</button>
-                            <button type="button" onclick="setCreditAmount(5000)" class="btn btn-primary" style="margin-right: 10px; padding: 8px 15px;">$5,000</button>
-                            <button type="button" onclick="setCreditAmount(10000)" class="btn btn-primary" style="margin-right: 10px; padding: 8px 15px;">$10,000</button>
-                            <button type="button" onclick="setMaxCreditAmount()" class="btn btn-success" style="padding: 8px 15px;">Макс.</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Предварительный расчет:</label>
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 10px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                <span>Новый денежный поток:</span>
-                                <span id="newCashFlow">$0</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>Ежемесячный платеж:</span>
-                                <span id="monthlyPayment">$0</span>
-                            </div>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-success" style="width: 100%; margin-bottom: 15px;">
-                        💳 Взять кредит
-                    </button>
-                </form>
+            <div class="bank-card">
+                <div class="bank-card-title">
+                    <span>💰</span>
+                    <span>Взять кредит</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Сумма кредита (кратно $1000)</label>
+                    <input type="number" class="form-input" id="creditAmount" placeholder="0" min="1000" step="1000">
+                </div>
+                <div class="bank-buttons">
+                    <button class="bank-btn primary" onclick="setCreditAmount(1000)">$1,000</button>
+                    <button class="bank-btn primary" onclick="setCreditAmount(5000)">$5,000</button>
+                    <button class="bank-btn primary" onclick="setCreditAmount(10000)">$10,000</button>
+                    <button class="bank-btn primary" onclick="setMaxCreditAmount()">Максимум</button>
+                </div>
+                <div class="bank-buttons">
+                    <button class="bank-btn credit" onclick="takeCredit()">Взять кредит</button>
+                </div>
             </div>
             
-            <!-- Погашение кредита -->
-            <div class="operations-card">
-                <h3 class="operations-title">💰 Погасить кредит</h3>
-                <form id="payoffForm">
-                    <div class="form-group">
-                        <label for="payoffAmount" class="form-label">Сумма погашения:</label>
-                        <input type="number" id="payoffAmount" class="form-input" placeholder="Введите сумму" min="1" required>
-                    </div>
-                    <button type="submit" class="btn btn-warning" style="width: 100%;">
-                        💰 Погасить кредит
-                    </button>
-                </form>
+            <div class="bank-card">
+                <div class="bank-card-title">
+                    <span>💸</span>
+                    <span>Погасить кредит</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Сумма погашения</label>
+                    <input type="number" class="form-input" id="payoffAmount" placeholder="0" min="1">
+                </div>
+                <div class="bank-buttons">
+                    <button class="bank-btn secondary" onclick="payOffCredit()">Погасить</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- Индикатор загрузки -->
-<div id="loadingIndicator" class="loading-indicator">
-    <div style="text-align: center;">
-        <div style="font-size: 1.2rem; margin-bottom: 10px;">⏳ Загрузка...</div>
-        <div style="font-size: 0.9rem; opacity: 0.8;">Пожалуйста, подождите</div>
-    </div>
-</div>
-
-<!-- Уведомления -->
-<div id="notification" class="notification">
-    <div id="notificationText">Уведомление</div>
 </div>
