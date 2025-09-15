@@ -98,7 +98,8 @@ const roomSchema = new mongoose.Schema({
         },
         position: { type: Number, default: 0 },
         balance: { type: Number, default: 10000 },
-        is_ready: { type: Boolean, default: false }
+        is_ready: { type: Boolean, default: false },
+        selected_dream: { type: Number, default: null }
     }],
     game_started: { type: Boolean, default: false },
     current_player: { type: Number, default: 0 },
@@ -803,6 +804,40 @@ app.post('/api/rooms/:id/leave', async (req, res) => {
     } catch (error) {
         console.error('Leave room error:', error);
         res.status(500).json({ message: 'Ошибка сервера при выходе из комнаты' });
+    }
+});
+
+// Save player dream selection
+app.post('/api/rooms/:id/dream', async (req, res) => {
+    try {
+        const { user_id, dream_id } = req.body;
+        
+        if (!user_id || !dream_id) {
+            return res.status(400).json({ message: 'ID пользователя и мечты обязательны' });
+        }
+        
+        const room = await Room.findById(req.params.id);
+        
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+        
+        // Find player in room
+        const playerIndex = room.players.findIndex(p => p.user_id.toString() === user_id);
+        if (playerIndex === -1) {
+            return res.status(403).json({ message: 'Вы не являетесь участником этой комнаты' });
+        }
+        
+        // Update player's dream
+        room.players[playerIndex].selected_dream = dream_id;
+        room.updated_at = new Date();
+        
+        await room.save();
+        
+        res.json({ message: 'Мечта сохранена' });
+    } catch (error) {
+        console.error('Save dream error:', error);
+        res.status(500).json({ message: 'Ошибка сервера при сохранении мечты' });
     }
 });
 

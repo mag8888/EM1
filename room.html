@@ -215,6 +215,27 @@
             color: #94a3b8;
         }
 
+        .player-dream {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+            font-size: 11px;
+        }
+
+        .player-dream .dream-icon {
+            font-size: 14px;
+        }
+
+        .player-dream .dream-name {
+            color: #10b981;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 120px;
+        }
+
         .player-status {
             padding: 4px 8px;
             border-radius: 12px;
@@ -233,6 +254,68 @@
             background: rgba(251, 191, 36, 0.2);
             color: #fbbf24;
             border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .dream-selection {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .dream-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .dream-item {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .dream-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #10b981;
+        }
+
+        .dream-item.selected {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10b981;
+        }
+
+        .dream-item.selected::after {
+            content: '❤️';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 16px;
+        }
+
+        .dream-name {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .dream-cost {
+            font-size: 12px;
+            color: #10b981;
+            font-weight: 500;
+        }
+
+        .dream-icon {
+            font-size: 20px;
+            margin-bottom: 8px;
         }
 
         .room-settings {
@@ -349,6 +432,14 @@
                     </div>
                 </div>
 
+                <!-- Dream Selection -->
+                <div class="dream-selection">
+                    <div class="panel-title">Выберите мечту</div>
+                    <div class="dream-list" id="dreamList">
+                        <!-- Dreams will be loaded here -->
+                    </div>
+                </div>
+
                 <!-- Room Settings -->
                 <div class="room-settings">
                     <div class="panel-title">Настройки комнаты</div>
@@ -374,6 +465,28 @@
         let currentUser = null;
         let currentRoom = null;
         let roomId = null;
+        let selectedDream = null;
+
+        // Dreams data from the big circle
+        const dreamsData = [
+            { id: 2, name: 'Построить дом мечты для семьи', cost: 100000, icon: '🏠' },
+            { id: 6, name: 'Посетить Антарктиду', cost: 150000, icon: '✈️' },
+            { id: 12, name: 'Подняться на все высочайшие вершины мира', cost: 500000, icon: '⛰️' },
+            { id: 16, name: 'Жить год на яхте в Средиземном море', cost: 300000, icon: '⛵' },
+            { id: 18, name: 'Создать фонд поддержки талантов', cost: 300000, icon: '🎗️' },
+            { id: 20, name: 'Организовать мировой фестиваль', cost: 200000, icon: '🎪' },
+            { id: 24, name: 'Туристический комплекс (эко-ранчо)', cost: 1000000, icon: '🏞️' },
+            { id: 28, name: 'NFT-платформа', cost: 400000, icon: '💎' },
+            { id: 30, name: 'Полет на Марс', cost: 300000, icon: '🚀' },
+            { id: 32, name: 'Создать школу будущего для детей', cost: 300000, icon: '🏫' },
+            { id: 35, name: 'Кругосветное плавание на паруснике', cost: 200000, icon: '⛵' },
+            { id: 37, name: 'Белоснежная Яхта', cost: 300000, icon: '⛵' },
+            { id: 42, name: 'Белоснежная Яхта', cost: 300000, icon: '⛵' },
+            { id: 44, name: 'Организовать благотворительный фонд', cost: 200000, icon: '🎗️' },
+            { id: 46, name: 'Полёт в космос', cost: 250000, icon: '🚀' },
+            { id: 48, name: 'Кругосветное путешествие', cost: 300000, icon: '🌍' },
+            { id: 50, name: 'Создать собственный остров', cost: 500000, icon: '🏝️' }
+        ];
 
         // Initialize room
         document.addEventListener('DOMContentLoaded', function() {
@@ -461,6 +574,9 @@
             
             renderPlayers();
             
+            // Render dreams
+            renderDreams();
+            
             // Show room content
             document.getElementById('roomContent').style.display = 'grid';
         }
@@ -472,6 +588,8 @@
             playersList.innerHTML = currentRoom.players.map(player => {
                 const isCurrentUser = player.user_id.toString() === currentUser.id;
                 const isReady = player.is_ready;
+                const selectedDream = player.selected_dream ? 
+                    dreamsData.find(dream => dream.id === player.selected_dream) : null;
                 
                 return `
                     <div class="player-item ${isCurrentUser ? 'current-user' : ''}">
@@ -479,6 +597,12 @@
                         <div class="player-info">
                             <div class="player-name">${player.name} ${isCurrentUser ? '(Вы)' : ''}</div>
                             <div class="player-profession">${player.profession || 'Без профессии'}</div>
+                            ${selectedDream ? `
+                                <div class="player-dream">
+                                    <span class="dream-icon">${selectedDream.icon}</span>
+                                    <span class="dream-name">${selectedDream.name}</span>
+                                </div>
+                            ` : ''}
                         </div>
                         <div class="player-status ${isReady ? 'status-ready' : 'status-waiting'}">
                             ${isReady ? 'Готов' : 'Ожидает'}
@@ -566,6 +690,64 @@
             }
         }
 
+        // Render dreams list
+        function renderDreams() {
+            const dreamList = document.getElementById('dreamList');
+            
+            dreamList.innerHTML = dreamsData.map(dream => `
+                <div class="dream-item" onclick="selectDream(${dream.id})" data-dream-id="${dream.id}">
+                    <div class="dream-icon">${dream.icon}</div>
+                    <div class="dream-name">${dream.name}</div>
+                    <div class="dream-cost">$${dream.cost.toLocaleString()}</div>
+                </div>
+            `).join('');
+        }
+
+        // Select dream
+        function selectDream(dreamId) {
+            // Remove previous selection
+            document.querySelectorAll('.dream-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Add selection to clicked item
+            const dreamItem = document.querySelector(`[data-dream-id="${dreamId}"]`);
+            if (dreamItem) {
+                dreamItem.classList.add('selected');
+                selectedDream = dreamId;
+                
+                // Save dream selection to server
+                saveDreamSelection(dreamId);
+            }
+        }
+
+        // Save dream selection to server
+        async function saveDreamSelection(dreamId) {
+            try {
+                if (!currentUser || !currentUser.id) {
+                    console.error('No user data found');
+                    return;
+                }
+                
+                const response = await fetch(`/api/rooms/${roomId}/dream`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        dream_id: dreamId
+                    })
+                });
+                
+                if (!response.ok) {
+                    console.error('Failed to save dream selection');
+                }
+            } catch (error) {
+                console.error('Error saving dream selection:', error);
+            }
+        }
+
         // Utility functions
         function showError(message) {
             const errorElement = document.getElementById('errorMessage');
@@ -581,12 +763,12 @@
             document.getElementById('loading').style.display = show ? 'block' : 'none';
         }
 
-        // Refresh room data every 5 seconds
+        // Refresh room data every 10 seconds (less frequent to reduce flickering)
         setInterval(() => {
             if (roomId && currentRoom && !currentRoom.game_started) {
                 loadRoomData();
             }
-        }, 5000);
+        }, 10000);
     </script>
 </body>
 </html>
