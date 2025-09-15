@@ -4409,8 +4409,29 @@
             const element = document.createElement('div');
             element.className = 'transfer-item';
             
-            const isIncome = transfer.recipient_index === getCurrentPlayerIndex();
-            const isOutgoing = transfer.sender_index === getCurrentPlayerIndex();
+            // Получаем ID текущего пользователя
+            const user = JSON.parse(localStorage.getItem('user'));
+            const currentUserId = user ? user.id : null;
+            
+            // Определяем, является ли перевод доходом или расходом
+            // Для стартовых сбережений (sender_index: -1) всегда показываем как доход
+            let isIncome = false;
+            let isOutgoing = false;
+            
+            if (transfer.sender_index === -1) {
+                // Перевод от банка - всегда доход
+                isIncome = true;
+            } else if (transfer.recipient_index === -1) {
+                // Перевод в банк - всегда расход
+                isOutgoing = true;
+            } else {
+                // Перевод между игроками - нужно определить по именам
+                // Если получатель - текущий пользователь, то это доход
+                // Если отправитель - текущий пользователь, то это расход
+                const currentPlayerName = user ? user.name : '';
+                isIncome = transfer.recipient === currentPlayerName;
+                isOutgoing = transfer.sender === currentPlayerName;
+            }
             
             element.innerHTML = `
                 <div class="transfer-info">
@@ -4431,15 +4452,22 @@
         }
         
         function getCurrentPlayerIndex() {
-            const user = JSON.parse(localStorage.getItem('user'));
-            if (!user) return -1;
-            
-            // Получаем индекс игрока в комнате
-            const roomId = getRoomIdFromURL();
-            if (!roomId) return -1;
-            
-            // Для упрощения возвращаем 0, в реальном приложении нужно получить из сервера
-            return 0;
+            try {
+                const user = JSON.parse(localStorage.getItem('user'));
+                if (!user) return -1;
+                
+                // Получаем индекс игрока из глобальной переменной currentPlayer
+                // которая устанавливается при загрузке данных комнаты
+                if (typeof currentPlayer !== 'undefined') {
+                    return currentPlayer;
+                }
+                
+                // Fallback: возвращаем 0 если currentPlayer не установлен
+                return 0;
+            } catch (error) {
+                console.error('Error getting current player index:', error);
+                return -1;
+            }
         }
         
         function formatTransferTime(timestamp) {
