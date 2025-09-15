@@ -2045,7 +2045,20 @@
                     
                     // Если ход истек, автоматически переходим к следующему
                     if (data.is_turn_expired) {
-                        await nextTurn();
+                        // Проверяем, что это ход текущего игрока перед переходом
+                        const user = localStorage.getItem('user');
+                        if (user) {
+                            const userData = JSON.parse(user);
+                            const playersResponse = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
+                            const playersData = await playersResponse.json();
+                            
+                            if (playersResponse.ok && playersData.players) {
+                                const playerIndex = playersData.players.findIndex(p => p.user_id.toString() === userData.id);
+                                if (playerIndex === data.current_player) {
+                                    await nextTurn();
+                                }
+                            }
+                        }
                     }
                 }
             } catch (error) {
@@ -2283,14 +2296,22 @@
             if (!user) return;
             
             const userData = JSON.parse(user);
-            const response = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
-            const data = await response.json();
             
-            if (response.ok && data.players) {
-                const playerIndex = data.players.findIndex(p => p.user_id.toString() === userData.id);
-                if (playerIndex !== data.current_player) {
-                    alert('Не ваш ход!');
-                    return;
+            // Получаем информацию о ходе
+            const turnResponse = await fetch(`/api/rooms/${roomId}/turn`);
+            const turnData = await turnResponse.json();
+            
+            if (turnResponse.ok) {
+                // Получаем информацию о игроках
+                const playersResponse = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
+                const playersData = await playersResponse.json();
+                
+                if (playersResponse.ok && playersData.players) {
+                    const playerIndex = playersData.players.findIndex(p => p.user_id.toString() === userData.id);
+                    if (playerIndex !== turnData.current_player) {
+                        alert('Не ваш ход!');
+                        return;
+                    }
                 }
             }
             
@@ -2429,8 +2450,15 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    // Обновляем информацию о ходе
-                    await loadTurnInfo();
+                    // Обновляем текущего игрока и таймер
+                    currentPlayer = data.current_player;
+                    gameTimer = data.turn_duration;
+                    maxTimer = data.turn_duration;
+                    
+                    // Обновляем UI
+                    updateCurrentPlayer();
+                    updateTimerDisplay();
+                    resetRollButton();
                 } else {
                     console.error('Error passing turn:', data.message);
                 }
@@ -2453,26 +2481,38 @@
         }
 
         // Обновление информации о текущем игроке
-        function updateCurrentPlayer() {
-            const players = [
-                { name: 'Игрок 1', role: 'Врач', balance: '$10000' },
-                { name: 'Игрок 2', role: 'Инвестор', balance: '$15000' },
-                { name: 'Игрок 3', role: 'Финансист', balance: '$20000' }
-            ];
-            
-            const currentPlayerData = players[currentPlayer - 1];
-            const currentPlayerInfo = document.getElementById('currentPlayerInfo');
-            
-            currentPlayerInfo.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                    <div class="player-avatar player-${currentPlayer}" style="width: 20px; height: 20px; font-size: 10px;">${currentPlayer}</div>
-                    <div>
-                        <div style="font-weight: bold;">${currentPlayerData.name}</div>
-                        <div style="font-size: 12px; color: #94a3b8;">${currentPlayerData.role}</div>
-                    </div>
-                </div>
-                <div style="font-size: 14px; font-weight: bold; color: #10b981;">${currentPlayerData.balance}</div>
-            `;
+        async function updateCurrentPlayer() {
+            try {
+                const roomId = getRoomIdFromURL();
+                if (!roomId) return;
+
+                const user = localStorage.getItem('user');
+                if (!user) return;
+                
+                const userData = JSON.parse(user);
+                const response = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
+                const data = await response.json();
+                
+                if (response.ok && data.players) {
+                    const currentPlayerData = data.players[currentPlayer];
+                    const currentPlayerInfo = document.getElementById('currentPlayerInfo');
+                    
+                    if (currentPlayerData && currentPlayerInfo) {
+                        currentPlayerInfo.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <div class="player-avatar player-${currentPlayer + 1}" style="width: 20px; height: 20px; font-size: 10px;">${currentPlayer + 1}</div>
+                                <div>
+                                    <div style="font-weight: bold;">${currentPlayerData.name || `Игрок ${currentPlayer + 1}`}</div>
+                                    <div style="font-size: 12px; color: #94a3b8;">Предприниматель</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 14px; font-weight: bold; color: #10b981;">$${currentBalance.toLocaleString()}</div>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating current player:', error);
+            }
         }
 
         // Открытие банка
