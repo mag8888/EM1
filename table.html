@@ -2979,13 +2979,23 @@
                 const data = await response.json();
                 
                 // Обновляем баланс
-                const playerIndex = data.players.findIndex(p => p.id === user.id);
+                const playerIndex = data.players.findIndex(p => p.user_id === user.id);
                 
-                if (playerIndex !== -1 && data.game_data?.player_balances) {
-                    currentBalance = data.game_data.player_balances[playerIndex] || 0;
-                    console.log('Balance loaded from server:', currentBalance, 'for player', playerIndex);
+                if (playerIndex !== -1) {
+                    // Сначала пробуем новую структуру (game_data.player_balances)
+                    if (data.game_data?.player_balances) {
+                        currentBalance = data.game_data.player_balances[playerIndex] || 0;
+                        console.log('Balance loaded from game_data.player_balances:', currentBalance, 'for player', playerIndex);
+                    } 
+                    // Если нет, используем старую структуру (players[].balance)
+                    else if (data.players[playerIndex]?.balance !== undefined) {
+                        currentBalance = data.players[playerIndex].balance;
+                        console.log('Balance loaded from players[].balance:', currentBalance, 'for player', playerIndex);
+                    } else {
+                        console.log('No balance data found, playerIndex:', playerIndex, 'player data:', data.players[playerIndex]);
+                    }
                 } else {
-                    console.log('No balance data found, playerIndex:', playerIndex, 'balances:', data.game_data?.player_balances);
+                    console.log('Player not found in room, user.id:', user.id, 'players:', data.players.map(p => p.user_id));
                 }
                 
                 // Обновляем историю переводов
@@ -4156,6 +4166,7 @@
         // Bank functions removed - keeping design only
         async function loadFinancialData(roomId, playerIndex) {
             try {
+                // Сначала пробуем загрузить с сервера
                 const response = await fetch(`/api/rooms/${roomId}/player/${playerIndex}/profession`);
                 if (response.ok) {
                     const data = await response.json();
@@ -4164,27 +4175,52 @@
                     monthlyIncome = data.cashFlow || 0;
                     currentCredit = data.totalCredits || 0;
                     
-                    console.log('Financial data loaded:', {
+                    console.log('Financial data loaded from API:', {
                         totalIncome,
                         totalExpenses,
                         monthlyIncome,
                         currentCredit
                     });
                 } else {
-                    console.log('Failed to load profession data, using defaults');
-                    // Используем значения по умолчанию
-                    totalIncome = 5000;
-                    totalExpenses = 3000;
-                    monthlyIncome = 2000;
-                    currentCredit = 0;
+                    console.log('Failed to load profession data from API, trying local data');
+                    // Если API не работает, используем данные из room data
+                    const roomResponse = await fetch(`/api/rooms/${roomId}`);
+                    if (roomResponse.ok) {
+                        const roomData = await roomResponse.json();
+                        const player = roomData.players[playerIndex];
+                        if (player?.profession_data) {
+                            totalIncome = player.profession_data.salary || 0;
+                            totalExpenses = player.profession_data.expenses || 0;
+                            monthlyIncome = player.profession_data.cash_flow || 0;
+                            currentCredit = 0; // Пока нет данных о кредитах в старой структуре
+                            
+                            console.log('Financial data loaded from room data:', {
+                                totalIncome,
+                                totalExpenses,
+                                monthlyIncome,
+                                currentCredit
+                            });
+                        } else {
+                            throw new Error('No profession data in room');
+                        }
+                    } else {
+                        throw new Error('Failed to load room data');
+                    }
                 }
             } catch (error) {
                 console.error('Error loading financial data:', error);
                 // Используем значения по умолчанию при ошибке
-                totalIncome = 5000;
-                totalExpenses = 3000;
-                monthlyIncome = 2000;
+                totalIncome = 10000;
+                totalExpenses = 6200;
+                monthlyIncome = 3800;
                 currentCredit = 0;
+                
+                console.log('Using default financial data:', {
+                    totalIncome,
+                    totalExpenses,
+                    monthlyIncome,
+                    currentCredit
+                });
             }
         }
         
