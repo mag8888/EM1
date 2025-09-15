@@ -1730,8 +1730,8 @@
     </div>
 
     <!-- Модальное окно банка -->
-    <div class="bank-modal" id="bankModal">
-        <div class="modal-content bank-modal-content">
+    <div class="bank-modal" id="bankModal" onclick="closeBankModalOnBackdrop(event)">
+        <div class="modal-content bank-modal-content" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <div class="header-left">
                     <span class="bank-icon">🏦</span>
@@ -2411,6 +2411,12 @@
 
         function closeBankModal() {
             document.getElementById('bankModal').style.display = 'none';
+        }
+
+        function closeBankModalOnBackdrop(event) {
+            if (event.target === event.currentTarget) {
+                closeBankModal();
+            }
         }
 
         function updateBankData() {
