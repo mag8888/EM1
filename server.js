@@ -71,6 +71,36 @@ userSchema.pre('save', function(next) {
 
 const User = mongoose.model('User', userSchema);
 
+// Room Schema
+const roomSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    creator_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    creator_profession: { type: String, required: true },
+    assign_professions: { type: Boolean, default: false },
+    max_players: { type: Number, required: true, min: 2, max: 6 },
+    password: { type: String, default: null },
+    turn_time: { type: Number, required: true, default: 2 },
+    players: [{
+        user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        name: { type: String, required: true },
+        profession: { type: String, default: null },
+        position: { type: Number, default: 0 },
+        balance: { type: Number, default: 3000 },
+        is_ready: { type: Boolean, default: false }
+    }],
+    game_started: { type: Boolean, default: false },
+    current_player: { type: Number, default: 0 },
+    game_data: {
+        board_state: { type: mongoose.Schema.Types.Mixed, default: {} },
+        cell_owners: { type: mongoose.Schema.Types.Mixed, default: {} },
+        game_timer: { type: Number, default: 0 }
+    },
+    created_at: { type: Date, default: Date.now },
+    updated_at: { type: Date, default: Date.now }
+});
+
+const Room = mongoose.model('Room', roomSchema);
+
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
@@ -386,6 +416,303 @@ app.post('/api/user/game-result', authenticateToken, async (req, res) => {
     }
 });
 
+// Room API endpoints
+
+// Get all rooms
+app.get('/api/rooms', async (req, res) => {
+    try {
+        const rooms = await Room.find({ game_started: false })
+            .populate('creator_id', 'first_name last_name')
+            .sort({ created_at: -1 })
+            .limit(20);
+        
+        const roomsData = rooms.map(room => ({
+            id: room._id,
+            name: room.name,
+            creator_name: `${room.creator_id.first_name} ${room.creator_id.last_name}`,
+            creator_profession: room.creator_profession,
+            assign_professions: room.assign_professions,
+            max_players: room.max_players,
+            password: room.password ? true : false,
+            turn_time: room.turn_time,
+            players: room.players,
+            game_started: room.game_started,
+            created_at: room.created_at
+        }));
+        
+        res.json(roomsData);
+    } catch (error) {
+        console.error('Get rooms error:', error);
+        res.status(500).json({ message: 'Ошибка сервера при получении списка комнат' });
+    }
+});
+
+// Create room
+app.post('/api/rooms/create', authenticateToken, async (req, res) => {
+    try {
+        const { name, creator_profession, assign_professions, max_players, turn_time, password } = req.body;
+        
+        // Validate input
+        if (!name || !creator_profession || !max_players || !turn_time) {
+            return res.status(400).json({ message: 'Все обязательные поля должны быть заполнены' });
+        }
+        
+        if (max_players < 2 || max_players > 6) {
+            return res.status(400).json({ message: 'Количество игроков должно быть от 2 до 6' });
+        }
+        
+        // Get user data
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'Пользователь не найден' });
+        }
+        
+        // Create room
+        const room = new Room({
+            name,
+            creator_id: req.user.userId,
+            creator_profession,
+            assign_professions: assign_professions || false,
+            max_players,
+            password: password || null,
+            turn_time,
+            players: [{
+                user_id: req.user.userId,
+                name: `${user.first_name} ${user.last_name}`,
+                profession: creator_profession,
+                position: 0,
+                balance: 3000,
+                is_ready: false
+            }]
+        });
+        
+        await room.save();
+        
+        res.status(201).json({ 
+            message: 'Комната успешно создана',
+            room_id: room._id
+        });
+    } catch (error) {
+        console.error('Create room error:', error);
+        res.status(500).json({ message: 'Ошибка сервера при создании комнаты' });
+    }
+});
+
+// Join room
+app.post('/api/rooms/join', authenticateToken, async (req, res) => {
+    try {
+        const { room_id, password } = req.body;
+        
+        if (!room_id) {
+            return res.status(400).json({ message: 'ID комнаты обязателен' });
+        }
+        
+        // Find room
+        const room = await Room.findById(room_id);
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+        
+        if (room.game_started) {
+            return res.status(400).json({ message: 'Игра уже началась' });
+        }
+        
+        if (room.players.length >= room.max_players) {
+            return res.status(400).json({ message: 'Комната заполнена' });
+        }
+        
+        // Check password
+        if (room.password && room.password !== password) {
+            return res.status(401).json({ message: 'Неверный пароль комнаты' });
+        }
+        
+        // Check if user is already in room
+        const existingPlayer = room.players.find(p => p.user_id.toString() === req.user.userId);
+        if (existingPlayer) {
+            return res.status(400).json({ message: 'Вы уже находитесь в этой комнате' });
+        }
+        
+        // Get user data
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'Пользователь не найден' });
+        }
+        
+        // Add player to room
+        const newPlayer = {
+            user_id: req.user.userId,
+            name: `${user.first_name} ${user.last_name}`,
+            profession: room.assign_professions ? room.creator_profession : null,
+            position: 0,
+            balance: 3000,
+            is_ready: false
+        };
+        
+        room.players.push(newPlayer);
+        room.updated_at = new Date();
+        
+        await room.save();
+        
+        res.json({ 
+            message: 'Успешно присоединились к комнате',
+            room_id: room._id
+        });
+    } catch (error) {
+        console.error('Join room error:', error);
+        res.status(500).json({ message: 'Ошибка сервера при присоединении к комнате' });
+    }
+});
+
+// Quick join
+app.post('/api/rooms/quick-join', authenticateToken, async (req, res) => {
+    try {
+        // Find a room with available slots
+        const room = await Room.findOne({
+            game_started: false,
+            password: null,
+            $expr: { $lt: [{ $size: '$players' }, '$max_players'] }
+        }).sort({ created_at: -1 });
+        
+        if (!room) {
+            return res.status(404).json({ message: 'Нет доступных комнат для быстрого присоединения' });
+        }
+        
+        // Check if user is already in this room
+        const existingPlayer = room.players.find(p => p.user_id.toString() === req.user.userId);
+        if (existingPlayer) {
+            return res.json({ room_id: room._id });
+        }
+        
+        // Get user data
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'Пользователь не найден' });
+        }
+        
+        // Add player to room
+        const newPlayer = {
+            user_id: req.user.userId,
+            name: `${user.first_name} ${user.last_name}`,
+            profession: room.assign_professions ? room.creator_profession : null,
+            position: 0,
+            balance: 3000,
+            is_ready: false
+        };
+        
+        room.players.push(newPlayer);
+        room.updated_at = new Date();
+        
+        await room.save();
+        
+        res.json({ room_id: room._id });
+    } catch (error) {
+        console.error('Quick join error:', error);
+        res.status(500).json({ message: 'Ошибка сервера при быстром присоединении' });
+    }
+});
+
+// Get room details
+app.get('/api/rooms/:id', authenticateToken, async (req, res) => {
+    try {
+        const room = await Room.findById(req.params.id)
+            .populate('creator_id', 'first_name last_name');
+        
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+        
+        // Check if user is in this room
+        const userInRoom = room.players.find(p => p.user_id.toString() === req.user.userId);
+        if (!userInRoom) {
+            return res.status(403).json({ message: 'Вы не являетесь участником этой комнаты' });
+        }
+        
+        res.json({
+            id: room._id,
+            name: room.name,
+            creator_name: `${room.creator_id.first_name} ${room.creator_id.last_name}`,
+            creator_profession: room.creator_profession,
+            assign_professions: room.assign_professions,
+            max_players: room.max_players,
+            turn_time: room.turn_time,
+            players: room.players,
+            game_started: room.game_started,
+            current_player: room.current_player,
+            game_data: room.game_data,
+            created_at: room.created_at
+        });
+    } catch (error) {
+        console.error('Get room error:', error);
+        res.status(500).json({ message: 'Ошибка сервера при получении данных комнаты' });
+    }
+});
+
+// Toggle player ready status
+app.post('/api/rooms/:id/ready', authenticateToken, async (req, res) => {
+    try {
+        const room = await Room.findById(req.params.id);
+        
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+        
+        if (room.game_started) {
+            return res.status(400).json({ message: 'Игра уже началась' });
+        }
+        
+        // Find player in room
+        const playerIndex = room.players.findIndex(p => p.user_id.toString() === req.user.userId);
+        if (playerIndex === -1) {
+            return res.status(403).json({ message: 'Вы не являетесь участником этой комнаты' });
+        }
+        
+        // Toggle ready status
+        room.players[playerIndex].is_ready = !room.players[playerIndex].is_ready;
+        room.updated_at = new Date();
+        
+        await room.save();
+        
+        res.json({ 
+            message: `Статус готовности изменен на ${room.players[playerIndex].is_ready ? 'готов' : 'не готов'}`,
+            is_ready: room.players[playerIndex].is_ready
+        });
+    } catch (error) {
+        console.error('Toggle ready error:', error);
+        res.status(500).json({ message: 'Ошибка сервера при изменении статуса готовности' });
+    }
+});
+
+// Leave room
+app.post('/api/rooms/:id/leave', authenticateToken, async (req, res) => {
+    try {
+        const room = await Room.findById(req.params.id);
+        
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+        
+        if (room.game_started) {
+            return res.status(400).json({ message: 'Нельзя покинуть комнату во время игры' });
+        }
+        
+        // Remove player from room
+        room.players = room.players.filter(p => p.user_id.toString() !== req.user.userId);
+        room.updated_at = new Date();
+        
+        // If room is empty, delete it
+        if (room.players.length === 0) {
+            await Room.findByIdAndDelete(req.params.id);
+            res.json({ message: 'Комната удалена' });
+        } else {
+            await room.save();
+            res.json({ message: 'Вы покинули комнату' });
+        }
+    } catch (error) {
+        console.error('Leave room error:', error);
+        res.status(500).json({ message: 'Ошибка сервера при выходе из комнаты' });
+    }
+});
+
 // Маршруты для HTML страниц
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -405,6 +732,14 @@ app.get('/profile', (req, res) => {
 
 app.get('/bank', (req, res) => {
     res.sendFile(path.join(__dirname, 'bank.html'));
+});
+
+app.get('/lobby', (req, res) => {
+    res.sendFile(path.join(__dirname, 'lobby.html'));
+});
+
+app.get('/room/:id', (req, res) => {
+    res.sendFile(path.join(__dirname, 'room.html'));
 });
 
 // Запуск сервера

@@ -522,9 +522,9 @@
                     
                     showSuccess('Успешный вход!');
                     
-                    // Перенаправляем на главную страницу
+                    // Перенаправляем в лобби
                     setTimeout(() => {
-                        window.location.href = '/';
+                        window.location.href = '/lobby';
                     }, 1500);
                 } else {
                     showError(data.message || 'Ошибка входа');

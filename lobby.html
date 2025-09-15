@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лобби - Энергия денег</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0c1445 100%);
+            color: white;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .header-info h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .header-info p {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .user-balance {
+            font-size: 14px;
+            color: #10b981;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .lobby-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            height: calc(100vh - 140px);
+        }
+
+        .rooms-section {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .rooms-list {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .room-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .room-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border-color: #10b981;
+        }
+
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .room-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .room-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-waiting {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .status-full {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-playing {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .room-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .room-players {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .player-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .empty-slot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+        }
+
+        .room-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .join-btn {
+            flex: 1;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .join-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .join-btn:disabled {
+            background: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .controls-section {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .create-room-btn {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .create-room-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .quick-join-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .quick-join-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+        }
+
+        .stats-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .stats-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .stat-label {
+            color: #94a3b8;
+        }
+
+        .stat-value {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-btn:hover {
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 8px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #10b981;
+        }
+
+        .checkbox-label {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(0, 0, 0, 0.3);
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .profession-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .profession-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .profession-card:hover {
+            border-color: #10b981;
+            transform: translateY(-2px);
+        }
+
+        .profession-card.selected {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .profession-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .profession-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #10b981;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .lobby-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .controls-section {
+                order: -1;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-section">
+                <div class="logo">🎲</div>
+                <div class="header-info">
+                    <h1>Энергия денег</h1>
+                    <p>Лобби игры</p>
+                </div>
+            </div>
+            <div class="user-section">
+                <div class="user-info">
+                    <div class="user-name" id="userName">Игрок</div>
+                    <div class="user-balance" id="userBalance">$3,000</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">Выйти</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="lobby-content">
+            <!-- Rooms Section -->
+            <div class="rooms-section">
+                <div class="section-header">
+                    <h2 class="section-title">Доступные комнаты</h2>
+                    <button class="refresh-btn" onclick="refreshRooms()">🔄 Обновить</button>
+                </div>
+                <div class="rooms-list" id="roomsList">
+                    <!-- Rooms will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Controls Section -->
+            <div class="controls-section">
+                <button class="create-room-btn" onclick="showCreateRoomModal()">
+                    ➕ Создать комнату
+                </button>
+                <button class="quick-join-btn" onclick="quickJoin()">
+                    ⚡ Быстрое присоединение
+                </button>
+                
+                <div class="stats-section">
+                    <div class="stats-title">Статистика</div>
+                    <div class="stat-item">
+                        <span class="stat-label">Всего игр:</span>
+                        <span class="stat-value" id="totalGames">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Побед:</span>
+                        <span class="stat-value" id="totalWins">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Уровень:</span>
+                        <span class="stat-value" id="userLevel">1</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Онлайн игроков:</span>
+                        <span class="stat-value" id="onlinePlayers">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Room Modal -->
+    <div class="modal" id="createRoomModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Создать комнату</h3>
+                <button class="close-btn" onclick="hideCreateRoomModal()">&times;</button>
+            </div>
+            
+            <div class="error-message" id="createRoomError"></div>
+            
+            <form id="createRoomForm">
+                <div class="form-group">
+                    <label class="form-label">Название комнаты</label>
+                    <input type="text" class="form-input" id="roomName" placeholder="Введите название комнаты" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Выберите профессию</label>
+                    <div class="profession-cards">
+                        <div class="profession-card" data-profession="engineer" onclick="selectProfession(this)">
+                            <div class="profession-icon">👨‍💻</div>
+                            <div class="profession-name">Инженер</div>
+                        </div>
+                        <div class="profession-card" data-profession="doctor" onclick="selectProfession(this)">
+                            <div class="profession-icon">👨‍⚕️</div>
+                            <div class="profession-name">Врач</div>
+                        </div>
+                        <div class="profession-card" data-profession="teacher" onclick="selectProfession(this)">
+                            <div class="profession-icon">👨‍🏫</div>
+                            <div class="profession-name">Учитель</div>
+                        </div>
+                        <div class="profession-card" data-profession="lawyer" onclick="selectProfession(this)">
+                            <div class="profession-icon">👨‍⚖️</div>
+                            <div class="profession-name">Юрист</div>
+                        </div>
+                        <div class="profession-card" data-profession="artist" onclick="selectProfession(this)">
+                            <div class="profession-icon">🎨</div>
+                            <div class="profession-name">Художник</div>
+                        </div>
+                        <div class="profession-card" data-profession="businessman" onclick="selectProfession(this)">
+                            <div class="profession-icon">👔</div>
+                            <div class="profession-name">Бизнесмен</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Максимальное количество игроков</label>
+                    <select class="form-select" id="maxPlayers" required>
+                        <option value="2">2 игрока</option>
+                        <option value="3">3 игрока</option>
+                        <option value="4" selected>4 игрока</option>
+                        <option value="5">5 игроков</option>
+                        <option value="6">6 игроков</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Время на ход (минуты)</label>
+                    <select class="form-select" id="turnTime" required>
+                        <option value="2" selected>2 минуты</option>
+                        <option value="3">3 минуты</option>
+                        <option value="5">5 минут</option>
+                        <option value="10">10 минут</option>
+                    </select>
+                </div>
+                
+                <div class="form-checkbox">
+                    <input type="checkbox" class="checkbox" id="assignProfessions">
+                    <label class="checkbox-label" for="assignProfessions">
+                        Назначить профессии всем игрокам
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Пароль комнаты (необязательно)</label>
+                    <input type="password" class="form-input" id="roomPassword" placeholder="Введите пароль для закрытой комнаты">
+                </div>
+                
+                <div class="loading" id="createRoomLoading">
+                    <div class="spinner"></div>
+                    <div>Создание комнаты...</div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="hideCreateRoomModal()">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Создать комнату</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Join Room Modal -->
+    <div class="modal" id="joinRoomModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Присоединиться к комнате</h3>
+                <button class="close-btn" onclick="hideJoinRoomModal()">&times;</button>
+            </div>
+            
+            <div class="error-message" id="joinRoomError"></div>
+            
+            <div id="joinRoomContent">
+                <div class="form-group">
+                    <label class="form-label">Введите пароль комнаты (если требуется)</label>
+                    <input type="password" class="form-input" id="joinRoomPassword" placeholder="Пароль комнаты">
+                </div>
+                
+                <div class="loading" id="joinRoomLoading">
+                    <div class="spinner"></div>
+                    <div>Присоединение к комнате...</div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="hideJoinRoomModal()">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmJoinRoom()">Присоединиться</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let selectedProfession = null;
+        let selectedRoomId = null;
+        let rooms = [];
+
+        // Initialize lobby
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+            loadUserStats();
+            loadRooms();
+            
+            // Refresh rooms every 10 seconds
+            setInterval(loadRooms, 10000);
+        });
+
+        // Check authentication status
+        function checkAuthStatus() {
+            const token = localStorage.getItem('authToken');
+            const user = localStorage.getItem('user');
+            
+            if (!token || !user) {
+                window.location.href = '/auth';
+                return;
+            }
+            
+            try {
+                currentUser = JSON.parse(user);
+                document.getElementById('userName').textContent = currentUser.first_name;
+                document.getElementById('userBalance').textContent = `$${currentUser.balance.toLocaleString()}`;
+            } catch (error) {
+                console.error('Error parsing user data:', error);
+                logout();
+            }
+        }
+
+        // Load user statistics
+        async function loadUserStats() {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const stats = await response.json();
+                    document.getElementById('totalGames').textContent = stats.games_played;
+                    document.getElementById('totalWins').textContent = stats.wins_count;
+                    document.getElementById('userLevel').textContent = stats.level;
+                }
+            } catch (error) {
+                console.error('Error loading user stats:', error);
+            }
+        }
+
+        // Load rooms from server
+        async function loadRooms() {
+            try {
+                const response = await fetch('/api/rooms');
+                
+                if (response.ok) {
+                    rooms = await response.json();
+                    renderRooms();
+                } else {
+                    console.error('Failed to load rooms');
+                }
+            } catch (error) {
+                console.error('Error loading rooms:', error);
+            }
+        }
+
+        // Render rooms list
+        function renderRooms() {
+            const roomsList = document.getElementById('roomsList');
+            
+            if (rooms.length === 0) {
+                roomsList.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #94a3b8;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">🏠</div>
+                        <div>Нет доступных комнат</div>
+                        <div style="font-size: 14px; margin-top: 10px;">Создайте свою комнату или подождите</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            roomsList.innerHTML = rooms.map(room => `
+                <div class="room-card" onclick="selectRoom('${room.id}')">
+                    <div class="room-header">
+                        <div class="room-name">${room.name}</div>
+                        <div class="room-status ${getRoomStatusClass(room)}">${getRoomStatusText(room)}</div>
+                    </div>
+                    <div class="room-info">
+                        <div class="info-item">
+                            <span>👑</span>
+                            <span>${room.creator_name}</span>
+                        </div>
+                        <div class="info-item">
+                            <span>👥</span>
+                            <span>${room.players.length}/${room.max_players}</span>
+                        </div>
+                        <div class="info-item">
+                            <span>⏱️</span>
+                            <span>${room.turn_time} мин</span>
+                        </div>
+                        <div class="info-item">
+                            <span>${room.password ? '🔒' : '🔓'}</span>
+                            <span>${room.password ? 'Приватная' : 'Публичная'}</span>
+                        </div>
+                    </div>
+                    <div class="room-players">
+                        ${room.players.map(player => `
+                            <div class="player-avatar" title="${player.name}">${player.name.charAt(0)}</div>
+                        `).join('')}
+                        ${Array(room.max_players - room.players.length).fill('<div class="empty-slot"></div>').join('')}
+                    </div>
+                    <div class="room-actions">
+                        <button class="join-btn" onclick="event.stopPropagation(); joinRoom('${room.id}')" 
+                                ${room.players.length >= room.max_players ? 'disabled' : ''}>
+                            ${room.players.length >= room.max_players ? 'Комната заполнена' : 'Присоединиться'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Get room status class
+        function getRoomStatusClass(room) {
+            if (room.players.length >= room.max_players) return 'status-full';
+            if (room.game_started) return 'status-playing';
+            return 'status-waiting';
+        }
+
+        // Get room status text
+        function getRoomStatusText(room) {
+            if (room.players.length >= room.max_players) return 'Заполнена';
+            if (room.game_started) return 'Игра идет';
+            return 'Ожидание';
+        }
+
+        // Select room
+        function selectRoom(roomId) {
+            selectedRoomId = roomId;
+            // Highlight selected room
+            document.querySelectorAll('.room-card').forEach(card => {
+                card.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+            });
+            event.currentTarget.style.borderColor = '#10b981';
+        }
+
+        // Show create room modal
+        function showCreateRoomModal() {
+            document.getElementById('createRoomModal').style.display = 'flex';
+            document.getElementById('createRoomForm').reset();
+            selectedProfession = null;
+            document.querySelectorAll('.profession-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+        }
+
+        // Hide create room modal
+        function hideCreateRoomModal() {
+            document.getElementById('createRoomModal').style.display = 'none';
+        }
+
+        // Select profession
+        function selectProfession(element) {
+            document.querySelectorAll('.profession-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            selectedProfession = element.dataset.profession;
+        }
+
+        // Create room form submission
+        document.getElementById('createRoomForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!selectedProfession) {
+                showError('createRoomError', 'Пожалуйста, выберите профессию');
+                return;
+            }
+            
+            const formData = {
+                name: document.getElementById('roomName').value,
+                creator_profession: selectedProfession,
+                max_players: parseInt(document.getElementById('maxPlayers').value),
+                turn_time: parseInt(document.getElementById('turnTime').value),
+                assign_professions: document.getElementById('assignProfessions').checked,
+                password: document.getElementById('roomPassword').value || null
+            };
+            
+            try {
+                showLoading('createRoomLoading', true);
+                hideError('createRoomError');
+                
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/rooms/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    hideCreateRoomModal();
+                    loadRooms();
+                    showSuccess('Комната успешно создана!');
+                } else {
+                    showError('createRoomError', data.message || 'Ошибка создания комнаты');
+                }
+            } catch (error) {
+                showError('createRoomError', 'Ошибка соединения с сервером');
+                console.error('Create room error:', error);
+            } finally {
+                showLoading('createRoomLoading', false);
+            }
+        });
+
+        // Join room
+        function joinRoom(roomId) {
+            const room = rooms.find(r => r.id === roomId);
+            if (!room) return;
+            
+            selectedRoomId = roomId;
+            
+            if (room.password) {
+                showJoinRoomModal();
+            } else {
+                confirmJoinRoom();
+            }
+        }
+
+        // Show join room modal
+        function showJoinRoomModal() {
+            document.getElementById('joinRoomModal').style.display = 'flex';
+            document.getElementById('joinRoomPassword').value = '';
+        }
+
+        // Hide join room modal
+        function hideJoinRoomModal() {
+            document.getElementById('joinRoomModal').style.display = 'none';
+        }
+
+        // Confirm join room
+        async function confirmJoinRoom() {
+            if (!selectedRoomId) return;
+            
+            const room = rooms.find(r => r.id === selectedRoomId);
+            if (!room) return;
+            
+            try {
+                showLoading('joinRoomLoading', true);
+                hideError('joinRoomError');
+                
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/rooms/join', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        room_id: selectedRoomId,
+                        password: document.getElementById('joinRoomPassword').value || null
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    hideJoinRoomModal();
+                    // Redirect to game room
+                    window.location.href = `/room/${selectedRoomId}`;
+                } else {
+                    showError('joinRoomError', data.message || 'Ошибка присоединения к комнате');
+                }
+            } catch (error) {
+                showError('joinRoomError', 'Ошибка соединения с сервером');
+                console.error('Join room error:', error);
+            } finally {
+                showLoading('joinRoomLoading', false);
+            }
+        }
+
+        // Quick join
+        async function quickJoin() {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/rooms/quick-join', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    window.location.href = `/room/${data.room_id}`;
+                } else {
+                    showError('createRoomError', data.message || 'Нет доступных комнат для быстрого присоединения');
+                }
+            } catch (error) {
+                showError('createRoomError', 'Ошибка соединения с сервером');
+                console.error('Quick join error:', error);
+            }
+        }
+
+        // Refresh rooms
+        function refreshRooms() {
+            loadRooms();
+        }
+
+        // Logout
+        function logout() {
+            if (confirm('Вы уверены, что хотите выйти?')) {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
+                window.location.href = '/auth';
+            }
+        }
+
+        // Utility functions
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        function hideError(elementId) {
+            document.getElementById(elementId).style.display = 'none';
+        }
+
+        function showLoading(elementId, show) {
+            document.getElementById(elementId).style.display = show ? 'block' : 'none';
+        }
+
+        function showSuccess(message) {
+            // Simple success notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(16, 185, 129, 0.9);
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                z-index: 2000;
+                font-weight: 600;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

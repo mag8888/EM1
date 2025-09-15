@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Комната - Энергия денег</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0c1445 100%);
+            color: white;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-info h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .room-info p {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .room-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+
+        .game-area {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .waiting-message {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .waiting-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .waiting-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .waiting-text {
+            font-size: 16px;
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+
+        .ready-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ready-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .ready-btn.ready {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .players-panel {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .players-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .player-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .player-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 2px;
+        }
+
+        .player-profession {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .player-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-ready {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-waiting {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .room-settings {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .setting-label {
+            color: #94a3b8;
+        }
+
+        .setting-value {
+            color: white;
+            font-weight: 600;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #10b981;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .room-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                order: -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="room-info">
+                <h1 id="roomName">Загрузка...</h1>
+                <p id="roomStatus">Подключение к комнате...</p>
+            </div>
+            <button class="back-btn" onclick="goBack()">← Назад в лобби</button>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message" id="errorMessage"></div>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div>Загрузка комнаты...</div>
+        </div>
+
+        <!-- Room Content -->
+        <div class="room-content" id="roomContent" style="display: none;">
+            <!-- Game Area -->
+            <div class="game-area">
+                <div class="waiting-message">
+                    <div class="waiting-icon">🎲</div>
+                    <div class="waiting-title">Ожидание игроков</div>
+                    <div class="waiting-text">
+                        Игра начнется, когда все игроки будут готовы
+                    </div>
+                    <button class="ready-btn" id="readyBtn" onclick="toggleReady()">
+                        Готов к игре
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Players Panel -->
+                <div class="players-panel">
+                    <div class="panel-title">Игроки (<span id="playersCount">0</span>/<span id="maxPlayers">0</span>)</div>
+                    <div class="players-list" id="playersList">
+                        <!-- Players will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Room Settings -->
+                <div class="room-settings">
+                    <div class="panel-title">Настройки комнаты</div>
+                    <div class="setting-item">
+                        <span class="setting-label">Время на ход:</span>
+                        <span class="setting-value" id="turnTime">2 мин</span>
+                    </div>
+                    <div class="setting-item">
+                        <span class="setting-label">Профессии:</span>
+                        <span class="setting-value" id="professionMode">Свободный выбор</span>
+                    </div>
+                    <div class="setting-item">
+                        <span class="setting-label">Создатель:</span>
+                        <span class="setting-value" id="creatorName">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let currentRoom = null;
+        let roomId = null;
+
+        // Initialize room
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+            getRoomIdFromURL();
+            if (roomId) {
+                loadRoomData();
+            }
+        });
+
+        // Check authentication status
+        function checkAuthStatus() {
+            const token = localStorage.getItem('authToken');
+            const user = localStorage.getItem('user');
+            
+            if (!token || !user) {
+                window.location.href = '/auth';
+                return;
+            }
+            
+            try {
+                currentUser = JSON.parse(user);
+            } catch (error) {
+                console.error('Error parsing user data:', error);
+                window.location.href = '/auth';
+            }
+        }
+
+        // Get room ID from URL
+        function getRoomIdFromURL() {
+            const pathParts = window.location.pathname.split('/');
+            roomId = pathParts[pathParts.length - 1];
+        }
+
+        // Load room data
+        async function loadRoomData() {
+            try {
+                showLoading(true);
+                
+                const token = localStorage.getItem('authToken');
+                const response = await fetch(`/api/rooms/${roomId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentRoom = data;
+                    renderRoom();
+                } else {
+                    showError(data.message || 'Ошибка загрузки комнаты');
+                    setTimeout(() => {
+                        window.location.href = '/lobby';
+                    }, 3000);
+                }
+            } catch (error) {
+                showError('Ошибка соединения с сервером');
+                console.error('Load room error:', error);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Render room
+        function renderRoom() {
+            if (!currentRoom) return;
+            
+            // Update header
+            document.getElementById('roomName').textContent = currentRoom.name;
+            document.getElementById('roomStatus').textContent = currentRoom.game_started ? 'Игра идет' : 'Ожидание игроков';
+            
+            // Update room settings
+            document.getElementById('turnTime').textContent = `${currentRoom.turn_time} мин`;
+            document.getElementById('professionMode').textContent = currentRoom.assign_professions ? 'Назначены' : 'Свободный выбор';
+            document.getElementById('creatorName').textContent = currentRoom.creator_name;
+            
+            // Update players
+            document.getElementById('playersCount').textContent = currentRoom.players.length;
+            document.getElementById('maxPlayers').textContent = currentRoom.max_players;
+            
+            renderPlayers();
+            
+            // Show room content
+            document.getElementById('roomContent').style.display = 'grid';
+        }
+
+        // Render players list
+        function renderPlayers() {
+            const playersList = document.getElementById('playersList');
+            
+            playersList.innerHTML = currentRoom.players.map(player => {
+                const isCurrentUser = player.user_id === currentUser.id;
+                const isReady = player.is_ready;
+                
+                return `
+                    <div class="player-item ${isCurrentUser ? 'current-user' : ''}">
+                        <div class="player-avatar">${player.name.charAt(0)}</div>
+                        <div class="player-info">
+                            <div class="player-name">${player.name} ${isCurrentUser ? '(Вы)' : ''}</div>
+                            <div class="player-profession">${player.profession || 'Без профессии'}</div>
+                        </div>
+                        <div class="player-status ${isReady ? 'status-ready' : 'status-waiting'}">
+                            ${isReady ? 'Готов' : 'Ожидает'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Update ready button
+            const currentPlayer = currentRoom.players.find(p => p.user_id === currentUser.id);
+            const readyBtn = document.getElementById('readyBtn');
+            
+            if (currentPlayer) {
+                readyBtn.textContent = currentPlayer.is_ready ? 'Отменить готовность' : 'Готов к игре';
+                readyBtn.classList.toggle('ready', currentPlayer.is_ready);
+            }
+        }
+
+        // Toggle ready status
+        async function toggleReady() {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch(`/api/rooms/${roomId}/ready`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    loadRoomData(); // Reload room data
+                } else {
+                    showError(data.message || 'Ошибка обновления статуса');
+                }
+            } catch (error) {
+                showError('Ошибка соединения с сервером');
+                console.error('Toggle ready error:', error);
+            }
+        }
+
+        // Go back to lobby
+        function goBack() {
+            if (confirm('Вы уверены, что хотите покинуть комнату?')) {
+                leaveRoom();
+            }
+        }
+
+        // Leave room
+        async function leaveRoom() {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch(`/api/rooms/${roomId}/leave`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    window.location.href = '/lobby';
+                } else {
+                    showError(data.message || 'Ошибка выхода из комнаты');
+                }
+            } catch (error) {
+                showError('Ошибка соединения с сервером');
+                console.error('Leave room error:', error);
+            }
+        }
+
+        // Utility functions
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        // Refresh room data every 5 seconds
+        setInterval(() => {
+            if (roomId && currentRoom && !currentRoom.game_started) {
+                loadRoomData();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
