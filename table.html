@@ -3104,17 +3104,27 @@
                 const playerIndex = data.players.findIndex(p => p.user_id === user.id);
                 
                 if (playerIndex !== -1) {
+                    let newBalance = currentBalance; // Сохраняем текущий баланс по умолчанию
+                    
                     // Сначала пробуем новую структуру (game_data.player_balances)
                     if (data.game_data?.player_balances) {
-                        currentBalance = data.game_data.player_balances[playerIndex] || 0;
-                        console.log('Balance loaded from game_data.player_balances:', currentBalance, 'for player', playerIndex);
+                        newBalance = data.game_data.player_balances[playerIndex] || 0;
+                        console.log('Balance loaded from game_data.player_balances:', newBalance, 'for player', playerIndex);
                     } 
                     // Если нет, используем старую структуру (players[].balance)
                     else if (data.players[playerIndex]?.balance !== undefined) {
-                        currentBalance = data.players[playerIndex].balance;
-                        console.log('Balance loaded from players[].balance:', currentBalance, 'for player', playerIndex);
+                        newBalance = data.players[playerIndex].balance;
+                        console.log('Balance loaded from players[].balance:', newBalance, 'for player', playerIndex);
                     } else {
                         console.log('No balance data found, playerIndex:', playerIndex, 'player data:', data.players[playerIndex]);
+                    }
+                    
+                    // Обновляем баланс только если новый баланс больше текущего (пополнение) или если текущий баланс равен 0
+                    if (newBalance > currentBalance || currentBalance === 0) {
+                        currentBalance = newBalance;
+                        console.log('Balance updated to:', currentBalance);
+                    } else {
+                        console.log('Keeping current balance:', currentBalance, '(new:', newBalance, ')');
                     }
                 } else {
                     console.log('Player not found in room, user.id:', user.id, 'players:', data.players.map(p => p.user_id));
