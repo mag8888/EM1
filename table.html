@@ -1295,6 +1295,15 @@
             background: rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.2);
         }
+        
+        .modern-btn.credit {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+        
+        .modern-btn.credit:hover {
+            background: linear-gradient(135deg, #d97706, #b45309);
+        }
 
         .btn-icon {
             font-size: 16px;
@@ -2611,6 +2620,10 @@
                                     <span class="btn-icon">🔄</span>
                                     Сбросить
                                 </button>
+                                <button class="modern-btn credit" onclick="openCreditModal()">
+                                    <span class="btn-icon">💳</span>
+                                    Кредит
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -2967,6 +2980,10 @@
                 
                 if (playerIndex !== -1 && data.game_data?.player_balances) {
                     currentBalance = data.game_data.player_balances[playerIndex] || 0;
+                    console.log(`Loaded balance for player ${playerIndex} (${user.name}): $${currentBalance}`);
+                } else {
+                    console.log('Player not found or no balance data');
+                    currentBalance = 0;
                 }
                 
                 // Обновляем историю переводов
@@ -2975,7 +2992,7 @@
                 }
                 
                 // Загружаем финансовые данные только если это нужно
-                if (typeof loadFinancialData === 'function') {
+                if (typeof loadFinancialData === 'function' && playerIndex !== -1) {
                     await loadFinancialData(roomId, playerIndex);
                 }
                 
@@ -3931,6 +3948,9 @@
                 // Загружаем актуальные данные
                 await loadBankData();
                 
+                // Принудительно обновляем баланс из истории переводов
+                updateBalanceFromHistory();
+                
                 // Открываем модальное окно
                 const bankModal = document.getElementById('bankModal');
                 if (bankModal) {
@@ -4141,9 +4161,28 @@
                     totalExpenses = data.expenses || 0;
                     monthlyIncome = data.cashFlow || 0;
                     currentCredit = data.totalCredits || 0;
+                    
+                    console.log('Financial data loaded:', {
+                        totalIncome,
+                        totalExpenses,
+                        monthlyIncome,
+                        currentCredit
+                    });
+                } else {
+                    console.log('Failed to load financial data, using defaults');
+                    // Используем значения по умолчанию
+                    totalIncome = 0;
+                    totalExpenses = 0;
+                    monthlyIncome = 0;
+                    currentCredit = 0;
                 }
             } catch (error) {
                 console.error('Error loading financial data:', error);
+                // Используем значения по умолчанию при ошибке
+                totalIncome = 0;
+                totalExpenses = 0;
+                monthlyIncome = 0;
+                currentCredit = 0;
             }
         }
         
@@ -4659,6 +4698,41 @@
         function getRoomIdFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get('room');
+        }
+        
+        // Функция открытия модального окна кредита
+        function openCreditModal() {
+            showNotification('Функция кредита в разработке', 'info');
+        }
+        
+        // Функция обновления баланса из истории переводов
+        function updateBalanceFromHistory() {
+            try {
+                const user = JSON.parse(localStorage.getItem('user'));
+                if (!user) return;
+                
+                let calculatedBalance = 0;
+                
+                // Проходим по истории переводов и рассчитываем баланс
+                transfersHistory.forEach(transfer => {
+                    if (transfer.sender === user.name) {
+                        // Исходящий перевод - уменьшаем баланс
+                        calculatedBalance -= transfer.amount;
+                    } else if (transfer.recipient === user.name) {
+                        // Входящий перевод - увеличиваем баланс
+                        calculatedBalance += transfer.amount;
+                    }
+                });
+                
+                // Если рассчитанный баланс больше текущего, обновляем
+                if (calculatedBalance > currentBalance) {
+                    currentBalance = calculatedBalance;
+                    console.log(`Updated balance from history: $${currentBalance}`);
+                }
+                
+            } catch (error) {
+                console.error('Error updating balance from history:', error);
+            }
         }
 
         async function loadPlayerProfileData(playerIndex) {
