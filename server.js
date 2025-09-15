@@ -712,6 +712,7 @@ app.get('/api/rooms/:id', async (req, res) => {
         res.json({
             id: room._id,
             name: room.name,
+            creator_id: room.creator_id._id,
             creator_name: `${room.creator_id.first_name} ${room.creator_id.last_name}`,
             creator_profession: room.creator_profession,
             assign_professions: room.assign_professions,
