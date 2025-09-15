@@ -890,8 +890,11 @@ app.post('/api/rooms/:id/start', async (req, res) => {
         room.updated_at = new Date();
         
         console.log('Starting game with turn_time:', room.turn_time, 'type:', typeof room.turn_time);
+        console.log('Game start time set to:', room.game_start_time);
         
         await room.save();
+        
+        console.log('Room saved successfully, ID:', room._id);
         
         res.json({ message: 'Игра началась!' });
     } catch (error) {
@@ -1128,14 +1131,35 @@ async function cleanupOldRooms() {
         const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
         
         // Удаляем комнаты, где игра началась более 6 часов назад
+        // ИЛИ комнаты без игроков старше 1 часа
+        const oneHourAgo = new Date(Date.now() - 1 * 60 * 60 * 1000);
+        
         const result = await Room.deleteMany({
-            game_started: true,
-            game_start_time: { $lt: sixHoursAgo }
+            $or: [
+                // Игра началась более 6 часов назад
+                {
+                    game_started: true,
+                    game_start_time: { $lt: sixHoursAgo }
+                },
+                // Комната без игроков старше 1 часа (игра не началась)
+                {
+                    game_started: false,
+                    players: { $size: 0 },
+                    created_at: { $lt: oneHourAgo }
+                }
+            ]
         });
         
         if (result.deletedCount > 0) {
-            console.log(`Cleaned up ${result.deletedCount} old rooms (older than 6 hours)`);
+            console.log(`Cleaned up ${result.deletedCount} old rooms`);
         }
+        
+        // Отладочная информация
+        const totalRooms = await Room.countDocuments();
+        const activeGames = await Room.countDocuments({ game_started: true });
+        const emptyRooms = await Room.countDocuments({ players: { $size: 0 } });
+        
+        console.log(`Room stats: Total=${totalRooms}, Active games=${activeGames}, Empty=${emptyRooms}`);
     } catch (error) {
         console.error('Error cleaning up old rooms:', error);
     }
@@ -1144,8 +1168,8 @@ async function cleanupOldRooms() {
 // Запускаем очистку каждые 30 минут
 setInterval(cleanupOldRooms, 30 * 60 * 1000);
 
-// Запускаем очистку при старте сервера
-cleanupOldRooms();
+// Запускаем очистку при старте сервера (отключено для отладки)
+// cleanupOldRooms();
 
 // API для ручной очистки старых комнат
 app.post('/api/admin/cleanup-rooms', async (req, res) => {
