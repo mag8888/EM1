@@ -102,6 +102,7 @@ const roomSchema = new mongoose.Schema({
         selected_dream: { type: Number, default: null }
     }],
     game_started: { type: Boolean, default: false },
+    game_start_time: { type: Date, default: null }, // Время начала игры
     current_player: { type: Number, default: 0 },
     game_data: {
         board_state: { type: mongoose.Schema.Types.Mixed, default: {} },
@@ -722,6 +723,7 @@ app.get('/api/rooms/:id', async (req, res) => {
             turn_time: room.turn_time,
             players: room.players,
             game_started: room.game_started,
+            game_start_time: room.game_start_time,
             current_player: room.current_player,
             game_data: room.game_data,
             created_at: room.created_at
@@ -796,20 +798,9 @@ app.post('/api/rooms/:id/leave', async (req, res) => {
         room.players = room.players.filter(p => p.user_id.toString() !== user_id);
         room.updated_at = new Date();
         
-        // If room is empty, delete it (but not if game is started)
-        if (room.players.length === 0) {
-            if (room.game_started) {
-                // Don't delete room if game is in progress
-                console.log('Room not deleted - game is in progress:', req.params.id);
-                res.json({ message: 'Игрок покинул комнату, но игра продолжается' });
-            } else {
-                await Room.findByIdAndDelete(req.params.id);
-                res.json({ message: 'Комната удалена' });
-            }
-        } else {
-            await room.save();
-            res.json({ message: 'Вы покинули комнату' });
-        }
+        // Save room without deleting it
+        await room.save();
+        res.json({ message: 'Вы покинули комнату' });
     } catch (error) {
         console.error('Leave room error:', error);
         res.status(500).json({ message: 'Ошибка сервера при выходе из комнаты' });
@@ -888,6 +879,7 @@ app.post('/api/rooms/:id/start', async (req, res) => {
         
         // Start the game
         room.game_started = true;
+        room.game_start_time = new Date(); // Время начала игры
         room.current_player = 0;
         room.turn_start_time = new Date(); // Время начала хода
         room.game_data = {
@@ -1130,7 +1122,44 @@ app.post('/api/rooms/:id/next-turn', async (req, res) => {
     }
 });
 
+// Функция для очистки старых комнат (старше 6 часов)
+async function cleanupOldRooms() {
+    try {
+        const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
+        
+        // Удаляем комнаты, где игра началась более 6 часов назад
+        const result = await Room.deleteMany({
+            game_started: true,
+            game_start_time: { $lt: sixHoursAgo }
+        });
+        
+        if (result.deletedCount > 0) {
+            console.log(`Cleaned up ${result.deletedCount} old rooms (older than 6 hours)`);
+        }
+    } catch (error) {
+        console.error('Error cleaning up old rooms:', error);
+    }
+}
+
+// Запускаем очистку каждые 30 минут
+setInterval(cleanupOldRooms, 30 * 60 * 1000);
+
+// Запускаем очистку при старте сервера
+cleanupOldRooms();
+
+// API для ручной очистки старых комнат
+app.post('/api/admin/cleanup-rooms', async (req, res) => {
+    try {
+        await cleanupOldRooms();
+        res.json({ message: 'Очистка комнат выполнена' });
+    } catch (error) {
+        console.error('Manual cleanup error:', error);
+        res.status(500).json({ message: 'Ошибка при очистке комнат' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`MongoDB URI: ${MONGODB_URI}`);
+    console.log('Room cleanup scheduled every 30 minutes');
 });
