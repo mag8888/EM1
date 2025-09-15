@@ -2929,13 +2929,13 @@
             createOuterTrack();
             createInnerTrack();
             initializePlayerTokens(); // Инициализируем фишки игроков
-            loadGameData(); // Загружаем данные игры с сервера
+            loadBankData(); // Загружаем данные игры с сервера
             loadTurnInfo(); // Загружаем информацию о ходе
             startTimer();
             updateCurrentPlayer();
             
             // Запускаем периодическое обновление данных
-            setInterval(loadGameData, 5000); // Обновляем каждые 5 секунд
+            setInterval(loadBankData, 5000); // Обновляем каждые 5 секунд
             setInterval(loadTurnInfo, 1000); // Обновляем информацию о ходе каждую секунду
         }
 
@@ -2944,18 +2944,25 @@
             try {
                 const roomId = getRoomIdFromURL();
                 if (!roomId) {
-                    throw new Error('Room ID not found');
+                    console.log('Room ID not found, skipping bank data load');
+                    return;
                 }
                 
-                const response = await fetch(`/api/rooms/${roomId}`);
+                const user = JSON.parse(localStorage.getItem('user'));
+                if (!user) {
+                    console.log('User not found, skipping bank data load');
+                    return;
+                }
+                
+                const response = await fetch(`/api/rooms/${roomId}?user_id=${user.id}`);
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    console.log(`Failed to load room data: HTTP ${response.status}`);
+                    return;
                 }
                 
                 const data = await response.json();
                 
                 // Обновляем баланс
-                const user = JSON.parse(localStorage.getItem('user'));
                 const playerIndex = data.players.findIndex(p => p.id === user.id);
                 
                 if (playerIndex !== -1 && data.game_data?.player_balances) {
@@ -2967,14 +2974,16 @@
                     transfersHistory = data.game_data.transfers_history;
                 }
                 
-                // Загружаем финансовые данные
-                await loadFinancialData(roomId, playerIndex);
+                // Загружаем финансовые данные только если это нужно
+                if (typeof loadFinancialData === 'function') {
+                    await loadFinancialData(roomId, playerIndex);
+                }
                 
                 lastUpdateTime = Date.now();
                 
             } catch (error) {
                 console.error('Error loading bank data:', error);
-                throw error;
+                // Не выбрасываем ошибку, чтобы не ломать игру
             }
         }
         // Загрузка информации о ходе с сервера
@@ -3924,12 +3933,14 @@
                 
                 // Открываем модальное окно
                 const bankModal = document.getElementById('bankModal');
-                bankModal.style.display = 'flex';
-                
-                // Анимация появления
-                setTimeout(() => {
-                    bankModal.classList.add('modal-show');
-                }, 10);
+                if (bankModal) {
+                    bankModal.style.display = 'flex';
+                    
+                    // Анимация появления
+                    setTimeout(() => {
+                        bankModal.classList.add('modal-show');
+                    }, 10);
+                }
                 
                 // Загружаем список получателей
                 await loadRecipients();
@@ -4197,29 +4208,45 @@
         async function loadRecipients() {
             try {
                 const roomId = getRoomIdFromURL();
-                if (!roomId) return;
+                if (!roomId) {
+                    console.log('Room ID not found for recipients');
+                    return;
+                }
                 
-                const response = await fetch(`/api/rooms/${roomId}`);
-                if (!response.ok) return;
+                const user = JSON.parse(localStorage.getItem('user'));
+                if (!user) {
+                    console.log('User not found for recipients');
+                    return;
+                }
+                
+                const response = await fetch(`/api/rooms/${roomId}?user_id=${user.id}`);
+                if (!response.ok) {
+                    console.log(`Failed to load recipients: HTTP ${response.status}`);
+                    return;
+                }
                 
                 const data = await response.json();
-                const user = JSON.parse(localStorage.getItem('user'));
                 
                 const recipientSelect = document.getElementById('recipientSelect');
-                if (!recipientSelect) return;
+                if (!recipientSelect) {
+                    console.log('Recipient select not found');
+                    return;
+                }
                 
                 // Очищаем список
                 recipientSelect.innerHTML = '<option value="">Выберите игрока...</option>';
                 
                 // Добавляем игроков
-                data.players.forEach((player, index) => {
-                    if (player.id !== user.id) {
-                        const option = document.createElement('option');
-                        option.value = index;
-                        option.textContent = player.name || `Игрок ${index + 1}`;
-                        recipientSelect.appendChild(option);
-                    }
-                });
+                if (data.players) {
+                    data.players.forEach((player, index) => {
+                        if (player.id !== user.id) {
+                            const option = document.createElement('option');
+                            option.value = index;
+                            option.textContent = player.name || `Игрок ${index + 1}`;
+                            recipientSelect.appendChild(option);
+                        }
+                    });
+                }
                 
             } catch (error) {
                 console.error('Error loading recipients:', error);
