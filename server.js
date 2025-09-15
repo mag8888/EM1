@@ -969,25 +969,30 @@ app.post('/api/rooms/:id/start', async (req, res) => {
                 currentCredit: 0,
                 maxCredit: 10000
             })),
+            player_professions: Array.from({ length: room.players.length }, () => ({
+                name: 'Предприниматель',
+                description: 'Владелец успешного бизнеса',
+                salary: 10000,
+                expenses: 6200,
+                cashFlow: 3800,
+                taxes: 1300,
+                otherExpenses: 1500,
+                carLoan: 700,
+                carLoanPrincipal: 14000,
+                eduLoan: 500,
+                eduLoanPrincipal: 10000,
+                mortgage: 1200,
+                mortgagePrincipal: 240000,
+                creditCards: 1000,
+                creditCardsPrincipal: 20000,
+                totalCredits: 284000
+            })),
             transfers_history: []
         };
 
-        // Начисляем стартовые сбережения 3000$ каждому игроку
+        // Инициализируем балансы игроков нулевыми значениями
         for (let i = 0; i < room.players.length; i++) {
-            room.game_data.player_balances[i] = 3000;
-            
-            // Добавляем запись в историю переводов
-            const savingsTransfer = {
-                sender: 'Банк',
-                recipient: room.players[i].name || `Игрок ${i + 1}`,
-                amount: 3000,
-                timestamp: new Date(),
-                sender_index: -1, // -1 означает банк
-                recipient_index: i,
-                type: 'savings',
-                description: 'Стартовые сбережения'
-            };
-            room.game_data.transfers_history.push(savingsTransfer);
+            room.game_data.player_balances[i] = 0;
         }
         room.updated_at = new Date();
         
@@ -1090,22 +1095,9 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
                 transfers_history: []
             };
 
-            // Начисляем стартовые сбережения 3000$ каждому игроку
+            // Инициализируем балансы игроков нулевыми значениями
             for (let i = 0; i < room.players.length; i++) {
-                room.game_data.player_balances[i] = 3000;
-                
-                // Добавляем запись в историю переводов
-                const savingsTransfer = {
-                    sender: 'Банк',
-                    recipient: room.players[i].name || `Игрок ${i + 1}`,
-                    amount: 3000,
-                    timestamp: new Date(),
-                    sender_index: -1, // -1 означает банк
-                    recipient_index: i,
-                    type: 'savings',
-                    description: 'Стартовые сбережения'
-                };
-                room.game_data.transfers_history.push(savingsTransfer);
+                room.game_data.player_balances[i] = 0;
             }
         }
         
@@ -1204,6 +1196,45 @@ app.get('/lobby', (req, res) => {
 
 app.get('/room/:id', (req, res) => {
     res.sendFile(path.join(__dirname, 'room.html'));
+});
+
+// Get player profession data
+app.get('/api/rooms/:id/player/:playerIndex/profession', async (req, res) => {
+    try {
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+
+        const playerIndex = parseInt(req.params.playerIndex);
+        if (playerIndex < 0 || playerIndex >= room.players.length) {
+            return res.status(400).json({ message: 'Неверный индекс игрока' });
+        }
+
+        const professionData = room.game_data?.player_professions?.[playerIndex] || {
+            name: 'Предприниматель',
+            description: 'Владелец успешного бизнеса',
+            salary: 10000,
+            expenses: 6200,
+            cashFlow: 3800,
+            taxes: 1300,
+            otherExpenses: 1500,
+            carLoan: 700,
+            carLoanPrincipal: 14000,
+            eduLoan: 500,
+            eduLoanPrincipal: 10000,
+            mortgage: 1200,
+            mortgagePrincipal: 240000,
+            creditCards: 1000,
+            creditCardsPrincipal: 20000,
+            totalCredits: 284000
+        };
+
+        res.json(professionData);
+    } catch (error) {
+        console.error('Error getting player profession:', error);
+        res.status(500).json({ message: 'Ошибка сервера' });
+    }
 });
 
 // Запуск сервера

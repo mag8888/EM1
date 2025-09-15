@@ -1422,6 +1422,226 @@
             color: #10b981;
         }
 
+        /* Стили для карточки игрока */
+        .player-profile-modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .player-profile-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        .player-profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 32px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .player-profile-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .player-profile-icon {
+            font-size: 32px;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border-radius: 12px;
+            color: white;
+        }
+
+        .player-profile-title h2 {
+            color: #1f2937;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .player-profile-title span {
+            color: #6b7280;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .player-profile-body {
+            padding: 32px;
+        }
+
+        .player-financial-summary {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .financial-box {
+            flex: 1;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .financial-box.salary {
+            background: #dbeafe;
+        }
+
+        .financial-box.expenses {
+            background: #fed7aa;
+        }
+
+        .financial-box.cashflow {
+            background: #dcfce7;
+            flex: 2;
+        }
+
+        .financial-amount {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .financial-box.salary .financial-amount {
+            color: #10b981;
+        }
+
+        .financial-box.expenses .financial-amount {
+            color: #f59e0b;
+        }
+
+        .financial-box.cashflow .financial-amount {
+            color: #10b981;
+        }
+
+        .financial-label {
+            color: #6b7280;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .player-expenses-details {
+            margin-bottom: 24px;
+        }
+
+        .expense-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .expense-item:last-child {
+            border-bottom: none;
+        }
+
+        .expense-label {
+            color: #374151;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .expense-amount {
+            color: #1f2937;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .expense-principal {
+            color: #8b5cf6;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .player-total-credits {
+            margin-bottom: 32px;
+        }
+
+        .total-credits-line {
+            height: 2px;
+            background: #e5e7eb;
+            margin-bottom: 16px;
+        }
+
+        .total-credits-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .total-credits-label {
+            color: #1f2937;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .total-credits-amount {
+            color: #1f2937;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .player-profile-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .profile-btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .profile-btn.business {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .profile-btn.business:hover {
+            background: #d97706;
+        }
+
+        .profile-btn.complex {
+            background: #ef4444;
+            color: white;
+        }
+
+        .profile-btn.complex:hover {
+            background: #dc2626;
+        }
+
         /* Стили для модального окна кредитов */
         .credit-modal {
             display: none;
@@ -2251,6 +2471,93 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно карточки игрока -->
+    <div class="player-profile-modal" id="playerProfileModal" onclick="closePlayerProfileModalOnBackdrop(event)">
+        <div class="player-profile-content" onclick="event.stopPropagation()">
+            <div class="player-profile-header">
+                <div class="player-profile-left">
+                    <div class="player-profile-icon">🚀</div>
+                    <div class="player-profile-title">
+                        <h2 id="playerProfessionName">Предприниматель</h2>
+                        <span id="playerProfessionDesc">Владелец успешного бизнеса</span>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closePlayerProfileModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+
+            <div class="player-profile-body">
+                <!-- Финансовая сводка -->
+                <div class="player-financial-summary">
+                    <div class="financial-box salary">
+                        <div class="financial-amount" id="playerSalary">$10,000</div>
+                        <div class="financial-label">Зарплата</div>
+                    </div>
+                    <div class="financial-box expenses">
+                        <div class="financial-amount" id="playerExpenses">$6,200</div>
+                        <div class="financial-label">Расходы</div>
+                    </div>
+                    <div class="financial-box cashflow">
+                        <div class="financial-amount" id="playerCashFlow">$3,800</div>
+                        <div class="financial-label">Денежный поток</div>
+                    </div>
+                </div>
+
+                <!-- Детальные расходы и кредиты -->
+                <div class="player-expenses-details">
+                    <div class="expense-item">
+                        <span class="expense-label">Налоги:</span>
+                        <span class="expense-amount" id="playerTaxes">$1,300 (13%)</span>
+                    </div>
+                    <div class="expense-item">
+                        <span class="expense-label">Прочие расходы:</span>
+                        <span class="expense-amount" id="playerOtherExpenses">$1,500</span>
+                    </div>
+                    <div class="expense-item">
+                        <span class="expense-label">Кредит на авто:</span>
+                        <span class="expense-amount" id="playerCarLoan">$700</span>
+                        <span class="expense-principal" id="playerCarLoanPrincipal">$14,000 (тело)</span>
+                    </div>
+                    <div class="expense-item">
+                        <span class="expense-label">Образовательный кредит:</span>
+                        <span class="expense-amount" id="playerEduLoan">$500</span>
+                        <span class="expense-principal" id="playerEduLoanPrincipal">$10,000 (тело)</span>
+                    </div>
+                    <div class="expense-item">
+                        <span class="expense-label">Ипотека:</span>
+                        <span class="expense-amount" id="playerMortgage">$1,200</span>
+                        <span class="expense-principal" id="playerMortgagePrincipal">$240,000 (тело)</span>
+                    </div>
+                    <div class="expense-item">
+                        <span class="expense-label">Кредитные карты:</span>
+                        <span class="expense-amount" id="playerCreditCards">$1,000</span>
+                        <span class="expense-principal" id="playerCreditCardsPrincipal">$20,000 (тело)</span>
+                    </div>
+                </div>
+
+                <!-- Итого кредитов -->
+                <div class="player-total-credits">
+                    <div class="total-credits-line"></div>
+                    <div class="total-credits-item">
+                        <span class="total-credits-label">Итого тело кредитов</span>
+                        <span class="total-credits-amount" id="playerTotalCredits">$284,000</span>
+                    </div>
+                </div>
+
+                <!-- Кнопки действий -->
+                <div class="player-profile-actions">
+                    <button class="profile-btn business" onclick="openBusinessModal()">
+                        Business
+                    </button>
+                    <button class="profile-btn complex" onclick="openComplexModal()">
+                        Сложный
+                    </button>
                 </div>
             </div>
         </div>
@@ -3442,64 +3749,7 @@
 
         // Профиль игрока (модалка)
         function openPlayerProfile(index, playerData) {
-            try {
-                const modal = document.createElement('div');
-                modal.className = 'bank-modal';
-                modal.onclick = () => document.body.removeChild(modal);
-                
-                const card = document.createElement('div');
-                card.className = 'modal-content bank-modal-content';
-                card.onclick = (e) => e.stopPropagation();
-                
-                const finance = playerData.profession_data || {};
-                const salary = finance.salary || 10000;
-                const expenses = finance.expenses || 6200;
-                const cashFlow = finance.cash_flow || (salary - expenses);
-                const debts = Array.isArray(finance.debts) ? finance.debts : [];
-                const totalPrincipal = debts.reduce((sum, d) => sum + (d.principal || 0), 0);
-                
-                card.innerHTML = `
-                    <div class="modal-header">
-                        <div class="header-left">
-                            <span class="bank-icon">🧾</span>
-                            <h3>${playerData.name} — ${playerData.profession || 'Предприниматель'}</h3>
-                        </div>
-                        <span class="close" onclick="this.closest('.bank-modal').remove()">&times;</span>
-                    </div>
-                    <div class="modal-body" style="padding: 24px;">
-                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">
-                            <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:16px;">
-                                <div style="color:#a7f3d0;font-weight:700;">$${salary.toLocaleString()}</div>
-                                <div style="color:#94a3b8;">Зарплата</div>
-                            </div>
-                            <div style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:12px;padding:16px;">
-                                <div style="color:#fcd34d;font-weight:700;">$${expenses.toLocaleString()}</div>
-                                <div style="color:#94a3b8;">Расходы</div>
-                            </div>
-                            <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.4);border-radius:12px;padding:16px;">
-                                <div style="color:#10b981;font-weight:800;">$${cashFlow.toLocaleString()}</div>
-                                <div style="color:#94a3b8;">Денежный поток</div>
-                            </div>
-                        </div>
-                        <div style="margin-top:20px;">
-                            ${debts.length ? debts.map(d => `
-                                <div style="display:flex;justify-content:space-between;color:#e5e7eb;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.1)">
-                                    <div>${d.name || 'Платеж'}: $${(d.monthly_payment||0).toLocaleString()}</div>
-                                    <div style="color:#a78bfa">$${(d.principal||0).toLocaleString()} (тело)</div>
-                                </div>
-                            `).join('') : '<div style="color:#94a3b8;">Долгов нет</div>'}
-                            <div style="display:flex;justify-content:space-between;margin-top:8px;font-weight:700;color:#e5e7eb;">
-                                <div>Итого тело кредитов</div>
-                                <div>$${totalPrincipal.toLocaleString()}</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                modal.appendChild(card);
-                document.body.appendChild(modal);
-            } catch (e) {
-                console.error('openPlayerProfile error:', e);
-            }
+            openPlayerProfileModal(index);
         }
 
         async function openBank() {
@@ -3687,7 +3937,27 @@
             }
         }
 
-        function updateBankData() {
+        async function updateBankData() {
+            // Загружаем данные профессии для текущего игрока
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const roomId = urlParams.get('room');
+                
+                if (roomId) {
+                    const response = await fetch(`/api/rooms/${roomId}/player/${currentPlayer}/profession`);
+                    if (response.ok) {
+                        const professionData = await response.json();
+                        
+                        // Обновляем переменные данными из профессии
+                        totalIncome = professionData.salary || 0;
+                        totalExpenses = professionData.expenses || 0;
+                        monthlyIncome = professionData.cashFlow || 0;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading profession data for bank:', error);
+            }
+
             // Обновляем основной баланс в банке
             const bankBalance = document.getElementById('bankBalance');
             if (bankBalance) {
@@ -3907,6 +4177,114 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        // Функции для карточки игрока
+        function openPlayerProfileModal(playerIndex = 0) {
+            const modal = document.getElementById('playerProfileModal');
+            if (!modal) return;
+            
+            // Загружаем данные игрока
+            loadPlayerProfileData(playerIndex);
+            
+            modal.style.display = 'flex';
+        }
+
+        function closePlayerProfileModal() {
+            const modal = document.getElementById('playerProfileModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function closePlayerProfileModalOnBackdrop(event) {
+            if (event.target === event.currentTarget) {
+                closePlayerProfileModal();
+            }
+        }
+
+        async function loadPlayerProfileData(playerIndex) {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const roomId = urlParams.get('room');
+                
+                if (!roomId) {
+                    console.error('Room ID not found in URL');
+                    return;
+                }
+
+                const response = await fetch(`/api/rooms/${roomId}/player/${playerIndex}/profession`);
+                if (!response.ok) {
+                    throw new Error('Failed to load profession data');
+                }
+
+                const professionData = await response.json();
+
+                // Обновляем элементы карточки
+                document.getElementById('playerProfessionName').textContent = professionData.name;
+                document.getElementById('playerProfessionDesc').textContent = professionData.description;
+                document.getElementById('playerSalary').textContent = `$${professionData.salary.toLocaleString()}`;
+                document.getElementById('playerExpenses').textContent = `$${professionData.expenses.toLocaleString()}`;
+                document.getElementById('playerCashFlow').textContent = `$${professionData.cashFlow.toLocaleString()}`;
+                document.getElementById('playerTaxes').textContent = `$${professionData.taxes.toLocaleString()} (13%)`;
+                document.getElementById('playerOtherExpenses').textContent = `$${professionData.otherExpenses.toLocaleString()}`;
+                document.getElementById('playerCarLoan').textContent = `$${professionData.carLoan.toLocaleString()}`;
+                document.getElementById('playerCarLoanPrincipal').textContent = `$${professionData.carLoanPrincipal.toLocaleString()} (тело)`;
+                document.getElementById('playerEduLoan').textContent = `$${professionData.eduLoan.toLocaleString()}`;
+                document.getElementById('playerEduLoanPrincipal').textContent = `$${professionData.eduLoanPrincipal.toLocaleString()} (тело)`;
+                document.getElementById('playerMortgage').textContent = `$${professionData.mortgage.toLocaleString()}`;
+                document.getElementById('playerMortgagePrincipal').textContent = `$${professionData.mortgagePrincipal.toLocaleString()} (тело)`;
+                document.getElementById('playerCreditCards').textContent = `$${professionData.creditCards.toLocaleString()}`;
+                document.getElementById('playerCreditCardsPrincipal').textContent = `$${professionData.creditCardsPrincipal.toLocaleString()} (тело)`;
+                document.getElementById('playerTotalCredits').textContent = `$${professionData.totalCredits.toLocaleString()}`;
+            } catch (error) {
+                console.error('Error loading player profile data:', error);
+                // Fallback to default data
+                const professionData = {
+                    name: 'Предприниматель',
+                    description: 'Владелец успешного бизнеса',
+                    salary: 10000,
+                    expenses: 6200,
+                    cashFlow: 3800,
+                    taxes: 1300,
+                    otherExpenses: 1500,
+                    carLoan: 700,
+                    carLoanPrincipal: 14000,
+                    eduLoan: 500,
+                    eduLoanPrincipal: 10000,
+                    mortgage: 1200,
+                    mortgagePrincipal: 240000,
+                    creditCards: 1000,
+                    creditCardsPrincipal: 20000,
+                    totalCredits: 284000
+                };
+
+                // Обновляем элементы карточки с fallback данными
+                document.getElementById('playerProfessionName').textContent = professionData.name;
+                document.getElementById('playerProfessionDesc').textContent = professionData.description;
+                document.getElementById('playerSalary').textContent = `$${professionData.salary.toLocaleString()}`;
+                document.getElementById('playerExpenses').textContent = `$${professionData.expenses.toLocaleString()}`;
+                document.getElementById('playerCashFlow').textContent = `$${professionData.cashFlow.toLocaleString()}`;
+                document.getElementById('playerTaxes').textContent = `$${professionData.taxes.toLocaleString()} (13%)`;
+                document.getElementById('playerOtherExpenses').textContent = `$${professionData.otherExpenses.toLocaleString()}`;
+                document.getElementById('playerCarLoan').textContent = `$${professionData.carLoan.toLocaleString()}`;
+                document.getElementById('playerCarLoanPrincipal').textContent = `$${professionData.carLoanPrincipal.toLocaleString()} (тело)`;
+                document.getElementById('playerEduLoan').textContent = `$${professionData.eduLoan.toLocaleString()}`;
+                document.getElementById('playerEduLoanPrincipal').textContent = `$${professionData.eduLoanPrincipal.toLocaleString()} (тело)`;
+                document.getElementById('playerMortgage').textContent = `$${professionData.mortgage.toLocaleString()}`;
+                document.getElementById('playerMortgagePrincipal').textContent = `$${professionData.mortgagePrincipal.toLocaleString()} (тело)`;
+                document.getElementById('playerCreditCards').textContent = `$${professionData.creditCards.toLocaleString()}`;
+                document.getElementById('playerCreditCardsPrincipal').textContent = `$${professionData.creditCardsPrincipal.toLocaleString()} (тело)`;
+                document.getElementById('playerTotalCredits').textContent = `$${professionData.totalCredits.toLocaleString()}`;
+            }
+        }
+
+        function openBusinessModal() {
+            alert('Функция Business будет реализована позже');
+        }
+
+        function openComplexModal() {
+            alert('Функция Сложный будет реализована позже');
         }
 
         // Инициализация при загрузке страницы
