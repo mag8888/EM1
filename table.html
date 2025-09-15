@@ -3078,7 +3078,7 @@
         }
 
         // Загрузка данных игры с сервера
-        async function loadBankData() {
+        async function loadBankData(forceUpdate = false) {
             try {
                 const roomId = getRoomIdFromURL();
                 if (!roomId) {
@@ -3123,15 +3123,16 @@
                     // 1. Новый баланс больше текущего (пополнение)
                     // 2. Текущий баланс равен 0 (первая загрузка)
                     // 3. Прошло больше 5 секунд с последнего обновления (защита от сброса после переводов)
+                    // 4. Принудительное обновление (forceUpdate = true)
                     const now = Date.now();
                     const timeSinceLastUpdate = now - (window.lastBalanceUpdate || 0);
                     
-                    if (newBalance > currentBalance || currentBalance === 0 || timeSinceLastUpdate > 5000) {
+                    if (newBalance > currentBalance || currentBalance === 0 || timeSinceLastUpdate > 5000 || forceUpdate) {
                         currentBalance = newBalance;
                         window.lastBalanceUpdate = now;
-                        console.log('Balance updated to:', currentBalance, 'timeSinceLastUpdate:', timeSinceLastUpdate + 'ms');
+                        console.log('Balance updated to:', currentBalance, 'timeSinceLastUpdate:', timeSinceLastUpdate + 'ms', 'forceUpdate:', forceUpdate);
                     } else {
-                        console.log('Keeping current balance:', currentBalance, '(new:', newBalance, ')', 'timeSinceLastUpdate:', timeSinceLastUpdate + 'ms');
+                        console.log('Keeping current balance:', currentBalance, '(new:', newBalance, ')', 'timeSinceLastUpdate:', timeSinceLastUpdate + 'ms', 'forceUpdate:', forceUpdate);
                     }
                 } else {
                     console.log('Player not found in room, user.id:', user.id, 'players:', data.players.map(p => p.user_id));
@@ -4121,7 +4122,7 @@
                 showLoadingIndicator();
                 
                 // Загружаем актуальные данные
-                await loadBankData();
+                await loadBankData(true); // Принудительное обновление при открытии банка
                 
                 // Открываем модальное окно
                 const bankModal = document.getElementById('bankModal');
@@ -4585,7 +4586,7 @@
                     
                     // Принудительно перезагружаем данные с сервера с задержкой
                     setTimeout(async () => {
-                        await loadBankData();
+                        await loadBankData(true); // Принудительное обновление после перевода
                     }, 1000);
                     
                     // Обновляем UI
@@ -4900,7 +4901,7 @@
                     updateBankUI();
                     
                     // Перезагружаем данные профиля
-                    await loadBankData();
+                    await loadBankData(true); // Принудительное обновление после погашения кредита
                     
                 } else {
                     throw new Error(data.message || 'Ошибка при погашении кредита');
@@ -5010,7 +5011,7 @@
                 creditModal.style.display = 'flex';
                 
                 // Принудительно загружаем данные перед обновлением
-                loadBankData().then(() => {
+                loadBankData(true).then(() => { // Принудительное обновление при открытии кредита
                     console.log('Bank data loaded, updating credit modal...');
                     updateCreditModal();
                     
