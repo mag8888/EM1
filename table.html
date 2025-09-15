@@ -2049,6 +2049,14 @@
                                 gameTimer = data.remaining_seconds;
                                 maxTimer = data.turn_duration;
                                 
+                                console.log('Turn info received:', {
+                                    current_player: data.current_player,
+                                    remaining_seconds: data.remaining_seconds,
+                                    turn_duration: data.turn_duration,
+                                    gameTimer: gameTimer,
+                                    maxTimer: maxTimer
+                                });
+                                
                                 // Обновляем UI
                                 updateCurrentPlayer();
                                 updateTimerDisplay();
@@ -2584,14 +2592,16 @@
         function updateTimerDisplay() {
             const minutes = Math.floor(gameTimer / 60);
             const seconds = gameTimer % 60;
-            const percentage = (gameTimer / maxTimer) * 100;
+            const maxMinutes = Math.floor(maxTimer / 60);
+            const maxSeconds = maxTimer % 60;
+            const percentage = maxTimer > 0 ? (gameTimer / maxTimer) * 100 : 0;
             
             const timerFill = document.getElementById('timerFill');
             const timerText = document.getElementById('timerText');
             
             // Обновляем текст
             timerText.textContent = 
-                `${minutes}:${seconds.toString().padStart(2, '0')} / 2:00`;
+                `${minutes}:${seconds.toString().padStart(2, '0')} / ${maxMinutes}:${maxSeconds.toString().padStart(2, '0')}`;
             
             // Обновляем прогресс-бар
             timerFill.style.width = `${percentage}%`;
