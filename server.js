@@ -772,6 +772,12 @@ app.get('/api/rooms/:id', async (req, res) => {
             return res.status(403).json({ message: 'Вы не являетесь участником этой комнаты' });
         }
         
+        console.log('Returning room data:', {
+            id: room._id,
+            player_balances: room.game_data?.player_balances,
+            transfers_count: room.game_data?.transfers_history?.length || 0
+        });
+        
         res.json({
             id: room._id,
             name: room.name,
@@ -1169,9 +1175,13 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
         }
         room.game_data.transfers_history.unshift(transfer);
         
+        console.log('Saving room to database...');
         await room.save();
+        console.log('Room saved successfully');
         
         console.log('Transfer completed successfully');
+        console.log('Final balances after save:', room.game_data.player_balances);
+        
         res.json({ 
             message: 'Перевод выполнен успешно',
             new_balance: room.game_data.player_balances[senderIndex],
