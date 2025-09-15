@@ -3119,18 +3119,34 @@
                 const data = await response.json();
                 
                 // Обновляем баланс
-                const playerIndex = data.players.findIndex(p => p.id === user.id);
-                
                 console.log('=== LOADING BALANCE ===');
-                console.log('Player index:', playerIndex);
+                console.log('User:', user);
+                console.log('Players:', data.players);
                 console.log('Game data:', data.game_data);
                 console.log('Player balances:', data.game_data?.player_balances);
                 
+                // Пробуем разные способы поиска игрока
+                let playerIndex = data.players.findIndex(p => p.id === user.id);
+                console.log('Player index by id:', playerIndex);
+                
+                if (playerIndex === -1) {
+                    // Пробуем найти по имени
+                    playerIndex = data.players.findIndex(p => p.name === user.name);
+                    console.log('Player index by name:', playerIndex);
+                }
+                
+                if (playerIndex === -1) {
+                    // Пробуем найти по user_id
+                    playerIndex = data.players.findIndex(p => p.user_id === user.id);
+                    console.log('Player index by user_id:', playerIndex);
+                }
+                
                 if (playerIndex !== -1 && data.game_data?.player_balances) {
                     currentBalance = data.game_data.player_balances[playerIndex] || 0;
-                    console.log(`Loaded balance for player ${playerIndex} (${user.name}): $${currentBalance}`);
+                    console.log(`✅ Loaded balance for player ${playerIndex} (${user.name}): $${currentBalance}`);
                 } else {
-                    console.log('Player not found or no balance data');
+                    console.log('❌ Player not found or no balance data');
+                    console.log('Available players:', data.players.map(p => ({ id: p.id, name: p.name, user_id: p.user_id })));
                     currentBalance = 0;
                 }
                 
@@ -4316,6 +4332,8 @@
         // Bank functions removed - keeping design only
         async function loadFinancialData(roomId, playerIndex) {
             try {
+                console.log(`Loading financial data for player ${playerIndex} in room ${roomId}`);
+                
                 const response = await fetch(`/api/rooms/${roomId}/player/${playerIndex}/profession`);
                 if (response.ok) {
                     const data = await response.json();
@@ -4324,14 +4342,14 @@
                     monthlyIncome = data.cashFlow || 0;
                     currentCredit = data.totalCredits || 0;
                     
-                    console.log('Financial data loaded:', {
+                    console.log('✅ Financial data loaded:', {
                         totalIncome,
                         totalExpenses,
                         monthlyIncome,
                         currentCredit
                     });
                 } else {
-                    console.log('Failed to load financial data, using defaults');
+                    console.log('❌ Failed to load financial data, using defaults');
                     // Используем значения по умолчанию
                     totalIncome = 0;
                     totalExpenses = 0;
@@ -4452,13 +4470,23 @@
                 recipientSelect.innerHTML = '<option value="">Выберите игрока...</option>';
                 
                 // Добавляем игроков
+                console.log('Loading recipients:', data.players);
+                
                 if (data.players) {
                     data.players.forEach((player, index) => {
-                        if (player.id !== user.id) {
+                        // Исключаем текущего игрока по разным критериям
+                        const isCurrentPlayer = player.id === user.id || 
+                                              player.name === user.name || 
+                                              player.user_id === user.id;
+                                              
+                        if (!isCurrentPlayer) {
                             const option = document.createElement('option');
                             option.value = index;
                             option.textContent = player.name || `Игрок ${index + 1}`;
                             recipientSelect.appendChild(option);
+                            console.log(`Added recipient: ${player.name} (index: ${index})`);
+                        } else {
+                            console.log(`Skipped current player: ${player.name}`);
                         }
                     });
                 }
@@ -4979,11 +5007,20 @@
                 transfersHistory.forEach((transfer, index) => {
                     console.log(`Processing transfer ${index + 1}:`, transfer);
                     
-                    if (transfer.sender === user.name) {
+                    // Проверяем разные варианты имен
+                    const isOutgoing = transfer.sender === user.name || 
+                                     transfer.sender === user.id || 
+                                     transfer.sender_index === user.id;
+                                     
+                    const isIncoming = transfer.recipient === user.name || 
+                                     transfer.recipient === user.id || 
+                                     transfer.recipient_index === user.id;
+                    
+                    if (isOutgoing) {
                         // Исходящий перевод - уменьшаем баланс
                         calculatedBalance -= transfer.amount;
                         console.log(`Outgoing transfer: -$${transfer.amount}, new balance: $${calculatedBalance}`);
-                    } else if (transfer.recipient === user.name) {
+                    } else if (isIncoming) {
                         // Входящий перевод - увеличиваем баланс
                         calculatedBalance += transfer.amount;
                         console.log(`Incoming transfer: +$${transfer.amount}, new balance: $${calculatedBalance}`);
