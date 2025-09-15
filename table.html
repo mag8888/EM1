@@ -252,6 +252,12 @@
             z-index: 20;
             position: relative;
             overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .center-logo:hover {
+            transform: translate(-50%, -50%) scale(1.05);
         }
 
         .logo-inner {
@@ -1108,10 +1114,10 @@
                 </div>
 
                 <!-- Центральный логотип -->
-                <div class="center-logo">
+                <div class="center-logo" onclick="rollDice()">
                     <div class="logo-inner">
                         <!-- Центральный результат броска кубика -->
-                        <div class="dice" id="dice">3</div>
+                        <div class="dice" id="dice">$</div>
                         
                         <!-- Энергетические линии -->
                         <div class="energy-lines"></div>
@@ -1250,10 +1256,6 @@
                     <span>🎲</span>
                     <span>Бросить кубик</span>
                 </button>
-                <!-- Анимация кубика под кнопкой -->
-                <div class="dice-animation-container">
-                    <div class="mini-dice" id="miniDice">3</div>
-                </div>
             </div>
 
             <!-- 5. Шкала тайминга -->
@@ -1511,28 +1513,26 @@
             
             isRolling = true;
             const dice = document.getElementById('dice');
-            const miniDice = document.getElementById('miniDice');
             const rollDiceBtn = document.getElementById('rollDiceBtn');
             
             rollDiceBtn.disabled = true;
             dice.classList.add('rolling');
-            miniDice.classList.add('rolling');
             
-            // Анимация броска
+            // Начинаем с знака $
+            dice.textContent = '$';
+            
+            // Анимация вращения знака $
             let rollCount = 0;
             const rollInterval = setInterval(() => {
                 const randomValue = Math.floor(Math.random() * 6) + 1;
                 dice.textContent = randomValue;
-                miniDice.textContent = randomValue;
                 rollCount++;
                 
-                if (rollCount >= 10) {
+                if (rollCount >= 15) {
                     clearInterval(rollInterval);
                     const finalValue = Math.floor(Math.random() * 6) + 1;
                     dice.textContent = finalValue;
-                    miniDice.textContent = finalValue;
                     dice.classList.remove('rolling');
-                    miniDice.classList.remove('rolling');
                     
                     // Перемещение фишки
                     movePlayerToken(finalValue);
@@ -1748,8 +1748,83 @@
             }
         }
 
+        // Загрузка данных игроков из комнаты
+        async function loadRoomPlayers() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const roomId = urlParams.get('room');
+                
+                if (!roomId) return;
+                
+                // Получаем данные пользователя
+                const currentUser = JSON.parse(localStorage.getItem('user'));
+                if (!currentUser || !currentUser.id) return;
+                
+                const response = await fetch(`/api/rooms/${roomId}?user_id=${currentUser.id}`);
+                const roomData = await response.json();
+                
+                if (response.ok && roomData.players) {
+                    updatePlayersList(roomData.players);
+                }
+            } catch (error) {
+                console.error('Error loading room players:', error);
+            }
+        }
+
+        // Обновление списка игроков
+        function updatePlayersList(players) {
+            const playersList = document.querySelector('.players-list');
+            if (!playersList) return;
+            
+            // Очищаем существующий список
+            playersList.innerHTML = '';
+            
+            players.forEach((player, index) => {
+                const playerItem = document.createElement('div');
+                playerItem.className = `player-item ${index === 0 ? 'current' : ''}`;
+                playerItem.id = `player${index + 1}Item`;
+                
+                playerItem.innerHTML = `
+                    <div class="player-avatar player-${index + 1}">${index + 1}</div>
+                    <div class="player-info">
+                        <div class="player-name">${player.name}</div>
+                        <div class="player-role">${player.profession || 'Предприниматель'}</div>
+                    </div>
+                    <div class="player-status">
+                        <span>✓</span>
+                        <span>Готов</span>
+                    </div>
+                `;
+                
+                playersList.appendChild(playerItem);
+            });
+            
+            // Обновляем информацию о текущем игроке
+            updateCurrentPlayerInfo(players[0]);
+        }
+
+        // Обновление информации о текущем игроке
+        function updateCurrentPlayerInfo(player) {
+            const currentPlayerInfo = document.getElementById('currentPlayerInfo');
+            if (!currentPlayerInfo || !player) return;
+            
+            currentPlayerInfo.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <div class="player-avatar player-1" style="width: 20px; height: 20px; font-size: 10px;">1</div>
+                    <div>
+                        <div style="font-weight: bold;">${player.name}</div>
+                        <div style="font-size: 12px; color: #94a3b8;">${player.profession || 'Предприниматель'}</div>
+                    </div>
+                </div>
+                <div style="font-size: 14px; font-weight: bold; color: #10b981;">$${player.balance || 10000}</div>
+            `;
+        }
+
         // Инициализация при загрузке страницы
-        document.addEventListener('DOMContentLoaded', initGame);
+        document.addEventListener('DOMContentLoaded', () => {
+            initGame();
+            loadRoomPlayers();
+        });
     </script>
 </body>
 </html>
