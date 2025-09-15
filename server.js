@@ -8,6 +8,74 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Функции для работы с балансом
+function addBalance(room, playerIndex, amount, description = '') {
+    if (!room.game_data) {
+        room.game_data = {
+            player_balances: new Array(room.players.length).fill(0),
+            transfers_history: []
+        };
+    }
+    
+    if (!room.game_data.player_balances) {
+        room.game_data.player_balances = new Array(room.players.length).fill(0);
+    }
+    
+    room.game_data.player_balances[playerIndex] += amount;
+    
+    // Добавляем запись в историю
+    if (!room.game_data.transfers_history) {
+        room.game_data.transfers_history = [];
+    }
+    
+    const transfer = {
+        sender: 'Банк',
+        recipient: room.players[playerIndex].name || `Игрок ${playerIndex + 1}`,
+        amount: amount,
+        timestamp: new Date(),
+        sender_index: -1, // -1 означает банк
+        recipient_index: playerIndex,
+        type: 'deposit',
+        description: description || 'Пополнение баланса'
+    };
+    
+    room.game_data.transfers_history.unshift(transfer);
+    
+    console.log(`Added $${amount} to player ${playerIndex} (${room.players[playerIndex].name}). New balance: $${room.game_data.player_balances[playerIndex]}`);
+}
+
+function subtractBalance(room, playerIndex, amount, description = '') {
+    if (!room.game_data || !room.game_data.player_balances) {
+        throw new Error('Game data not initialized');
+    }
+    
+    if (room.game_data.player_balances[playerIndex] < amount) {
+        throw new Error('Insufficient funds');
+    }
+    
+    room.game_data.player_balances[playerIndex] -= amount;
+    
+    // Добавляем запись в историю
+    if (!room.game_data.transfers_history) {
+        room.game_data.transfers_history = [];
+    }
+    
+    const transfer = {
+        sender: room.players[playerIndex].name || `Игрок ${playerIndex + 1}`,
+        recipient: 'Банк',
+        amount: amount,
+        timestamp: new Date(),
+        sender_index: playerIndex,
+        recipient_index: -1, // -1 означает банк
+        type: 'withdrawal',
+        description: description || 'Списание с баланса'
+    };
+    
+    room.game_data.transfers_history.unshift(transfer);
+    
+    console.log(`Subtracted $${amount} from player ${playerIndex} (${room.players[playerIndex].name}). New balance: $${room.game_data.player_balances[playerIndex]}`);
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -1011,21 +1079,8 @@ app.post('/api/rooms/:id/start', async (req, res) => {
                     const updatedRoom = await Room.findById(roomId);
                     if (updatedRoom && updatedRoom.game_data && !updatedRoom.game_data.starting_savings_given) {
                         for (let i = 0; i < updatedRoom.players.length; i++) {
-                            // Начисляем стартовые сбережения
-                            updatedRoom.game_data.player_balances[i] = 3000;
-                            
-                            // Добавляем запись в историю
-                            const savingsTransfer = {
-                                sender: 'Банк',
-                                recipient: updatedRoom.players[i].name || `Игрок ${i + 1}`,
-                                amount: 3000,
-                                timestamp: new Date(),
-                                sender_index: -1, // -1 означает банк
-                                recipient_index: i,
-                                type: 'savings',
-                                description: 'Стартовые сбережения'
-                            };
-                            updatedRoom.game_data.transfers_history.push(savingsTransfer);
+                            // Используем функцию добавления баланса вместо хардкода
+                            addBalance(updatedRoom, i, 3000, 'Стартовые сбережения');
                         }
                         
                         // Отмечаем, что стартовые сбережения начислены
@@ -1162,30 +1217,18 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
             return res.status(400).json({ message: 'Недостаточно средств для перевода' });
         }
         
-        // Execute transfer
+        // Execute transfer using balance functions
         console.log('Before transfer - sender balance:', room.game_data.player_balances[senderIndex]);
         console.log('Before transfer - recipient balance:', room.game_data.player_balances[recipient_index]);
         
-        room.game_data.player_balances[senderIndex] -= amount;
-        room.game_data.player_balances[recipient_index] += amount;
+        // Используем функции для работы с балансом
+        subtractBalance(room, senderIndex, amount, `Перевод игроку ${room.players[recipient_index].name}`);
+        addBalance(room, recipient_index, amount, `Перевод от игрока ${room.players[senderIndex].name}`);
         
         console.log('After transfer - sender balance:', room.game_data.player_balances[senderIndex]);
         console.log('After transfer - recipient balance:', room.game_data.player_balances[recipient_index]);
         
-        // Add to transfer history
-        const transfer = {
-            sender: room.players[senderIndex].name || `Игрок ${senderIndex + 1}`,
-            recipient: room.players[recipient_index].name || `Игрок ${recipient_index + 1}`,
-            amount: amount,
-            timestamp: new Date(),
-            sender_index: senderIndex,
-            recipient_index: recipient_index
-        };
-        
-        if (!room.game_data.transfers_history) {
-            room.game_data.transfers_history = [];
-        }
-        room.game_data.transfers_history.unshift(transfer);
+        // Transfer history is already added by addBalance/subtractBalance functions
         
         console.log('Saving room to database...');
         console.log('Before save - player_balances:', room.game_data.player_balances);
@@ -1203,7 +1246,14 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
             message: 'Перевод выполнен успешно',
             new_balance: room.game_data.player_balances[senderIndex],
             recipient_balance: room.game_data.player_balances[recipient_index],
-            transfer: transfer
+            transfer: {
+                sender: room.players[senderIndex].name || `Игрок ${senderIndex + 1}`,
+                recipient: room.players[recipient_index].name || `Игрок ${recipient_index + 1}`,
+                amount: amount,
+                timestamp: new Date(),
+                sender_index: senderIndex,
+                recipient_index: recipient_index
+            }
         });
     } catch (error) {
         console.error('Transfer error:', error);
@@ -1363,8 +1413,8 @@ app.post('/api/rooms/:id/payoff-loan', async (req, res) => {
             });
         }
 
-        // Списываем сумму с баланса игрока
-        room.game_data.player_balances[player_index] -= principalAmount;
+        // Списываем сумму с баланса игрока используя функцию
+        subtractBalance(room, player_index, principalAmount, `Погашение ${loanName}`);
 
         // Обнуляем кредит
         switch (loan_type) {
@@ -1395,18 +1445,7 @@ app.post('/api/rooms/:id/payoff-loan', async (req, res) => {
         profession.totalCredits = (profession.carLoanPrincipal || 0) + (profession.eduLoanPrincipal || 0) + 
                                 (profession.mortgagePrincipal || 0) + (profession.creditCardsPrincipal || 0);
 
-        // Добавляем запись в историю
-        const transferRecord = {
-            sender: room.players[player_index].name || `Игрок ${player_index + 1}`,
-            recipient: 'Банк',
-            amount: principalAmount,
-            timestamp: new Date(),
-            sender_index: player_index,
-            recipient_index: -1, // -1 означает банк
-            type: 'loan_payoff',
-            description: `Погашение ${loanName}`
-        };
-        room.game_data.transfers_history.push(transferRecord);
+        // Transfer history is already added by subtractBalance function
 
         room.updated_at = new Date();
         await room.save();
