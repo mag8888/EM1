@@ -2951,7 +2951,7 @@
             updateCurrentPlayer();
             
             // Запускаем периодическое обновление данных
-            setInterval(loadBankData, 5000); // Обновляем каждые 5 секунд
+            setInterval(loadBankData, 30000); // Обновляем каждые 30 секунд
             setInterval(loadTurnInfo, 1000); // Обновляем информацию о ходе каждую секунду
         }
 
@@ -2983,6 +2983,9 @@
                 
                 if (playerIndex !== -1 && data.game_data?.player_balances) {
                     currentBalance = data.game_data.player_balances[playerIndex] || 0;
+                    console.log('Balance loaded from server:', currentBalance, 'for player', playerIndex);
+                } else {
+                    console.log('No balance data found, playerIndex:', playerIndex, 'balances:', data.game_data?.player_balances);
                 }
                 
                 // Обновляем историю переводов

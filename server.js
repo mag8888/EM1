@@ -1326,24 +1326,27 @@ app.get('/api/rooms/:id/player/:playerIndex/profession', async (req, res) => {
             return res.status(400).json({ message: 'Неверный индекс игрока' });
         }
 
-        const professionData = room.game_data?.player_professions?.[playerIndex] || {
-            name: 'Предприниматель',
-            description: 'Владелец успешного бизнеса',
-            salary: 10000,
-            expenses: 6200,
-            cashFlow: 3800,
-            taxes: 1300,
-            otherExpenses: 1500,
-            carLoan: 700,
-            carLoanPrincipal: 14000,
-            eduLoan: 500,
-            eduLoanPrincipal: 10000,
-            mortgage: 1200,
-            mortgagePrincipal: 240000,
-            creditCards: 1000,
-            creditCardsPrincipal: 20000,
-            totalCredits: 284000
-        };
+        // Инициализируем player_professions если не существует
+        if (!room.game_data) {
+            room.game_data = {};
+        }
+        if (!room.game_data.player_professions) {
+            room.game_data.player_professions = [];
+        }
+        if (!room.game_data.player_professions[playerIndex]) {
+            room.game_data.player_professions[playerIndex] = {
+                name: 'Предприниматель',
+                description: 'Владелец успешного бизнеса',
+                salary: 10000,
+                expenses: 6200,
+                cashFlow: 3800,
+                totalCredits: 0,
+                loans: []
+            };
+            await room.save();
+        }
+
+        const professionData = room.game_data.player_professions[playerIndex];
 
         res.json(professionData);
     } catch (error) {
