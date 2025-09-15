@@ -885,6 +885,151 @@
             transform: translateY(0);
         }
 
+        /* Банковское модальное окно */
+        .bank-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .bank-modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 0;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .bank-section {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .bank-section:last-child {
+            border-bottom: none;
+        }
+
+        .bank-section h4 {
+            color: #e2e8f0;
+            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .balance-display {
+            font-size: 32px;
+            font-weight: bold;
+            color: #10b981;
+            text-align: center;
+            padding: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 12px;
+            border: 2px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .transfer-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            color: #e2e8f0;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-select, .form-input {
+            padding: 12px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #e2e8f0;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus, .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .transfer-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .transfer-btn:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-2px);
+        }
+
+        .transfers-history {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .transfer-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 4px solid #10b981;
+        }
+
+        .transfer-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .transfer-amount {
+            font-weight: bold;
+            color: #10b981;
+        }
+
+        .transfer-date {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .no-transfers {
+            text-align: center;
+            color: #94a3b8;
+            font-style: italic;
+            padding: 20px;
+        }
+
         .bank-btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -1327,6 +1472,49 @@
                 <div class="modal-actions">
                     <button class="btn-primary" onclick="buyCell()" id="buyButton" style="display: none;">Купить</button>
                     <button class="btn-secondary" onclick="closeCellModal()">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно банка -->
+    <div class="bank-modal" id="bankModal">
+        <div class="modal-content bank-modal-content">
+            <div class="modal-header">
+                <h3>🏦 Банк</h3>
+                <span class="close" onclick="closeBankModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Текущий баланс -->
+                <div class="bank-section">
+                    <h4>💰 Текущий баланс</h4>
+                    <div class="balance-display" id="currentBalance">$10,000</div>
+                </div>
+
+                <!-- Перевод средств -->
+                <div class="bank-section">
+                    <h4>💸 Перевод средств</h4>
+                    <div class="transfer-form">
+                        <div class="form-group">
+                            <label>Выберите получателя:</label>
+                            <select id="recipientSelect" class="form-select">
+                                <option value="">Выберите игрока...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Сумма перевода:</label>
+                            <input type="number" id="transferAmount" class="form-input" placeholder="Введите сумму" min="1">
+                        </div>
+                        <button class="transfer-btn" onclick="processTransfer()">Перевести</button>
+                    </div>
+                </div>
+
+                <!-- История переводов -->
+                <div class="bank-section">
+                    <h4>📋 История переводов</h4>
+                    <div class="transfers-history" id="transfersHistory">
+                        <div class="no-transfers">История переводов пуста</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1818,6 +2006,112 @@
                 </div>
                 <div style="font-size: 14px; font-weight: bold; color: #10b981;">$${player.balance || 10000}</div>
             `;
+        }
+
+        // Банковские функции
+        let transfersHistory = [];
+        let currentBalance = 10000;
+
+        function openBank() {
+            const bankModal = document.getElementById('bankModal');
+            bankModal.style.display = 'block';
+            
+            // Обновляем баланс
+            updateBalance();
+            
+            // Загружаем список игроков для перевода
+            loadRecipients();
+            
+            // Обновляем историю переводов
+            updateTransfersHistory();
+        }
+
+        function closeBankModal() {
+            document.getElementById('bankModal').style.display = 'none';
+        }
+
+        function updateBalance() {
+            document.getElementById('currentBalance').textContent = `$${currentBalance.toLocaleString()}`;
+        }
+
+        function loadRecipients() {
+            const recipientSelect = document.getElementById('recipientSelect');
+            recipientSelect.innerHTML = '<option value="">Выберите игрока...</option>';
+            
+            // Получаем список игроков из комнаты
+            const playersList = document.querySelectorAll('.player-item');
+            playersList.forEach((playerItem, index) => {
+                const playerName = playerItem.querySelector('.player-name').textContent;
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = playerName;
+                recipientSelect.appendChild(option);
+            });
+        }
+
+        function processTransfer() {
+            const recipientIndex = document.getElementById('recipientSelect').value;
+            const amount = parseInt(document.getElementById('transferAmount').value);
+            
+            if (!recipientIndex || !amount) {
+                alert('Пожалуйста, выберите получателя и введите сумму');
+                return;
+            }
+            
+            if (amount <= 0) {
+                alert('Сумма должна быть больше 0');
+                return;
+            }
+            
+            if (amount > currentBalance) {
+                alert('Недостаточно средств на балансе');
+                return;
+            }
+            
+            // Получаем имя получателя
+            const recipientSelect = document.getElementById('recipientSelect');
+            const recipientName = recipientSelect.options[recipientSelect.selectedIndex].textContent;
+            
+            // Выполняем перевод
+            currentBalance -= amount;
+            
+            // Добавляем в историю
+            const transfer = {
+                recipient: recipientName,
+                amount: amount,
+                date: new Date().toLocaleString('ru-RU'),
+                type: 'outgoing'
+            };
+            transfersHistory.unshift(transfer);
+            
+            // Обновляем интерфейс
+            updateBalance();
+            updateTransfersHistory();
+            
+            // Очищаем форму
+            document.getElementById('recipientSelect').value = '';
+            document.getElementById('transferAmount').value = '';
+            
+            alert(`Перевод $${amount.toLocaleString()} игроку ${recipientName} выполнен успешно!`);
+        }
+
+        function updateTransfersHistory() {
+            const historyContainer = document.getElementById('transfersHistory');
+            
+            if (transfersHistory.length === 0) {
+                historyContainer.innerHTML = '<div class="no-transfers">История переводов пуста</div>';
+                return;
+            }
+            
+            historyContainer.innerHTML = transfersHistory.map(transfer => `
+                <div class="transfer-item">
+                    <div class="transfer-info">
+                        <div>Перевод игроку: ${transfer.recipient}</div>
+                        <div class="transfer-date">${transfer.date}</div>
+                    </div>
+                    <div class="transfer-amount">-$${transfer.amount.toLocaleString()}</div>
+                </div>
+            `).join('');
         }
 
         // Инициализация при загрузке страницы
