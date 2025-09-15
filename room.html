@@ -467,7 +467,7 @@
             const playersList = document.getElementById('playersList');
             
             playersList.innerHTML = currentRoom.players.map(player => {
-                const isCurrentUser = player.user_id === currentUser.id;
+                const isCurrentUser = player.user_id.toString() === currentUser.id;
                 const isReady = player.is_ready;
                 
                 return `
@@ -485,7 +485,7 @@
             }).join('');
             
             // Update ready button
-            const currentPlayer = currentRoom.players.find(p => p.user_id === currentUser.id);
+            const currentPlayer = currentRoom.players.find(p => p.user_id.toString() === currentUser.id);
             const readyBtn = document.getElementById('readyBtn');
             
             if (currentPlayer) {

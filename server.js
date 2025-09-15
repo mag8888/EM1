@@ -76,16 +76,28 @@ const roomSchema = new mongoose.Schema({
     name: { type: String, required: true },
     creator_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     creator_profession: { type: String, required: true },
-    assign_professions: { type: Boolean, default: false },
+    assign_professions: { type: Boolean, default: true },
     max_players: { type: Number, required: true, min: 2, max: 6 },
     password: { type: String, default: null },
-    turn_time: { type: Number, required: true, default: 2 },
+    turn_time: { type: Number, required: true, default: 2, min: 1, max: 5 },
     players: [{
         user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         name: { type: String, required: true },
         profession: { type: String, default: null },
+        profession_data: {
+            name: { type: String, default: 'Предприниматель' },
+            description: { type: String, default: 'Владелец успешного бизнеса' },
+            salary: { type: Number, default: 10000 },
+            expenses: { type: Number, default: 6200 },
+            cash_flow: { type: Number, default: 3800 },
+            debts: [{
+                name: { type: String },
+                monthly_payment: { type: Number },
+                principal: { type: Number }
+            }]
+        },
         position: { type: Number, default: 0 },
-        balance: { type: Number, default: 3000 },
+        balance: { type: Number, default: 10000 },
         is_ready: { type: Boolean, default: false }
     }],
     game_started: { type: Boolean, default: false },
@@ -467,12 +479,28 @@ app.post('/api/rooms/create', authenticateToken, async (req, res) => {
             return res.status(404).json({ message: 'Пользователь не найден' });
         }
         
-        // Create room
+        // Create room with entrepreneur profession data
+        const entrepreneurData = {
+            name: 'Предприниматель',
+            description: 'Владелец успешного бизнеса',
+            salary: 10000,
+            expenses: 6200,
+            cash_flow: 3800,
+            debts: [
+                { name: 'Налоги', monthly_payment: 1300, principal: 0 },
+                { name: 'Прочие расходы', monthly_payment: 1500, principal: 0 },
+                { name: 'Кредит на авто', monthly_payment: 700, principal: 14000 },
+                { name: 'Образовательный кредит', monthly_payment: 500, principal: 10000 },
+                { name: 'Ипотека', monthly_payment: 1200, principal: 240000 },
+                { name: 'Кредитные карты', monthly_payment: 1000, principal: 20000 }
+            ]
+        };
+
         const room = new Room({
             name,
             creator_id: req.user.userId,
             creator_profession,
-            assign_professions: assign_professions || false,
+            assign_professions: assign_professions !== false, // Default to true
             max_players,
             password: password || null,
             turn_time,
@@ -480,8 +508,9 @@ app.post('/api/rooms/create', authenticateToken, async (req, res) => {
                 user_id: req.user.userId,
                 name: `${user.first_name} ${user.last_name}`,
                 profession: creator_profession,
+                profession_data: entrepreneurData,
                 position: 0,
-                balance: 3000,
+                balance: 10000,
                 is_ready: false
             }]
         });
@@ -538,13 +567,30 @@ app.post('/api/rooms/join', authenticateToken, async (req, res) => {
             return res.status(404).json({ message: 'Пользователь не найден' });
         }
         
-        // Add player to room
+        // Add player to room with entrepreneur data
+        const entrepreneurData = {
+            name: 'Предприниматель',
+            description: 'Владелец успешного бизнеса',
+            salary: 10000,
+            expenses: 6200,
+            cash_flow: 3800,
+            debts: [
+                { name: 'Налоги', monthly_payment: 1300, principal: 0 },
+                { name: 'Прочие расходы', monthly_payment: 1500, principal: 0 },
+                { name: 'Кредит на авто', monthly_payment: 700, principal: 14000 },
+                { name: 'Образовательный кредит', monthly_payment: 500, principal: 10000 },
+                { name: 'Ипотека', monthly_payment: 1200, principal: 240000 },
+                { name: 'Кредитные карты', monthly_payment: 1000, principal: 20000 }
+            ]
+        };
+
         const newPlayer = {
             user_id: req.user.userId,
             name: `${user.first_name} ${user.last_name}`,
             profession: room.assign_professions ? room.creator_profession : null,
+            profession_data: room.assign_professions ? entrepreneurData : null,
             position: 0,
-            balance: 3000,
+            balance: 10000,
             is_ready: false
         };
         
@@ -589,13 +635,30 @@ app.post('/api/rooms/quick-join', authenticateToken, async (req, res) => {
             return res.status(404).json({ message: 'Пользователь не найден' });
         }
         
-        // Add player to room
+        // Add player to room with entrepreneur data
+        const entrepreneurData = {
+            name: 'Предприниматель',
+            description: 'Владелец успешного бизнеса',
+            salary: 10000,
+            expenses: 6200,
+            cash_flow: 3800,
+            debts: [
+                { name: 'Налоги', monthly_payment: 1300, principal: 0 },
+                { name: 'Прочие расходы', monthly_payment: 1500, principal: 0 },
+                { name: 'Кредит на авто', monthly_payment: 700, principal: 14000 },
+                { name: 'Образовательный кредит', monthly_payment: 500, principal: 10000 },
+                { name: 'Ипотека', monthly_payment: 1200, principal: 240000 },
+                { name: 'Кредитные карты', monthly_payment: 1000, principal: 20000 }
+            ]
+        };
+
         const newPlayer = {
             user_id: req.user.userId,
             name: `${user.first_name} ${user.last_name}`,
             profession: room.assign_professions ? room.creator_profession : null,
+            profession_data: room.assign_professions ? entrepreneurData : null,
             position: 0,
-            balance: 3000,
+            balance: 10000,
             is_ready: false
         };
         

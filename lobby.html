@@ -554,6 +554,49 @@
             font-size: 12px;
             font-weight: 600;
             color: white;
+            margin-bottom: 4px;
+        }
+
+        .profession-description {
+            font-size: 10px;
+            color: #94a3b8;
+            line-height: 1.2;
+            margin-bottom: 8px;
+        }
+
+        .profession-details {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+            font-size: 10px;
+        }
+
+        .detail-label {
+            color: #94a3b8;
+        }
+
+        .detail-value {
+            font-weight: 600;
+        }
+
+        .detail-value.income {
+            color: #10b981;
+        }
+
+        .detail-value.expense {
+            color: #f59e0b;
+        }
+
+        .detail-value.cashflow {
+            color: #10b981;
+            font-weight: 700;
         }
 
         .loading {
@@ -688,31 +731,26 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Выберите профессию</label>
+                    <label class="form-label">Профессия</label>
                     <div class="profession-cards">
-                        <div class="profession-card" data-profession="engineer" onclick="selectProfession(this)">
-                            <div class="profession-icon">👨‍💻</div>
-                            <div class="profession-name">Инженер</div>
-                        </div>
-                        <div class="profession-card" data-profession="doctor" onclick="selectProfession(this)">
-                            <div class="profession-icon">👨‍⚕️</div>
-                            <div class="profession-name">Врач</div>
-                        </div>
-                        <div class="profession-card" data-profession="teacher" onclick="selectProfession(this)">
-                            <div class="profession-icon">👨‍🏫</div>
-                            <div class="profession-name">Учитель</div>
-                        </div>
-                        <div class="profession-card" data-profession="lawyer" onclick="selectProfession(this)">
-                            <div class="profession-icon">👨‍⚖️</div>
-                            <div class="profession-name">Юрист</div>
-                        </div>
-                        <div class="profession-card" data-profession="artist" onclick="selectProfession(this)">
-                            <div class="profession-icon">🎨</div>
-                            <div class="profession-name">Художник</div>
-                        </div>
-                        <div class="profession-card" data-profession="businessman" onclick="selectProfession(this)">
-                            <div class="profession-icon">👔</div>
-                            <div class="profession-name">Бизнесмен</div>
+                        <div class="profession-card selected" data-profession="entrepreneur" onclick="selectProfession(this)">
+                            <div class="profession-icon">🚀</div>
+                            <div class="profession-name">Предприниматель</div>
+                            <div class="profession-description">Владелец успешного бизнеса</div>
+                            <div class="profession-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Зарплата:</span>
+                                    <span class="detail-value income">$10,000</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Расходы:</span>
+                                    <span class="detail-value expense">$6,200</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Денежный поток:</span>
+                                    <span class="detail-value cashflow">$3,800</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -731,15 +769,16 @@
                 <div class="form-group">
                     <label class="form-label">Время на ход (минуты)</label>
                     <select class="form-select" id="turnTime" required>
+                        <option value="1">1 минута</option>
                         <option value="2" selected>2 минуты</option>
                         <option value="3">3 минуты</option>
+                        <option value="4">4 минуты</option>
                         <option value="5">5 минут</option>
-                        <option value="10">10 минут</option>
                     </select>
                 </div>
                 
                 <div class="form-checkbox">
-                    <input type="checkbox" class="checkbox" id="assignProfessions">
+                    <input type="checkbox" class="checkbox" id="assignProfessions" checked>
                     <label class="checkbox-label" for="assignProfessions">
                         Назначить профессии всем игрокам
                     </label>
@@ -949,10 +988,11 @@
         function showCreateRoomModal() {
             document.getElementById('createRoomModal').style.display = 'flex';
             document.getElementById('createRoomForm').reset();
-            selectedProfession = null;
+            selectedProfession = 'entrepreneur'; // Set default profession
             document.querySelectorAll('.profession-card').forEach(card => {
                 card.classList.remove('selected');
             });
+            document.querySelector('.profession-card').classList.add('selected');
         }
 
         // Hide create room modal
