@@ -1088,7 +1088,9 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    window.location.href = '/lobby';
+                    // Принудительно обновляем лобби перед переходом
+                    console.log('Successfully left room, redirecting to lobby');
+                    window.location.href = '/lobby?refresh=' + Date.now();
                 } else {
                     showError(data.message || 'Ошибка выхода из комнаты');
                 }

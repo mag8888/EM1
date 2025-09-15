@@ -875,6 +875,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             checkAuthStatus();
             loadUserStats();
+            
+            // Принудительно обновляем комнаты при загрузке
             loadRooms();
             
             // Refresh rooms every 10 seconds
@@ -935,7 +937,7 @@
                 console.log('Making request to:', `/api/rooms?user_id=${currentUser.id}`);
                 console.log('Retry count:', retryCount);
                 
-                const response = await fetch(`/api/rooms?user_id=${currentUser.id}`, {
+                const response = await fetch(`/api/rooms?user_id=${currentUser.id}&t=${Date.now()}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',

@@ -437,7 +437,10 @@ app.get('/api/rooms', async (req, res) => {
     try {
         const { user_id } = req.query;
         
-        const rooms = await Room.find({ game_started: false })
+        const rooms = await Room.find({ 
+            game_started: false,
+            'players.0': { $exists: true } // Только комнаты с игроками
+        })
             .populate('creator_id', 'first_name last_name')
             .sort({ created_at: -1 })
             .limit(20);

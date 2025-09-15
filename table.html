@@ -2627,8 +2627,8 @@
                 
                 if (gameTimer <= 0) {
                     clearInterval(timerInterval);
-                    nextPlayer();
-                    startTimer(); // Запуск нового таймера
+                    // Не вызываем nextPlayer() здесь - сервер сам управляет переходами
+                    console.log('Timer expired, waiting for server to handle turn transition');
                 }
             }, 1000);
         }
