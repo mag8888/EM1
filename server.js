@@ -503,6 +503,8 @@ app.post('/api/rooms/create', async (req, res) => {
             ]
         };
 
+        console.log('Creating room with turn_time:', turn_time, 'type:', typeof turn_time);
+        
         const room = new Room({
             name,
             creator_id: creator_id,
@@ -889,6 +891,8 @@ app.post('/api/rooms/:id/start', async (req, res) => {
         };
         room.updated_at = new Date();
         
+        console.log('Starting game with turn_time:', room.turn_time, 'type:', typeof room.turn_time);
+        
         await room.save();
         
         res.json({ message: 'Игра началась!' });
@@ -1042,9 +1046,18 @@ app.get('/api/rooms/:id/turn', async (req, res) => {
         const now = new Date();
         const turnStartTime = new Date(room.turn_start_time);
         const elapsedSeconds = Math.floor((now - turnStartTime) / 1000);
-        const turnDuration = room.turn_time * 60; // Конвертируем минуты в секунды
+        const turnDuration = room.turn_time * 60; // turn_time в минутах, конвертируем в секунды
         const remainingSeconds = Math.max(0, turnDuration - elapsedSeconds);
         const isTurnExpired = remainingSeconds <= 0;
+
+        console.log('Turn info debug:', {
+            roomId: req.params.id,
+            turn_time: room.turn_time,
+            turnDuration: turnDuration,
+            elapsedSeconds: elapsedSeconds,
+            remainingSeconds: remainingSeconds,
+            isTurnExpired: isTurnExpired
+        });
 
         // Если ход истек, автоматически переходим к следующему игроку
         if (isTurnExpired) {
