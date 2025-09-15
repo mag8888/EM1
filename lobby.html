@@ -992,8 +992,12 @@
             console.log('Rendering rooms:', rooms.length, 'rooms');
             console.log('Rooms data:', rooms);
             console.log('Current user:', currentUser);
+            console.log('rooms.length === 0:', rooms.length === 0);
+            console.log('rooms type:', typeof rooms);
+            console.log('rooms is array:', Array.isArray(rooms));
             
             if (rooms.length === 0) {
+                console.log('No rooms found, showing empty state');
                 roomsList.innerHTML = `
                     <div style="text-align: center; padding: 40px; color: #94a3b8;">
                         <div style="font-size: 48px; margin-bottom: 20px;">🏠</div>
@@ -1004,6 +1008,7 @@
                 return;
             }
             
+            console.log('Starting to render', rooms.length, 'rooms');
             roomsList.innerHTML = rooms.map((room, index) => {
                 const isUserInRoom = currentUser && room.players.some(player => player.user_id.toString() === currentUser.id);
                 
