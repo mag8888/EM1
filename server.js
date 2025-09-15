@@ -962,13 +962,13 @@ app.post('/api/rooms/:id/start', async (req, res) => {
         room.game_data = {
             player_positions: new Array(room.players.length).fill(0),
             player_balances: new Array(room.players.length).fill(0), // Стартовый баланс 0
-            player_finances: new Array(room.players.length).fill({
+            player_finances: Array.from({ length: room.players.length }, () => ({
                 totalIncome: 0,
                 totalExpenses: 0,
                 monthlyIncome: 0,
                 currentCredit: 0,
                 maxCredit: 10000
-            }),
+            })),
             transfers_history: []
         };
 
@@ -1080,13 +1080,13 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
             room.game_data = {
                 player_positions: new Array(room.players.length).fill(0),
                 player_balances: new Array(room.players.length).fill(0), // Стартовый баланс 0
-                player_finances: new Array(room.players.length).fill({
+                player_finances: Array.from({ length: room.players.length }, () => ({
                     totalIncome: 0,
                     totalExpenses: 0,
                     monthlyIncome: 0,
                     currentCredit: 0,
                     maxCredit: 10000
-                }),
+                })),
                 transfers_history: []
             };
 
@@ -1354,6 +1354,57 @@ app.post('/api/rooms/:id/next-turn', async (req, res) => {
     } catch (error) {
         console.error('Next turn error:', error);
         res.status(500).json({ message: 'Ошибка сервера при переходе хода' });
+    }
+});
+
+// Persist player move (small circle only)
+app.post('/api/rooms/:id/move', async (req, res) => {
+    try {
+        const { user_id, steps } = req.body;
+        
+        if (!user_id || typeof steps !== 'number' || steps < 1 || steps > 12) {
+            return res.status(400).json({ message: 'Некорректные данные хода' });
+        }
+        
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+        
+        if (!room.game_started) {
+            return res.status(400).json({ message: 'Игра еще не началась' });
+        }
+        
+        // Find player index by user_id and validate turn
+        const playerIndex = room.players.findIndex(p => p.user_id.toString() === user_id);
+        if (playerIndex === -1) {
+            return res.status(403).json({ message: 'Вы не являетесь участником этой комнаты' });
+        }
+        if (playerIndex !== room.current_player) {
+            return res.status(403).json({ message: 'Сейчас не ваш ход' });
+        }
+        
+        // Ensure game_data and player_positions are initialized
+        if (!room.game_data) room.game_data = {};
+        if (!Array.isArray(room.game_data.player_positions) || room.game_data.player_positions.length !== room.players.length) {
+            room.game_data.player_positions = new Array(room.players.length).fill(0);
+        }
+        
+        const currentPosition = room.game_data.player_positions[playerIndex] || 0;
+        const newPosition = (currentPosition + steps) % 24; // small circle wrap
+        room.game_data.player_positions[playerIndex] = newPosition;
+        room.updated_at = new Date();
+        
+        await room.save();
+        
+        return res.json({
+            message: 'Ход сохранен',
+            player_positions: room.game_data.player_positions,
+            current_player: room.current_player
+        });
+    } catch (error) {
+        console.error('Move error:', error);
+        return res.status(500).json({ message: 'Ошибка сервера при сохранении хода' });
     }
 });
 

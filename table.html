@@ -2497,7 +2497,11 @@
         }
 
         // Обновление позиций фишек игроков
+        let tokensInitialized = false;
         function updatePlayerTokenPositions() {
+            if (!tokensInitialized) {
+                return;
+            }
             console.log('Updating player token positions:', playerPositions);
             for (let i = 0; i < playerPositions.length; i++) {
                 const playerToken = document.getElementById(`player${i}`);
@@ -2600,6 +2604,8 @@
                             console.warn(`Start cell not found for player ${i}`);
                         }
                     }
+                    tokensInitialized = true;
+                    updatePlayerTokenPositions();
                 }
             } catch (error) {
                 console.error('Error initializing player tokens:', error);
@@ -2790,63 +2796,64 @@
         }
 
         // Перемещение фишки игрока
-        function movePlayerToken(steps) {
+        async function movePlayerToken(steps) {
             const playerToken = document.getElementById(`player${currentPlayer}`);
             if (!playerToken) {
                 console.error(`Player token ${currentPlayer} not found`);
                 return;
             }
             
+            // Persist move on server to avoid overwrites by polling
+            try {
+                const roomId = getRoomIdFromURL();
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                if (!roomId || !user.id) return;
+                
+                const resp = await fetch(`/api/rooms/${roomId}/move`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: user.id, steps })
+                });
+                const data = await resp.json();
+                if (!resp.ok) {
+                    console.error('Move rejected:', data);
+                    return;
+                }
+                
+                // Update local positions from server
+                if (Array.isArray(data.player_positions)) {
+                    playerPositions = data.player_positions;
+                }
+            } catch (e) {
+                console.error('Move error:', e);
+                return;
+            }
+            
+            // Animate token to its new cell using updated playerPositions
+            const newPosition = playerPositions[currentPlayer] || 0;
             playerToken.classList.add('moving');
-            
-            // Получаем текущую позицию
-            const currentPosition = playerPositions[currentPlayer] || 0;
-            let newPosition;
-            
-            // Игра всегда происходит на малом круге (0-23)
-            // Фишки не переходят на большой круг
-            newPosition = (currentPosition + steps) % 24;
-            
-            console.log(`Moving player ${currentPlayer}: ${currentPosition} + ${steps} = ${newPosition} (small circle)`);
-            
-            // Обновляем позицию
-            playerPositions[currentPlayer] = newPosition;
-            
-            // Находим целевую клетку
             const targetCell = document.querySelector(`[data-cell="${newPosition}"]`);
             if (targetCell) {
                 const cellRect = targetCell.getBoundingClientRect();
                 const boardRect = document.querySelector('.game-board').getBoundingClientRect();
-                
-                // Вычисляем позицию относительно игрового поля
                 const x = cellRect.left - boardRect.left + cellRect.width / 2;
                 const y = cellRect.top - boardRect.top + cellRect.height / 2;
-                
-                // Проверяем, есть ли другие фишки на этой клетке
                 const existingTokens = targetCell.querySelectorAll('.player-token');
                 let offsetX = 0;
                 let offsetY = 0;
-                
-                // Если несколько фишек на одной клетке, сдвигаем их на 15% от размера клетки
                 if (existingTokens.length > 1) {
                     const offset = cellRect.width * 0.15;
                     offsetX = (currentPlayer % 3) * offset;
                     offsetY = Math.floor(currentPlayer / 3) * offset;
                 }
-                
-                // Позиционируем фишку в центр клетки
-                playerToken.style.left = `${x + offsetX - 12}px`; // 12px - половина размера фишки
+                playerToken.style.left = `${x + offsetX - 12}px`;
                 playerToken.style.top = `${y + offsetY - 12}px`;
                 playerToken.style.position = 'absolute';
-                playerToken.style.zIndex = '100'; // Высокий z-index для отображения поверх клеток
-                
-                // Показываем информацию о клетке
+                playerToken.style.zIndex = '100';
                 setTimeout(() => {
                     showCellInfo(newPosition);
                 }, 500);
             }
-            
-            // Убираем анимацию
             setTimeout(() => {
                 playerToken.classList.remove('moving');
             }, 1000);
