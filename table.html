@@ -2833,6 +2833,7 @@
                         // Баланс игрока
                         if (data.game_data.player_balances) {
                             currentBalance = data.game_data.player_balances[playerIndex] || 0;
+                            console.log('Loaded balance from server:', currentBalance, 'for player', playerIndex);
                         }
                         
                         // Финансовая статистика игрока
@@ -3986,6 +3987,8 @@
         }
 
         async function updateBankData() {
+            console.log('Updating bank data, current balance:', currentBalance);
+            
             // Загружаем данные профессии для текущего игрока
             try {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -4010,12 +4013,16 @@
             const bankBalance = document.getElementById('bankBalance');
             if (bankBalance) {
                 bankBalance.textContent = `$${currentBalance.toLocaleString()}`;
+                console.log('Updated bank balance display:', bankBalance.textContent);
             }
             
             // Обновляем баланс в модальном окне
             const currentBalanceEl = document.getElementById('currentBalance');
             if (currentBalanceEl) {
                 currentBalanceEl.textContent = `$${currentBalance.toLocaleString()}`;
+                console.log('Updated modal balance display:', currentBalanceEl.textContent);
+            } else {
+                console.error('currentBalance element not found!');
             }
             
             // Обновляем финансовую сводку в банке
@@ -4142,8 +4149,14 @@
                 const data = await response.json();
                 
                 if (response.ok) {
+                    console.log('Transfer successful, reloading data...');
+                    
                     // Перезагружаем данные с сервера для синхронизации
                     await loadGameData();
+                    
+                    console.log('Data reloaded, updating UI...');
+                    console.log('Current balance:', currentBalance);
+                    console.log('Transfers history:', transfersHistory);
                     
                     // Обновляем интерфейс
                     updateBankData();
@@ -4172,6 +4185,8 @@
         function updateTransfersHistory() {
             const historyContainer = document.getElementById('transfersHistory');
             const historyCount = document.getElementById('historyCount');
+            
+            console.log('Updating transfers history:', transfersHistory);
             
             if (transfersHistory.length === 0) {
                 historyContainer.innerHTML = '<div class="no-transfers">История переводов пуста</div>';
