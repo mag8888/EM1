@@ -433,6 +433,8 @@ app.post('/api/user/game-result', authenticateToken, async (req, res) => {
 // Get all rooms
 app.get('/api/rooms', async (req, res) => {
     try {
+        const { user_id } = req.query;
+        
         const rooms = await Room.find({ game_started: false })
             .populate('creator_id', 'first_name last_name')
             .sort({ created_at: -1 })
@@ -460,12 +462,12 @@ app.get('/api/rooms', async (req, res) => {
 });
 
 // Create room
-app.post('/api/rooms/create', authenticateToken, async (req, res) => {
+app.post('/api/rooms/create', async (req, res) => {
     try {
-        const { name, creator_profession, assign_professions, max_players, turn_time, password } = req.body;
+        const { name, creator_id, creator_profession, assign_professions, max_players, turn_time, password } = req.body;
         
         // Validate input
-        if (!name || !creator_profession || !max_players || !turn_time) {
+        if (!name || !creator_id || !creator_profession || !max_players || !turn_time) {
             return res.status(400).json({ message: 'Все обязательные поля должны быть заполнены' });
         }
         
@@ -473,8 +475,12 @@ app.post('/api/rooms/create', authenticateToken, async (req, res) => {
             return res.status(400).json({ message: 'Количество игроков должно быть от 2 до 6' });
         }
         
+        if (turn_time < 1 || turn_time > 5) {
+            return res.status(400).json({ message: 'Время на ход должно быть от 1 до 5 минут' });
+        }
+        
         // Get user data
-        const user = await User.findById(req.user.userId);
+        const user = await User.findById(creator_id);
         if (!user) {
             return res.status(404).json({ message: 'Пользователь не найден' });
         }
@@ -498,14 +504,14 @@ app.post('/api/rooms/create', authenticateToken, async (req, res) => {
 
         const room = new Room({
             name,
-            creator_id: req.user.userId,
+            creator_id: creator_id,
             creator_profession,
             assign_professions: assign_professions !== false, // Default to true
             max_players,
             password: password || null,
             turn_time,
             players: [{
-                user_id: req.user.userId,
+                user_id: creator_id,
                 name: `${user.first_name} ${user.last_name}`,
                 profession: creator_profession,
                 profession_data: entrepreneurData,
@@ -528,12 +534,12 @@ app.post('/api/rooms/create', authenticateToken, async (req, res) => {
 });
 
 // Join room
-app.post('/api/rooms/join', authenticateToken, async (req, res) => {
+app.post('/api/rooms/join', async (req, res) => {
     try {
-        const { room_id, password } = req.body;
+        const { room_id, user_id, password } = req.body;
         
-        if (!room_id) {
-            return res.status(400).json({ message: 'ID комнаты обязателен' });
+        if (!room_id || !user_id) {
+            return res.status(400).json({ message: 'ID комнаты и пользователя обязательны' });
         }
         
         // Find room
@@ -556,7 +562,7 @@ app.post('/api/rooms/join', authenticateToken, async (req, res) => {
         }
         
         // Check if user is already in room
-        const existingPlayer = room.players.find(p => p.user_id.toString() === req.user.userId);
+        const existingPlayer = room.players.find(p => p.user_id.toString() === user_id);
         if (existingPlayer) {
             return res.status(200).json({ 
                 message: 'Вы уже находитесь в этой комнате',
@@ -566,7 +572,7 @@ app.post('/api/rooms/join', authenticateToken, async (req, res) => {
         }
         
         // Get user data
-        const user = await User.findById(req.user.userId);
+        const user = await User.findById(user_id);
         if (!user) {
             return res.status(404).json({ message: 'Пользователь не найден' });
         }
@@ -589,7 +595,7 @@ app.post('/api/rooms/join', authenticateToken, async (req, res) => {
         };
 
         const newPlayer = {
-            user_id: req.user.userId,
+            user_id: user_id,
             name: `${user.first_name} ${user.last_name}`,
             profession: room.assign_professions ? room.creator_profession : null,
             profession_data: room.assign_professions ? entrepreneurData : null,
@@ -614,8 +620,14 @@ app.post('/api/rooms/join', authenticateToken, async (req, res) => {
 });
 
 // Quick join
-app.post('/api/rooms/quick-join', authenticateToken, async (req, res) => {
+app.post('/api/rooms/quick-join', async (req, res) => {
     try {
+        const { user_id } = req.body;
+        
+        if (!user_id) {
+            return res.status(400).json({ message: 'ID пользователя обязателен' });
+        }
+        
         // Find a room with available slots
         const room = await Room.findOne({
             game_started: false,
@@ -628,13 +640,13 @@ app.post('/api/rooms/quick-join', authenticateToken, async (req, res) => {
         }
         
         // Check if user is already in this room
-        const existingPlayer = room.players.find(p => p.user_id.toString() === req.user.userId);
+        const existingPlayer = room.players.find(p => p.user_id.toString() === user_id);
         if (existingPlayer) {
             return res.json({ room_id: room._id });
         }
         
         // Get user data
-        const user = await User.findById(req.user.userId);
+        const user = await User.findById(user_id);
         if (!user) {
             return res.status(404).json({ message: 'Пользователь не найден' });
         }
@@ -657,7 +669,7 @@ app.post('/api/rooms/quick-join', authenticateToken, async (req, res) => {
         };
 
         const newPlayer = {
-            user_id: req.user.userId,
+            user_id: user_id,
             name: `${user.first_name} ${user.last_name}`,
             profession: room.assign_professions ? room.creator_profession : null,
             profession_data: room.assign_professions ? entrepreneurData : null,
@@ -679,8 +691,10 @@ app.post('/api/rooms/quick-join', authenticateToken, async (req, res) => {
 });
 
 // Get room details
-app.get('/api/rooms/:id', authenticateToken, async (req, res) => {
+app.get('/api/rooms/:id', async (req, res) => {
     try {
+        const { user_id } = req.query;
+        
         const room = await Room.findById(req.params.id)
             .populate('creator_id', 'first_name last_name');
         
@@ -689,7 +703,7 @@ app.get('/api/rooms/:id', authenticateToken, async (req, res) => {
         }
         
         // Check if user is in this room
-        const userInRoom = room.players.find(p => p.user_id.toString() === req.user.userId);
+        const userInRoom = user_id ? room.players.find(p => p.user_id.toString() === user_id) : null;
         if (!userInRoom) {
             return res.status(403).json({ message: 'Вы не являетесь участником этой комнаты' });
         }

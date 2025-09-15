@@ -923,27 +923,19 @@
         // Load rooms from server
         async function loadRooms() {
             try {
-                const token = localStorage.getItem('authToken');
-                if (!token) {
-                    console.log('No token found, redirecting to auth');
+                if (!currentUser || !currentUser.id) {
+                    console.log('No user data found, redirecting to auth');
                     window.location.href = '/auth';
                     return;
                 }
                 
-                const response = await fetch('/api/rooms', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+                const response = await fetch(`/api/rooms?user_id=${currentUser.id}`);
                 
                 console.log('Load rooms response status:', response.status);
                 
                 if (response.ok) {
                     rooms = await response.json();
                     renderRooms();
-                } else if (response.status === 401) {
-                    console.log('Token expired, redirecting to auth');
-                    logout();
                 } else {
                     console.error('Error loading rooms:', response.status, await response.text());
                 }
@@ -1070,8 +1062,14 @@
                 return;
             }
             
+            if (!currentUser || !currentUser.id) {
+                showError('createRoomError', 'Данные пользователя не найдены. Пожалуйста, войдите заново.');
+                return;
+            }
+            
             const formData = {
                 name: document.getElementById('roomName').value,
+                creator_id: currentUser.id,
                 creator_profession: selectedProfession,
                 max_players: parseInt(document.getElementById('maxPlayers').value),
                 turn_time: parseInt(document.getElementById('turnTime').value),
@@ -1083,12 +1081,10 @@
                 showLoading('createRoomLoading', true);
                 hideError('createRoomError');
                 
-                const token = localStorage.getItem('authToken');
                 const response = await fetch('/api/rooms/create', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(formData)
                 });
@@ -1097,8 +1093,8 @@
                 
                 if (response.ok) {
                     hideCreateRoomModal();
-                    loadRooms();
-                    showSuccess('Комната успешно создана!');
+                    // Redirect to game room
+                    window.location.href = `/room/${data.room_id}`;
                 } else {
                     showError('createRoomError', data.message || 'Ошибка создания комнаты');
                 }
@@ -1146,23 +1142,22 @@
                 showLoading('joinRoomLoading', true);
                 hideError('joinRoomError');
                 
-                const token = localStorage.getItem('authToken');
-                if (!token) {
-                    showError('joinRoomError', 'Токен авторизации не найден. Пожалуйста, войдите заново.');
+                if (!currentUser || !currentUser.id) {
+                    showError('joinRoomError', 'Данные пользователя не найдены. Пожалуйста, войдите заново.');
                     return;
                 }
                 
                 console.log('Joining room:', selectedRoomId);
-                console.log('Token:', token.substring(0, 20) + '...');
+                console.log('User ID:', currentUser.id);
                 
                 const response = await fetch('/api/rooms/join', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         room_id: selectedRoomId,
+                        user_id: currentUser.id,
                         password: document.getElementById('joinRoomPassword').value || null
                     })
                 });
@@ -1180,14 +1175,7 @@
                     // Redirect to game room
                     window.location.href = `/room/${selectedRoomId}`;
                 } else {
-                    if (response.status === 401) {
-                        showError('joinRoomError', 'Сессия истекла. Пожалуйста, войдите заново.');
-                        setTimeout(() => {
-                            window.location.href = '/auth';
-                        }, 2000);
-                    } else {
-                        showError('joinRoomError', data.message || 'Ошибка присоединения к комнате');
-                    }
+                    showError('joinRoomError', data.message || 'Ошибка присоединения к комнате');
                 }
             } catch (error) {
                 showError('joinRoomError', 'Ошибка соединения с сервером');
@@ -1200,12 +1188,19 @@
         // Quick join
         async function quickJoin() {
             try {
-                const token = localStorage.getItem('authToken');
+                if (!currentUser || !currentUser.id) {
+                    showError('createRoomError', 'Данные пользователя не найдены. Пожалуйста, войдите заново.');
+                    return;
+                }
+                
                 const response = await fetch('/api/rooms/quick-join', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUser.id
+                    })
                 });
                 
                 const data = await response.json();
