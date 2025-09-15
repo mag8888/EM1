@@ -715,6 +715,21 @@
             gap: 4px;
         }
 
+        .status-your-turn {
+            color: #3b82f6;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        .status-waiting-turn {
+            color: #6b7280;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
         .current-player {
             margin-top: 15px;
         }
@@ -2016,6 +2031,11 @@
                     // Обновляем UI
                     updateBankData();
                     updateTransfersHistory();
+                    
+                    // Обновляем список игроков с правильным индексом текущего игрока
+                    if (data.players) {
+                        updatePlayersList(data.players, currentPlayer);
+                    }
                 } else if (response.status === 404) {
                     console.error('Room not found in loadGameData:', roomId);
                     alert('Комната не найдена. Возможно, она была удалена.');
@@ -2527,6 +2547,23 @@
                 const data = await response.json();
                 
                 if (response.ok && data.players && data.players.length > 0) {
+                    // Находим индекс текущего пользователя в массиве игроков
+                    const currentUserIndex = data.players.findIndex(player => player.user_id.toString() === userData.id);
+                    const isCurrentUserTurn = currentUserIndex === currentPlayer;
+                    
+                    // Управляем кнопкой броска кубика
+                    const rollDiceBtn = document.getElementById('rollDiceBtn');
+                    if (rollDiceBtn) {
+                        if (isCurrentUserTurn) {
+                            // Показываем кнопку броска кубика для текущего игрока
+                            rollDiceBtn.style.display = 'flex';
+                            rollDiceBtn.disabled = false;
+                        } else {
+                            // Скрываем кнопку для других игроков
+                            rollDiceBtn.style.display = 'none';
+                        }
+                    }
+                    
                     // Проверяем, что currentPlayer в пределах массива игроков
                     if (currentPlayer >= 0 && currentPlayer < data.players.length) {
                         const currentPlayerData = data.players[currentPlayer];
@@ -2785,7 +2822,7 @@
                 const roomData = await response.json();
                 
                 if (response.ok && roomData.players) {
-                    updatePlayersList(roomData.players);
+                    updatePlayersList(roomData.players, currentPlayer);
                 }
             } catch (error) {
                 console.error('Error loading room players:', error);
@@ -2793,7 +2830,7 @@
         }
 
         // Обновление списка игроков
-        function updatePlayersList(players) {
+        function updatePlayersList(players, currentPlayerIndex = 0) {
             const playersList = document.querySelector('.players-list');
             if (!playersList) return;
             
@@ -2801,9 +2838,22 @@
             playersList.innerHTML = '';
             
             players.forEach((player, index) => {
+                const isCurrentPlayer = index === currentPlayerIndex;
                 const playerItem = document.createElement('div');
-                playerItem.className = `player-item ${index === 0 ? 'current' : ''}`;
+                playerItem.className = `player-item ${isCurrentPlayer ? 'current' : ''}`;
                 playerItem.id = `player${index + 1}Item`;
+                
+                // Определяем статус игрока
+                let statusIcon, statusText, statusClass;
+                if (isCurrentPlayer) {
+                    statusIcon = '🎲';
+                    statusText = 'Ваш ход';
+                    statusClass = 'status-your-turn';
+                } else {
+                    statusIcon = '⏳';
+                    statusText = 'Ожидание';
+                    statusClass = 'status-waiting-turn';
+                }
                 
                 playerItem.innerHTML = `
                     <div class="player-avatar player-${index + 1}">${index + 1}</div>
@@ -2811,9 +2861,9 @@
                         <div class="player-name">${player.name}</div>
                         <div class="player-role">${player.profession || 'Предприниматель'}</div>
                     </div>
-                    <div class="player-status">
-                        <span>✓</span>
-                        <span>Готов</span>
+                    <div class="player-status ${statusClass}">
+                        <span>${statusIcon}</span>
+                        <span>${statusText}</span>
                     </div>
                 `;
                 
@@ -2821,7 +2871,9 @@
             });
             
             // Обновляем информацию о текущем игроке
-            updateCurrentPlayerInfo(players[0]);
+            if (players[currentPlayerIndex]) {
+                updateCurrentPlayerInfo(players[currentPlayerIndex]);
+            }
         }
 
         // Обновление информации о текущем игроке
