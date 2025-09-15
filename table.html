@@ -4969,7 +4969,14 @@
                 
                 // Принудительно загружаем данные перед обновлением
                 loadBankData().then(() => {
+                    console.log('Bank data loaded, updating credit modal...');
                     updateCreditModal();
+                    
+                    // Дополнительное обновление через задержку
+                    setTimeout(() => {
+                        console.log('Delayed credit modal update...');
+                        updateCreditModal();
+                    }, 200);
                 });
                 
                 setTimeout(() => {
@@ -5006,24 +5013,38 @@
                 currentCreditAmountEl: !!currentCreditAmountEl
             });
             
+            // Принудительно обновляем значения
             if (currentCashFlowEl) {
                 currentCashFlowEl.textContent = `$${monthlyIncome.toLocaleString()}`;
+                currentCashFlowEl.style.color = '#10b981';
                 console.log('Updated cash flow to:', monthlyIncome);
             }
             
             if (maxCreditAmountEl) {
                 const maxCredit = Math.floor(monthlyIncome / 100) * 1000;
                 maxCreditAmountEl.textContent = `$${maxCredit.toLocaleString()}`;
+                maxCreditAmountEl.style.color = '#10b981';
                 console.log('Updated max credit to:', maxCredit);
             }
             
             if (currentCreditAmountEl) {
                 currentCreditAmountEl.textContent = `$${currentCredit.toLocaleString()}`;
+                currentCreditAmountEl.style.color = '#10b981';
                 console.log('Updated current credit to:', currentCredit);
             }
             
             // Обновляем превью при изменении суммы
             updateCreditPreview();
+            
+            // Принудительное обновление через небольшую задержку
+            setTimeout(() => {
+                if (currentCashFlowEl) currentCashFlowEl.textContent = `$${monthlyIncome.toLocaleString()}`;
+                if (maxCreditAmountEl) {
+                    const maxCredit = Math.floor(monthlyIncome / 100) * 1000;
+                    maxCreditAmountEl.textContent = `$${maxCredit.toLocaleString()}`;
+                }
+                if (currentCreditAmountEl) currentCreditAmountEl.textContent = `$${currentCredit.toLocaleString()}`;
+            }, 100);
         }
         
         // Установка суммы кредита
@@ -5294,7 +5315,7 @@
                     <div class="form-group">
                         <label for="creditAmount">Сумма кредита (кратно 1000$):</label>
                         <div class="amount-input">
-                            <input type="number" id="creditAmount" min="1000" step="1000" placeholder="1000" oninput="updateCreditPreview()">
+                            <input type="number" id="creditAmount" min="1000" step="1000" placeholder="1000" oninput="updateCreditPreview()" onchange="updateCreditPreview()">
                             <div class="amount-buttons">
                                 <button type="button" onclick="setCreditAmount(1000)">1K</button>
                                 <button type="button" onclick="setCreditAmount(5000)">5K</button>
