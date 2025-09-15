@@ -951,6 +951,7 @@
                 if (response.ok) {
                     const data = await response.json();
                     console.log('Rooms data received:', data);
+                    console.log('Number of rooms:', data.length);
                     rooms = data;
                     renderRooms();
                 } else {
@@ -987,6 +988,9 @@
         // Render rooms list
         function renderRooms() {
             const roomsList = document.getElementById('roomsList');
+            
+            console.log('Rendering rooms:', rooms.length, 'rooms');
+            console.log('Current user:', currentUser);
             
             if (rooms.length === 0) {
                 roomsList.innerHTML = `
@@ -1121,6 +1125,8 @@
                 showLoading('createRoomLoading', true);
                 hideError('createRoomError');
                 
+                console.log('Creating room with data:', formData);
+                
                 const response = await fetch('/api/rooms/create', {
                     method: 'POST',
                     headers: {
@@ -1129,18 +1135,22 @@
                     body: JSON.stringify(formData)
                 });
                 
+                console.log('Create room response status:', response.status);
                 const data = await response.json();
+                console.log('Create room response data:', data);
                 
                 if (response.ok) {
+                    console.log('Room created successfully, redirecting to:', `/room/${data.room_id}`);
                     hideCreateRoomModal();
                     // Redirect to game room
                     window.location.href = `/room/${data.room_id}`;
                 } else {
+                    console.error('Room creation failed:', data.message);
                     showError('createRoomError', data.message || 'Ошибка создания комнаты');
                 }
             } catch (error) {
-                showError('createRoomError', 'Ошибка соединения с сервером');
                 console.error('Create room error:', error);
+                showError('createRoomError', 'Ошибка соединения с сервером');
             } finally {
                 showLoading('createRoomLoading', false);
             }
