@@ -2841,6 +2841,8 @@
                             console.log('All player balances:', data.game_data.player_balances);
                             currentBalance = data.game_data.player_balances[playerIndex] || 0;
                             console.log('Loaded balance from server:', currentBalance, 'for player', playerIndex);
+                            console.log('Previous balance was:', currentBalance);
+                            console.log('New balance from server:', gameData.player_balances[playerIndex]);
                         }
                         
                         // Финансовая статистика игрока
@@ -4211,17 +4213,21 @@
                 if (response.ok) {
                     console.log('Transfer successful, waiting for server to save...');
                     
-                    // Ждем немного, чтобы сервер успел сохранить изменения
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+        // Ждем немного, чтобы сервер успел сохранить изменения
+        await new Promise(resolve => setTimeout(resolve, 5000));
                     
                     console.log('Reloading data from server...');
                     // Перезагружаем данные с сервера для синхронизации
                     await loadGameData();
                     
-                    // Принудительно обновляем UI с новым балансом
-                    console.log('Force updating UI with new balance:', data.new_balance);
-                    currentBalance = data.new_balance;
-                    updateBankData();
+                    // Проверяем, что баланс действительно изменился
+                    if (currentBalance !== data.new_balance) {
+                        console.log('Balance mismatch detected, force updating UI with new balance:', data.new_balance);
+                        currentBalance = data.new_balance;
+                        updateBankData();
+                    } else {
+                        console.log('Balance is correct, no need to force update');
+                    }
                     
                     // Добавляем перевод в историю локально
                     if (data.transfer) {
