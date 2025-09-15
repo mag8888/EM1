@@ -921,7 +921,7 @@
         }
 
         // Load rooms from server
-        async function loadRooms() {
+        async function loadRooms(retryCount = 0) {
             try {
                 if (!currentUser || !currentUser.id) {
                     console.log('No user data found, redirecting to auth');
@@ -929,18 +929,56 @@
                     return;
                 }
                 
-                const response = await fetch(`/api/rooms?user_id=${currentUser.id}`);
+                console.log('Loading rooms for user:', currentUser.id);
+                console.log('Making request to:', `/api/rooms?user_id=${currentUser.id}`);
+                console.log('Retry count:', retryCount);
+                
+                const response = await fetch(`/api/rooms?user_id=${currentUser.id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    mode: 'cors',
+                    credentials: 'same-origin',
+                    cache: 'no-cache'
+                });
                 
                 console.log('Load rooms response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
                 
                 if (response.ok) {
-                    rooms = await response.json();
+                    const data = await response.json();
+                    console.log('Rooms data received:', data);
+                    rooms = data;
                     renderRooms();
                 } else {
-                    console.error('Error loading rooms:', response.status, await response.text());
+                    const errorText = await response.text();
+                    console.error('Error loading rooms:', response.status, errorText);
+                    
+                    // Retry logic for 502/503 errors
+                    if ((response.status === 502 || response.status === 503) && retryCount < 3) {
+                        console.log(`Retrying in ${(retryCount + 1) * 2} seconds...`);
+                        setTimeout(() => {
+                            loadRooms(retryCount + 1);
+                        }, (retryCount + 1) * 2000);
+                        return;
+                    }
+                    
+                    showError('errorMessage', `Ошибка загрузки комнат: ${response.status} - ${errorText}`);
                 }
             } catch (error) {
                 console.error('Error loading rooms:', error);
+                
+                // Retry logic for network errors
+                if (retryCount < 3) {
+                    console.log(`Network error, retrying in ${(retryCount + 1) * 2} seconds...`);
+                    setTimeout(() => {
+                        loadRooms(retryCount + 1);
+                    }, (retryCount + 1) * 2000);
+                    return;
+                }
+                
+                showError('errorMessage', `Ошибка соединения: ${error.message}`);
             }
         }
 

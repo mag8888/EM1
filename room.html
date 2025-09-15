@@ -501,8 +501,8 @@
             <div class="game-area">
                 <div class="waiting-message">
                     <div class="waiting-icon">🎲</div>
-                    <div class="waiting-title">Ожидание игроков</div>
-                    <div class="waiting-text">
+                    <div class="waiting-title" id="waitingTitle">Ожидание игроков</div>
+                    <div class="waiting-text" id="waitingText">
                         Игра начнется, когда все игроки будут готовы
                     </div>
                     <div class="button-group">
@@ -678,9 +678,34 @@
         function renderRoom() {
             if (!currentRoom) return;
             
+            // Check if game has started and redirect all players
+            if (currentRoom.game_started) {
+                console.log('Game has started, redirecting to game board...');
+                window.location.href = `/table?room=${roomId}`;
+                return;
+            }
+            
             // Update header
             document.getElementById('roomName').textContent = currentRoom.name;
-            document.getElementById('roomStatus').textContent = currentRoom.game_started ? 'Игра идет' : 'Ожидание игроков';
+            
+            // Check if all players are ready
+            const readyPlayers = currentRoom.players.filter(p => p.is_ready).length;
+            const totalPlayers = currentRoom.players.length;
+            const isHost = currentRoom.creator_id && currentRoom.creator_id.toString() === currentUser.id.toString();
+            
+            if (readyPlayers >= 2 && totalPlayers >= 2 && isHost) {
+                document.getElementById('roomStatus').textContent = 'Готово к запуску! Нажмите "Старт"';
+                document.getElementById('waitingTitle').textContent = 'Готово к запуску!';
+                document.getElementById('waitingText').textContent = 'Все игроки готовы. Нажмите "Старт" для начала игры.';
+            } else if (readyPlayers >= 2 && totalPlayers >= 2) {
+                document.getElementById('roomStatus').textContent = 'Все готовы! Ожидание запуска...';
+                document.getElementById('waitingTitle').textContent = 'Все готовы!';
+                document.getElementById('waitingText').textContent = 'Ожидание запуска игры создателем комнаты...';
+            } else {
+                document.getElementById('roomStatus').textContent = `Ожидание игроков (${readyPlayers}/${totalPlayers} готовы)`;
+                document.getElementById('waitingTitle').textContent = 'Ожидание игроков';
+                document.getElementById('waitingText').textContent = `Игра начнется, когда все игроки будут готовы (${readyPlayers}/${totalPlayers} готовы)`;
+            }
             
             // Update room settings
             document.getElementById('turnTime').textContent = `${currentRoom.turn_time} мин`;
@@ -857,10 +882,16 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    // Redirect to game board
-                    window.location.href = `/table?room=${roomId}`;
+                    console.log('Game started successfully, redirecting...');
+                    // Show success message
+                    showError('errorMessage', 'Игра началась! Перенаправление...');
+                    
+                    // Redirect to game board after a short delay
+                    setTimeout(() => {
+                        window.location.href = `/table?room=${roomId}`;
+                    }, 1000);
                 } else {
-                    showError(data.message || 'Ошибка запуска игры');
+                    showError('errorMessage', data.message || 'Ошибка запуска игры');
                 }
             } catch (error) {
                 showError('Ошибка соединения с сервером');
@@ -1010,12 +1041,12 @@
             document.getElementById('loading').style.display = show ? 'block' : 'none';
         }
 
-        // Manual refresh only - no automatic updates to prevent flickering
-        // setInterval(() => {
-        //     if (roomId && currentRoom && !currentRoom.game_started) {
-        //         loadRoomData(false); // Don't show loading indicator for auto-refresh
-        //     }
-        // }, 10000);
+        // Check for game start every 3 seconds
+        setInterval(() => {
+            if (roomId && currentRoom && !currentRoom.game_started) {
+                loadRoomData(false); // Don't show loading indicator for auto-refresh
+            }
+        }, 3000);
     </script>
 </body>
 </html>
