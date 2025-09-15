@@ -3130,15 +3130,20 @@
                     // 2. Текущий баланс равен 0 (первая загрузка)
                     // 3. Прошло больше 5 секунд с последнего обновления (защита от сброса после переводов)
                     // 4. Принудительное обновление (forceUpdate = true)
+                    // 5. НО НЕ если новый баланс меньше текущего (защита от сброса после переводов)
                     const now = Date.now();
                     const timeSinceLastUpdate = now - (window.lastBalanceUpdate || 0);
                     
-                    if (newBalance > currentBalance || currentBalance === 0 || timeSinceLastUpdate > 5000 || forceUpdate) {
+                    // Дополнительная защита: не сбрасываем баланс если он больше нового
+                    const shouldUpdate = (newBalance > currentBalance || currentBalance === 0 || timeSinceLastUpdate > 5000 || forceUpdate) && 
+                                       !(newBalance < currentBalance && timeSinceLastUpdate < 10000); // Защита от сброса в течение 10 секунд
+                    
+                    if (shouldUpdate) {
                         currentBalance = newBalance;
                         window.lastBalanceUpdate = now;
                         console.log('Balance updated to:', currentBalance, 'timeSinceLastUpdate:', timeSinceLastUpdate + 'ms', 'forceUpdate:', forceUpdate);
                     } else {
-                        console.log('Keeping current balance:', currentBalance, '(new:', newBalance, ')', 'timeSinceLastUpdate:', timeSinceLastUpdate + 'ms', 'forceUpdate:', forceUpdate);
+                        console.log('Keeping current balance:', currentBalance, '(new:', newBalance, ')', 'timeSinceLastUpdate:', timeSinceLastUpdate + 'ms', 'forceUpdate:', forceUpdate, 'shouldUpdate:', shouldUpdate);
                     }
                 } else {
                     console.log('Player not found in room, user.id:', user.id, 'players:', data.players.map(p => p.user_id));
@@ -4590,11 +4595,11 @@
                     // Показываем успех
                     showSuccess('Перевод выполнен успешно!');
                     
-                    // Синхронизируем с сервером через 2 секунды (только для проверки)
+                    // Синхронизируем с сервером через 5 секунд (даем серверу время сохранить)
                     setTimeout(async () => {
                         console.log('🔄 Синхронизация с сервером после перевода...');
                         await loadBankData(true); // Принудительное обновление для синхронизации
-                    }, 2000);
+                    }, 5000);
                     
                     // Очищаем форму
                     resetTransferForm();
