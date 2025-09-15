@@ -124,12 +124,10 @@ const roomSchema = new mongoose.Schema({
     }],
     game_started: { type: Boolean, default: false },
     game_start_time: { type: Date, default: null }, // Время начала игры
+    turn_start_time: { type: Date, default: null }, // Время начала текущего хода
     current_player: { type: Number, default: 0 },
-    game_data: {
-        board_state: { type: mongoose.Schema.Types.Mixed, default: {} },
-        cell_owners: { type: mongoose.Schema.Types.Mixed, default: {} },
-        game_timer: { type: Number, default: 0 }
-    },
+    // Разрешаем произвольную структуру данных игры (включая player_positions, balances, history, финансы и т.п.)
+    game_data: { type: mongoose.Schema.Types.Mixed, default: {} },
     created_at: { type: Date, default: Date.now },
     updated_at: { type: Date, default: Date.now }
 });
