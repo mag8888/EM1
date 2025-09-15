@@ -1590,7 +1590,7 @@
                 </div>
                 
                 <div class="bank-balance">
-                    <div class="balance-amount" id="bankBalance">$3 000</div>
+                    <div class="balance-amount" id="bankBalance">$0</div>
                     <div class="balance-label">Доступно для операций</div>
                 </div>
                 
@@ -1600,21 +1600,21 @@
                             <span>📈</span>
                             <span>Доход:</span>
                         </div>
-                        <div class="stat-value income">$6 000</div>
+                        <div class="stat-value income">$0</div>
                     </div>
                     <div class="bank-stat">
                         <div class="stat-label">
                             <span>📉</span>
                             <span>Расходы:</span>
                         </div>
-                        <div class="stat-value expenses">$2 500</div>
+                        <div class="stat-value expenses">$0</div>
                     </div>
                     <div class="bank-stat">
                         <div class="stat-label">
                             <span>💰</span>
                             <span>PAYDAY:</span>
                         </div>
-                        <div class="stat-value payday">$3 500/мес</div>
+                        <div class="stat-value payday">$0/мес</div>
                     </div>
                 </div>
                 
@@ -1781,7 +1781,7 @@
                         </div>
                         
                         <div class="balance-section">
-                            <div class="balance-amount" id="currentBalance">$3,000</div>
+                            <div class="balance-amount" id="currentBalance">$0</div>
                             <div class="balance-label">Доступно для операций</div>
                         </div>
 
@@ -1789,17 +1789,17 @@
                             <div class="summary-item">
                                 <span class="summary-icon">📈</span>
                                 <span class="summary-label">Доход:</span>
-                                <span class="summary-value" id="totalIncome">$6,000</span>
+                                <span class="summary-value" id="totalIncome">$0</span>
                             </div>
                             <div class="summary-item">
                                 <span class="summary-icon">📉</span>
                                 <span class="summary-label">Расходы:</span>
-                                <span class="summary-value" id="totalExpenses">$2,500</span>
+                                <span class="summary-value" id="totalExpenses">$0</span>
                             </div>
                             <div class="summary-item">
                                 <span class="summary-icon">💰</span>
                                 <span class="summary-label">PAYDAY:</span>
-                                <span class="summary-value" id="monthlyIncome">$3,500/мес</span>
+                                <span class="summary-value" id="monthlyIncome">$0/мес</span>
                             </div>
                         </div>
 
@@ -2013,8 +2013,22 @@
                     // Находим индекс текущего игрока
                     const playerIndex = data.players.findIndex(p => p.user_id.toString() === userData.id);
                     
-                    if (playerIndex !== -1 && data.game_data.player_balances) {
-                        currentBalance = data.game_data.player_balances[playerIndex] || 10000;
+                    // Загружаем все финансовые данные с сервера
+                    if (playerIndex !== -1) {
+                        // Баланс игрока
+                        if (data.game_data.player_balances) {
+                            currentBalance = data.game_data.player_balances[playerIndex] || 10000;
+                        }
+                        
+                        // Финансовая статистика игрока
+                        if (data.game_data.player_finances && data.game_data.player_finances[playerIndex]) {
+                            const finances = data.game_data.player_finances[playerIndex];
+                            totalIncome = finances.totalIncome || 0;
+                            totalExpenses = finances.totalExpenses || 0;
+                            monthlyIncome = finances.monthlyIncome || 0;
+                            currentCredit = finances.currentCredit || 0;
+                            maxCredit = finances.maxCredit || 10000;
+                        }
                     }
                     
                     // Обновляем историю переводов
@@ -2625,7 +2639,7 @@
 
         // Просмотр деталей банка
         function viewDetails() {
-            alert('Детальная информация о банке:\n\n• Текущий баланс: $3,000\n• Доходы: $6,000\n• Расходы: $2,500\n• PAYDAY: $3,500/мес\n\nДля полного доступа откройте банк.');
+            alert(`Детальная информация о банке:\n\n• Текущий баланс: $${currentBalance.toLocaleString()}\n• Доходы: $${totalIncome.toLocaleString()}\n• Расходы: $${totalExpenses.toLocaleString()}\n• PAYDAY: $${monthlyIncome.toLocaleString()}/мес\n\nДля полного доступа откройте банк.`);
         }
 
         // Обновление баланса банка
@@ -2928,9 +2942,9 @@
         // Банковские функции
         let transfersHistory = [];
         let currentBalance = 10000;
-        let totalIncome = 6000;
-        let totalExpenses = 2500;
-        let monthlyIncome = 3500;
+        let totalIncome = 0;
+        let totalExpenses = 0;
+        let monthlyIncome = 0;
         let currentCredit = 0;
         let maxCredit = 10000;
 
@@ -2962,17 +2976,60 @@
         }
 
         function updateBankData() {
-            // Обновляем баланс
-            document.getElementById('currentBalance').textContent = `$${currentBalance.toLocaleString()}`;
+            // Обновляем основной баланс в банке
+            const bankBalance = document.getElementById('bankBalance');
+            if (bankBalance) {
+                bankBalance.textContent = `$${currentBalance.toLocaleString()}`;
+            }
             
-            // Обновляем финансовую сводку
-            document.getElementById('totalIncome').textContent = `$${totalIncome.toLocaleString()}`;
-            document.getElementById('totalExpenses').textContent = `$${totalExpenses.toLocaleString()}`;
-            document.getElementById('monthlyIncome').textContent = `$${monthlyIncome.toLocaleString()}/мес`;
+            // Обновляем баланс в модальном окне
+            const currentBalanceEl = document.getElementById('currentBalance');
+            if (currentBalanceEl) {
+                currentBalanceEl.textContent = `$${currentBalance.toLocaleString()}`;
+            }
+            
+            // Обновляем финансовую сводку в банке
+            const incomeEl = document.querySelector('.stat-value.income');
+            if (incomeEl) {
+                incomeEl.textContent = `$${totalIncome.toLocaleString()}`;
+            }
+            
+            const expensesEl = document.querySelector('.stat-value.expenses');
+            if (expensesEl) {
+                expensesEl.textContent = `$${totalExpenses.toLocaleString()}`;
+            }
+            
+            const paydayEl = document.querySelector('.stat-value.payday');
+            if (paydayEl) {
+                paydayEl.textContent = `$${monthlyIncome.toLocaleString()}/мес`;
+            }
+            
+            // Обновляем финансовую сводку в модальном окне
+            const totalIncomeEl = document.getElementById('totalIncome');
+            if (totalIncomeEl) {
+                totalIncomeEl.textContent = `$${totalIncome.toLocaleString()}`;
+            }
+            
+            const totalExpensesEl = document.getElementById('totalExpenses');
+            if (totalExpensesEl) {
+                totalExpensesEl.textContent = `$${totalExpenses.toLocaleString()}`;
+            }
+            
+            const monthlyIncomeEl = document.getElementById('monthlyIncome');
+            if (monthlyIncomeEl) {
+                monthlyIncomeEl.textContent = `$${monthlyIncome.toLocaleString()}/мес`;
+            }
             
             // Обновляем кредитную информацию
-            document.getElementById('currentCredit').textContent = `$${currentCredit.toLocaleString()}`;
-            document.getElementById('maxCredit').textContent = `$${maxCredit.toLocaleString()}`;
+            const currentCreditEl = document.getElementById('currentCredit');
+            if (currentCreditEl) {
+                currentCreditEl.textContent = `$${currentCredit.toLocaleString()}`;
+            }
+            
+            const maxCreditEl = document.getElementById('maxCredit');
+            if (maxCreditEl) {
+                maxCreditEl.textContent = `$${maxCredit.toLocaleString()}`;
+            }
         }
 
         async function loadRecipients() {

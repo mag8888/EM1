@@ -931,6 +931,13 @@ app.post('/api/rooms/:id/start', async (req, res) => {
         room.game_data = {
             player_positions: new Array(room.players.length).fill(0),
             player_balances: new Array(room.players.length).fill(10000), // Начальный баланс
+            player_finances: new Array(room.players.length).fill({
+                totalIncome: 0,
+                totalExpenses: 0,
+                monthlyIncome: 0,
+                currentCredit: 0,
+                maxCredit: 10000
+            }),
             transfers_history: []
         };
         room.updated_at = new Date();
@@ -1000,6 +1007,13 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
             room.game_data = {
                 player_positions: new Array(room.players.length).fill(0),
                 player_balances: new Array(room.players.length).fill(10000),
+                player_finances: new Array(room.players.length).fill({
+                    totalIncome: 0,
+                    totalExpenses: 0,
+                    monthlyIncome: 0,
+                    currentCredit: 0,
+                    maxCredit: 10000
+                }),
                 transfers_history: []
             };
         }
