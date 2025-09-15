@@ -4601,20 +4601,25 @@
             }
             
             const recipientIndex = recipientSelect.value;
-            const amount = parseInt(amountInput.value);
+            const amount = parseFloat(amountInput.value);
             
             console.log('Validation values:', {
                 recipientIndex,
                 amount,
+                amountInputValue: amountInput.value,
                 minAmount: BANK_CONFIG.minTransferAmount,
                 currentBalance
             });
             
-            if (!recipientIndex || recipientIndex === '') {
+            if (!recipientIndex || recipientIndex === '' || recipientIndex === '0') {
                 return { valid: false, message: 'Выберите получателя' };
             }
             
-            if (!amount || isNaN(amount) || amount < 1) {
+            if (!amountInput.value || amountInput.value.trim() === '') {
+                return { valid: false, message: 'Введите сумму перевода' };
+            }
+            
+            if (isNaN(amount) || amount < 1) {
                 return { valid: false, message: `Минимальная сумма: $1` };
             }
             
@@ -4626,6 +4631,7 @@
                 return { valid: false, message: 'Недостаточно средств на балансе' };
             }
             
+            console.log('Transfer validation passed');
             return { valid: true };
         }
         
