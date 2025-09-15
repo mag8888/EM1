@@ -703,8 +703,18 @@ app.get('/api/rooms/:id', async (req, res) => {
             .populate('creator_id', 'first_name last_name');
         
         if (!room) {
+            console.log('Room not found in GET /api/rooms/:id:', req.params.id);
             return res.status(404).json({ message: 'Комната не найдена' });
         }
+        
+        console.log('Room found in GET /api/rooms/:id:', {
+            id: room._id,
+            name: room.name,
+            game_started: room.game_started,
+            game_start_time: room.game_start_time,
+            players_count: room.players.length,
+            created_at: room.created_at
+        });
         
         // Check if user is in this room
         const userInRoom = user_id ? room.players.find(p => p.user_id.toString() === user_id) : null;
@@ -853,8 +863,16 @@ app.post('/api/rooms/:id/start', async (req, res) => {
         const room = await Room.findById(req.params.id);
         
         if (!room) {
+            console.log('Room not found in POST /api/rooms/:id/start:', req.params.id);
             return res.status(404).json({ message: 'Комната не найдена' });
         }
+        
+        console.log('Room found for start game:', {
+            id: room._id,
+            name: room.name,
+            game_started: room.game_started,
+            players_count: room.players.length
+        });
         
         // Check if user is the creator
         if (room.creator_id.toString() !== user_id) {
@@ -1040,6 +1058,14 @@ app.get('/api/rooms/:id/turn', async (req, res) => {
             console.log('Room not found for turn info:', req.params.id);
             return res.status(404).json({ message: 'Комната не найдена' });
         }
+        
+        console.log('Room found for turn info:', {
+            id: room._id,
+            name: room.name,
+            game_started: room.game_started,
+            game_start_time: room.game_start_time,
+            players_count: room.players.length
+        });
 
         if (!room.game_started) {
             return res.status(400).json({ message: 'Игра еще не началась' });
@@ -1094,8 +1120,17 @@ app.post('/api/rooms/:id/next-turn', async (req, res) => {
 
         const room = await Room.findById(req.params.id);
         if (!room) {
+            console.log('Room not found in POST /api/rooms/:id/next-turn:', req.params.id);
             return res.status(404).json({ message: 'Комната не найдена' });
         }
+        
+        console.log('Room found for next turn:', {
+            id: room._id,
+            name: room.name,
+            game_started: room.game_started,
+            current_player: room.current_player,
+            players_count: room.players.length
+        });
 
         if (!room.game_started) {
             return res.status(400).json({ message: 'Игра еще не началась' });
@@ -1165,8 +1200,8 @@ async function cleanupOldRooms() {
     }
 }
 
-// Запускаем очистку каждые 30 минут
-setInterval(cleanupOldRooms, 30 * 60 * 1000);
+// Запускаем очистку каждые 30 минут (отключено для отладки)
+// setInterval(cleanupOldRooms, 30 * 60 * 1000);
 
 // Запускаем очистку при старте сервера (отключено для отладки)
 // cleanupOldRooms();
