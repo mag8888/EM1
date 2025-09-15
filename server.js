@@ -1467,6 +1467,121 @@ app.post('/api/rooms/:id/payoff-loan', async (req, res) => {
     }
 });
 
+// API для взятия кредита
+app.post('/api/rooms/:id/take-credit', async (req, res) => {
+    try {
+        const { playerIndex, amount } = req.body;
+        const room = await Room.findById(req.params.id);
+        
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+        
+        if (!room.game_data?.player_professions?.[playerIndex]) {
+            return res.status(404).json({ message: 'Данные игрока не найдены' });
+        }
+        
+        const playerProfession = room.game_data.player_professions[playerIndex];
+        const maxCredit = playerProfession.maxCredit || 10000;
+        const currentCredit = playerProfession.totalCredits || 0;
+        
+        if (currentCredit + amount > maxCredit) {
+            return res.status(400).json({ 
+                message: `Превышен лимит кредита. Доступно: $${maxCredit - currentCredit}` 
+            });
+        }
+        
+        if (amount < 100 || amount > 10000) {
+            return res.status(400).json({ 
+                message: 'Сумма кредита должна быть от $100 до $10,000' 
+            });
+        }
+        
+        // Добавляем кредит к балансу
+        addBalance(room, playerIndex, amount, 'Взятие кредита');
+        
+        // Обновляем данные о кредите
+        playerProfession.totalCredits = (playerProfession.totalCredits || 0) + amount;
+        
+        // Добавляем ежемесячный платеж (10% от суммы кредита)
+        const monthlyPayment = Math.round(amount * 0.1);
+        playerProfession.expenses = (playerProfession.expenses || 0) + monthlyPayment;
+        
+        await room.save();
+        
+        res.json({ 
+            message: 'Кредит успешно взят',
+            new_balance: room.game_data.player_balances[playerIndex],
+            credit_amount: amount,
+            monthly_payment: monthlyPayment,
+            total_credits: playerProfession.totalCredits
+        });
+        
+    } catch (error) {
+        console.error('Take credit error:', error);
+        res.status(500).json({ message: 'Ошибка при взятии кредита' });
+    }
+});
+
+// API для погашения долга
+app.post('/api/rooms/:id/payoff-debt', async (req, res) => {
+    try {
+        const { playerIndex, amount } = req.body;
+        const room = await Room.findById(req.params.id);
+        
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+        
+        if (!room.game_data?.player_professions?.[playerIndex]) {
+            return res.status(404).json({ message: 'Данные игрока не найдены' });
+        }
+        
+        const playerProfession = room.game_data.player_professions[playerIndex];
+        const currentCredit = playerProfession.totalCredits || 0;
+        
+        if (amount > currentCredit) {
+            return res.status(400).json({ 
+                message: `Сумма погашения превышает текущий долг. Доступно для погашения: $${currentCredit}` 
+            });
+        }
+        
+        if (amount > room.game_data.player_balances[playerIndex]) {
+            return res.status(400).json({ 
+                message: 'Недостаточно средств для погашения' 
+            });
+        }
+        
+        // Списываем сумму с баланса
+        subtractBalance(room, playerIndex, amount, 'Погашение долга');
+        
+        // Уменьшаем долг
+        playerProfession.totalCredits = Math.max(0, currentCredit - amount);
+        
+        // Пересчитываем ежемесячные расходы (10% от оставшегося долга)
+        const remainingDebt = playerProfession.totalCredits;
+        const newMonthlyPayment = Math.round(remainingDebt * 0.1);
+        const oldMonthlyPayment = Math.round(currentCredit * 0.1);
+        const paymentDifference = oldMonthlyPayment - newMonthlyPayment;
+        
+        playerProfession.expenses = Math.max(0, (playerProfession.expenses || 0) - paymentDifference);
+        
+        await room.save();
+        
+        res.json({ 
+            message: 'Долг успешно погашен',
+            new_balance: room.game_data.player_balances[playerIndex],
+            amount_paid: amount,
+            remaining_debt: playerProfession.totalCredits,
+            new_monthly_payment: newMonthlyPayment
+        });
+        
+    } catch (error) {
+        console.error('Payoff debt error:', error);
+        res.status(500).json({ message: 'Ошибка при погашении долга' });
+    }
+});
+
 // Запуск сервера
 // Get current turn info
 app.get('/api/rooms/:id/turn', async (req, res) => {

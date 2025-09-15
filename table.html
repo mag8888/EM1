@@ -4931,18 +4931,68 @@
         }
         
         // Функция загрузки данных кредита
-        function loadCreditData() {
-            // Пока что используем фиксированные значения
-            // В будущем можно загружать с сервера
-            const availableCredit = 10000; // Максимальный кредит
-            const currentDebt = currentCredit || 0; // Текущий долг
-            
-            document.getElementById('availableCredit').textContent = `$${availableCredit.toLocaleString()}`;
-            document.getElementById('currentDebt').textContent = `$${currentDebt.toLocaleString()}`;
+        async function loadCreditData() {
+            try {
+                const roomId = getRoomIdFromURL();
+                const user = JSON.parse(localStorage.getItem('user'));
+                
+                if (!roomId || !user) {
+                    // Используем значения по умолчанию
+                    const availableCredit = 10000;
+                    const currentDebt = 0;
+                    
+                    document.getElementById('availableCredit').textContent = `$${availableCredit.toLocaleString()}`;
+                    document.getElementById('currentDebt').textContent = `$${currentDebt.toLocaleString()}`;
+                    return;
+                }
+                
+                // Находим индекс игрока
+                const response = await fetch(`/api/rooms/${roomId}?user_id=${user.id}`);
+                const data = await response.json();
+                const playerIndex = data.players.findIndex(p => p.id === user.id || p.name === user.name || p.user_id === user.id);
+                
+                if (playerIndex === -1) {
+                    // Используем значения по умолчанию
+                    const availableCredit = 10000;
+                    const currentDebt = 0;
+                    
+                    document.getElementById('availableCredit').textContent = `$${availableCredit.toLocaleString()}`;
+                    document.getElementById('currentDebt').textContent = `$${currentDebt.toLocaleString()}`;
+                    return;
+                }
+                
+                // Загружаем данные профессии
+                const professionResponse = await fetch(`/api/rooms/${roomId}/player/${playerIndex}/profession`);
+                if (professionResponse.ok) {
+                    const professionData = await professionResponse.json();
+                    const maxCredit = professionData.maxCredit || 10000;
+                    const currentDebt = professionData.totalCredits || 0;
+                    const availableCredit = maxCredit - currentDebt;
+                    
+                    document.getElementById('availableCredit').textContent = `$${availableCredit.toLocaleString()}`;
+                    document.getElementById('currentDebt').textContent = `$${currentDebt.toLocaleString()}`;
+                } else {
+                    // Используем значения по умолчанию
+                    const availableCredit = 10000;
+                    const currentDebt = 0;
+                    
+                    document.getElementById('availableCredit').textContent = `$${availableCredit.toLocaleString()}`;
+                    document.getElementById('currentDebt').textContent = `$${currentDebt.toLocaleString()}`;
+                }
+                
+            } catch (error) {
+                console.error('Error loading credit data:', error);
+                // Используем значения по умолчанию при ошибке
+                const availableCredit = 10000;
+                const currentDebt = 0;
+                
+                document.getElementById('availableCredit').textContent = `$${availableCredit.toLocaleString()}`;
+                document.getElementById('currentDebt').textContent = `$${currentDebt.toLocaleString()}`;
+            }
         }
         
         // Функция взятия кредита
-        function takeCredit() {
+        async function takeCredit() {
             const amount = parseInt(document.getElementById('creditAmount').value);
             
             if (!amount || amount < 100) {
@@ -4955,17 +5005,67 @@
                 return;
             }
             
-            showNotification(`Кредит на $${amount.toLocaleString()} взят успешно!`, 'success');
-            
-            // Очищаем форму
-            document.getElementById('creditAmount').value = '';
-            
-            // Обновляем данные
-            loadCreditData();
+            try {
+                showLoadingIndicator();
+                
+                const roomId = getRoomIdFromURL();
+                const user = JSON.parse(localStorage.getItem('user'));
+                
+                if (!roomId || !user) {
+                    showError('Ошибка: не найдены данные комнаты или пользователя');
+                    return;
+                }
+                
+                // Находим индекс игрока
+                const response = await fetch(`/api/rooms/${roomId}?user_id=${user.id}`);
+                const data = await response.json();
+                const playerIndex = data.players.findIndex(p => p.id === user.id || p.name === user.name || p.user_id === user.id);
+                
+                if (playerIndex === -1) {
+                    showError('Игрок не найден');
+                    return;
+                }
+                
+                // Отправляем запрос на взятие кредита
+                const creditResponse = await fetch(`/api/rooms/${roomId}/take-credit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        playerIndex: playerIndex,
+                        amount: amount
+                    })
+                });
+                
+                const result = await creditResponse.json();
+                
+                if (creditResponse.ok) {
+                    showNotification(`Кредит на $${amount.toLocaleString()} взят успешно!`, 'success');
+                    
+                    // Обновляем баланс
+                    currentBalance = result.new_balance;
+                    updateBalanceDisplay();
+                    
+                    // Очищаем форму
+                    document.getElementById('creditAmount').value = '';
+                    
+                    // Обновляем данные
+                    loadCreditData();
+                } else {
+                    showError(result.message || 'Ошибка при взятии кредита');
+                }
+                
+            } catch (error) {
+                console.error('Take credit error:', error);
+                showError('Ошибка при взятии кредита: ' + error.message);
+            } finally {
+                hideLoadingIndicator();
+            }
         }
         
         // Функция погашения долга
-        function payoffDebt() {
+        async function payoffDebt() {
             const amount = parseInt(document.getElementById('payoffAmount').value);
             
             if (!amount || amount < 1) {
@@ -4978,13 +5078,63 @@
                 return;
             }
             
-            showNotification(`Долг на $${amount.toLocaleString()} погашен!`, 'success');
-            
-            // Очищаем форму
-            document.getElementById('payoffAmount').value = '';
-            
-            // Обновляем данные
-            loadCreditData();
+            try {
+                showLoadingIndicator();
+                
+                const roomId = getRoomIdFromURL();
+                const user = JSON.parse(localStorage.getItem('user'));
+                
+                if (!roomId || !user) {
+                    showError('Ошибка: не найдены данные комнаты или пользователя');
+                    return;
+                }
+                
+                // Находим индекс игрока
+                const response = await fetch(`/api/rooms/${roomId}?user_id=${user.id}`);
+                const data = await response.json();
+                const playerIndex = data.players.findIndex(p => p.id === user.id || p.name === user.name || p.user_id === user.id);
+                
+                if (playerIndex === -1) {
+                    showError('Игрок не найден');
+                    return;
+                }
+                
+                // Отправляем запрос на погашение долга
+                const payoffResponse = await fetch(`/api/rooms/${roomId}/payoff-debt`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        playerIndex: playerIndex,
+                        amount: amount
+                    })
+                });
+                
+                const result = await payoffResponse.json();
+                
+                if (payoffResponse.ok) {
+                    showNotification(`Долг на $${amount.toLocaleString()} погашен!`, 'success');
+                    
+                    // Обновляем баланс
+                    currentBalance = result.new_balance;
+                    updateBalanceDisplay();
+                    
+                    // Очищаем форму
+                    document.getElementById('payoffAmount').value = '';
+                    
+                    // Обновляем данные
+                    loadCreditData();
+                } else {
+                    showError(result.message || 'Ошибка при погашении долга');
+                }
+                
+            } catch (error) {
+                console.error('Payoff debt error:', error);
+                showError('Ошибка при погашении долга: ' + error.message);
+            } finally {
+                hideLoadingIndicator();
+            }
         }
         
         // Функция обновления баланса из истории переводов
