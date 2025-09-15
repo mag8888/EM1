@@ -2157,6 +2157,7 @@
                         let offsetX = 0;
                         let offsetY = 0;
                         
+                        // Если несколько фишек на одной клетке, сдвигаем их на 15% от размера клетки
                         if (existingTokens.length > 1) {
                             const offset = cellRect.width * 0.15;
                             offsetX = (i % 3) * offset;
@@ -2222,9 +2223,10 @@
                             const x = cellRect.left - boardRect.left + cellRect.width / 2;
                             const y = cellRect.top - boardRect.top + cellRect.height / 2;
                             
-                            // Сдвигаем фишки, чтобы они не накладывались друг на друга
-                            const offsetX = (i % 3) * 8; // 8px между фишками по горизонтали
-                            const offsetY = Math.floor(i / 3) * 8; // 8px между рядами фишек
+                            // Если несколько фишек на одной клетке, сдвигаем их на 15% от размера клетки
+                            const offset = cellRect.width * 0.15;
+                            const offsetX = (i % 3) * offset;
+                            const offsetY = Math.floor(i / 3) * offset;
                             
                             playerToken.style.left = `${x + offsetX - 12}px`;
                             playerToken.style.top = `${y + offsetY - 12}px`;
@@ -2439,14 +2441,11 @@
             const currentPosition = playerPositions[currentPlayer] || 0;
             let newPosition;
             
-            // Определяем, на каком круге находимся
-            if (currentPosition < 24) {
-                // Малый круг (0-23)
-                newPosition = (currentPosition + steps) % 24;
-            } else {
-                // Большой круг (24-74)
-                newPosition = (currentPosition + steps) % 51;
-            }
+            // Игра всегда происходит на малом круге (0-23)
+            // Фишки не переходят на большой круг
+            newPosition = (currentPosition + steps) % 24;
+            
+            console.log(`Moving player ${currentPlayer}: ${currentPosition} + ${steps} = ${newPosition} (small circle)`);
             
             // Обновляем позицию
             playerPositions[currentPlayer] = newPosition;
@@ -2466,11 +2465,11 @@
                 let offsetX = 0;
                 let offsetY = 0;
                 
-                if (existingTokens.length > 0) {
-                    // Сдвигаем на 15% от размера клетки
+                // Если несколько фишек на одной клетке, сдвигаем их на 15% от размера клетки
+                if (existingTokens.length > 1) {
                     const offset = cellRect.width * 0.15;
-                    offsetX = (existingTokens.length % 2 === 0) ? offset : -offset;
-                    offsetY = (existingTokens.length > 1) ? offset : 0;
+                    offsetX = (currentPlayer % 3) * offset;
+                    offsetY = Math.floor(currentPlayer / 3) * offset;
                 }
                 
                 // Позиционируем фишку в центр клетки
