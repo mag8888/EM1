@@ -621,6 +621,11 @@
 
         // Render players list
         function renderPlayers() {
+            if (!currentRoom || !currentRoom.players) {
+                console.error('currentRoom or players not available');
+                return;
+            }
+            
             const playersList = document.getElementById('playersList');
             
             playersList.innerHTML = currentRoom.players.map(player => {
@@ -654,9 +659,9 @@
             const readyBtn = document.getElementById('readyBtn');
             const startBtn = document.getElementById('startBtn');
             
-            if (currentPlayer) {
+            if (currentPlayer && readyBtn && startBtn) {
                 const hasDream = currentPlayer.selected_dream !== null && currentPlayer.selected_dream !== undefined;
-                const isHost = currentRoom.creator_id.toString() === currentUser.id;
+                const isHost = currentRoom.creator_id && currentRoom.creator_id.toString() === currentUser.id;
                 const readyPlayers = currentRoom.players.filter(p => p.is_ready).length;
                 const canStart = isHost && readyPlayers >= 2 && currentRoom.players.length >= 2;
                 
@@ -725,6 +730,11 @@
             try {
                 if (!currentUser || !currentUser.id) {
                     showError('Данные пользователя не найдены');
+                    return;
+                }
+                
+                if (!currentRoom || !currentRoom.creator_id) {
+                    showError('Данные комнаты не найдены');
                     return;
                 }
                 
@@ -832,7 +842,12 @@
 
         // Update ready button state
         function updateReadyButtonState() {
-            const currentPlayer = currentRoom?.players.find(p => p.user_id.toString() === currentUser.id);
+            if (!currentRoom || !currentRoom.players) {
+                console.error('currentRoom or players not available for updateReadyButtonState');
+                return;
+            }
+            
+            const currentPlayer = currentRoom.players.find(p => p.user_id.toString() === currentUser.id);
             const readyBtn = document.getElementById('readyBtn');
             
             if (currentPlayer && readyBtn) {
