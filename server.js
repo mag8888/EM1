@@ -1240,7 +1240,7 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
         console.log('After save - transfers_history length:', savedRoom.game_data.transfers_history.length);
         
         // Проверяем, что данные действительно сохранились
-        const verificationRoom = await Room.findById(roomId);
+        const verificationRoom = await Room.findById(req.params.id);
         console.log('Verification - player_balances:', verificationRoom.game_data.player_balances);
         console.log('Verification - transfers_history length:', verificationRoom.game_data.transfers_history.length);
         
