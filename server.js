@@ -796,10 +796,16 @@ app.post('/api/rooms/:id/leave', async (req, res) => {
         room.players = room.players.filter(p => p.user_id.toString() !== user_id);
         room.updated_at = new Date();
         
-        // If room is empty, delete it
+        // If room is empty, delete it (but not if game is started)
         if (room.players.length === 0) {
-            await Room.findByIdAndDelete(req.params.id);
-            res.json({ message: 'Комната удалена' });
+            if (room.game_started) {
+                // Don't delete room if game is in progress
+                console.log('Room not deleted - game is in progress:', req.params.id);
+                res.json({ message: 'Игрок покинул комнату, но игра продолжается' });
+            } else {
+                await Room.findByIdAndDelete(req.params.id);
+                res.json({ message: 'Комната удалена' });
+            }
         } else {
             await room.save();
             res.json({ message: 'Вы покинули комнату' });
@@ -1036,6 +1042,7 @@ app.get('/api/rooms/:id/turn', async (req, res) => {
     try {
         const room = await Room.findById(req.params.id);
         if (!room) {
+            console.log('Room not found for turn info:', req.params.id);
             return res.status(404).json({ message: 'Комната не найдена' });
         }
 

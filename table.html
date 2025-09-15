@@ -2016,6 +2016,11 @@
                     // Обновляем UI
                     updateBankData();
                     updateTransfersHistory();
+                } else if (response.status === 404) {
+                    console.error('Room not found in loadGameData:', roomId);
+                    alert('Комната не найдена. Возможно, она была удалена.');
+                    // Перенаправляем в лобби
+                    window.location.href = '/lobby';
                 }
             } catch (error) {
                 console.error('Error loading game data:', error);
@@ -2067,6 +2072,11 @@
                             }
                         }
                     }
+                } else if (response.status === 404) {
+                    console.error('Room not found:', roomId);
+                    alert('Комната не найдена. Возможно, она была удалена.');
+                    // Перенаправляем в лобби
+                    window.location.href = '/lobby';
                 }
             } catch (error) {
                 console.error('Error loading turn info:', error);
