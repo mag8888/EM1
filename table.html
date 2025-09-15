@@ -4584,8 +4584,14 @@
                 const response = await sendTransferRequest(transferData);
                 
                 if (response.ok) {
+                    // Получаем данные из формы для анимации
+                    const amountInput = document.getElementById('transferAmount');
+                    const recipientSelect = document.getElementById('recipientSelect');
+                    const transferAmount = parseFloat(amountInput.value);
+                    const recipientName = recipientSelect.options[recipientSelect.selectedIndex].text;
+                    
                     // Показываем анимацию перевода
-                    showTransferAnimation(amount, recipientName);
+                    showTransferAnimation(transferAmount, recipientName);
                     
                     // Ждем обновления баланса с сервера
                     setTimeout(async () => {
@@ -4593,7 +4599,7 @@
                         await loadBankData(true); // Принудительное обновление для получения актуального баланса
                         
                         // Показываем успех после обновления
-                        showSuccess(`Перевод $${amount} выполнен успешно!`);
+                        showSuccess(`Перевод $${transferAmount} выполнен успешно!`);
                     }, 1000); // 1 секунда задержка для анимации
                     
                     // Очищаем форму
@@ -4881,11 +4887,6 @@
             
             if (!historyContainer) return;
             
-            // Обновляем счетчик
-            if (historyCount) {
-                historyCount.textContent = transfersHistory.length;
-            }
-            
             // Очищаем контейнер
             historyContainer.innerHTML = '';
             
@@ -4894,8 +4895,36 @@
                 return;
             }
             
+            // Получаем текущего игрока
+            const currentPlayerIndex = getCurrentPlayerIndex();
+            const currentPlayerName = roomData?.players?.[currentPlayerIndex]?.name || 'Unknown';
+            
+            console.log(`🔍 Filtering transfers for current player: ${currentPlayerName} (index: ${currentPlayerIndex})`);
+            
+            // Фильтруем только операции текущего игрока
+            const myTransfers = transfersHistory.filter(transfer => {
+                // Показываем операции где текущий игрок - отправитель или получатель
+                const isSender = transfer.sender_index === currentPlayerIndex;
+                const isRecipient = transfer.recipient_index === currentPlayerIndex;
+                const isBankOperation = transfer.sender_index === -1 || transfer.recipient_index === -1;
+                
+                return isSender || isRecipient || isBankOperation;
+            });
+            
+            console.log(`📊 Found ${myTransfers.length} transfers for current player out of ${transfersHistory.length} total`);
+            
+            if (myTransfers.length === 0) {
+                historyContainer.innerHTML = '<div class="no-transfers">У вас пока нет операций</div>';
+                return;
+            }
+            
+            // Обновляем счетчик только для своих операций
+            if (historyCount) {
+                historyCount.textContent = myTransfers.length;
+            }
+            
             // Сортируем по дате (новые сверху)
-            const sortedTransfers = [...transfersHistory].sort((a, b) => 
+            const sortedTransfers = [...myTransfers].sort((a, b) => 
                 new Date(b.timestamp) - new Date(a.timestamp)
             );
             
@@ -4904,6 +4933,8 @@
                 const transferElement = createTransferElement(transfer);
                 historyContainer.appendChild(transferElement);
             });
+            
+            console.log(`✅ Updated transfers history with ${sortedTransfers.length} transfers for current player`);
         }
         
         function createTransferElement(transfer) {
