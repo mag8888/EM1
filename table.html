@@ -929,22 +929,23 @@
             backdrop-filter: blur(10px);
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 0; /* full-screen without outer padding */
             box-sizing: border-box;
         }
 
         .bank-modal-content {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
+            border: none; /* remove frame */
+            border-radius: 0; /* full-bleed */
             padding: 0;
-            max-width: 1000px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
+            max-width: none;
+            width: 100vw; /* occupy full viewport */
+            max-height: none;
+            height: 100vh; /* occupy full viewport */
+            overflow: hidden; /* internal panes manage their scroll */
             position: relative;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-            animation: modalSlideIn 0.3s ease-out;
+            box-shadow: none; /* no shadow frame */
+            animation: none; /* no shrink effect for full-screen */
         }
 
         @keyframes modalSlideIn {
@@ -985,7 +986,7 @@
 
         .bank-layout {
             display: flex;
-            min-height: 500px;
+            height: calc(100vh - 70px); /* fill below header */
         }
 
         .bank-info-panel {
@@ -993,11 +994,13 @@
             padding: 30px;
             border-right: 1px solid rgba(255, 255, 255, 0.1);
             background: rgba(255, 255, 255, 0.02);
+            overflow-y: auto;
         }
 
         .bank-operations-panel {
             flex: 1.5;
             padding: 30px;
+            overflow-y: auto;
         }
 
         .bank-status {
