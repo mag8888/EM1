@@ -455,12 +455,8 @@ app.get('/api/rooms', async (req, res) => {
     try {
         const { user_id } = req.query;
         
-        // Удаляем старые комнаты (старше 6 часов)
-        const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
-        await Room.deleteMany({ 
-            created_at: { $lt: sixHoursAgo }
-        });
-        
+        // НЕ удаляем комнаты здесь - это делается в cleanupOldRooms()
+        // Показываем все комнаты, где игра не началась
         const rooms = await Room.find({ game_started: false })
             .populate('creator_id', 'first_name last_name')
             .sort({ created_at: -1 })
@@ -1326,46 +1322,6 @@ app.post('/api/rooms/:id/next-turn', async (req, res) => {
     }
 });
 
-// Функция для очистки старых комнат (старше 6 часов)
-async function cleanupOldRooms() {
-    console.log('CLEANUP FUNCTION CALLED - THIS SHOULD NOT HAPPEN!');
-    try {
-        const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
-        
-        // Удаляем комнаты, где игра началась более 6 часов назад
-        // ИЛИ комнаты без игроков старше 1 часа
-        const oneHourAgo = new Date(Date.now() - 1 * 60 * 60 * 1000);
-        
-        const result = await Room.deleteMany({
-            $or: [
-                // Игра началась более 6 часов назад
-                {
-                    game_started: true,
-                    game_start_time: { $lt: sixHoursAgo }
-                },
-                // Комната без игроков старше 1 часа (игра не началась)
-                {
-                    game_started: false,
-                    players: { $size: 0 },
-                    created_at: { $lt: oneHourAgo }
-                }
-            ]
-        });
-        
-        if (result.deletedCount > 0) {
-            console.log(`Cleaned up ${result.deletedCount} old rooms`);
-        }
-        
-        // Отладочная информация
-        const totalRooms = await Room.countDocuments();
-        const activeGames = await Room.countDocuments({ game_started: true });
-        const emptyRooms = await Room.countDocuments({ players: { $size: 0 } });
-        
-        console.log(`Room stats: Total=${totalRooms}, Active games=${activeGames}, Empty=${emptyRooms}`);
-    } catch (error) {
-        console.error('Error cleaning up old rooms:', error);
-    }
-}
 
 // Запускаем очистку каждые 30 минут (отключено для отладки)
 // setInterval(cleanupOldRooms, 30 * 60 * 1000);
@@ -1450,12 +1406,28 @@ app.get('/api/admin/all-rooms', async (req, res) => {
 async function cleanupOldRooms() {
     try {
         const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
-        const deletedRooms = await Room.deleteMany({ 
-            created_at: { $lt: sixHoursAgo }
+        const oneHourAgo = new Date(Date.now() - 1 * 60 * 60 * 1000);
+        
+        // Удаляем только комнаты, где игра началась более 6 часов назад
+        // ИЛИ комнаты без игроков старше 1 часа (игра не началась)
+        const result = await Room.deleteMany({
+            $or: [
+                // Игра началась более 6 часов назад
+                {
+                    game_started: true,
+                    game_start_time: { $lt: sixHoursAgo }
+                },
+                // Комната без игроков старше 1 часа (игра не началась)
+                {
+                    game_started: false,
+                    players: { $size: 0 },
+                    created_at: { $lt: oneHourAgo }
+                }
+            ]
         });
         
-        if (deletedRooms.deletedCount > 0) {
-            console.log(`Очищено ${deletedRooms.deletedCount} старых комнат`);
+        if (result.deletedCount > 0) {
+            console.log(`Очищено ${result.deletedCount} старых комнат`);
         }
     } catch (error) {
         console.error('Ошибка при очистке старых комнат:', error);
@@ -1483,6 +1455,6 @@ app.listen(PORT, () => {
     // Очищаем старые комнаты при запуске
     cleanupOldRooms();
     
-    // Очищаем старые комнаты каждые 30 минут
-    setInterval(cleanupOldRooms, 30 * 60 * 1000);
+    // Очищаем старые комнаты каждые 2 часа
+    setInterval(cleanupOldRooms, 2 * 60 * 60 * 1000);
 });
