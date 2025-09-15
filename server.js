@@ -729,8 +729,14 @@ app.get('/api/rooms/:id', async (req, res) => {
 });
 
 // Toggle player ready status
-app.post('/api/rooms/:id/ready', authenticateToken, async (req, res) => {
+app.post('/api/rooms/:id/ready', async (req, res) => {
     try {
+        const { user_id } = req.body;
+        
+        if (!user_id) {
+            return res.status(400).json({ message: 'ID пользователя обязателен' });
+        }
+        
         const room = await Room.findById(req.params.id);
         
         if (!room) {
@@ -742,7 +748,7 @@ app.post('/api/rooms/:id/ready', authenticateToken, async (req, res) => {
         }
         
         // Find player in room
-        const playerIndex = room.players.findIndex(p => p.user_id.toString() === req.user.userId);
+        const playerIndex = room.players.findIndex(p => p.user_id.toString() === user_id);
         if (playerIndex === -1) {
             return res.status(403).json({ message: 'Вы не являетесь участником этой комнаты' });
         }
@@ -764,8 +770,14 @@ app.post('/api/rooms/:id/ready', authenticateToken, async (req, res) => {
 });
 
 // Leave room
-app.post('/api/rooms/:id/leave', authenticateToken, async (req, res) => {
+app.post('/api/rooms/:id/leave', async (req, res) => {
     try {
+        const { user_id } = req.body;
+        
+        if (!user_id) {
+            return res.status(400).json({ message: 'ID пользователя обязателен' });
+        }
+        
         const room = await Room.findById(req.params.id);
         
         if (!room) {
@@ -777,7 +789,7 @@ app.post('/api/rooms/:id/leave', authenticateToken, async (req, res) => {
         }
         
         // Remove player from room
-        room.players = room.players.filter(p => p.user_id.toString() !== req.user.userId);
+        room.players = room.players.filter(p => p.user_id.toString() !== user_id);
         room.updated_at = new Date();
         
         // If room is empty, delete it

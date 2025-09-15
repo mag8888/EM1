@@ -413,12 +413,15 @@
             try {
                 showLoading(true);
                 
-                const token = localStorage.getItem('authToken');
-                const response = await fetch(`/api/rooms/${roomId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+                if (!currentUser || !currentUser.id) {
+                    showError('Данные пользователя не найдены');
+                    setTimeout(() => {
+                        window.location.href = '/auth';
+                    }, 2000);
+                    return;
+                }
+                
+                const response = await fetch(`/api/rooms/${roomId}?user_id=${currentUser.id}`);
                 
                 const data = await response.json();
                 
@@ -497,13 +500,19 @@
         // Toggle ready status
         async function toggleReady() {
             try {
-                const token = localStorage.getItem('authToken');
+                if (!currentUser || !currentUser.id) {
+                    showError('Данные пользователя не найдены');
+                    return;
+                }
+                
                 const response = await fetch(`/api/rooms/${roomId}/ready`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUser.id
+                    })
                 });
                 
                 const data = await response.json();
@@ -529,12 +538,19 @@
         // Leave room
         async function leaveRoom() {
             try {
-                const token = localStorage.getItem('authToken');
+                if (!currentUser || !currentUser.id) {
+                    showError('Данные пользователя не найдены');
+                    return;
+                }
+                
                 const response = await fetch(`/api/rooms/${roomId}/leave`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUser.id
+                    })
                 });
                 
                 const data = await response.json();
