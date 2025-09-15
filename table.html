@@ -4352,14 +4352,18 @@
                 // Очищаем список
                 recipientSelect.innerHTML = '<option value="">Выберите игрока...</option>';
                 
-                // Добавляем игроков
+                // Добавляем игроков (исключаем текущего пользователя)
                 if (data.players) {
                     data.players.forEach((player, index) => {
-                        if (player.id !== user.id) {
+                        // Исключаем текущего пользователя по user_id
+                        if (player.user_id !== user.id) {
                             const option = document.createElement('option');
                             option.value = index;
                             option.textContent = player.name || `Игрок ${index + 1}`;
                             recipientSelect.appendChild(option);
+                            console.log('Added recipient:', player.name, 'index:', index);
+                        } else {
+                            console.log('Skipped current user:', player.name, 'user_id:', player.user_id);
                         }
                     });
                 }
