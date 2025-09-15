@@ -841,6 +841,56 @@ app.post('/api/rooms/:id/dream', async (req, res) => {
     }
 });
 
+// Start game
+app.post('/api/rooms/:id/start', async (req, res) => {
+    try {
+        const { user_id } = req.body;
+        
+        if (!user_id) {
+            return res.status(400).json({ message: 'ID пользователя обязателен' });
+        }
+        
+        const room = await Room.findById(req.params.id);
+        
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+        
+        // Check if user is the creator
+        if (room.creator_id.toString() !== user_id) {
+            return res.status(403).json({ message: 'Только создатель комнаты может начать игру' });
+        }
+        
+        // Check if game is already started
+        if (room.game_started) {
+            return res.status(400).json({ message: 'Игра уже началась' });
+        }
+        
+        // Check if there are at least 2 players
+        if (room.players.length < 2) {
+            return res.status(400).json({ message: 'Недостаточно игроков для начала игры' });
+        }
+        
+        // Check if at least 2 players are ready
+        const readyPlayers = room.players.filter(p => p.is_ready).length;
+        if (readyPlayers < 2) {
+            return res.status(400).json({ message: 'Недостаточно готовых игроков для начала игры' });
+        }
+        
+        // Start the game
+        room.game_started = true;
+        room.current_player = 0;
+        room.updated_at = new Date();
+        
+        await room.save();
+        
+        res.json({ message: 'Игра началась!' });
+    } catch (error) {
+        console.error('Start game error:', error);
+        res.status(500).json({ message: 'Ошибка сервера при запуске игры' });
+    }
+});
+
 // Маршруты для HTML страниц
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));

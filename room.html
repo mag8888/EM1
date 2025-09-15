@@ -150,6 +150,39 @@
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
         }
 
+        .ready-btn.disabled {
+            background: rgba(107, 114, 128, 0.3);
+            color: #9ca3af;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .start-btn:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+        }
+
         .sidebar {
             display: flex;
             flex-direction: column;
@@ -416,9 +449,14 @@
                     <div class="waiting-text">
                         Игра начнется, когда все игроки будут готовы
                     </div>
-                    <button class="ready-btn" id="readyBtn" onclick="toggleReady()">
-                        Готов к игре
-                    </button>
+                    <div class="button-group">
+                        <button class="ready-btn" id="readyBtn" onclick="toggleReady()">
+                            Готов к игре
+                        </button>
+                        <button class="start-btn" id="startBtn" onclick="startGame()" style="display: none;">
+                            🚀 Начать игру
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -614,10 +652,34 @@
             // Update ready button
             const currentPlayer = currentRoom.players.find(p => p.user_id.toString() === currentUser.id);
             const readyBtn = document.getElementById('readyBtn');
+            const startBtn = document.getElementById('startBtn');
             
             if (currentPlayer) {
-                readyBtn.textContent = currentPlayer.is_ready ? 'Отменить готовность' : 'Готов к игре';
+                const hasDream = currentPlayer.selected_dream !== null && currentPlayer.selected_dream !== undefined;
+                const isHost = currentRoom.creator_id.toString() === currentUser.id;
+                const readyPlayers = currentRoom.players.filter(p => p.is_ready).length;
+                const canStart = isHost && readyPlayers >= 2 && currentRoom.players.length >= 2;
+                
+                if (currentPlayer.is_ready) {
+                    readyBtn.textContent = 'Отменить готовность';
+                    readyBtn.disabled = false;
+                } else if (hasDream) {
+                    readyBtn.textContent = 'Готов к игре';
+                    readyBtn.disabled = false;
+                } else {
+                    readyBtn.textContent = 'Выберите мечту';
+                    readyBtn.disabled = true;
+                }
+                
                 readyBtn.classList.toggle('ready', currentPlayer.is_ready);
+                readyBtn.classList.toggle('disabled', !hasDream && !currentPlayer.is_ready);
+                
+                // Show/hide start button for host
+                if (canStart) {
+                    startBtn.style.display = 'block';
+                } else {
+                    startBtn.style.display = 'none';
+                }
             }
         }
 
@@ -626,6 +688,12 @@
             try {
                 if (!currentUser || !currentUser.id) {
                     showError('Данные пользователя не найдены');
+                    return;
+                }
+                
+                // Check if dream is selected
+                if (!selectedDream) {
+                    showError('Сначала выберите мечту!');
                     return;
                 }
                 
@@ -649,6 +717,44 @@
             } catch (error) {
                 showError('Ошибка соединения с сервером');
                 console.error('Toggle ready error:', error);
+            }
+        }
+
+        // Start game
+        async function startGame() {
+            try {
+                if (!currentUser || !currentUser.id) {
+                    showError('Данные пользователя не найдены');
+                    return;
+                }
+                
+                const isHost = currentRoom.creator_id.toString() === currentUser.id;
+                if (!isHost) {
+                    showError('Только создатель комнаты может начать игру');
+                    return;
+                }
+                
+                const response = await fetch(`/api/rooms/${roomId}/start`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUser.id
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Redirect to game board
+                    window.location.href = `/table?room=${roomId}`;
+                } else {
+                    showError(data.message || 'Ошибка запуска игры');
+                }
+            } catch (error) {
+                showError('Ошибка соединения с сервером');
+                console.error('Start game error:', error);
             }
         }
 
@@ -718,6 +824,32 @@
                 
                 // Save dream selection to server
                 saveDreamSelection(dreamId);
+                
+                // Update ready button state
+                updateReadyButtonState();
+            }
+        }
+
+        // Update ready button state
+        function updateReadyButtonState() {
+            const currentPlayer = currentRoom?.players.find(p => p.user_id.toString() === currentUser.id);
+            const readyBtn = document.getElementById('readyBtn');
+            
+            if (currentPlayer && readyBtn) {
+                const hasDream = selectedDream !== null && selectedDream !== undefined;
+                
+                if (currentPlayer.is_ready) {
+                    readyBtn.textContent = 'Отменить готовность';
+                    readyBtn.disabled = false;
+                } else if (hasDream) {
+                    readyBtn.textContent = 'Готов к игре';
+                    readyBtn.disabled = false;
+                } else {
+                    readyBtn.textContent = 'Выберите мечту';
+                    readyBtn.disabled = true;
+                }
+                
+                readyBtn.classList.toggle('disabled', !hasDream && !currentPlayer.is_ready);
             }
         }
 
@@ -763,12 +895,12 @@
             document.getElementById('loading').style.display = show ? 'block' : 'none';
         }
 
-        // Refresh room data every 10 seconds (less frequent to reduce flickering)
-        setInterval(() => {
-            if (roomId && currentRoom && !currentRoom.game_started) {
-                loadRoomData();
-            }
-        }, 10000);
+        // Refresh room data only when needed (no automatic refresh to prevent flickering)
+        // setInterval(() => {
+        //     if (roomId && currentRoom && !currentRoom.game_started) {
+        //         loadRoomData();
+        //     }
+        // }, 10000);
     </script>
 </body>
 </html>
