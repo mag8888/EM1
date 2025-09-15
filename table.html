@@ -11,10 +11,10 @@
             box-sizing: border-box;
         }
 
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        /* Using system fonts to avoid connection issues */
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0c1445 100%);
             color: white;
             overflow: hidden;
@@ -1858,6 +1858,34 @@
     </div>
 
     <script>
+        // Данные о клетках малого круга (0-23)
+        const innerCellData = {
+            0: { name: "Старт", type: "Старт", cost: 0, income: 0, description: "Начальная клетка", color: "blue", icon: "🏁" },
+            1: { name: "Зарплата", type: "Доход", cost: 0, income: 1000, description: "Получение зарплаты", color: "green", icon: "💰" },
+            2: { name: "Налоги", type: "Расход", cost: 0, income: -500, description: "Уплата налогов", color: "red", icon: "📊" },
+            3: { name: "Инвестиции", type: "Инвестиция", cost: 5000, income: 200, description: "Покупка акций", color: "purple", icon: "📈" },
+            4: { name: "Недвижимость", type: "Недвижимость", cost: 10000, income: 500, description: "Покупка квартиры", color: "orange", icon: "🏠" },
+            5: { name: "Бизнес", type: "Бизнес", cost: 15000, income: 800, description: "Открытие бизнеса", color: "yellow", icon: "🏢" },
+            6: { name: "Образование", type: "Образование", cost: 3000, income: 0, description: "Повышение квалификации", color: "cyan", icon: "🎓" },
+            7: { name: "Страхование", type: "Страхование", cost: 1000, income: 0, description: "Страхование жизни", color: "pink", icon: "🛡️" },
+            8: { name: "Кредит", type: "Кредит", cost: 0, income: -200, description: "Погашение кредита", color: "red", icon: "💳" },
+            9: { name: "Дивиденды", type: "Доход", cost: 0, income: 300, description: "Получение дивидендов", color: "green", icon: "💎" },
+            10: { name: "Ремонт", type: "Расход", cost: 2000, income: 0, description: "Ремонт квартиры", color: "red", icon: "🔧" },
+            11: { name: "Пенсия", type: "Пенсия", cost: 0, income: 400, description: "Пенсионные накопления", color: "blue", icon: "👴" },
+            12: { name: "Медицина", type: "Расход", cost: 1500, income: 0, description: "Медицинские услуги", color: "red", icon: "🏥" },
+            13: { name: "Путешествие", type: "Расход", cost: 5000, income: 0, description: "Отпуск", color: "orange", icon: "✈️" },
+            14: { name: "Благотворительность", type: "Благотворительность", cost: 1000, income: 0, description: "Помощь нуждающимся", color: "purple", icon: "❤️" },
+            15: { name: "Налоги", type: "Расход", cost: 0, income: -800, description: "Уплата налогов", color: "red", icon: "📊" },
+            16: { name: "Инвестиции", type: "Инвестиция", cost: 8000, income: 400, description: "Покупка облигаций", color: "purple", icon: "📈" },
+            17: { name: "Недвижимость", type: "Недвижимость", cost: 20000, income: 1000, description: "Покупка дома", color: "orange", icon: "🏘️" },
+            18: { name: "Бизнес", type: "Бизнес", cost: 25000, income: 1200, description: "Расширение бизнеса", color: "yellow", icon: "🏭" },
+            19: { name: "Образование", type: "Образование", cost: 5000, income: 0, description: "MBA", color: "cyan", icon: "🎓" },
+            20: { name: "Страхование", type: "Страхование", cost: 2000, income: 0, description: "Страхование имущества", color: "pink", icon: "🛡️" },
+            21: { name: "Кредит", type: "Кредит", cost: 0, income: -400, description: "Погашение ипотеки", color: "red", icon: "💳" },
+            22: { name: "Дивиденды", type: "Доход", cost: 0, income: 600, description: "Получение дивидендов", color: "green", icon: "💎" },
+            23: { name: "Финиш", type: "Финиш", cost: 0, income: 0, description: "Завершение малого круга", color: "gold", icon: "🏆" }
+        };
+
         // Данные о клетках внешнего круга (Fast Track) - 51 клетка
         const cellData = {
             // 🟡 ДЕНЬГИ (5 клеток) - СЕРЫЕ
@@ -1931,7 +1959,7 @@
         let timerInterval;
         let isRolling = false;
         let cellOwners = {}; // Владельцы клеток
-        let playerPositions = [0, 0, 0]; // Позиции игроков на поле
+        let playerPositions = [0, 0, 0]; // Позиции игроков на поле (0 = малый круг)
         let diceRolled = false; // Флаг броска кубика
         let turnTransitionTimeout; // Таймаут для перехода хода
         let warningSoundPlayed = false; // Флаг для предотвращения повторных сигналов
@@ -1940,8 +1968,36 @@
         function initGame() {
             createOuterTrack();
             createInnerTrack();
+            initializePlayerTokens(); // Инициализируем фишки игроков
             startTimer();
             updateCurrentPlayer();
+        }
+
+        // Инициализация фишек игроков в центре стартовой клетки
+        function initializePlayerTokens() {
+            for (let i = 1; i <= 3; i++) {
+                const playerToken = document.getElementById(`player${i}`);
+                if (playerToken) {
+                    // Позиционируем фишку в центре клетки 0 (старт)
+                    const startCell = document.querySelector(`[data-cell="0"]`);
+                    if (startCell) {
+                        const cellRect = startCell.getBoundingClientRect();
+                        const boardRect = document.querySelector('.game-board').getBoundingClientRect();
+                        
+                        const x = cellRect.left - boardRect.left + cellRect.width / 2;
+                        const y = cellRect.top - boardRect.top + cellRect.height / 2;
+                        
+                        // Сдвигаем фишки, чтобы они не накладывались друг на друга
+                        const offsetX = (i - 1) * 8; // 8px между фишками
+                        const offsetY = (i - 1) * 8;
+                        
+                        playerToken.style.left = `${x + offsetX - 12}px`;
+                        playerToken.style.top = `${y + offsetY - 12}px`;
+                        playerToken.style.position = 'absolute';
+                        playerToken.style.zIndex = '100';
+                    }
+                }
+            }
         }
 
         // Создание внешнего трека (51 квадрат) - квадратное поле
@@ -2011,6 +2067,7 @@
             for (let i = 1; i <= 24; i++) {
                 const square = document.createElement('div');
                 square.className = `inner-square ${colors[(i - 1) % colors.length]}`;
+                square.dataset.cell = i - 1; // Добавляем data-cell для позиционирования фишек (0-23)
                 
                 // Ровное круговое позиционирование
                 const angle = (i - 1) * (360 / 24) * (Math.PI / 180);
@@ -2027,6 +2084,7 @@
                 square.style.left = `${x}%`;
                 square.style.top = `${y}%`;
                 square.style.transform = 'translate(-50%, -50%)';
+                square.onclick = () => showCellInfo(i - 1); // Добавляем обработчик клика
                 
                 // Добавляем цифру в угол
                 const number = document.createElement('div');
@@ -2113,7 +2171,16 @@
             
             // Получаем текущую позицию
             const currentPosition = playerPositions[currentPlayer] || 0;
-            const newPosition = (currentPosition + steps) % 51; // 51 клетка в большом круге
+            let newPosition;
+            
+            // Определяем, на каком круге находимся
+            if (currentPosition < 24) {
+                // Малый круг (0-23)
+                newPosition = (currentPosition + steps) % 24;
+            } else {
+                // Большой круг (24-74)
+                newPosition = (currentPosition + steps) % 51;
+            }
             
             // Обновляем позицию
             playerPositions[currentPlayer] = newPosition;
@@ -2140,11 +2207,11 @@
                     offsetY = (existingTokens.length > 1) ? offset : 0;
                 }
                 
-                // Позиционируем фишку
+                // Позиционируем фишку в центр клетки
                 playerToken.style.left = `${x + offsetX - 12}px`; // 12px - половина размера фишки
                 playerToken.style.top = `${y + offsetY - 12}px`;
                 playerToken.style.position = 'absolute';
-                playerToken.style.zIndex = '10';
+                playerToken.style.zIndex = '100'; // Высокий z-index для отображения поверх клеток
                 
                 // Показываем информацию о клетке
                 setTimeout(() => {
@@ -2319,7 +2386,16 @@
 
         // Функции для работы с модальным окном клетки
         function showCellInfo(cellNumber) {
-            const cell = cellData[cellNumber];
+            // Определяем, из какого круга клетка
+            let cell;
+            if (cellNumber < 24) {
+                // Малый круг
+                cell = innerCellData[cellNumber];
+            } else {
+                // Большой круг
+                cell = cellData[cellNumber];
+            }
+            
             if (!cell) return;
 
             document.getElementById('cellTitle').textContent = cell.name;
@@ -2333,6 +2409,8 @@
                 document.getElementById('cellIncome').textContent = `$${cell.income.toLocaleString()}/мес`;
             } else if (typeof cell.income === 'string') {
                 document.getElementById('cellIncome').textContent = cell.income;
+            } else if (cell.income < 0) {
+                document.getElementById('cellIncome').textContent = `$${cell.income.toLocaleString()}/мес`;
             } else {
                 document.getElementById('cellIncome').textContent = 'Нет дохода';
             }
