@@ -3080,11 +3080,11 @@
         // Загрузка данных игры с сервера
         async function loadBankData(forceUpdate = false) {
             try {
-                // Проверяем, нужно ли загружать данные
-                if (!forceUpdate && !shouldLoadBankData()) {
-                    console.log('⏭️ Пропускаем загрузку данных - недавно обновлялись');
-                    return;
-                }
+        // Простая проверка: загружаем только если принудительно или это первая загрузка
+        if (!forceUpdate && currentBalance > 0) {
+            console.log('⏭️ Пропускаем загрузку данных - баланс уже установлен');
+            return;
+        }
                 
                 const roomId = getRoomIdFromURL();
                 if (!roomId) {
@@ -3125,25 +3125,13 @@
                         console.log('No balance data found, playerIndex:', playerIndex, 'player data:', data.players[playerIndex]);
                     }
                     
-                    // Обновляем баланс только если:
-                    // 1. Новый баланс больше текущего (пополнение)
-                    // 2. Текущий баланс равен 0 (первая загрузка)
-                    // 3. Прошло больше 5 секунд с последнего обновления (защита от сброса после переводов)
-                    // 4. Принудительное обновление (forceUpdate = true)
-                    // 5. НО НЕ если новый баланс меньше текущего (защита от сброса после переводов)
-                    const now = Date.now();
-                    const timeSinceLastUpdate = now - (window.lastBalanceUpdate || 0);
-                    
-                    // Дополнительная защита: не сбрасываем баланс если он больше нового
-                    const shouldUpdate = (newBalance > currentBalance || currentBalance === 0 || timeSinceLastUpdate > 5000 || forceUpdate) && 
-                                       !(newBalance < currentBalance && timeSinceLastUpdate < 10000); // Защита от сброса в течение 10 секунд
-                    
-                    if (shouldUpdate) {
+                    // Простое правило: обновляем баланс только если новый больше текущего (пополнение) или принудительно
+                    if (newBalance > currentBalance || forceUpdate) {
                         currentBalance = newBalance;
-                        window.lastBalanceUpdate = now;
-                        console.log('Balance updated to:', currentBalance, 'timeSinceLastUpdate:', timeSinceLastUpdate + 'ms', 'forceUpdate:', forceUpdate);
+                        window.lastBalanceUpdate = Date.now();
+                        console.log('Balance updated to:', currentBalance, 'forceUpdate:', forceUpdate);
                     } else {
-                        console.log('Keeping current balance:', currentBalance, '(new:', newBalance, ')', 'timeSinceLastUpdate:', timeSinceLastUpdate + 'ms', 'forceUpdate:', forceUpdate, 'shouldUpdate:', shouldUpdate);
+                        console.log('Keeping current balance:', currentBalance, '(new:', newBalance, ')', 'forceUpdate:', forceUpdate);
                     }
                 } else {
                     console.log('Player not found in room, user.id:', user.id, 'players:', data.players.map(p => p.user_id));
@@ -4595,11 +4583,11 @@
                     // Показываем успех
                     showSuccess('Перевод выполнен успешно!');
                     
-                    // Синхронизируем с сервером через 5 секунд (даем серверу время сохранить)
-                    setTimeout(async () => {
-                        console.log('🔄 Синхронизация с сервером после перевода...');
-                        await loadBankData(true); // Принудительное обновление для синхронизации
-                    }, 5000);
+                    // НЕ синхронизируем с сервером после перевода - баланс уже обновлен локально
+                    // setTimeout(async () => {
+                    //     console.log('🔄 Синхронизация с сервером после перевода...');
+                    //     await loadBankData(true); // Принудительное обновление для синхронизации
+                    // }, 5000);
                     
                     // Очищаем форму
                     resetTransferForm();
@@ -4738,16 +4726,7 @@
             return currentBalance;
         }
         
-        // Функция для проверки изменений баланса перед загрузкой с сервера
-        function shouldLoadBankData() {
-            const now = Date.now();
-            const timeSinceLastUpdate = now - (window.lastBalanceUpdate || 0);
-            
-            // Загружаем данные только если:
-            // 1. Прошло больше 5 секунд с последнего обновления
-            // 2. Или это первая загрузка (lastBalanceUpdate не установлен)
-            return timeSinceLastUpdate > 5000 || !window.lastBalanceUpdate;
-        }
+        // Функция shouldLoadBankData() удалена - больше не нужна
         
         // Пример использования для других операций:
         // updateLocalBalance(-100, 'Списание за покупку'); // Списание 100$
