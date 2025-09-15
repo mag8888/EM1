@@ -993,21 +993,40 @@ app.post('/api/rooms/:id/start', async (req, res) => {
         // Инициализируем балансы игроков нулевыми значениями
         for (let i = 0; i < room.players.length; i++) {
             room.game_data.player_balances[i] = 0;
-            
-            // Добавляем запись о стартовых сбережениях в историю
-            const savingsTransfer = {
-                sender: 'Банк',
-                recipient: room.players[i].name || `Игрок ${i + 1}`,
-                amount: 0, // Стартовый баланс 0
-                timestamp: new Date(),
-                sender_index: -1, // -1 означает банк
-                recipient_index: i,
-                type: 'savings',
-                description: 'Стартовые сбережения'
-            };
-            room.game_data.transfers_history.push(savingsTransfer);
         }
         room.updated_at = new Date();
+        
+        // Начисляем стартовые сбережения через 1 секунду после старта игры
+        setTimeout(async () => {
+            try {
+                const updatedRoom = await Room.findById(roomId);
+                if (updatedRoom && updatedRoom.game_data) {
+                    for (let i = 0; i < updatedRoom.players.length; i++) {
+                        // Начисляем стартовые сбережения
+                        updatedRoom.game_data.player_balances[i] = 3000;
+                        
+                        // Добавляем запись в историю
+                        const savingsTransfer = {
+                            sender: 'Банк',
+                            recipient: updatedRoom.players[i].name || `Игрок ${i + 1}`,
+                            amount: 3000,
+                            timestamp: new Date(),
+                            sender_index: -1, // -1 означает банк
+                            recipient_index: i,
+                            type: 'savings',
+                            description: 'Стартовые сбережения'
+                        };
+                        updatedRoom.game_data.transfers_history.push(savingsTransfer);
+                    }
+                    
+                    updatedRoom.updated_at = new Date();
+                    await updatedRoom.save();
+                    console.log('Стартовые сбережения начислены всем игрокам');
+                }
+            } catch (error) {
+                console.error('Ошибка при начислении стартовых сбережений:', error);
+            }
+        }, 1000); // 1 секунда задержка
         
         console.log('Starting game with turn_time:', room.turn_time, 'type:', typeof room.turn_time);
         console.log('Game start time set to:', room.game_start_time);

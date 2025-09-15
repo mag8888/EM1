@@ -4157,9 +4157,9 @@
                     second: '2-digit'
                 });
                 
-                // Для стартовых сбережений показываем $0, для остальных - сумму
-                const amount = transfer.type === 'savings' ? 0 : transfer.amount;
-                const amountDisplay = amount === 0 ? '$0' : `${isPositive ? '+' : '-'}$${amount.toLocaleString()}`;
+                // Для стартовых сбережений показываем реальную сумму, для остальных - сумму
+                const amount = transfer.amount;
+                const amountDisplay = `${isPositive ? '+' : '-'}$${amount.toLocaleString()}`;
                 
                 return `
                     <div class="transfer-item">
