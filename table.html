@@ -1888,9 +1888,9 @@
                 </div>
                 
                 <div class="bank-actions">
-                    <button class="bank-btn secondary" onclick="event.stopPropagation(); viewDetails()">
-                        <span>👁</span>
-                        <span>Детали</span>
+                    <button class="bank-btn secondary" onclick="event.stopPropagation(); openCreditModal()">
+                        <span>💳</span>
+                        <span>Кредит</span>
                     </button>
                     <button class="bank-btn primary" onclick="event.stopPropagation(); openBank()">
                         <span>🏦</span>
@@ -2995,10 +2995,7 @@
             window.open('/bank', '_blank');
         }
 
-        // Просмотр деталей банка
-        function viewDetails() {
-            alert(`Детальная информация о банке:\n\n• Текущий баланс: $${currentBalance.toLocaleString()}\n• Доходы: $${totalIncome.toLocaleString()}\n• Расходы: $${totalExpenses.toLocaleString()}\n• PAYDAY: $${monthlyIncome.toLocaleString()}/мес\n\nДля полного доступа откройте банк.`);
-        }
+        // Просмотр деталей заменен кнопкой "Кредит" (см. openCreditModal)
 
         // Обновление баланса банка
         function updateBankBalance(balance) {
