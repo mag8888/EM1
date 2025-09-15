@@ -3133,6 +3133,19 @@
                 // Обновляем UI после загрузки данных
                 updateBankUI();
                 
+                // Принудительное обновление через небольшую задержку
+                setTimeout(() => {
+                    updateBankUI();
+                    console.log('=== FORCED UI UPDATE ===');
+                }, 100);
+                
+                console.log('=== BANK DATA LOADED ===');
+                console.log('Balance:', currentBalance);
+                console.log('Income:', totalIncome);
+                console.log('Expenses:', totalExpenses);
+                console.log('Cash Flow:', monthlyIncome);
+                console.log('Credit:', currentCredit);
+                
                 console.log('Bank UI updated with data:', {
                     currentBalance,
                     totalIncome,
@@ -4322,7 +4335,7 @@
                         if (player?.profession_data) {
                             totalIncome = player.profession_data.salary || 0;
                             totalExpenses = player.profession_data.expenses || 0;
-                            monthlyIncome = player.profession_data.cash_flow || 0;
+                            monthlyIncome = player.profession_data.cash_flow || player.profession_data.cashFlow || 0;
                             currentCredit = 0; // Пока нет данных о кредитах в старой структуре
                             
                             console.log('Financial data loaded from room data:', {
@@ -4397,6 +4410,12 @@
                 el.textContent = `$${currentBalance.toLocaleString()}`;
             });
             
+            // Обновляем все элементы с балансом
+            const allBalanceElements = document.querySelectorAll('[data-balance]');
+            allBalanceElements.forEach(el => {
+                el.textContent = `$${currentBalance.toLocaleString()}`;
+            });
+            
             console.log('Balance updated to:', currentBalance);
         }
         
@@ -4418,6 +4437,20 @@
                 totalExpenses: !!elements.totalExpenses,
                 monthlyIncome: !!elements.monthlyIncome
             });
+            
+            // Если элементы не найдены, попробуем найти их по классу
+            if (!elements.totalIncome) {
+                elements.totalIncome = document.querySelector('.finance-item:nth-child(1) .finance-value');
+                console.log('Found totalIncome by class:', !!elements.totalIncome);
+            }
+            if (!elements.totalExpenses) {
+                elements.totalExpenses = document.querySelector('.finance-item:nth-child(2) .finance-value');
+                console.log('Found totalExpenses by class:', !!elements.totalExpenses);
+            }
+            if (!elements.monthlyIncome) {
+                elements.monthlyIncome = document.querySelector('.finance-item:nth-child(3) .finance-value');
+                console.log('Found monthlyIncome by class:', !!elements.monthlyIncome);
+            }
             
             Object.entries(elements).forEach(([key, el]) => {
                 if (el) {
@@ -4467,6 +4500,7 @@
                 
                 console.log('Loading recipients for user:', user.id);
                 console.log('Players data:', data.players);
+                console.log('User object:', user);
                 
                 const recipientSelect = document.getElementById('recipientSelect');
                 if (!recipientSelect) {
@@ -4580,8 +4614,8 @@
                 return { valid: false, message: 'Выберите получателя' };
             }
             
-            if (!amount || isNaN(amount) || amount < BANK_CONFIG.minTransferAmount) {
-                return { valid: false, message: `Минимальная сумма: $${BANK_CONFIG.minTransferAmount}` };
+            if (!amount || isNaN(amount) || amount < 1) {
+                return { valid: false, message: `Минимальная сумма: $1` };
             }
             
             if (amount > BANK_CONFIG.maxTransferAmount) {
