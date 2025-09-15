@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пример интеграции банковского модуля</title>
+    
+    <!-- Подключение стилей банковского модуля -->
+    <link rel="stylesheet" href="bank.css">
+    
+    <style>
+        /* Стили для примера */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .game-board {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .bank-preview {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            border-radius: 15px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            color: white;
+        }
+        
+        .bank-preview:hover {
+            transform: translateY(-5px);
+            border-color: #fbbf24;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+        
+        .bank-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .bank-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .bank-icon {
+            font-size: 24px;
+        }
+        
+        .bank-status {
+            background: #10b981;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .balance-section {
+            text-align: center;
+        }
+        
+        .balance-amount {
+            font-size: 36px;
+            font-weight: 700;
+            color: #10b981;
+            margin: 10px 0;
+        }
+        
+        .balance-label {
+            color: #a0aec0;
+            font-size: 14px;
+        }
+        
+        .financial-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .finance-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        .finance-label {
+            color: #a0aec0;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .finance-value {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .finance-value.income {
+            color: #10b981;
+        }
+        
+        .finance-value.expenses {
+            color: #ef4444;
+        }
+        
+        .finance-value.payday {
+            color: #fbbf24;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn.primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+        }
+        
+        .btn.primary:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            transform: translateY(-2px);
+        }
+        
+        .btn.credit {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        
+        .btn.credit:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+        }
+        
+        .btn.assets {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        
+        .btn.assets:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Игра EM1</h1>
+            <p>Пример интеграции банковского модуля</p>
+        </div>
+        
+        <div class="game-board">
+            <h2>Игровое поле</h2>
+            <p>Здесь будет игровое поле с клетками и фишками игроков.</p>
+        </div>
+        
+        <!-- Банковский превью -->
+        <div class="bank-preview" onclick="openBank()">
+            <div class="bank-header">
+                <div class="bank-title">
+                    <span class="bank-icon">🏦</span>
+                    <span>Банк</span>
+                </div>
+                <div class="bank-status">Активен</div>
+            </div>
+            
+            <div class="balance-section">
+                <div class="balance-amount">$0</div>
+                <div class="balance-label">Доступно для операций</div>
+            </div>
+            
+            <div class="financial-summary">
+                <div class="finance-item">
+                    <div class="finance-label">Доход</div>
+                    <div class="finance-value income">$0</div>
+                </div>
+                <div class="finance-item">
+                    <div class="finance-label">Расходы</div>
+                    <div class="finance-value expenses">$0</div>
+                </div>
+                <div class="finance-item">
+                    <div class="finance-label">PAYDAY</div>
+                    <div class="finance-value payday">$0/мес</div>
+                </div>
+            </div>
+            
+            <div class="actions">
+                <button class="btn credit" onclick="openCredit()">
+                    <span>💳</span>
+                    Кредит
+                </button>
+                <button class="btn primary" onclick="openBank()">
+                    <span>🏦</span>
+                    Открыть
+                </button>
+                <button class="btn assets" onclick="openAssets()">
+                    <span>💰</span>
+                    Мои активы
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Подключение HTML банковского модуля -->
+    <!--#include file="bank.html"-->
+    
+    <!-- Подключение JavaScript банковского модуля -->
+    <script src="bank.js"></script>
+    
+    <script>
+        // Пример использования банковского модуля
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🎮 Игра загружена');
+            console.log('🏦 Банковский модуль:', window.bankModule);
+            
+            // Симуляция данных пользователя
+            localStorage.setItem('user', JSON.stringify({
+                id: 'user123',
+                name: 'Игрок 1',
+                email: 'player1@example.com'
+            }));
+            
+            // Загрузка данных банка
+            if (window.bankModule) {
+                window.bankModule.loadBankData();
+            }
+        });
+        
+        // Функции для примера
+        function openBank() {
+            if (window.bankModule) {
+                window.bankModule.openBank();
+            }
+        }
+        
+        function openCredit() {
+            if (window.bankModule) {
+                window.bankModule.openCredit();
+            }
+        }
+        
+        function openAssets() {
+            alert('Функция "Мои активы" в разработке');
+        }
+        
+        // Дополнительные функции для банковского модуля
+        function setCreditAmount(amount) {
+            const input = document.getElementById('creditAmount');
+            if (input) {
+                input.value = amount;
+                if (window.bankModule && window.bankModule.updateCreditPreview) {
+                    window.bankModule.updateCreditPreview();
+                }
+            }
+        }
+        
+        function setMaxCreditAmount() {
+            if (window.bankModule) {
+                const maxCredit = Math.floor(window.bankModule.monthlyIncome / 100) * 1000;
+                setCreditAmount(maxCredit);
+            }
+        }
+        
+        function updateCreditPreview() {
+            if (window.bankModule && window.bankModule.updateCreditPreview) {
+                window.bankModule.updateCreditPreview();
+            }
+        }
+        
+        function resetTransferForm() {
+            const form = document.getElementById('transferForm');
+            if (form) {
+                form.reset();
+            }
+        }
+        
+        function closeBankModalOnBackdrop(event) {
+            if (event.target === event.currentTarget) {
+                if (window.bankModule) {
+                    window.bankModule.closeBank();
+                }
+            }
+        }
+        
+        function closeCreditModalOnBackdrop(event) {
+            if (event.target === event.currentTarget) {
+                if (window.bankModule) {
+                    window.bankModule.closeCredit();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
