@@ -4212,11 +4212,16 @@
                     console.log('Transfer successful, waiting for server to save...');
                     
                     // Ждем немного, чтобы сервер успел сохранить изменения
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await new Promise(resolve => setTimeout(resolve, 2000));
                     
                     console.log('Reloading data from server...');
                     // Перезагружаем данные с сервера для синхронизации
                     await loadGameData();
+                    
+                    // Принудительно обновляем UI с новым балансом
+                    console.log('Force updating UI with new balance:', data.new_balance);
+                    currentBalance = data.new_balance;
+                    updateBankData();
                     
                     console.log('Data reloaded, updating UI...');
                     console.log('Current balance:', currentBalance);
