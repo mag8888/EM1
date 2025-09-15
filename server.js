@@ -893,6 +893,12 @@ app.post('/api/rooms/:id/dream', async (req, res) => {
 // Start game
 app.post('/api/rooms/:id/start', async (req, res) => {
     try {
+        // Check database connection
+        if (mongoose.connection.readyState !== 1) {
+            console.error('Database not connected during game start');
+            return res.status(503).json({ message: 'База данных недоступна' });
+        }
+
         const { user_id } = req.body;
         
         if (!user_id) {
@@ -989,6 +995,24 @@ app.post('/api/rooms/:id/start', async (req, res) => {
         res.json({ message: 'Игра началась!' });
     } catch (error) {
         console.error('Start game error:', error);
+        console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name,
+            code: error.code
+        });
+        
+        // More specific error handling
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ message: 'Ошибка валидации данных' });
+        }
+        if (error.name === 'CastError') {
+            return res.status(400).json({ message: 'Неверный формат данных' });
+        }
+        if (error.code === 11000) {
+            return res.status(409).json({ message: 'Конфликт данных' });
+        }
+        
         res.status(500).json({ message: 'Ошибка сервера при запуске игры' });
     }
 });
