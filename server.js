@@ -993,6 +993,19 @@ app.post('/api/rooms/:id/start', async (req, res) => {
         // Инициализируем балансы игроков нулевыми значениями
         for (let i = 0; i < room.players.length; i++) {
             room.game_data.player_balances[i] = 0;
+            
+            // Добавляем запись о стартовых сбережениях в историю
+            const savingsTransfer = {
+                sender: 'Банк',
+                recipient: room.players[i].name || `Игрок ${i + 1}`,
+                amount: 0, // Стартовый баланс 0
+                timestamp: new Date(),
+                sender_index: -1, // -1 означает банк
+                recipient_index: i,
+                type: 'savings',
+                description: 'Стартовые сбережения'
+            };
+            room.game_data.transfers_history.push(savingsTransfer);
         }
         room.updated_at = new Date();
         

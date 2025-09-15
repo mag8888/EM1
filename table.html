@@ -2798,11 +2798,9 @@
                         }
                     }
                     
-                    // Обновляем историю переводов (фильтруем стартовые сбережения)
+                    // Обновляем историю переводов
                     if (data.game_data.transfers_history) {
-                        transfersHistory = data.game_data.transfers_history.filter(transfer => 
-                            transfer.type !== 'savings' && transfer.description !== 'Стартовые сбережения'
-                        );
+                        transfersHistory = data.game_data.transfers_history;
                     }
                     
                     // Обновляем позиции игроков
@@ -4159,6 +4157,10 @@
                     second: '2-digit'
                 });
                 
+                // Для стартовых сбережений показываем $0, для остальных - сумму
+                const amount = transfer.type === 'savings' ? 0 : transfer.amount;
+                const amountDisplay = amount === 0 ? '$0' : `${isPositive ? '+' : '-'}$${amount.toLocaleString()}`;
+                
                 return `
                     <div class="transfer-item">
                         <div class="transfer-icon">${icon}</div>
@@ -4167,7 +4169,7 @@
                             <div class="transfer-direction">${direction}</div>
                             <div class="transfer-date">${formattedDate}</div>
                         </div>
-                        <div class="transfer-amount ${isPositive ? 'positive' : 'negative'}">${isPositive ? '+' : '-'}$${transfer.amount.toLocaleString()}</div>
+                        <div class="transfer-amount ${isPositive ? 'positive' : 'negative'}">${amountDisplay}</div>
                         <div class="transfer-status completed">Завершено</div>
                     </div>
                 `;
