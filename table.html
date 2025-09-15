@@ -2359,6 +2359,9 @@
                     // Перемещение фишки
                     movePlayerToken(finalValue);
                     
+                    // Сбрасываем флаг броска после завершения анимации
+                    isRolling = false;
+                    
                     // Через 10 секунд после броска кнопка становится "Переход хода"
                     turnTransitionTimeout = setTimeout(() => {
                         updateRollButton();
@@ -2375,6 +2378,7 @@
                 rollDiceBtn.onclick = () => {
                     nextPlayer();
                 };
+                isRolling = false; // Сбрасываем флаг броска для кнопки "Переход хода"
             }
         }
 
@@ -2506,6 +2510,7 @@
             rollDiceBtn.onclick = rollDice;
             rollDiceBtn.disabled = false;
             diceRolled = false;
+            isRolling = false; // Сбрасываем флаг броска
         }
 
         // Обновление информации о текущем игроке
