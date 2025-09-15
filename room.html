@@ -183,6 +183,28 @@
             box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
         }
 
+        .update-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 5px;
+        }
+
+        .update-dot {
+            width: 6px;
+            height: 6px;
+            background: #3b82f6;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
         .sidebar {
             display: flex;
             flex-direction: column;
@@ -426,6 +448,10 @@
             <div class="room-info">
                 <h1 id="roomName">Загрузка...</h1>
                 <p id="roomStatus">Подключение к комнате...</p>
+                <div class="update-indicator" id="updateIndicator" style="display: none;">
+                    <span class="update-dot"></span>
+                    Обновление...
+                </div>
             </div>
             <button class="back-btn" onclick="goBack()">← Назад в лобби</button>
         </div>
@@ -560,9 +586,17 @@
         }
 
         // Load room data
-        async function loadRoomData() {
+        async function loadRoomData(showLoadingIndicator = true) {
             try {
-                showLoading(true);
+                if (showLoadingIndicator) {
+                    showLoading(true);
+                } else {
+                    // Show update indicator for auto-refresh
+                    const updateIndicator = document.getElementById('updateIndicator');
+                    if (updateIndicator) {
+                        updateIndicator.style.display = 'flex';
+                    }
+                }
                 
                 if (!currentUser || !currentUser.id) {
                     showError('Данные пользователя не найдены');
@@ -577,8 +611,17 @@
                 const data = await response.json();
                 
                 if (response.ok) {
+                    // Check if data has changed to avoid unnecessary re-renders
+                    const hasChanged = !currentRoom || 
+                        currentRoom.players.length !== data.players.length ||
+                        JSON.stringify(currentRoom.players.map(p => ({id: p.user_id, ready: p.is_ready, dream: p.selected_dream}))) !== 
+                        JSON.stringify(data.players.map(p => ({id: p.user_id, ready: p.is_ready, dream: p.selected_dream})));
+                    
                     currentRoom = data;
-                    renderRoom();
+                    
+                    if (hasChanged || showLoadingIndicator) {
+                        renderRoom();
+                    }
                 } else {
                     showError(data.message || 'Ошибка загрузки комнаты');
                     setTimeout(() => {
@@ -589,7 +632,15 @@
                 showError('Ошибка соединения с сервером');
                 console.error('Load room error:', error);
             } finally {
-                showLoading(false);
+                if (showLoadingIndicator) {
+                    showLoading(false);
+                } else {
+                    // Hide update indicator
+                    const updateIndicator = document.getElementById('updateIndicator');
+                    if (updateIndicator) {
+                        updateIndicator.style.display = 'none';
+                    }
+                }
             }
         }
 
@@ -910,12 +961,12 @@
             document.getElementById('loading').style.display = show ? 'block' : 'none';
         }
 
-        // Refresh room data only when needed (no automatic refresh to prevent flickering)
-        // setInterval(() => {
-        //     if (roomId && currentRoom && !currentRoom.game_started) {
-        //         loadRoomData();
-        //     }
-        // }, 10000);
+        // Refresh room data every 5 seconds to show new players
+        setInterval(() => {
+            if (roomId && currentRoom && !currentRoom.game_started) {
+                loadRoomData(false); // Don't show loading indicator for auto-refresh
+            }
+        }, 5000);
     </script>
 </body>
 </html>
