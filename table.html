@@ -4209,8 +4209,12 @@
                 });
                 
                 if (response.ok) {
-                    console.log('Transfer successful, reloading data...');
+                    console.log('Transfer successful, waiting for server to save...');
                     
+                    // Ждем немного, чтобы сервер успел сохранить изменения
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    console.log('Reloading data from server...');
                     // Перезагружаем данные с сервера для синхронизации
                     await loadGameData();
                     
