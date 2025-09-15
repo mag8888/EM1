@@ -775,7 +775,8 @@ app.get('/api/rooms/:id', async (req, res) => {
         console.log('Returning room data:', {
             id: room._id,
             player_balances: room.game_data?.player_balances,
-            transfers_count: room.game_data?.transfers_history?.length || 0
+            transfers_count: room.game_data?.transfers_history?.length || 0,
+            last_transfer: room.game_data?.transfers_history?.[0] || null
         });
         
         res.json({
@@ -1176,8 +1177,13 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
         room.game_data.transfers_history.unshift(transfer);
         
         console.log('Saving room to database...');
-        await room.save();
+        console.log('Before save - player_balances:', room.game_data.player_balances);
+        console.log('Before save - transfers_history length:', room.game_data.transfers_history.length);
+        
+        const savedRoom = await room.save();
         console.log('Room saved successfully');
+        console.log('After save - player_balances:', savedRoom.game_data.player_balances);
+        console.log('After save - transfers_history length:', savedRoom.game_data.transfers_history.length);
         
         console.log('Transfer completed successfully');
         console.log('Final balances after save:', room.game_data.player_balances);
