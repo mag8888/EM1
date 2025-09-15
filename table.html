@@ -4897,7 +4897,9 @@
             
             // Получаем текущего игрока
             const currentPlayerIndex = getCurrentPlayerIndex();
-            const currentPlayerName = roomData?.players?.[currentPlayerIndex]?.name || 'Unknown';
+            
+            // Получаем данные игрока из глобальных переменных
+            const currentPlayerName = players?.[currentPlayerIndex]?.name || 'Unknown';
             
             console.log(`🔍 Filtering transfers for current player: ${currentPlayerName} (index: ${currentPlayerIndex})`);
             
