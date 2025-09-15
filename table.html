@@ -851,6 +851,34 @@
             border: 1px solid rgba(107, 114, 128, 0.5);
         }
 
+        .exit-game-button {
+            width: 100%;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .exit-game-button:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .exit-game-button:active {
+            transform: translateY(0);
+        }
+
         .bank-btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -1252,6 +1280,14 @@
                     </div>
                     <div style="font-size: 14px; font-weight: bold; color: #10b981;">$10000</div>
                 </div>
+            </div>
+
+            <!-- Выход из игры -->
+            <div class="section">
+                <button class="exit-game-button" onclick="exitGame()">
+                    <span>🚪</span>
+                    <span>Выход из игры</span>
+                </button>
             </div>
         </div>
     </div>
@@ -1692,6 +1728,23 @@
             const modal = document.getElementById('cellModal');
             if (event.target === modal) {
                 closeCellModal();
+            }
+        }
+
+        // Функция выхода из игры
+        function exitGame() {
+            if (confirm('Вы уверены, что хотите выйти из игры? Ваш прогресс будет потерян.')) {
+                // Получаем ID комнаты из URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const roomId = urlParams.get('room');
+                
+                if (roomId) {
+                    // Перенаправляем в лобби
+                    window.location.href = '/lobby';
+                } else {
+                    // Если нет ID комнаты, перенаправляем на главную
+                    window.location.href = '/';
+                }
             }
         }
 
