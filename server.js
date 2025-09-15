@@ -441,6 +441,17 @@ app.get('/api/rooms', async (req, res) => {
             .populate('creator_id', 'first_name last_name')
             .sort({ created_at: -1 })
             .limit(20);
+            
+        console.log('Found rooms in lobby:', rooms.length);
+        rooms.forEach(room => {
+            console.log('Room in lobby:', {
+                id: room._id,
+                name: room.name,
+                game_started: room.game_started,
+                players_count: room.players.length,
+                created_at: room.created_at
+            });
+        });
         
         const roomsData = rooms.map(room => ({
             id: room._id,
@@ -526,6 +537,14 @@ app.post('/api/rooms/create', async (req, res) => {
         });
         
         await room.save();
+        
+        console.log('Room created successfully:', {
+            id: room._id,
+            name: room.name,
+            creator_id: room.creator_id,
+            players_count: room.players.length,
+            created_at: room.created_at
+        });
         
         res.status(201).json({ 
             message: 'Комната успешно создана',
@@ -1162,6 +1181,7 @@ app.post('/api/rooms/:id/next-turn', async (req, res) => {
 
 // Функция для очистки старых комнат (старше 6 часов)
 async function cleanupOldRooms() {
+    console.log('CLEANUP FUNCTION CALLED - THIS SHOULD NOT HAPPEN!');
     try {
         const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
         
@@ -1214,6 +1234,42 @@ app.post('/api/admin/cleanup-rooms', async (req, res) => {
     } catch (error) {
         console.error('Manual cleanup error:', error);
         res.status(500).json({ message: 'Ошибка при очистке комнат' });
+    }
+});
+
+// API для отладки - получить все комнаты
+app.get('/api/admin/all-rooms', async (req, res) => {
+    try {
+        const allRooms = await Room.find({})
+            .populate('creator_id', 'first_name last_name')
+            .sort({ created_at: -1 });
+            
+        console.log('All rooms in database:', allRooms.length);
+        allRooms.forEach(room => {
+            console.log('Room in DB:', {
+                id: room._id,
+                name: room.name,
+                game_started: room.game_started,
+                game_start_time: room.game_start_time,
+                players_count: room.players.length,
+                created_at: room.created_at
+            });
+        });
+        
+        res.json({
+            total: allRooms.length,
+            rooms: allRooms.map(room => ({
+                id: room._id,
+                name: room.name,
+                game_started: room.game_started,
+                game_start_time: room.game_start_time,
+                players_count: room.players.length,
+                created_at: room.created_at
+            }))
+        });
+    } catch (error) {
+        console.error('Get all rooms error:', error);
+        res.status(500).json({ message: 'Ошибка при получении всех комнат' });
     }
 });
 
