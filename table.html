@@ -3809,6 +3809,8 @@
         }
 
         async function openBank() {
+            console.log('Opening bank modal');
+            
             // Загружаем актуальные данные с сервера
             await loadGameData();
             
@@ -3819,7 +3821,8 @@
             updateBankData();
             
             // Загружаем список игроков для перевода
-            loadRecipients();
+            console.log('Calling loadRecipients...');
+            await loadRecipients();
             
             // Обновляем историю переводов
             updateTransfersHistory();
@@ -4119,10 +4122,13 @@
         async function processTransfer() {
             console.log('processTransfer called');
             
-            const recipientIndex = document.getElementById('recipientSelect').value;
+            const recipientSelect = document.getElementById('recipientSelect');
+            const recipientIndex = recipientSelect.value;
             const amount = parseInt(document.getElementById('transferAmount').value);
             
             console.log('Transfer form data:', { recipientIndex, amount });
+            console.log('Recipient select element:', recipientSelect);
+            console.log('Available options:', Array.from(recipientSelect.options).map(opt => ({ value: opt.value, text: opt.textContent })));
             
             if (!recipientIndex || !amount) {
                 console.log('Validation failed: missing recipient or amount');
@@ -4141,7 +4147,6 @@
             }
             
             // Получаем имя получателя
-            const recipientSelect = document.getElementById('recipientSelect');
             const recipientName = recipientSelect.options[recipientSelect.selectedIndex].textContent;
             
             try {
