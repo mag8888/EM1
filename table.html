@@ -4343,6 +4343,9 @@
                 
                 const data = await response.json();
                 
+                console.log('Loading recipients for user:', user.id);
+                console.log('Players data:', data.players);
+                
                 const recipientSelect = document.getElementById('recipientSelect');
                 if (!recipientSelect) {
                     console.log('Recipient select not found');
@@ -4355,6 +4358,13 @@
                 // Добавляем игроков (исключаем текущего пользователя)
                 if (data.players) {
                     data.players.forEach((player, index) => {
+                        console.log(`Player ${index}:`, {
+                            name: player.name,
+                            user_id: player.user_id,
+                            current_user_id: user.id,
+                            is_current_user: player.user_id === user.id
+                        });
+                        
                         // Исключаем текущего пользователя по user_id
                         if (player.user_id !== user.id) {
                             const option = document.createElement('option');
@@ -4423,12 +4433,26 @@
             const recipientSelect = document.getElementById('recipientSelect');
             const amountInput = document.getElementById('transferAmount');
             
+            console.log('Validating transfer form:', {
+                recipientSelect: !!recipientSelect,
+                amountInput: !!amountInput,
+                recipientValue: recipientSelect?.value,
+                amountValue: amountInput?.value
+            });
+            
             if (!recipientSelect || !amountInput) {
                 return { valid: false, message: 'Форма не найдена' };
             }
             
             const recipientIndex = recipientSelect.value;
             const amount = parseInt(amountInput.value);
+            
+            console.log('Validation values:', {
+                recipientIndex,
+                amount,
+                minAmount: BANK_CONFIG.minTransferAmount,
+                currentBalance
+            });
             
             if (!recipientIndex || recipientIndex === '') {
                 return { valid: false, message: 'Выберите получателя' };
