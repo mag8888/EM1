@@ -2032,31 +2032,36 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    // Обновляем текущего игрока
-                    currentPlayer = data.current_player;
-                    
-                    // Обновляем таймер
-                    gameTimer = data.remaining_seconds;
-                    maxTimer = data.turn_duration;
-                    
-                    // Обновляем UI
-                    updateCurrentPlayer();
-                    updateTimerDisplay();
-                    
-                    // Если ход истек, автоматически переходим к следующему
-                    if (data.is_turn_expired) {
-                        // Проверяем, что это ход текущего игрока перед переходом
-                        const user = localStorage.getItem('user');
-                        if (user) {
-                            const userData = JSON.parse(user);
-                            const playersResponse = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
-                            const playersData = await playersResponse.json();
-                            
-                            if (playersResponse.ok && playersData.players) {
-                                const playerIndex = playersData.players.findIndex(p => p.user_id.toString() === userData.id);
-                                if (playerIndex === data.current_player) {
-                                    await nextTurn();
+                    // Получаем информацию о игроках для проверки
+                    const user = localStorage.getItem('user');
+                    if (user) {
+                        const userData = JSON.parse(user);
+                        const playersResponse = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
+                        const playersData = await playersResponse.json();
+                        
+                        if (playersResponse.ok && playersData.players && playersData.players.length > 0) {
+                            // Проверяем, что current_player в пределах массива игроков
+                            if (data.current_player >= 0 && data.current_player < playersData.players.length) {
+                                // Обновляем текущего игрока
+                                currentPlayer = data.current_player;
+                                
+                                // Обновляем таймер
+                                gameTimer = data.remaining_seconds;
+                                maxTimer = data.turn_duration;
+                                
+                                // Обновляем UI
+                                updateCurrentPlayer();
+                                updateTimerDisplay();
+                                
+                                // Если ход истек, автоматически переходим к следующему
+                                if (data.is_turn_expired) {
+                                    const playerIndex = playersData.players.findIndex(p => p.user_id.toString() === userData.id);
+                                    if (playerIndex === data.current_player) {
+                                        await nextTurn();
+                                    }
                                 }
+                            } else {
+                                console.warn('Server current_player out of bounds:', data.current_player, 'Players count:', playersData.players.length);
                             }
                         }
                     }
@@ -2450,15 +2455,26 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    // Обновляем текущего игрока и таймер
-                    currentPlayer = data.current_player;
-                    gameTimer = data.turn_duration;
-                    maxTimer = data.turn_duration;
+                    // Получаем информацию о игроках для проверки
+                    const playersResponse = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
+                    const playersData = await playersResponse.json();
                     
-                    // Обновляем UI
-                    updateCurrentPlayer();
-                    updateTimerDisplay();
-                    resetRollButton();
+                    if (playersResponse.ok && playersData.players && playersData.players.length > 0) {
+                        // Проверяем, что новый current_player в пределах массива игроков
+                        if (data.current_player >= 0 && data.current_player < playersData.players.length) {
+                            // Обновляем текущего игрока и таймер
+                            currentPlayer = data.current_player;
+                            gameTimer = data.turn_duration;
+                            maxTimer = data.turn_duration;
+                            
+                            // Обновляем UI
+                            updateCurrentPlayer();
+                            updateTimerDisplay();
+                            resetRollButton();
+                        } else {
+                            console.warn('New current_player out of bounds:', data.current_player, 'Players count:', playersData.players.length);
+                        }
+                    }
                 } else {
                     console.error('Error passing turn:', data.message);
                 }
@@ -2493,21 +2509,32 @@
                 const response = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
                 const data = await response.json();
                 
-                if (response.ok && data.players) {
-                    const currentPlayerData = data.players[currentPlayer];
-                    const currentPlayerInfo = document.getElementById('currentPlayerInfo');
-                    
-                    if (currentPlayerData && currentPlayerInfo) {
-                        currentPlayerInfo.innerHTML = `
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                <div class="player-avatar player-${currentPlayer + 1}" style="width: 20px; height: 20px; font-size: 10px;">${currentPlayer + 1}</div>
-                                <div>
-                                    <div style="font-weight: bold;">${currentPlayerData.name || `Игрок ${currentPlayer + 1}`}</div>
-                                    <div style="font-size: 12px; color: #94a3b8;">Предприниматель</div>
+                if (response.ok && data.players && data.players.length > 0) {
+                    // Проверяем, что currentPlayer в пределах массива игроков
+                    if (currentPlayer >= 0 && currentPlayer < data.players.length) {
+                        const currentPlayerData = data.players[currentPlayer];
+                        const currentPlayerInfo = document.getElementById('currentPlayerInfo');
+                        
+                        if (currentPlayerData && currentPlayerInfo) {
+                            // Получаем баланс текущего игрока
+                            let playerBalance = currentBalance;
+                            if (data.game_data && data.game_data.player_balances && data.game_data.player_balances[currentPlayer] !== undefined) {
+                                playerBalance = data.game_data.player_balances[currentPlayer];
+                            }
+                            
+                            currentPlayerInfo.innerHTML = `
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                    <div class="player-avatar player-${currentPlayer + 1}" style="width: 20px; height: 20px; font-size: 10px;">${currentPlayer + 1}</div>
+                                    <div>
+                                        <div style="font-weight: bold;">${currentPlayerData.name || `Игрок ${currentPlayer + 1}`}</div>
+                                        <div style="font-size: 12px; color: #94a3b8;">Предприниматель</div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div style="font-size: 14px; font-weight: bold; color: #10b981;">$${currentBalance.toLocaleString()}</div>
-                        `;
+                                <div style="font-size: 14px; font-weight: bold; color: #10b981;">$${playerBalance.toLocaleString()}</div>
+                            `;
+                        }
+                    } else {
+                        console.warn('Current player index out of bounds:', currentPlayer, 'Players count:', data.players.length);
                     }
                 }
             } catch (error) {
