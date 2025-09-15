@@ -4966,7 +4966,12 @@
             const creditModal = document.getElementById('creditModal');
             if (creditModal) {
                 creditModal.style.display = 'flex';
-                updateCreditModal();
+                
+                // Принудительно загружаем данные перед обновлением
+                loadBankData().then(() => {
+                    updateCreditModal();
+                });
+                
                 setTimeout(() => {
                     creditModal.classList.add('modal-show');
                 }, 10);
@@ -4986,21 +4991,35 @@
         
         // Обновление данных в модальном окне кредита
         function updateCreditModal() {
+            console.log('Updating credit modal with data:', {
+                monthlyIncome,
+                currentCredit
+            });
+            
             const currentCashFlowEl = document.getElementById('currentCashFlow');
             const maxCreditAmountEl = document.getElementById('maxCreditAmount');
             const currentCreditAmountEl = document.getElementById('currentCreditAmount');
             
+            console.log('Credit modal elements found:', {
+                currentCashFlowEl: !!currentCashFlowEl,
+                maxCreditAmountEl: !!maxCreditAmountEl,
+                currentCreditAmountEl: !!currentCreditAmountEl
+            });
+            
             if (currentCashFlowEl) {
                 currentCashFlowEl.textContent = `$${monthlyIncome.toLocaleString()}`;
+                console.log('Updated cash flow to:', monthlyIncome);
             }
             
             if (maxCreditAmountEl) {
                 const maxCredit = Math.floor(monthlyIncome / 100) * 1000;
                 maxCreditAmountEl.textContent = `$${maxCredit.toLocaleString()}`;
+                console.log('Updated max credit to:', maxCredit);
             }
             
             if (currentCreditAmountEl) {
                 currentCreditAmountEl.textContent = `$${currentCredit.toLocaleString()}`;
+                console.log('Updated current credit to:', currentCredit);
             }
             
             // Обновляем превью при изменении суммы
