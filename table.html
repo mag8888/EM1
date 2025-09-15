@@ -4070,12 +4070,19 @@
         }
 
         async function loadRecipients() {
+            console.log('loadRecipients called');
             try {
                 const roomId = getRoomIdFromURL();
-                if (!roomId) return;
+                if (!roomId) {
+                    console.log('No room ID found');
+                    return;
+                }
 
                 const user = localStorage.getItem('user');
-                if (!user) return;
+                if (!user) {
+                    console.log('No user found in localStorage');
+                    return;
+                }
                 
                 const userData = JSON.parse(user);
                 const response = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
@@ -4103,10 +4110,15 @@
         }
 
         async function processTransfer() {
+            console.log('processTransfer called');
+            
             const recipientIndex = document.getElementById('recipientSelect').value;
             const amount = parseInt(document.getElementById('transferAmount').value);
             
+            console.log('Transfer form data:', { recipientIndex, amount });
+            
             if (!recipientIndex || !amount) {
+                console.log('Validation failed: missing recipient or amount');
                 alert('Пожалуйста, выберите получателя и введите сумму');
                 return;
             }
