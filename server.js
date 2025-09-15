@@ -17,26 +17,34 @@ app.use(express.static('.'));
 const MONGODB_URI = 'mongodb+srv://xqrmedia_db_user:9URuHWBY9lUQPOsj@cluster0.wvumcaj.mongodb.net/energy_money_game?retryWrites=true&w=majority&appName=Cluster0';
 
 // Добавляем более детальную обработку ошибок подключения
+console.log('Attempting to connect to MongoDB...');
+console.log('MongoDB URI:', MONGODB_URI ? 'Set' : 'Not set');
+
 mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+    serverSelectionTimeoutMS: 10000, // Увеличиваем timeout до 10 секунд
     socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+    maxPoolSize: 10, // Maintain up to 10 socket connections
+    serverApi: { version: '1', strict: true, deprecationErrors: true }
 })
 .then(() => {
-    console.log('MongoDB connected successfully');
+    console.log('✅ MongoDB connected successfully');
     console.log('Database:', mongoose.connection.db.databaseName);
+    console.log('Connection state:', mongoose.connection.readyState);
 })
 .catch(err => {
-    console.error('MongoDB connection error:', err);
+    console.error('❌ MongoDB connection error:', err);
     console.error('Error details:', {
         name: err.name,
         message: err.message,
-        code: err.code
+        code: err.code,
+        stack: err.stack
     });
     
     // Если не удается подключиться к MongoDB, продолжаем работу без базы данных
-    console.log('Continuing without database connection...');
+    console.log('⚠️ Continuing without database connection...');
+    console.log('Application will run in limited mode');
 });
 
 // User Schema
@@ -146,7 +154,12 @@ app.post('/api/auth/register', async (req, res) => {
         // Проверяем подключение к базе данных
         if (mongoose.connection.readyState !== 1) {
             console.log('Database connection state:', mongoose.connection.readyState);
-            return res.status(503).json({ message: 'База данных недоступна. Попробуйте позже.' });
+            console.log('Available states: 0=disconnected, 1=connected, 2=connecting, 3=disconnecting');
+            return res.status(503).json({ 
+                message: 'База данных недоступна. Попробуйте позже.',
+                error: 'DATABASE_UNAVAILABLE',
+                state: mongoose.connection.readyState
+            });
         }
 
         const { firstName, lastName, email, password, referralCode } = req.body;
@@ -218,7 +231,12 @@ app.post('/api/auth/login', async (req, res) => {
     try {
         // Проверяем подключение к базе данных
         if (mongoose.connection.readyState !== 1) {
-            return res.status(503).json({ message: 'База данных недоступна. Попробуйте позже.' });
+            console.log('Database connection state during login:', mongoose.connection.readyState);
+            return res.status(503).json({ 
+                message: 'База данных недоступна. Попробуйте позже.',
+                error: 'DATABASE_UNAVAILABLE',
+                state: mongoose.connection.readyState
+            });
         }
 
         const { email, password } = req.body;
@@ -1373,10 +1391,23 @@ async function cleanupOldRooms() {
     }
 }
 
+// Глобальная обработка ошибок
+process.on('uncaughtException', (err) => {
+    console.error('❌ Uncaught Exception:', err);
+    console.error('Stack:', err.stack);
+    // Не завершаем процесс, продолжаем работу
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+    // Не завершаем процесс, продолжаем работу
+});
+
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`MongoDB URI: ${MONGODB_URI}`);
-    console.log('Room cleanup scheduled every 30 minutes');
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📊 MongoDB URI: ${MONGODB_URI ? 'Set' : 'Not set'}`);
+    console.log('🕐 Room cleanup scheduled every 30 minutes');
+    console.log('✅ Application started successfully');
     
     // Очищаем старые комнаты при запуске
     cleanupOldRooms();
