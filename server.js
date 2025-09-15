@@ -1140,16 +1140,30 @@ app.get('/api/rooms/:id/turn', async (req, res) => {
             room.updated_at = new Date();
             await room.save();
             console.log('Turn transitioned to player', room.current_player, 'at', room.turn_start_time);
+            
+            // Пересчитываем время для нового хода
+            const newTurnStartTime = new Date(room.turn_start_time);
+            const newElapsedSeconds = Math.floor((now - newTurnStartTime) / 1000);
+            const newRemainingSeconds = Math.max(0, turnDuration - newElapsedSeconds);
+            
+            res.json({
+                current_player: room.current_player,
+                turn_start_time: room.turn_start_time,
+                elapsed_seconds: newElapsedSeconds,
+                remaining_seconds: newRemainingSeconds,
+                turn_duration: turnDuration,
+                is_turn_expired: false
+            });
+        } else {
+            res.json({
+                current_player: room.current_player,
+                turn_start_time: room.turn_start_time,
+                elapsed_seconds: elapsedSeconds,
+                remaining_seconds: remainingSeconds,
+                turn_duration: turnDuration,
+                is_turn_expired: isTurnExpired
+            });
         }
-
-        res.json({
-            current_player: room.current_player,
-            turn_start_time: room.turn_start_time,
-            elapsed_seconds: elapsedSeconds,
-            remaining_seconds: remainingSeconds,
-            turn_duration: turnDuration,
-            is_turn_expired: isTurnExpired
-        });
     } catch (error) {
         console.error('Get turn info error:', error);
         res.status(500).json({ message: 'Ошибка сервера при получении информации о ходе' });

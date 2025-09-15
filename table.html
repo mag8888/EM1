@@ -2067,7 +2067,8 @@
                         if (playersResponse.ok && playersData.players && playersData.players.length > 0) {
                             // Проверяем, что current_player в пределах массива игроков
                             if (data.current_player >= 0 && data.current_player < playersData.players.length) {
-                                // Обновляем текущего игрока
+                                // Проверяем, изменился ли текущий игрок
+                                const previousPlayer = currentPlayer;
                                 currentPlayer = data.current_player;
                                 
                                 // Обновляем таймер
@@ -2076,11 +2077,19 @@
                                 
                                 console.log('Turn info received:', {
                                     current_player: data.current_player,
+                                    previous_player: previousPlayer,
                                     remaining_seconds: data.remaining_seconds,
                                     turn_duration: data.turn_duration,
                                     gameTimer: gameTimer,
                                     maxTimer: maxTimer
                                 });
+                                
+                                // Если сменился игрок, перезапускаем таймер
+                                if (previousPlayer !== currentPlayer) {
+                                    console.log('Player changed, restarting timer');
+                                    clearInterval(timerInterval);
+                                    startTimer();
+                                }
                                 
                                 // Обновляем UI
                                 updateCurrentPlayer();
@@ -2127,11 +2136,14 @@
 
         // Обновление позиций фишек игроков
         function updatePlayerTokenPositions() {
+            console.log('Updating player token positions:', playerPositions);
             for (let i = 0; i < playerPositions.length; i++) {
                 const playerToken = document.getElementById(`player${i}`);
                 if (playerToken && playerPositions[i] !== undefined) {
                     const position = playerPositions[i];
                     const targetCell = document.querySelector(`[data-cell="${position}"]`);
+                    
+                    console.log(`Player ${i} position: ${position}, targetCell:`, targetCell);
                     
                     if (targetCell) {
                         const cellRect = targetCell.getBoundingClientRect();
@@ -2155,7 +2167,13 @@
                         playerToken.style.top = `${y + offsetY - 12}px`;
                         playerToken.style.position = 'absolute';
                         playerToken.style.zIndex = '100';
+                        
+                        console.log(`Positioned player ${i} at cell ${position} (${x}, ${y})`);
+                    } else {
+                        console.warn(`Target cell not found for position ${position}`);
                     }
+                } else {
+                    console.warn(`Player token not found for player ${i}`);
                 }
             }
         }
@@ -2196,6 +2214,7 @@
                         
                         // Позиционируем фишку в центре клетки 0 (старт)
                         const startCell = document.querySelector(`[data-cell="0"]`);
+                        console.log(`Initializing player ${i} token, startCell:`, startCell);
                         if (startCell) {
                             const cellRect = startCell.getBoundingClientRect();
                             const boardRect = document.querySelector('.game-board').getBoundingClientRect();
@@ -2211,6 +2230,10 @@
                             playerToken.style.top = `${y + offsetY - 12}px`;
                             playerToken.style.position = 'absolute';
                             playerToken.style.zIndex = '100';
+                            
+                            console.log(`Positioned player ${i} token at start cell 0 (${x}, ${y})`);
+                        } else {
+                            console.warn(`Start cell not found for player ${i}`);
                         }
                     }
                 }
@@ -2616,10 +2639,17 @@
 
         // Таймер хода
         function startTimer() {
+            // Очищаем предыдущий таймер если он есть
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            
             gameTimer = maxTimer;
             diceRolled = false;
             warningSoundPlayed = false;
             clearTimeout(turnTransitionTimeout);
+            
+            console.log('Starting timer for player', currentPlayer, 'with', gameTimer, 'seconds');
             
             timerInterval = setInterval(() => {
                 gameTimer--;
