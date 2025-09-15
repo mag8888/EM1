@@ -2498,7 +2498,7 @@
                 
                 if (response.ok) {
                     // Обновляем локальные данные
-                    currentBalance -= amount;
+                    currentBalance = data.new_balance;
                     
                     // Добавляем в историю
                     const transfer = {
@@ -2520,7 +2520,8 @@
                     
                     alert(`Перевод $${amount.toLocaleString()} игроку ${recipientName} выполнен успешно!`);
                 } else {
-                    alert(data.message || 'Ошибка при выполнении перевода');
+                    console.error('Transfer failed:', response.status, data);
+                    alert(data.message || `Ошибка при выполнении перевода (${response.status})`);
                 }
             } catch (error) {
                 console.error('Transfer error:', error);

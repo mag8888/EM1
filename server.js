@@ -881,6 +881,11 @@ app.post('/api/rooms/:id/start', async (req, res) => {
         // Start the game
         room.game_started = true;
         room.current_player = 0;
+        room.game_data = {
+            player_positions: new Array(room.players.length).fill(0),
+            player_balances: new Array(room.players.length).fill(10000), // Начальный баланс
+            transfers_history: []
+        };
         room.updated_at = new Date();
         
         await room.save();
@@ -897,6 +902,8 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
     try {
         const { user_id, recipient_index, amount } = req.body;
         
+        console.log('Transfer request:', { user_id, recipient_index, amount, room_id: req.params.id });
+        
         if (!user_id || recipient_index === undefined || !amount) {
             return res.status(400).json({ message: 'Все поля обязательны' });
         }
@@ -905,6 +912,12 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
         if (!room) {
             return res.status(404).json({ message: 'Комната не найдена' });
         }
+        
+        console.log('Room found:', { 
+            game_started: room.game_started, 
+            players_count: room.players.length,
+            has_game_data: !!room.game_data 
+        });
         
         if (!room.game_started) {
             return res.status(400).json({ message: 'Игра еще не началась' });
@@ -926,12 +939,19 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
         
         // Initialize game data if not exists
         if (!room.game_data) {
+            console.log('Initializing game_data for room');
             room.game_data = {
                 player_positions: new Array(room.players.length).fill(0),
                 player_balances: new Array(room.players.length).fill(10000),
                 transfers_history: []
             };
         }
+        
+        console.log('Game data:', {
+            player_balances: room.game_data.player_balances,
+            sender_index: senderIndex,
+            recipient_index: recipient_index
+        });
         
         // Check sufficient funds
         if (room.game_data.player_balances[senderIndex] < amount) {
@@ -959,6 +979,7 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
         
         await room.save();
         
+        console.log('Transfer completed successfully');
         res.json({ 
             message: 'Перевод выполнен успешно',
             new_balance: room.game_data.player_balances[senderIndex],
@@ -966,6 +987,11 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
         });
     } catch (error) {
         console.error('Transfer error:', error);
+        console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+        });
         res.status(500).json({ message: 'Ошибка сервера при выполнении перевода' });
     }
 });
