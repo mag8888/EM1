@@ -47,6 +47,19 @@ mongoose.connect(MONGODB_URI, {
     console.log('Application will run in limited mode');
 });
 
+// Добавляем обработчики событий MongoDB
+mongoose.connection.on('disconnected', () => {
+    console.log('⚠️ MongoDB disconnected');
+});
+
+mongoose.connection.on('reconnected', () => {
+    console.log('✅ MongoDB reconnected');
+});
+
+mongoose.connection.on('error', (err) => {
+    console.error('❌ MongoDB connection error:', err);
+});
+
 // User Schema
 const userSchema = new mongoose.Schema({
     telegram_id: { type: Number, required: false, sparse: true }, // sparse: true позволяет множественные null значения
@@ -1470,10 +1483,45 @@ process.on('unhandledRejection', (reason, promise) => {
     // Не завершаем процесс, продолжаем работу
 });
 
-app.listen(PORT, () => {
+// Обработка сигналов для graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('🔄 SIGTERM received, shutting down gracefully...');
+    server.close(() => {
+        console.log('✅ Server closed');
+        mongoose.connection.close(() => {
+            console.log('✅ Database connection closed');
+            process.exit(0);
+        });
+    });
+    
+    // Принудительное завершение через 10 секунд
+    setTimeout(() => {
+        console.log('⚠️ Forced shutdown after timeout');
+        process.exit(1);
+    }, 10000);
+});
+
+process.on('SIGINT', () => {
+    console.log('🔄 SIGINT received, shutting down gracefully...');
+    server.close(() => {
+        console.log('✅ Server closed');
+        mongoose.connection.close(() => {
+            console.log('✅ Database connection closed');
+            process.exit(0);
+        });
+    });
+    
+    // Принудительное завершение через 10 секунд
+    setTimeout(() => {
+        console.log('⚠️ Forced shutdown after timeout');
+        process.exit(1);
+    }, 10000);
+});
+
+const server = app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📊 MongoDB URI: ${MONGODB_URI ? 'Set' : 'Not set'}`);
-    console.log('🕐 Room cleanup scheduled every 30 minutes');
+    console.log('🕐 Room cleanup scheduled every 2 hours');
     console.log('✅ Application started successfully');
     
     // Очищаем старые комнаты при запуске
@@ -1481,4 +1529,15 @@ app.listen(PORT, () => {
     
     // Очищаем старые комнаты каждые 2 часа
     setInterval(cleanupOldRooms, 2 * 60 * 60 * 1000);
+    
+    // Мониторинг памяти каждые 5 минут
+    setInterval(() => {
+        const memUsage = process.memoryUsage();
+        console.log('📊 Memory usage:', {
+            rss: Math.round(memUsage.rss / 1024 / 1024) + ' MB',
+            heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + ' MB',
+            heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + ' MB',
+            external: Math.round(memUsage.external / 1024 / 1024) + ' MB'
+        });
+    }, 5 * 60 * 1000);
 });
