@@ -948,7 +948,7 @@ app.post('/api/rooms/:id/start', async (req, res) => {
         console.log('Setting turn_start_time to:', room.turn_start_time);
         room.game_data = {
             player_positions: new Array(room.players.length).fill(0),
-            player_balances: new Array(room.players.length).fill(10000), // Начальный баланс
+            player_balances: new Array(room.players.length).fill(0), // Стартовый баланс 0
             player_finances: new Array(room.players.length).fill({
                 totalIncome: 0,
                 totalExpenses: 0,
@@ -958,6 +958,24 @@ app.post('/api/rooms/:id/start', async (req, res) => {
             }),
             transfers_history: []
         };
+
+        // Начисляем стартовые сбережения 3000$ каждому игроку
+        for (let i = 0; i < room.players.length; i++) {
+            room.game_data.player_balances[i] = 3000;
+            
+            // Добавляем запись в историю переводов
+            const savingsTransfer = {
+                sender: 'Банк',
+                recipient: room.players[i].name || `Игрок ${i + 1}`,
+                amount: 3000,
+                timestamp: new Date(),
+                sender_index: -1, // -1 означает банк
+                recipient_index: i,
+                type: 'savings',
+                description: 'Стартовые сбережения'
+            };
+            room.game_data.transfers_history.push(savingsTransfer);
+        }
         room.updated_at = new Date();
         
         console.log('Starting game with turn_time:', room.turn_time, 'type:', typeof room.turn_time);
@@ -1024,7 +1042,7 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
             console.log('Initializing game_data for room');
             room.game_data = {
                 player_positions: new Array(room.players.length).fill(0),
-                player_balances: new Array(room.players.length).fill(10000),
+                player_balances: new Array(room.players.length).fill(0), // Стартовый баланс 0
                 player_finances: new Array(room.players.length).fill({
                     totalIncome: 0,
                     totalExpenses: 0,
@@ -1118,6 +1136,16 @@ app.get('/room/:id', (req, res) => {
 // Get current turn info
 app.get('/api/rooms/:id/turn', async (req, res) => {
     try {
+        // Проверяем подключение к базе данных
+        if (mongoose.connection.readyState !== 1) {
+            console.log('Database connection state during turn info:', mongoose.connection.readyState);
+            return res.status(503).json({ 
+                message: 'База данных недоступна. Попробуйте позже.',
+                error: 'DATABASE_UNAVAILABLE',
+                state: mongoose.connection.readyState
+            });
+        }
+
         const room = await Room.findById(req.params.id);
         if (!room) {
             console.log('Room not found for turn info:', req.params.id);
