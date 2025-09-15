@@ -710,11 +710,27 @@
             const readyBtn = document.getElementById('readyBtn');
             const startBtn = document.getElementById('startBtn');
             
+            console.log('DOM elements found:', {
+                currentPlayer: !!currentPlayer,
+                readyBtn: !!readyBtn,
+                startBtn: !!startBtn
+            });
+            
             if (currentPlayer && readyBtn && startBtn) {
                 const hasDream = currentPlayer.selected_dream !== null && currentPlayer.selected_dream !== undefined;
-                const isHost = currentRoom.creator_id && currentRoom.creator_id.toString() === currentUser.id;
+                const isHost = currentRoom.creator_id && currentRoom.creator_id.toString() === currentUser.id.toString();
                 const readyPlayers = currentRoom.players.filter(p => p.is_ready).length;
                 const canStart = isHost && readyPlayers >= 2 && currentRoom.players.length >= 2;
+                
+                // Debug logging
+                console.log('Debug room data:', {
+                    currentUser_id: currentUser.id,
+                    creator_id: currentRoom.creator_id,
+                    isHost: isHost,
+                    readyPlayers: readyPlayers,
+                    totalPlayers: currentRoom.players.length,
+                    canStart: canStart
+                });
                 
                 if (currentPlayer.is_ready) {
                     readyBtn.textContent = 'Отменить готовность';
@@ -733,8 +749,10 @@
                 // Show/hide start button for host
                 if (canStart) {
                     startBtn.style.display = 'block';
+                    console.log('Start button should be visible');
                 } else {
                     startBtn.style.display = 'none';
+                    console.log('Start button hidden - canStart:', canStart);
                 }
             }
         }
@@ -789,7 +807,7 @@
                     return;
                 }
                 
-                const isHost = currentRoom.creator_id.toString() === currentUser.id;
+                const isHost = currentRoom.creator_id.toString() === currentUser.id.toString();
                 if (!isHost) {
                     showError('Только создатель комнаты может начать игру');
                     return;
