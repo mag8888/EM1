@@ -194,6 +194,37 @@
             border-color: #10b981;
         }
 
+        .room-card.user-in-room {
+            border-color: #10b981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+        }
+
+        .user-in-room-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #10b981;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .player-avatar.current-user {
+            border: 2px solid #10b981;
+            background: #10b981;
+        }
+
+        .join-btn.in-room {
+            background: #10b981;
+            color: white;
+        }
+
+        .join-btn.in-room:hover {
+            background: #059669;
+        }
+
         .room-header {
             display: flex;
             justify-content: space-between;
@@ -892,13 +923,29 @@
         // Load rooms from server
         async function loadRooms() {
             try {
-                const response = await fetch('/api/rooms');
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    console.log('No token found, redirecting to auth');
+                    window.location.href = '/auth';
+                    return;
+                }
+                
+                const response = await fetch('/api/rooms', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                console.log('Load rooms response status:', response.status);
                 
                 if (response.ok) {
                     rooms = await response.json();
                     renderRooms();
+                } else if (response.status === 401) {
+                    console.log('Token expired, redirecting to auth');
+                    logout();
                 } else {
-                    console.error('Failed to load rooms');
+                    console.error('Error loading rooms:', response.status, await response.text());
                 }
             } catch (error) {
                 console.error('Error loading rooms:', error);
@@ -920,11 +967,15 @@
                 return;
             }
             
-            roomsList.innerHTML = rooms.map(room => `
-                <div class="room-card" onclick="selectRoom('${room.id}')">
+            roomsList.innerHTML = rooms.map(room => {
+                const isUserInRoom = currentUser && room.players.some(player => player.user_id.toString() === currentUser.id);
+                
+                return `
+                <div class="room-card ${isUserInRoom ? 'user-in-room' : ''}" onclick="selectRoom('${room.id}')">
                     <div class="room-header">
                         <div class="room-name">${room.name}</div>
                         <div class="room-status ${getRoomStatusClass(room)}">${getRoomStatusText(room)}</div>
+                        ${isUserInRoom ? '<div class="user-in-room-badge">Вы в комнате</div>' : ''}
                     </div>
                     <div class="room-info">
                         <div class="info-item">
@@ -946,18 +997,19 @@
                     </div>
                     <div class="room-players">
                         ${room.players.map(player => `
-                            <div class="player-avatar" title="${player.name}">${player.name.charAt(0)}</div>
+                            <div class="player-avatar ${player.user_id.toString() === currentUser?.id ? 'current-user' : ''}" title="${player.name}">${player.name.charAt(0)}</div>
                         `).join('')}
                         ${Array(room.max_players - room.players.length).fill('<div class="empty-slot"></div>').join('')}
                     </div>
                     <div class="room-actions">
-                        <button class="join-btn" onclick="event.stopPropagation(); joinRoom('${room.id}')" 
-                                ${room.players.length >= room.max_players ? 'disabled' : ''}>
-                            ${room.players.length >= room.max_players ? 'Комната заполнена' : 'Присоединиться'}
+                        <button class="join-btn ${isUserInRoom ? 'in-room' : ''}" onclick="event.stopPropagation(); joinRoom('${room.id}')" 
+                                ${room.players.length >= room.max_players && !isUserInRoom ? 'disabled' : ''}>
+                            ${isUserInRoom ? 'Войти в комнату' : (room.players.length >= room.max_players ? 'Комната заполнена' : 'Присоединиться')}
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         // Get room status class
@@ -1095,6 +1147,14 @@
                 hideError('joinRoomError');
                 
                 const token = localStorage.getItem('authToken');
+                if (!token) {
+                    showError('joinRoomError', 'Токен авторизации не найден. Пожалуйста, войдите заново.');
+                    return;
+                }
+                
+                console.log('Joining room:', selectedRoomId);
+                console.log('Token:', token.substring(0, 20) + '...');
+                
                 const response = await fetch('/api/rooms/join', {
                     method: 'POST',
                     headers: {
@@ -1107,14 +1167,27 @@
                     })
                 });
                 
+                console.log('Response status:', response.status);
                 const data = await response.json();
+                console.log('Response data:', data);
                 
                 if (response.ok) {
                     hideJoinRoomModal();
+                    // Check if user was already in room
+                    if (data.redirect) {
+                        console.log('User already in room, redirecting...');
+                    }
                     // Redirect to game room
                     window.location.href = `/room/${selectedRoomId}`;
                 } else {
-                    showError('joinRoomError', data.message || 'Ошибка присоединения к комнате');
+                    if (response.status === 401) {
+                        showError('joinRoomError', 'Сессия истекла. Пожалуйста, войдите заново.');
+                        setTimeout(() => {
+                            window.location.href = '/auth';
+                        }, 2000);
+                    } else {
+                        showError('joinRoomError', data.message || 'Ошибка присоединения к комнате');
+                    }
                 }
             } catch (error) {
                 showError('joinRoomError', 'Ошибка соединения с сервером');

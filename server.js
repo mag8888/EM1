@@ -558,7 +558,11 @@ app.post('/api/rooms/join', authenticateToken, async (req, res) => {
         // Check if user is already in room
         const existingPlayer = room.players.find(p => p.user_id.toString() === req.user.userId);
         if (existingPlayer) {
-            return res.status(400).json({ message: 'Вы уже находитесь в этой комнате' });
+            return res.status(200).json({ 
+                message: 'Вы уже находитесь в этой комнате',
+                room_id: room_id,
+                redirect: true
+            });
         }
         
         // Get user data
