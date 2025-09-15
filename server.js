@@ -1091,6 +1091,14 @@ app.get('/api/rooms/:id/turn', async (req, res) => {
         }
 
         const now = new Date();
+        
+        // Проверяем и инициализируем turn_start_time если его нет
+        if (!room.turn_start_time) {
+            console.log('turn_start_time is null, initializing...');
+            room.turn_start_time = new Date();
+            await room.save();
+        }
+        
         const turnStartTime = new Date(room.turn_start_time);
         const elapsedSeconds = Math.floor((now - turnStartTime) / 1000);
         const turnDuration = room.turn_time * 60; // turn_time в минутах, конвертируем в секунды
@@ -1100,6 +1108,7 @@ app.get('/api/rooms/:id/turn', async (req, res) => {
         console.log('Turn info debug:', {
             roomId: req.params.id,
             turn_time: room.turn_time,
+            turn_start_time: room.turn_start_time,
             turnDuration: turnDuration,
             elapsedSeconds: elapsedSeconds,
             remainingSeconds: remainingSeconds,
