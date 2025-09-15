@@ -4902,15 +4902,22 @@
             const currentPlayerName = players?.[currentPlayerIndex]?.name || 'Unknown';
             
             console.log(`🔍 Filtering transfers for current player: ${currentPlayerName} (index: ${currentPlayerIndex})`);
+            console.log(`📋 Total transfers available: ${transfersHistory.length}`);
+            console.log(`📋 Transfers data:`, transfersHistory);
             
             // Фильтруем только операции текущего игрока
             const myTransfers = transfersHistory.filter(transfer => {
                 // Показываем операции где текущий игрок - отправитель или получатель
                 const isSender = transfer.sender_index === currentPlayerIndex;
                 const isRecipient = transfer.recipient_index === currentPlayerIndex;
-                const isBankOperation = transfer.sender_index === -1 || transfer.recipient_index === -1;
                 
-                return isSender || isRecipient || isBankOperation;
+                // Для банковских операций показываем только если они касаются текущего игрока
+                const isBankToPlayer = transfer.sender_index === -1 && transfer.recipient_index === currentPlayerIndex;
+                const isPlayerToBank = transfer.sender_index === currentPlayerIndex && transfer.recipient_index === -1;
+                
+                console.log(`🔍 Transfer ${transfer.description}: sender=${transfer.sender_index}, recipient=${transfer.recipient_index}, currentPlayer=${currentPlayerIndex}, isSender=${isSender}, isRecipient=${isRecipient}, isBankToPlayer=${isBankToPlayer}, isPlayerToBank=${isPlayerToBank}`);
+                
+                return isSender || isRecipient || isBankToPlayer || isPlayerToBank;
             });
             
             console.log(`📊 Found ${myTransfers.length} transfers for current player out of ${transfersHistory.length} total`);
