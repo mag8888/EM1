@@ -1004,36 +1004,41 @@ app.post('/api/rooms/:id/start', async (req, res) => {
         room.updated_at = new Date();
         
         // Начисляем стартовые сбережения через 1 секунду после старта игры
-        setTimeout(async () => {
-            try {
-                const updatedRoom = await Room.findById(roomId);
-                if (updatedRoom && updatedRoom.game_data) {
-                    for (let i = 0; i < updatedRoom.players.length; i++) {
-                        // Начисляем стартовые сбережения
-                        updatedRoom.game_data.player_balances[i] = 3000;
+        // ТОЛЬКО если стартовые сбережения еще не начислены
+        if (!room.game_data.starting_savings_given) {
+            setTimeout(async () => {
+                try {
+                    const updatedRoom = await Room.findById(roomId);
+                    if (updatedRoom && updatedRoom.game_data && !updatedRoom.game_data.starting_savings_given) {
+                        for (let i = 0; i < updatedRoom.players.length; i++) {
+                            // Начисляем стартовые сбережения
+                            updatedRoom.game_data.player_balances[i] = 3000;
+                            
+                            // Добавляем запись в историю
+                            const savingsTransfer = {
+                                sender: 'Банк',
+                                recipient: updatedRoom.players[i].name || `Игрок ${i + 1}`,
+                                amount: 3000,
+                                timestamp: new Date(),
+                                sender_index: -1, // -1 означает банк
+                                recipient_index: i,
+                                type: 'savings',
+                                description: 'Стартовые сбережения'
+                            };
+                            updatedRoom.game_data.transfers_history.push(savingsTransfer);
+                        }
                         
-                        // Добавляем запись в историю
-                        const savingsTransfer = {
-                            sender: 'Банк',
-                            recipient: updatedRoom.players[i].name || `Игрок ${i + 1}`,
-                            amount: 3000,
-                            timestamp: new Date(),
-                            sender_index: -1, // -1 означает банк
-                            recipient_index: i,
-                            type: 'savings',
-                            description: 'Стартовые сбережения'
-                        };
-                        updatedRoom.game_data.transfers_history.push(savingsTransfer);
+                        // Отмечаем, что стартовые сбережения начислены
+                        updatedRoom.game_data.starting_savings_given = true;
+                        updatedRoom.updated_at = new Date();
+                        await updatedRoom.save();
+                        console.log('Стартовые сбережения начислены всем игрокам');
                     }
-                    
-                    updatedRoom.updated_at = new Date();
-                    await updatedRoom.save();
-                    console.log('Стартовые сбережения начислены всем игрокам');
+                } catch (error) {
+                    console.error('Ошибка при начислении стартовых сбережений:', error);
                 }
-            } catch (error) {
-                console.error('Ошибка при начислении стартовых сбережений:', error);
-            }
-        }, 1000); // 1 секунда задержка
+            }, 1000); // 1 секунда задержка
+        }
         
         console.log('Starting game with turn_time:', room.turn_time, 'type:', typeof room.turn_time);
         console.log('Game start time set to:', room.game_start_time);
