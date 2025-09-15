@@ -631,7 +631,21 @@
         .timer-fill {
             height: 100%;
             background: #10b981;
-            transition: width 1s linear;
+            transition: width 1s linear, background-color 0.3s ease;
+        }
+
+        .timer-fill.warning {
+            background: #f59e0b;
+        }
+
+        .timer-fill.danger {
+            background: #ef4444;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
 
         .timer-text {
@@ -1913,10 +1927,14 @@
         // Игровые переменные
         let currentPlayer = 1;
         let gameTimer = 120; // 2 минуты в секундах
+        let maxTimer = 120; // Максимальное время хода
         let timerInterval;
         let isRolling = false;
         let cellOwners = {}; // Владельцы клеток
         let playerPositions = [0, 0, 0]; // Позиции игроков на поле
+        let diceRolled = false; // Флаг броска кубика
+        let turnTransitionTimeout; // Таймаут для перехода хода
+        let warningSoundPlayed = false; // Флаг для предотвращения повторных сигналов
 
         // Инициализация игры
         function initGame() {
@@ -2041,6 +2059,7 @@
             }
             
             isRolling = true;
+            diceRolled = true;
             const dice = document.getElementById('dice');
             const rollDiceBtn = document.getElementById('rollDiceBtn');
             
@@ -2066,14 +2085,23 @@
                     // Перемещение фишки
                     movePlayerToken(finalValue);
                     
-                    // Смена игрока через 2 секунды
-                    setTimeout(() => {
-                        nextPlayer();
-                        rollDiceBtn.disabled = false;
-                        isRolling = false;
-                    }, 2000);
+                    // Через 10 секунд после броска кнопка становится "Переход хода"
+                    turnTransitionTimeout = setTimeout(() => {
+                        updateRollButton();
+                    }, 10000);
                 }
             }, 100);
+        }
+
+        function updateRollButton() {
+            const rollDiceBtn = document.getElementById('rollDiceBtn');
+            if (diceRolled) {
+                rollDiceBtn.innerHTML = '<span>⏭️</span><span>Переход хода</span>';
+                rollDiceBtn.disabled = false;
+                rollDiceBtn.onclick = () => {
+                    nextPlayer();
+                };
+            }
         }
 
         // Перемещение фишки игрока
@@ -2133,16 +2161,34 @@
         // Смена игрока
         function nextPlayer() {
             // Убираем выделение с текущего игрока
-            document.getElementById(`player${currentPlayer}Item`).classList.remove('current');
+            const currentPlayerItem = document.getElementById(`player${currentPlayer}Item`);
+            if (currentPlayerItem) {
+                currentPlayerItem.classList.remove('current');
+            }
             
             // Переходим к следующему игроку
             currentPlayer = currentPlayer === 3 ? 1 : currentPlayer + 1;
             
             // Выделяем нового игрока
-            document.getElementById(`player${currentPlayer}Item`).classList.add('current');
+            const newPlayerItem = document.getElementById(`player${currentPlayer}Item`);
+            if (newPlayerItem) {
+                newPlayerItem.classList.add('current');
+            }
             
             updateCurrentPlayer();
+            
+            // Сбрасываем кнопку броска кубика
+            resetRollButton();
+            
             resetTimer();
+        }
+
+        function resetRollButton() {
+            const rollDiceBtn = document.getElementById('rollDiceBtn');
+            rollDiceBtn.innerHTML = '<span>🎲</span><span>Бросить кубик</span>';
+            rollDiceBtn.onclick = rollDice;
+            rollDiceBtn.disabled = false;
+            diceRolled = false;
         }
 
         // Обновление информации о текущем игроке
@@ -2188,30 +2234,84 @@
 
         // Таймер хода
         function startTimer() {
+            gameTimer = maxTimer;
+            diceRolled = false;
+            warningSoundPlayed = false;
+            clearTimeout(turnTransitionTimeout);
+            
             timerInterval = setInterval(() => {
                 gameTimer--;
                 updateTimerDisplay();
                 
                 if (gameTimer <= 0) {
-                    // Время вышло, автоматически переходим к следующему игроку
+                    clearInterval(timerInterval);
                     nextPlayer();
+                    startTimer(); // Запуск нового таймера
                 }
             }, 1000);
         }
 
         function resetTimer() {
-            gameTimer = 120;
+            gameTimer = maxTimer;
+            diceRolled = false;
+            warningSoundPlayed = false;
+            clearTimeout(turnTransitionTimeout);
             updateTimerDisplay();
         }
 
         function updateTimerDisplay() {
             const minutes = Math.floor(gameTimer / 60);
             const seconds = gameTimer % 60;
-            const percentage = (gameTimer / 120) * 100;
+            const percentage = (gameTimer / maxTimer) * 100;
             
-            document.getElementById('timerText').textContent = 
+            const timerFill = document.getElementById('timerFill');
+            const timerText = document.getElementById('timerText');
+            
+            // Обновляем текст
+            timerText.textContent = 
                 `${minutes}:${seconds.toString().padStart(2, '0')} / 2:00`;
-            document.getElementById('timerFill').style.width = `${percentage}%`;
+            
+            // Обновляем прогресс-бар
+            timerFill.style.width = `${percentage}%`;
+            
+            // Цветовая индикация
+            timerFill.classList.remove('warning', 'danger');
+            
+            if (gameTimer <= 20) {
+                // Последние 20 секунд - красный + сигнал
+                timerFill.classList.add('danger');
+                if (!warningSoundPlayed) {
+                    playWarningSound();
+                    warningSoundPlayed = true;
+                }
+            } else if (gameTimer <= 60) {
+                // Вторая минута - желтый
+                timerFill.classList.add('warning');
+            }
+            // Первая минута - зеленый (по умолчанию)
+        }
+
+        function playWarningSound() {
+            // Создаем звуковой сигнал
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+            } catch (error) {
+                console.log('Audio not supported:', error);
+            }
         }
 
         // Обработчики событий
