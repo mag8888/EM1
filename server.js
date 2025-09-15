@@ -1103,7 +1103,7 @@ app.get('/api/rooms/:id/turn', async (req, res) => {
         // Проверяем и инициализируем turn_start_time если его нет
         if (!room.turn_start_time) {
             console.log('turn_start_time is null, initializing...');
-            room.turn_start_time = new Date();
+            room.turn_start_time = room.game_start_time || new Date();
             await room.save();
             console.log('turn_start_time initialized and saved:', room.turn_start_time);
         }
