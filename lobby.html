@@ -915,6 +915,11 @@
                 currentUser = JSON.parse(user);
                 
                 // Проверяем, что у пользователя есть ID
+                if (!currentUser.id && currentUser._id) {
+                    // Нормализуем и сохраняем обратно, чтобы избежать будущих сбоев
+                    currentUser.id = currentUser._id;
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                }
                 if (!currentUser.id) {
                     console.error('User ID not found, redirecting to auth');
                     logout();
@@ -973,9 +978,21 @@
                     const userData = await response.json();
                     console.log('Updated user data from server:', userData);
                     
+                    // Нормализуем объект пользователя (гарантируем наличие id)
+                    const normalizedUser = { ...userData };
+                    if (!normalizedUser.id && normalizedUser._id) {
+                        normalizedUser.id = normalizedUser._id;
+                    }
+                    
+                    if (!normalizedUser.id) {
+                        console.error('Normalized user has no id, forcing logout');
+                        logout();
+                        return false;
+                    }
+                    
                     // Обновляем данные пользователя в localStorage
-                    localStorage.setItem('user', JSON.stringify(userData));
-                    currentUser = userData;
+                    localStorage.setItem('user', JSON.stringify(normalizedUser));
+                    currentUser = normalizedUser;
                     
                     // Обновляем отображение
                     document.getElementById('userName').textContent = currentUser.first_name;

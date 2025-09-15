@@ -519,17 +519,27 @@
 
                 if (response.ok) {
                     // Проверяем, что у пользователя есть ID
-                    if (!data.user || !data.user.id) {
+                    if (!data.user) {
                         showError('Ошибка: данные пользователя неполные. Попробуйте войти заново.');
+                        return;
+                    }
+                    
+                    // Нормализуем id
+                    const normalizedUser = { ...data.user };
+                    if (!normalizedUser.id && normalizedUser._id) {
+                        normalizedUser.id = normalizedUser._id;
+                    }
+                    if (!normalizedUser.id) {
+                        showError('Ошибка: не удалось определить ID пользователя. Попробуйте войти заново.');
                         return;
                     }
                     
                     // Сохраняем токен и данные пользователя
                     localStorage.setItem('authToken', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('user', JSON.stringify(normalizedUser));
                     
-                    console.log('User logged in successfully:', data.user);
-                    console.log('User ID:', data.user.id);
+                    console.log('User logged in successfully:', normalizedUser);
+                    console.log('User ID:', normalizedUser.id);
                     
                     showSuccess('Успешный вход!');
                     

@@ -682,6 +682,10 @@
                 currentUser = JSON.parse(user);
                 
                 // Проверяем, что у пользователя есть ID
+                if (!currentUser.id && currentUser._id) {
+                    currentUser.id = currentUser._id;
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                }
                 if (!currentUser.id) {
                     console.error('User ID not found, redirecting to auth');
                     window.location.href = '/auth';
