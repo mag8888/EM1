@@ -2798,9 +2798,11 @@
                         }
                     }
                     
-                    // Обновляем историю переводов
+                    // Обновляем историю переводов (фильтруем стартовые сбережения)
                     if (data.game_data.transfers_history) {
-                        transfersHistory = data.game_data.transfers_history;
+                        transfersHistory = data.game_data.transfers_history.filter(transfer => 
+                            transfer.type !== 'savings' && transfer.description !== 'Стартовые сбережения'
+                        );
                     }
                     
                     // Обновляем позиции игроков
@@ -3723,8 +3725,8 @@
             const currentPlayerInfo = document.getElementById('currentPlayerInfo');
             if (!currentPlayerInfo || !player) return;
             
-            // Обновляем баланс в банковских данных
-            currentBalance = player.balance || 10000;
+            // Баланс берется из game_data, не из player.balance
+            // currentBalance уже обновлен в loadGameData
             
             currentPlayerInfo.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
@@ -4097,15 +4099,8 @@
                     // Обновляем локальные данные
                     currentBalance = data.new_balance;
                     
-                    // Добавляем в историю
-                    const transfer = {
-                        recipient: recipientName,
-                        amount: amount,
-                        date: new Date().toLocaleString('ru-RU'),
-                        type: 'outgoing',
-                        status: 'completed'
-                    };
-                    transfersHistory.unshift(transfer);
+                    // Перезагружаем данные с сервера для синхронизации истории
+                    await loadGameData();
                     
                     // Обновляем интерфейс
                     updateBankData();
