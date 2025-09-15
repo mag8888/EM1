@@ -3011,6 +3011,14 @@
                 // Обновляем UI после загрузки данных
                 updateBankUI();
                 
+                console.log('Bank UI updated with data:', {
+                    currentBalance,
+                    totalIncome,
+                    totalExpenses,
+                    monthlyIncome,
+                    currentCredit
+                });
+                
                 lastUpdateTime = Date.now();
                 
             } catch (error) {
@@ -4184,7 +4192,8 @@
                 } else {
                     console.log('Failed to load profession data from API, trying local data');
                     // Если API не работает, используем данные из room data
-                    const roomResponse = await fetch(`/api/rooms/${roomId}`);
+                    const user = JSON.parse(localStorage.getItem('user'));
+                    const roomResponse = await fetch(`/api/rooms/${roomId}?user_id=${user.id}`);
                     if (roomResponse.ok) {
                         const roomData = await roomResponse.json();
                         const player = roomData.players[playerIndex];
@@ -4201,9 +4210,11 @@
                                 currentCredit
                             });
                         } else {
+                            console.log('No profession_data found, using defaults');
                             throw new Error('No profession data in room');
                         }
                     } else {
+                        console.log('Failed to load room data, using defaults');
                         throw new Error('Failed to load room data');
                     }
                 }
@@ -4269,10 +4280,19 @@
                 monthlyIncome: document.getElementById('monthlyIncome')
             };
             
+            console.log('Updating financial summary:', {
+                totalIncome,
+                totalExpenses,
+                monthlyIncome
+            });
+            
             Object.entries(elements).forEach(([key, el]) => {
                 if (el) {
                     const value = { totalIncome, totalExpenses, monthlyIncome }[key];
                     el.textContent = `$${value.toLocaleString()}`;
+                    console.log(`Updated ${key}: $${value.toLocaleString()}`);
+                } else {
+                    console.log(`Element not found for ${key}`);
                 }
             });
         }
