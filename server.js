@@ -881,6 +881,7 @@ app.post('/api/rooms/:id/start', async (req, res) => {
         // Start the game
         room.game_started = true;
         room.current_player = 0;
+        room.turn_start_time = new Date(); // Время начала хода
         room.game_data = {
             player_positions: new Array(room.players.length).fill(0),
             player_balances: new Array(room.players.length).fill(10000), // Начальный баланс
@@ -1026,6 +1027,80 @@ app.get('/room/:id', (req, res) => {
 });
 
 // Запуск сервера
+// Get current turn info
+app.get('/api/rooms/:id/turn', async (req, res) => {
+    try {
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+
+        if (!room.game_started) {
+            return res.status(400).json({ message: 'Игра еще не началась' });
+        }
+
+        const now = new Date();
+        const turnStartTime = new Date(room.turn_start_time);
+        const elapsedSeconds = Math.floor((now - turnStartTime) / 1000);
+        const turnDuration = room.turn_time * 60; // Конвертируем минуты в секунды
+        const remainingSeconds = Math.max(0, turnDuration - elapsedSeconds);
+
+        res.json({
+            current_player: room.current_player,
+            turn_start_time: room.turn_start_time,
+            elapsed_seconds: elapsedSeconds,
+            remaining_seconds: remainingSeconds,
+            turn_duration: turnDuration,
+            is_turn_expired: remainingSeconds <= 0
+        });
+    } catch (error) {
+        console.error('Get turn info error:', error);
+        res.status(500).json({ message: 'Ошибка сервера при получении информации о ходе' });
+    }
+});
+
+// Next turn
+app.post('/api/rooms/:id/next-turn', async (req, res) => {
+    try {
+        const { user_id } = req.body;
+        
+        if (!user_id) {
+            return res.status(400).json({ message: 'user_id обязателен' });
+        }
+
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+
+        if (!room.game_started) {
+            return res.status(400).json({ message: 'Игра еще не началась' });
+        }
+
+        // Проверяем, что это ход текущего игрока
+        const playerIndex = room.players.findIndex(p => p.user_id.toString() === user_id);
+        if (playerIndex !== room.current_player) {
+            return res.status(403).json({ message: 'Не ваш ход' });
+        }
+
+        // Переходим к следующему игроку
+        room.current_player = (room.current_player + 1) % room.players.length;
+        room.turn_start_time = new Date();
+        room.updated_at = new Date();
+
+        await room.save();
+
+        res.json({ 
+            message: 'Ход передан следующему игроку',
+            current_player: room.current_player,
+            turn_start_time: room.turn_start_time
+        });
+    } catch (error) {
+        console.error('Next turn error:', error);
+        res.status(500).json({ message: 'Ошибка сервера при переходе хода' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`MongoDB URI: ${MONGODB_URI}`);

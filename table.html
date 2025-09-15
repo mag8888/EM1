@@ -1972,11 +1972,13 @@
             createInnerTrack();
             initializePlayerTokens(); // Инициализируем фишки игроков
             loadGameData(); // Загружаем данные игры с сервера
+            loadTurnInfo(); // Загружаем информацию о ходе
             startTimer();
             updateCurrentPlayer();
             
             // Запускаем периодическое обновление данных
             setInterval(loadGameData, 5000); // Обновляем каждые 5 секунд
+            setInterval(loadTurnInfo, 1000); // Обновляем информацию о ходе каждую секунду
         }
 
         // Загрузка данных игры с сервера
@@ -2017,6 +2019,37 @@
                 }
             } catch (error) {
                 console.error('Error loading game data:', error);
+            }
+        }
+
+        // Загрузка информации о ходе с сервера
+        async function loadTurnInfo() {
+            try {
+                const roomId = getRoomIdFromURL();
+                if (!roomId) return;
+
+                const response = await fetch(`/api/rooms/${roomId}/turn`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Обновляем текущего игрока
+                    currentPlayer = data.current_player;
+                    
+                    // Обновляем таймер
+                    gameTimer = data.remaining_seconds;
+                    maxTimer = data.turn_duration;
+                    
+                    // Обновляем UI
+                    updateCurrentPlayer();
+                    updateTimerDisplay();
+                    
+                    // Если ход истек, автоматически переходим к следующему
+                    if (data.is_turn_expired) {
+                        await nextTurn();
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading turn info:', error);
             }
         }
 
@@ -2239,17 +2272,26 @@
         }
 
         // Бросок кубика
-        function rollDice() {
+        async function rollDice() {
             if (isRolling) return;
             
             // Проверяем, что это ход текущего игрока
-            const urlParams = new URLSearchParams(window.location.search);
-            const roomId = urlParams.get('room');
-            const currentUser = JSON.parse(localStorage.getItem('user'));
+            const roomId = getRoomIdFromURL();
+            if (!roomId) return;
+
+            const user = localStorage.getItem('user');
+            if (!user) return;
             
-            if (roomId && currentUser) {
-                // Здесь нужно проверить, что это ход текущего игрока
-                // Пока что разрешаем всем
+            const userData = JSON.parse(user);
+            const response = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
+            const data = await response.json();
+            
+            if (response.ok && data.players) {
+                const playerIndex = data.players.findIndex(p => p.user_id.toString() === userData.id);
+                if (playerIndex !== data.current_player) {
+                    alert('Не ваш ход!');
+                    return;
+                }
             }
             
             isRolling = true;
@@ -2364,10 +2406,9 @@
             }, 1000);
         }
 
-        // Смена игрока
-        async function nextPlayer() {
+        // Переход хода через сервер
+        async function nextTurn() {
             try {
-                // Получаем количество игроков из данных комнаты
                 const roomId = getRoomIdFromURL();
                 if (!roomId) return;
 
@@ -2375,37 +2416,32 @@
                 if (!user) return;
                 
                 const userData = JSON.parse(user);
-                const response = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
+                const response = await fetch(`/api/rooms/${roomId}/next-turn`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: userData.id
+                    })
+                });
+                
                 const data = await response.json();
                 
-                if (response.ok && data.players) {
-                    const playerCount = data.players.length;
-                    
-                    // Убираем выделение с текущего игрока
-                    const currentPlayerItem = document.getElementById(`player${currentPlayer}Item`);
-                    if (currentPlayerItem) {
-                        currentPlayerItem.classList.remove('current');
-                    }
-                    
-                    // Переходим к следующему игроку
-                    currentPlayer = currentPlayer === playerCount ? 1 : currentPlayer + 1;
-                    
-                    // Выделяем нового игрока
-                    const newPlayerItem = document.getElementById(`player${currentPlayer}Item`);
-                    if (newPlayerItem) {
-                        newPlayerItem.classList.add('current');
-                    }
-                    
-                    updateCurrentPlayer();
-                    
-                    // Сбрасываем кнопку броска кубика
-                    resetRollButton();
+                if (response.ok) {
+                    // Обновляем информацию о ходе
+                    await loadTurnInfo();
+                } else {
+                    console.error('Error passing turn:', data.message);
                 }
             } catch (error) {
-                console.error('Error in nextPlayer:', error);
+                console.error('Error in nextTurn:', error);
             }
-            
-            resetTimer();
+        }
+
+        // Смена игрока (устаревшая функция, теперь используем nextTurn)
+        async function nextPlayer() {
+            await nextTurn();
         }
 
         function resetRollButton() {
