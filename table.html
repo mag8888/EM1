@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Игровой стол - Энергия денег</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="alternate icon" href="/favicon.ico">
     <style>
         * {
             margin: 0;
@@ -2006,6 +2008,7 @@
                     // Обновляем позиции игроков
                     if (data.game_data.player_positions) {
                         playerPositions = data.game_data.player_positions;
+                        updatePlayerTokenPositions();
                     }
                     
                     // Обновляем UI
@@ -2039,23 +2042,31 @@
             return 0;
         }
 
-        // Инициализация фишек игроков в центре стартовой клетки
-        function initializePlayerTokens() {
-            for (let i = 1; i <= 3; i++) {
+        // Обновление позиций фишек игроков
+        function updatePlayerTokenPositions() {
+            for (let i = 0; i < playerPositions.length; i++) {
                 const playerToken = document.getElementById(`player${i}`);
-                if (playerToken) {
-                    // Позиционируем фишку в центре клетки 0 (старт)
-                    const startCell = document.querySelector(`[data-cell="0"]`);
-                    if (startCell) {
-                        const cellRect = startCell.getBoundingClientRect();
+                if (playerToken && playerPositions[i] !== undefined) {
+                    const position = playerPositions[i];
+                    const targetCell = document.querySelector(`[data-cell="${position}"]`);
+                    
+                    if (targetCell) {
+                        const cellRect = targetCell.getBoundingClientRect();
                         const boardRect = document.querySelector('.game-board').getBoundingClientRect();
                         
                         const x = cellRect.left - boardRect.left + cellRect.width / 2;
                         const y = cellRect.top - boardRect.top + cellRect.height / 2;
                         
-                        // Сдвигаем фишки, чтобы они не накладывались друг на друга
-                        const offsetX = (i - 1) * 8; // 8px между фишками
-                        const offsetY = (i - 1) * 8;
+                        // Проверяем, есть ли другие фишки на этой клетке
+                        const existingTokens = targetCell.querySelectorAll('.player-token');
+                        let offsetX = 0;
+                        let offsetY = 0;
+                        
+                        if (existingTokens.length > 1) {
+                            const offset = cellRect.width * 0.15;
+                            offsetX = (i % 3) * offset;
+                            offsetY = Math.floor(i / 3) * offset;
+                        }
                         
                         playerToken.style.left = `${x + offsetX - 12}px`;
                         playerToken.style.top = `${y + offsetY - 12}px`;
@@ -2063,6 +2074,65 @@
                         playerToken.style.zIndex = '100';
                     }
                 }
+            }
+        }
+
+        // Инициализация фишек игроков в центре стартовой клетки
+        async function initializePlayerTokens() {
+            try {
+                // Загружаем данные комнаты для получения количества игроков
+                const roomId = getRoomIdFromURL();
+                if (!roomId) return;
+
+                const user = localStorage.getItem('user');
+                if (!user) return;
+                
+                const userData = JSON.parse(user);
+                const response = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
+                const data = await response.json();
+                
+                if (response.ok && data.players) {
+                    const playerCount = data.players.length;
+                    
+                    // Удаляем все существующие фишки
+                    const existingTokens = document.querySelectorAll('.player-token');
+                    existingTokens.forEach(token => token.remove());
+                    
+                    // Создаем фишки для каждого игрока
+                    for (let i = 0; i < playerCount; i++) {
+                        const playerToken = document.createElement('div');
+                        playerToken.className = 'player-token';
+                        playerToken.id = `player${i}`;
+                        playerToken.innerHTML = `<div class="token-number">${i + 1}</div>`;
+                        
+                        // Добавляем фишку на игровое поле
+                        const gameBoard = document.querySelector('.game-board');
+                        if (gameBoard) {
+                            gameBoard.appendChild(playerToken);
+                        }
+                        
+                        // Позиционируем фишку в центре клетки 0 (старт)
+                        const startCell = document.querySelector(`[data-cell="0"]`);
+                        if (startCell) {
+                            const cellRect = startCell.getBoundingClientRect();
+                            const boardRect = document.querySelector('.game-board').getBoundingClientRect();
+                            
+                            const x = cellRect.left - boardRect.left + cellRect.width / 2;
+                            const y = cellRect.top - boardRect.top + cellRect.height / 2;
+                            
+                            // Сдвигаем фишки, чтобы они не накладывались друг на друга
+                            const offsetX = (i % 3) * 8; // 8px между фишками по горизонтали
+                            const offsetY = Math.floor(i / 3) * 8; // 8px между рядами фишек
+                            
+                            playerToken.style.left = `${x + offsetX - 12}px`;
+                            playerToken.style.top = `${y + offsetY - 12}px`;
+                            playerToken.style.position = 'absolute';
+                            playerToken.style.zIndex = '100';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error initializing player tokens:', error);
             }
         }
 
@@ -2231,7 +2301,10 @@
         // Перемещение фишки игрока
         function movePlayerToken(steps) {
             const playerToken = document.getElementById(`player${currentPlayer}`);
-            if (!playerToken) return;
+            if (!playerToken) {
+                console.error(`Player token ${currentPlayer} not found`);
+                return;
+            }
             
             playerToken.classList.add('moving');
             
@@ -2292,26 +2365,45 @@
         }
 
         // Смена игрока
-        function nextPlayer() {
-            // Убираем выделение с текущего игрока
-            const currentPlayerItem = document.getElementById(`player${currentPlayer}Item`);
-            if (currentPlayerItem) {
-                currentPlayerItem.classList.remove('current');
+        async function nextPlayer() {
+            try {
+                // Получаем количество игроков из данных комнаты
+                const roomId = getRoomIdFromURL();
+                if (!roomId) return;
+
+                const user = localStorage.getItem('user');
+                if (!user) return;
+                
+                const userData = JSON.parse(user);
+                const response = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
+                const data = await response.json();
+                
+                if (response.ok && data.players) {
+                    const playerCount = data.players.length;
+                    
+                    // Убираем выделение с текущего игрока
+                    const currentPlayerItem = document.getElementById(`player${currentPlayer}Item`);
+                    if (currentPlayerItem) {
+                        currentPlayerItem.classList.remove('current');
+                    }
+                    
+                    // Переходим к следующему игроку
+                    currentPlayer = currentPlayer === playerCount ? 1 : currentPlayer + 1;
+                    
+                    // Выделяем нового игрока
+                    const newPlayerItem = document.getElementById(`player${currentPlayer}Item`);
+                    if (newPlayerItem) {
+                        newPlayerItem.classList.add('current');
+                    }
+                    
+                    updateCurrentPlayer();
+                    
+                    // Сбрасываем кнопку броска кубика
+                    resetRollButton();
+                }
+            } catch (error) {
+                console.error('Error in nextPlayer:', error);
             }
-            
-            // Переходим к следующему игроку
-            currentPlayer = currentPlayer === 3 ? 1 : currentPlayer + 1;
-            
-            // Выделяем нового игрока
-            const newPlayerItem = document.getElementById(`player${currentPlayer}Item`);
-            if (newPlayerItem) {
-                newPlayerItem.classList.add('current');
-            }
-            
-            updateCurrentPlayer();
-            
-            // Сбрасываем кнопку броска кубика
-            resetRollButton();
             
             resetTimer();
         }
