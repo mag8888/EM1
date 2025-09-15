@@ -2812,80 +2812,9 @@
         }
 
         // Загрузка данных игры с сервера
-        async function loadGameData() {
-            try {
-                const roomId = getRoomIdFromURL();
-                if (!roomId) return;
-
-                const user = localStorage.getItem('user');
-                if (!user) return;
-                
-                const userData = JSON.parse(user);
-                const response = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
-                const data = await response.json();
-                
-                if (response.ok && data.game_data) {
-                    // Находим индекс текущего игрока
-                    const playerIndex = data.players.findIndex(p => p.user_id.toString() === userData.id);
-                    
-                    console.log('Player lookup:', {
-                        userDataId: userData.id,
-                        players: data.players.map(p => ({ id: p.user_id.toString(), name: p.name })),
-                        foundPlayerIndex: playerIndex
-                    });
-                    
-                    // Загружаем все финансовые данные с сервера
-                    if (playerIndex !== -1) {
-                        // Баланс игрока
-                        if (data.game_data.player_balances) {
-                            console.log('All player balances:', data.game_data.player_balances);
-                            currentBalance = data.game_data.player_balances[playerIndex] || 0;
-                            console.log('Loaded balance from server:', currentBalance, 'for player', playerIndex);
-                            console.log('Previous balance was:', currentBalance);
-                            console.log('New balance from server:', data.game_data.player_balances[playerIndex]);
-                        }
-                        
-                        // Финансовая статистика игрока
-                        if (data.game_data.player_finances && data.game_data.player_finances[playerIndex]) {
-                            const finances = data.game_data.player_finances[playerIndex];
-                            totalIncome = finances.totalIncome || 0;
-                            totalExpenses = finances.totalExpenses || 0;
-                            monthlyIncome = finances.monthlyIncome || 0;
-                            currentCredit = finances.currentCredit || 0;
-                            maxCredit = finances.maxCredit || 10000;
-                        }
-                    }
-                    
-                    // Обновляем историю переводов
-                    if (data.game_data.transfers_history) {
-                        transfersHistory = data.game_data.transfers_history;
-                    }
-                    
-                    // Обновляем позиции игроков
-                    if (data.game_data.player_positions) {
-                        playerPositions = data.game_data.player_positions;
-                        updatePlayerTokenPositions();
-                    }
-                    
-                    // Обновляем UI
-                    updateBankData();
-                    updateTransfersHistory();
-                    
-                    // Обновляем список игроков с правильным индексом текущего игрока
-                    if (data.players) {
-                        updatePlayersList(data.players, currentPlayer);
-                    }
-                } else if (response.status === 404) {
-                    console.error('Room not found in loadGameData:', roomId);
-                    alert('Комната не найдена. Возможно, она была удалена.');
-                    // Перенаправляем в лобби
-                    window.location.href = '/lobby';
-                }
-            } catch (error) {
-                console.error('Error loading game data:', error);
-            }
+        function loadGameData() {
+            // Bank logic removed - keeping design only
         }
-
         // Загрузка информации о ходе с сервера
         async function loadTurnInfo() {
             try {
@@ -3439,7 +3368,7 @@
                         
                         if (currentPlayerData && currentPlayerInfo) {
                             // Получаем баланс текущего игрока
-                            let playerBalance = currentBalance;
+                            let playerBalance = 0;
                             if (data.game_data && data.game_data.player_balances && data.game_data.player_balances[currentPlayer] !== undefined) {
                                 playerBalance = data.game_data.player_balances[currentPlayer];
                             }
@@ -3782,7 +3711,7 @@
             if (!currentPlayerInfo || !player) return;
             
             // Баланс берется из game_data, не из player.balance
-            // currentBalance уже обновлен в loadGameData
+            // Bank logic removed
             
             currentPlayerInfo.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
@@ -3792,50 +3721,24 @@
                         <div style="font-size: 12px; color: #94a3b8;">${player.profession || 'Предприниматель'}</div>
                     </div>
                 </div>
-                <div style="font-size: 14px; font-weight: bold; color: #10b981;">$${currentBalance.toLocaleString()}</div>
+                <div style="font-size: 14px; font-weight: bold; color: #10b981;">$0</div>
             `;
         }
 
-        // Банковские функции
-        let transfersHistory = [];
-        let currentBalance = 0; // Стартовый баланс 0
-        let totalIncome = 0;
-        let totalExpenses = 0;
-        let monthlyIncome = 0;
-        let currentCredit = 0;
-        let maxCredit = 10000;
+        // Банковские функции - логика удалена, дизайн сохранен
+        // Bank variables removed - keeping design only
 
         // Профиль игрока (модалка)
         function openPlayerProfile(index, playerData) {
             openPlayerProfileModal(index);
         }
 
-        async function openBank() {
+        function openBank() {
             console.log('=== OPENING BANK MODAL ===');
-            
-            try {
-                // Загружаем актуальные данные с сервера
-                console.log('Loading game data...');
-                await loadGameData();
-            
             const bankModal = document.getElementById('bankModal');
-            bankModal.style.display = 'flex'; // Используем flex для центрирования
-            
-            // Обновляем все данные
-            updateBankData();
-            
-            // Загружаем список игроков для перевода
-            console.log('Calling loadRecipients...');
-            await loadRecipients();
-            
-            // Обновляем историю переводов
-            updateTransfersHistory();
+            bankModal.style.display = 'flex';
             
             console.log('=== BANK MODAL OPENED SUCCESSFULLY ===');
-            } catch (error) {
-                console.error('Error opening bank modal:', error);
-                alert('Ошибка при открытии банка: ' + error.message);
-            }
         }
 
         function closeBankModal() {
@@ -3891,10 +3794,10 @@
             playerPassiveIncome[playerIndex] = newPassiveIncome;
             
             // Начисляем стартовый доход на большой круг
-            currentBalance += newPassiveIncome;
+            // Bank logic removed
             
             // Обновляем отображение
-            updateBankData();
+            // Bank logic removed
             
             alert(`Поздравляем! Вы перешли на большой круг!\nПассивный доход увеличен в 10 раз: $${newPassiveIncome.toLocaleString()}\nНачислено на баланс: $${newPassiveIncome.toLocaleString()}`);
         }
@@ -3911,13 +3814,13 @@
                 cost = cell.cost * 2;
             }
             
-            if (currentBalance < cost) {
+            if (0 < cost) {
                 alert(`Недостаточно средств для покупки. Нужно: $${cost.toLocaleString()}`);
                 return false;
             }
             
             // Списываем средства
-            currentBalance -= cost;
+            // Bank logic removed
             
             // Если был предыдущий владелец, он теряет доход
             if (currentOwner && currentOwner !== playerIndex) {
@@ -3939,7 +3842,7 @@
             playerBusinesses[playerIndex].push(cellNumber);
             
             // Обновляем отображение
-            updateBankData();
+            // Bank logic removed
             updateCellOwnership(cellNumber, playerIndex);
             
             alert(`Бизнес "${cell.name}" ${currentOwner ? 'перекуплен' : 'куплен'} за $${cost.toLocaleString()}!\nДоход: $${cell.income.toLocaleString()}/ход`);
@@ -3951,13 +3854,13 @@
             const cell = cellData[cellNumber];
             if (!cell || cell.type !== 'Мечта') return false;
             
-            if (currentBalance < cell.cost) {
+            if (0 < cell.cost) {
                 alert(`Недостаточно средств для покупки мечты. Нужно: $${cell.cost.toLocaleString()}`);
                 return false;
             }
             
             // Списываем средства
-            currentBalance -= cell.cost;
+            // Bank logic removed
             
             // Добавляем в список мечт игрока
             if (!playerDreams[playerIndex]) {
@@ -3966,7 +3869,7 @@
             playerDreams[playerIndex].push(cellNumber);
             
             // Обновляем отображение
-            updateBankData();
+            // Bank logic removed
             updateCellOwnership(cellNumber, playerIndex);
             
             alert(`Мечта "${cell.name}" куплена за $${cell.cost.toLocaleString()}!`);
@@ -4006,326 +3909,24 @@
             }
         }
 
-        async function updateBankData() {
-            console.log('Updating bank data, current balance:', currentBalance);
-            
-            // Загружаем данные профессии для текущего игрока
-            try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const roomId = urlParams.get('room');
-                
-                if (roomId) {
-                    const response = await fetch(`/api/rooms/${roomId}/player/${currentPlayer}/profession`);
-                    if (response.ok) {
-                        const professionData = await response.json();
-                        
-                        // Обновляем переменные данными из профессии
-                        totalIncome = professionData.salary || 0;
-                        totalExpenses = professionData.expenses || 0;
-                        monthlyIncome = professionData.cashFlow || 0;
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading profession data for bank:', error);
-            }
-
-            // Обновляем основной баланс в банке
-            const bankBalance = document.getElementById('bankBalance');
-            if (bankBalance) {
-                bankBalance.textContent = `$${currentBalance.toLocaleString()}`;
-                console.log('Updated bank balance display:', bankBalance.textContent);
-            }
-            
-            // Обновляем баланс в модальном окне
-            const currentBalanceEl = document.getElementById('currentBalance');
-            if (currentBalanceEl) {
-                currentBalanceEl.textContent = `$${currentBalance.toLocaleString()}`;
-                console.log('Updated modal balance display:', currentBalanceEl.textContent);
-            } else {
-                console.error('currentBalance element not found!');
-            }
-            
-            // Обновляем финансовую сводку в банке
-            const incomeEl = document.querySelector('.stat-value.income');
-            if (incomeEl) {
-                incomeEl.textContent = `$${totalIncome.toLocaleString()}`;
-            }
-            
-            const expensesEl = document.querySelector('.stat-value.expenses');
-            if (expensesEl) {
-                expensesEl.textContent = `$${totalExpenses.toLocaleString()}`;
-            }
-            
-            const paydayEl = document.querySelector('.stat-value.payday');
-            if (paydayEl) {
-                paydayEl.textContent = `$${monthlyIncome.toLocaleString()}/мес`;
-            }
-            
-            // Обновляем финансовую сводку в модальном окне
-            const totalIncomeEl = document.getElementById('totalIncome');
-            if (totalIncomeEl) {
-                totalIncomeEl.textContent = `$${totalIncome.toLocaleString()}`;
-            }
-            
-            const totalExpensesEl = document.getElementById('totalExpenses');
-            if (totalExpensesEl) {
-                totalExpensesEl.textContent = `$${totalExpenses.toLocaleString()}`;
-            }
-            
-            const monthlyIncomeEl = document.getElementById('monthlyIncome');
-            if (monthlyIncomeEl) {
-                monthlyIncomeEl.textContent = `$${monthlyIncome.toLocaleString()}/мес`;
-            }
-            
-            // Обновляем кредитную информацию
-            const currentCreditEl = document.getElementById('currentCredit');
-            if (currentCreditEl) {
-                currentCreditEl.textContent = `$${currentCredit.toLocaleString()}`;
-            }
-            
-            const maxCreditEl = document.getElementById('maxCredit');
-            if (maxCreditEl) {
-                maxCreditEl.textContent = `$${maxCredit.toLocaleString()}`;
-            }
+        // Bank functions removed - keeping design only
+        function updateBankData() {
+            // Bank logic removed - keeping design only
         }
-
-        async function loadRecipients() {
-            console.log('loadRecipients called');
-            try {
-                const roomId = getRoomIdFromURL();
-                if (!roomId) {
-                    console.log('No room ID found');
-                    return;
-                }
-
-                const user = localStorage.getItem('user');
-                if (!user) {
-                    console.log('No user found in localStorage');
-                    return;
-                }
-                
-                const userData = JSON.parse(user);
-                const response = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
-                const data = await response.json();
-                
-                const recipientSelect = document.getElementById('recipientSelect');
-                recipientSelect.innerHTML = '<option value="">Выберите игрока...</option>';
-                
-                if (response.ok && data.players) {
-                    console.log('Loading recipients:', data.players.map((p, i) => ({ index: i, name: p.name, userId: p.user_id })));
-                    data.players.forEach((player, index) => {
-                        // Не добавляем себя в список получателей
-                        if (player.user_id.toString() !== userData.id) {
-                            const option = document.createElement('option');
-                            option.value = index;
-                            option.textContent = player.name || `Игрок ${index + 1}`;
-                            recipientSelect.appendChild(option);
-                            console.log('Added recipient option:', { index, name: option.textContent });
-                        } else {
-                            console.log('Skipping self:', { index, name: player.name, userId: player.user_id });
-                        }
-                    });
-                    console.log('Final recipient options count:', recipientSelect.options.length);
-                } else {
-                    console.log('Failed to load recipients:', { responseOk: response.ok, hasPlayers: !!data.players });
-                }
-            } catch (error) {
-                console.error('Error loading recipients:', error);
-            }
+        function loadRecipients() {
+            // Bank logic removed - keeping design only
         }
-
-        async function processTransfer() {
-            console.log('processTransfer called');
-            
-            const recipientSelect = document.getElementById('recipientSelect');
-            const recipientIndex = recipientSelect.value;
-            const amount = parseInt(document.getElementById('transferAmount').value);
-            
-            console.log('Transfer form data:', { recipientIndex, amount });
-            console.log('Recipient select element:', recipientSelect);
-            console.log('Available options:', Array.from(recipientSelect.options).map(opt => ({ value: opt.value, text: opt.textContent })));
-            
-            if (!recipientIndex || !amount) {
-                console.log('Validation failed: missing recipient or amount');
-                alert('Пожалуйста, выберите получателя и введите сумму');
-                return;
-            }
-            
-            if (amount <= 0) {
-                alert('Сумма должна быть больше 0');
-                return;
-            }
-            
-            if (amount > currentBalance) {
-                alert('Недостаточно средств на балансе');
-                return;
-            }
-            
-            // Получаем имя получателя
-            const recipientName = recipientSelect.options[recipientSelect.selectedIndex].textContent;
-            
-            try {
-                // Отправляем запрос на сервер
-                const urlParams = new URLSearchParams(window.location.search);
-                const roomId = urlParams.get('room');
-                const currentUser = JSON.parse(localStorage.getItem('user'));
-                
-                if (!roomId || !currentUser) {
-                    alert('Ошибка: не найдены данные комнаты или пользователя');
-                    return;
-                }
-                
-                console.log('Transfer request:', {
-                    roomId,
-                    userId: currentUser.id,
-                    recipientIndex: parseInt(recipientIndex),
-                    amount,
-                    currentBalance
-                });
-                
-                const response = await fetch(`/api/rooms/${roomId}/transfer`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_id: currentUser.id,
-                        recipient_index: parseInt(recipientIndex),
-                        amount: amount
-                    })
-                });
-                
-                const data = await response.json();
-                
-                console.log('Transfer response:', {
-                    status: response.status,
-                    ok: response.ok,
-                    data: data
-                });
-                
-                // Детальная информация о ответе сервера
-                console.log('Server response details:', {
-                    message: data.message,
-                    new_balance: data.new_balance,
-                    transfer: data.transfer
-                });
-                
-                if (response.ok) {
-                    console.log('Transfer successful, waiting for server to save...');
-                    
-        // Ждем немного, чтобы сервер успел сохранить изменения
-        await new Promise(resolve => setTimeout(resolve, 5000));
-                    
-                    console.log('Reloading data from server...');
-                    // Перезагружаем данные с сервера для синхронизации
-                    await loadGameData();
-                    
-                    // Проверяем, что баланс действительно изменился
-                    if (currentBalance !== data.new_balance) {
-                        console.log('Balance mismatch detected, force updating UI with new balance:', data.new_balance);
-                        currentBalance = data.new_balance;
-                        updateBankData();
-                    } else {
-                        console.log('Balance is correct, no need to force update');
-                    }
-                    
-                    // Добавляем перевод в историю локально
-                    if (data.transfer) {
-                        transfersHistory.unshift(data.transfer);
-                        updateTransfersHistory();
-                    }
-                    
-                    // Показываем информацию о переводе
-                    console.log('Transfer details:', {
-                        sender: data.transfer?.sender,
-                        recipient: data.transfer?.recipient,
-                        amount: data.transfer?.amount,
-                        sender_balance: data.new_balance,
-                        recipient_balance: data.recipient_balance
-                    });
-                    
-                    console.log('Data reloaded, updating UI...');
-                    console.log('Current balance:', currentBalance);
-                    console.log('Transfers history:', transfersHistory);
-                    
-                    // Обновляем интерфейс
-                    updateBankData();
-                    updateTransfersHistory();
-                    
-                    // Очищаем форму
-                    document.getElementById('recipientSelect').value = '';
-                    document.getElementById('transferAmount').value = '';
-                    
-                    alert(`Перевод $${amount.toLocaleString()} игроку ${recipientName} выполнен успешно!`);
-                } else {
-                    console.error('Transfer failed:', response.status, data);
-                    alert(data.message || `Ошибка при выполнении перевода (${response.status})`);
-                }
-            } catch (error) {
-                console.error('Transfer error:', error);
-                alert('Ошибка соединения с сервером');
-            }
+        function processTransfer() {
+            // Bank logic removed - keeping design only
         }
-
         function resetTransferForm() {
             document.getElementById('recipientSelect').value = '';
             document.getElementById('transferAmount').value = '';
         }
 
         function updateTransfersHistory() {
-            const historyContainer = document.getElementById('transfersHistory');
-            const historyCount = document.getElementById('historyCount');
-            
-            console.log('Updating transfers history:', transfersHistory);
-            
-            if (transfersHistory.length === 0) {
-                historyContainer.innerHTML = '<div class="no-transfers">История переводов пуста</div>';
-                historyCount.textContent = '0';
-                return;
-            }
-            
-            historyCount.textContent = transfersHistory.length;
-            
-            // Сортируем по дате (новые сверху)
-            const sortedTransfers = [...transfersHistory].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            historyContainer.innerHTML = sortedTransfers.map(transfer => {
-                const isPositive = transfer.type === 'savings' || transfer.sender_index === -1;
-                const isNegative = !isPositive;
-                const icon = transfer.type === 'savings' ? '💰' : '📄';
-                const direction = transfer.sender_index === -1 ? 'Банк -> Игрок' : 'Игрок -> Игрок';
-                const description = transfer.description || (transfer.type === 'savings' ? 'Стартовые сбережения' : `Перевод игроку: ${transfer.recipient}`);
-                
-                // Форматируем дату
-                const date = new Date(transfer.timestamp);
-                const formattedDate = date.toLocaleString('ru-RU', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit'
-                });
-                
-                // Для стартовых сбережений показываем реальную сумму, для остальных - сумму
-                const amount = transfer.amount;
-                const amountDisplay = `${isPositive ? '+' : '-'}$${amount.toLocaleString()}`;
-                
-                return `
-                    <div class="transfer-item">
-                        <div class="transfer-icon">${icon}</div>
-                        <div class="transfer-details">
-                            <div class="transfer-description">${description}</div>
-                            <div class="transfer-direction">${direction}</div>
-                            <div class="transfer-date">${formattedDate}</div>
-                        </div>
-                        <div class="transfer-amount ${isPositive ? 'positive' : 'negative'}">${amountDisplay}</div>
-                        <div class="transfer-status completed">Завершено</div>
-                    </div>
-                `;
-            }).join('');
+            // Bank logic removed - keeping design only
         }
-
         // Функции для карточки игрока
         function openPlayerProfileModal(playerIndex = 0) {
             const modal = document.getElementById('playerProfileModal');
@@ -4351,45 +3952,9 @@
         }
         
         // Функция погашения кредита
-        async function payOffLoan(loanType) {
-            const urlParams = new URLSearchParams(window.location.search);
-            const roomId = urlParams.get('room');
-            
-            if (!roomId) {
-                alert('Ошибка: не найдена комната');
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/api/rooms/${roomId}/payoff-loan`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        player_index: currentPlayer,
-                        loan_type: loanType
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Обновляем данные
-                    await loadGameData();
-                    await loadPlayerProfileData(currentPlayer);
-                    updateBankData();
-                    
-                    alert(`Кредит "${getLoanName(loanType)}" успешно погашен!`);
-                } else {
-                    alert(`Ошибка: ${data.message}`);
-                }
-            } catch (error) {
-                console.error('Error paying off loan:', error);
-                alert('Ошибка при погашении кредита');
-            }
-        }
-        
+        function payOffLoan() {
+            // Bank logic removed - keeping design only
+        }        
         // Получение названия кредита
         function getLoanName(loanType) {
             const names = {
