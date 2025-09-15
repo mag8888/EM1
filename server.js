@@ -892,6 +892,84 @@ app.post('/api/rooms/:id/start', async (req, res) => {
     }
 });
 
+// Transfer funds between players
+app.post('/api/rooms/:id/transfer', async (req, res) => {
+    try {
+        const { user_id, recipient_index, amount } = req.body;
+        
+        if (!user_id || recipient_index === undefined || !amount) {
+            return res.status(400).json({ message: 'Все поля обязательны' });
+        }
+        
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+        
+        if (!room.game_started) {
+            return res.status(400).json({ message: 'Игра еще не началась' });
+        }
+        
+        // Find sender and recipient
+        const senderIndex = room.players.findIndex(p => p.user_id.toString() === user_id);
+        if (senderIndex === -1) {
+            return res.status(403).json({ message: 'Вы не являетесь участником этой комнаты' });
+        }
+        
+        if (recipient_index < 0 || recipient_index >= room.players.length) {
+            return res.status(400).json({ message: 'Неверный индекс получателя' });
+        }
+        
+        if (senderIndex === recipient_index) {
+            return res.status(400).json({ message: 'Нельзя переводить средства самому себе' });
+        }
+        
+        // Initialize game data if not exists
+        if (!room.game_data) {
+            room.game_data = {
+                player_positions: new Array(room.players.length).fill(0),
+                player_balances: new Array(room.players.length).fill(10000),
+                transfers_history: []
+            };
+        }
+        
+        // Check sufficient funds
+        if (room.game_data.player_balances[senderIndex] < amount) {
+            return res.status(400).json({ message: 'Недостаточно средств для перевода' });
+        }
+        
+        // Execute transfer
+        room.game_data.player_balances[senderIndex] -= amount;
+        room.game_data.player_balances[recipient_index] += amount;
+        
+        // Add to transfer history
+        const transfer = {
+            sender: room.players[senderIndex].name || `Игрок ${senderIndex + 1}`,
+            recipient: room.players[recipient_index].name || `Игрок ${recipient_index + 1}`,
+            amount: amount,
+            timestamp: new Date(),
+            sender_index: senderIndex,
+            recipient_index: recipient_index
+        };
+        
+        if (!room.game_data.transfers_history) {
+            room.game_data.transfers_history = [];
+        }
+        room.game_data.transfers_history.unshift(transfer);
+        
+        await room.save();
+        
+        res.json({ 
+            message: 'Перевод выполнен успешно',
+            new_balance: room.game_data.player_balances[senderIndex],
+            transfer: transfer
+        });
+    } catch (error) {
+        console.error('Transfer error:', error);
+        res.status(500).json({ message: 'Ошибка сервера при выполнении перевода' });
+    }
+});
+
 // Маршруты для HTML страниц
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
