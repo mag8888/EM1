@@ -1163,8 +1163,14 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
         }
         
         // Execute transfer
+        console.log('Before transfer - sender balance:', room.game_data.player_balances[senderIndex]);
+        console.log('Before transfer - recipient balance:', room.game_data.player_balances[recipient_index]);
+        
         room.game_data.player_balances[senderIndex] -= amount;
         room.game_data.player_balances[recipient_index] += amount;
+        
+        console.log('After transfer - sender balance:', room.game_data.player_balances[senderIndex]);
+        console.log('After transfer - recipient balance:', room.game_data.player_balances[recipient_index]);
         
         // Add to transfer history
         const transfer = {
@@ -1196,6 +1202,7 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
         res.json({ 
             message: 'Перевод выполнен успешно',
             new_balance: room.game_data.player_balances[senderIndex],
+            recipient_balance: room.game_data.player_balances[recipient_index],
             transfer: transfer
         });
     } catch (error) {

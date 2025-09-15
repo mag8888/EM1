@@ -4229,6 +4229,15 @@
                         updateTransfersHistory();
                     }
                     
+                    // Показываем информацию о переводе
+                    console.log('Transfer details:', {
+                        sender: data.transfer?.sender,
+                        recipient: data.transfer?.recipient,
+                        amount: data.transfer?.amount,
+                        sender_balance: data.new_balance,
+                        recipient_balance: data.recipient_balance
+                    });
+                    
                     console.log('Data reloaded, updating UI...');
                     console.log('Current balance:', currentBalance);
                     console.log('Transfers history:', transfersHistory);
