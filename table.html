@@ -1615,6 +1615,128 @@
             opacity: 0.5;
             margin-left: 8px;
         }
+        
+        /* Анимации для банковского модуля */
+        .balance-updated {
+            animation: balanceUpdate 0.5s ease-in-out;
+        }
+        
+        @keyframes balanceUpdate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); color: #10b981; }
+            100% { transform: scale(1); }
+        }
+        
+        .modal-show {
+            animation: modalShow 0.3s ease-out;
+        }
+        
+        @keyframes modalShow {
+            0% { 
+                opacity: 0; 
+                transform: scale(0.9) translateY(-20px); 
+            }
+            100% { 
+                opacity: 1; 
+                transform: scale(1) translateY(0); 
+            }
+        }
+        
+        /* Стили для истории переводов */
+        .transfer-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.2s ease;
+        }
+        
+        .transfer-item:hover {
+            background-color: #f9fafb;
+        }
+        
+        .transfer-item:last-child {
+            border-bottom: none;
+        }
+        
+        .transfer-info {
+            flex: 1;
+        }
+        
+        .transfer-participants {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .transfer-arrow {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .transfer-description {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 2px;
+        }
+        
+        .transfer-time {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+        
+        .transfer-amount {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .transfer-amount.income {
+            color: #10b981;
+        }
+        
+        .transfer-amount.outgoing {
+            color: #ef4444;
+        }
+        
+        .no-transfers {
+            text-align: center;
+            color: #6b7280;
+            padding: 40px 20px;
+            font-style: italic;
+        }
+        
+        /* Индикатор загрузки */
+        #loadingIndicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff40;
+            border-top: 2px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
         .player-total-credits {
             margin-bottom: 32px;
@@ -2682,6 +2804,12 @@
         </div>
     </div>
 
+    <!-- Индикатор загрузки -->
+    <div id="loadingIndicator">
+        <div class="loading-spinner"></div>
+        <span>Загрузка...</span>
+    </div>
+
     <script>
         // Данные о клетках малого круга (0-23)
         const innerCellData = {
@@ -2812,8 +2940,42 @@
         }
 
         // Загрузка данных игры с сервера
-        function loadGameData() {
-            // Bank logic removed - keeping design only
+        async function loadBankData() {
+            try {
+                const roomId = getRoomIdFromURL();
+                if (!roomId) {
+                    throw new Error('Room ID not found');
+                }
+                
+                const response = await fetch(`/api/rooms/${roomId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Обновляем баланс
+                const user = JSON.parse(localStorage.getItem('user'));
+                const playerIndex = data.players.findIndex(p => p.id === user.id);
+                
+                if (playerIndex !== -1 && data.game_data?.player_balances) {
+                    currentBalance = data.game_data.player_balances[playerIndex] || 0;
+                }
+                
+                // Обновляем историю переводов
+                if (data.game_data?.transfers_history) {
+                    transfersHistory = data.game_data.transfers_history;
+                }
+                
+                // Загружаем финансовые данные
+                await loadFinancialData(roomId, playerIndex);
+                
+                lastUpdateTime = Date.now();
+                
+            } catch (error) {
+                console.error('Error loading bank data:', error);
+                throw error;
+            }
         }
         // Загрузка информации о ходе с сервера
         async function loadTurnInfo() {
@@ -3725,24 +3887,73 @@
             `;
         }
 
-        // Банковские функции - логика удалена, дизайн сохранен
-        // Bank variables removed - keeping design only
+        // Банковский модуль - полная реализация
+        let currentBalance = 0;
+        let transfersHistory = [];
+        let totalIncome = 0;
+        let totalExpenses = 0;
+        let monthlyIncome = 0;
+        let currentCredit = 0;
+        let maxCredit = 10000;
+        let isLoading = false;
+        let lastUpdateTime = 0;
+        
+        // Конфигурация
+        const BANK_CONFIG = {
+            minTransferAmount: 1,
+            maxTransferAmount: 1000000,
+            updateInterval: 5000,
+            loadingTimeout: 10000,
+            animationDuration: 300
+        };
 
         // Профиль игрока (модалка)
         function openPlayerProfile(index, playerData) {
             openPlayerProfileModal(index);
         }
 
-        function openBank() {
+        async function openBank() {
             console.log('=== OPENING BANK MODAL ===');
-            const bankModal = document.getElementById('bankModal');
-            bankModal.style.display = 'flex';
             
-            console.log('=== BANK MODAL OPENED SUCCESSFULLY ===');
+            try {
+                // Показываем индикатор загрузки
+                showLoadingIndicator();
+                
+                // Загружаем актуальные данные
+                await loadBankData();
+                
+                // Открываем модальное окно
+                const bankModal = document.getElementById('bankModal');
+                bankModal.style.display = 'flex';
+                
+                // Анимация появления
+                setTimeout(() => {
+                    bankModal.classList.add('modal-show');
+                }, 10);
+                
+                // Загружаем список получателей
+                await loadRecipients();
+                
+                // Обновляем UI
+                updateBankUI();
+                
+                console.log('=== BANK MODAL OPENED SUCCESSFULLY ===');
+                
+            } catch (error) {
+                console.error('Error opening bank modal:', error);
+                showError('Ошибка при открытии банка: ' + error.message);
+            } finally {
+                hideLoadingIndicator();
+            }
         }
 
         function closeBankModal() {
-            document.getElementById('bankModal').style.display = 'none';
+            const bankModal = document.getElementById('bankModal');
+            bankModal.classList.remove('modal-show');
+            
+            setTimeout(() => {
+                bankModal.style.display = 'none';
+            }, 300);
         }
 
         function closeBankModalOnBackdrop(event) {
@@ -3910,14 +4121,226 @@
         }
 
         // Bank functions removed - keeping design only
-        function updateBankData() {
-            // Bank logic removed - keeping design only
+        async function loadFinancialData(roomId, playerIndex) {
+            try {
+                const response = await fetch(`/api/rooms/${roomId}/player/${playerIndex}/profession`);
+                if (response.ok) {
+                    const data = await response.json();
+                    totalIncome = data.salary || 0;
+                    totalExpenses = data.expenses || 0;
+                    monthlyIncome = data.cashFlow || 0;
+                    currentCredit = data.totalCredits || 0;
+                }
+            } catch (error) {
+                console.error('Error loading financial data:', error);
+            }
         }
-        function loadRecipients() {
-            // Bank logic removed - keeping design only
+        
+        function updateBankUI() {
+            // Обновляем баланс
+            updateBalanceDisplay();
+            
+            // Обновляем финансовую сводку
+            updateFinancialSummary();
+            
+            // Обновляем историю переводов
+            updateTransfersHistory();
+            
+            // Обновляем кредитную информацию
+            updateCreditInfo();
         }
-        function processTransfer() {
-            // Bank logic removed - keeping design only
+        
+        function updateBalanceDisplay() {
+            const balanceElements = [
+                document.getElementById('currentBalance'),
+                document.querySelector('.bank-preview .balance-amount')
+            ];
+            
+            balanceElements.forEach(el => {
+                if (el) {
+                    el.textContent = `$${currentBalance.toLocaleString()}`;
+                    // Анимация обновления
+                    el.classList.add('balance-updated');
+                    setTimeout(() => el.classList.remove('balance-updated'), 500);
+                }
+            });
+        }
+        
+        function updateFinancialSummary() {
+            const elements = {
+                totalIncome: document.getElementById('totalIncome'),
+                totalExpenses: document.getElementById('totalExpenses'),
+                monthlyIncome: document.getElementById('monthlyIncome')
+            };
+            
+            Object.entries(elements).forEach(([key, el]) => {
+                if (el) {
+                    const value = { totalIncome, totalExpenses, monthlyIncome }[key];
+                    el.textContent = `$${value.toLocaleString()}`;
+                }
+            });
+        }
+        
+        function updateCreditInfo() {
+            const elements = {
+                currentCredit: document.getElementById('currentCredit'),
+                maxCredit: document.getElementById('maxCredit')
+            };
+            
+            Object.entries(elements).forEach(([key, el]) => {
+                if (el) {
+                    const value = { currentCredit, maxCredit }[key];
+                    el.textContent = `$${value.toLocaleString()}`;
+                }
+            });
+        }
+        async function loadRecipients() {
+            try {
+                const roomId = getRoomIdFromURL();
+                if (!roomId) return;
+                
+                const response = await fetch(`/api/rooms/${roomId}`);
+                if (!response.ok) return;
+                
+                const data = await response.json();
+                const user = JSON.parse(localStorage.getItem('user'));
+                
+                const recipientSelect = document.getElementById('recipientSelect');
+                if (!recipientSelect) return;
+                
+                // Очищаем список
+                recipientSelect.innerHTML = '<option value="">Выберите игрока...</option>';
+                
+                // Добавляем игроков
+                data.players.forEach((player, index) => {
+                    if (player.id !== user.id) {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = player.name || `Игрок ${index + 1}`;
+                        recipientSelect.appendChild(option);
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error loading recipients:', error);
+            }
+        }
+        async function processTransfer() {
+            if (isLoading) return;
+            
+            try {
+                // Валидация формы
+                const validation = validateTransferForm();
+                if (!validation.valid) {
+                    showError(validation.message);
+                    return;
+                }
+                
+                // Показываем индикатор загрузки
+                showLoadingIndicator();
+                isLoading = true;
+                
+                // Подготавливаем данные
+                const transferData = prepareTransferData();
+                
+                // Отправляем запрос
+                const response = await sendTransferRequest(transferData);
+                
+                if (response.ok) {
+                    // Обновляем локальные данные
+                    updateLocalData(response.data);
+                    
+                    // Показываем успех
+                    showSuccess('Перевод выполнен успешно!');
+                    
+                    // Обновляем UI
+                    updateBankUI();
+                    
+                    // Очищаем форму
+                    resetTransferForm();
+                    
+                } else {
+                    throw new Error(response.data?.message || 'Ошибка при выполнении перевода');
+                }
+                
+            } catch (error) {
+                console.error('Transfer error:', error);
+                showError(error.message);
+            } finally {
+                hideLoadingIndicator();
+                isLoading = false;
+            }
+        }
+        
+        function validateTransferForm() {
+            const recipientSelect = document.getElementById('recipientSelect');
+            const amountInput = document.getElementById('transferAmount');
+            
+            if (!recipientSelect || !amountInput) {
+                return { valid: false, message: 'Форма не найдена' };
+            }
+            
+            const recipientIndex = recipientSelect.value;
+            const amount = parseInt(amountInput.value);
+            
+            if (!recipientIndex) {
+                return { valid: false, message: 'Выберите получателя' };
+            }
+            
+            if (!amount || amount < BANK_CONFIG.minTransferAmount) {
+                return { valid: false, message: `Минимальная сумма: $${BANK_CONFIG.minTransferAmount}` };
+            }
+            
+            if (amount > BANK_CONFIG.maxTransferAmount) {
+                return { valid: false, message: `Максимальная сумма: $${BANK_CONFIG.maxTransferAmount.toLocaleString()}` };
+            }
+            
+            if (amount > currentBalance) {
+                return { valid: false, message: 'Недостаточно средств на балансе' };
+            }
+            
+            return { valid: true };
+        }
+        
+        function prepareTransferData() {
+            const roomId = getRoomIdFromURL();
+            const user = JSON.parse(localStorage.getItem('user'));
+            const recipientSelect = document.getElementById('recipientSelect');
+            const amountInput = document.getElementById('transferAmount');
+            
+            return {
+                roomId,
+                userId: user.id,
+                recipientIndex: parseInt(recipientSelect.value),
+                amount: parseInt(amountInput.value)
+            };
+        }
+        
+        async function sendTransferRequest(transferData) {
+            const response = await fetch(`/api/rooms/${transferData.roomId}/transfer`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId: transferData.userId,
+                    recipientIndex: transferData.recipientIndex,
+                    amount: transferData.amount
+                })
+            });
+            
+            const data = await response.json();
+            return { ok: response.ok, data };
+        }
+        
+        function updateLocalData(responseData) {
+            // Обновляем баланс
+            currentBalance = responseData.new_balance;
+            
+            // Добавляем перевод в историю
+            if (responseData.transfer) {
+                transfersHistory.unshift(responseData.transfer);
+            }
         }
         function resetTransferForm() {
             document.getElementById('recipientSelect').value = '';
@@ -3925,7 +4348,95 @@
         }
 
         function updateTransfersHistory() {
-            // Bank logic removed - keeping design only
+            const historyContainer = document.getElementById('transfersHistory');
+            const historyCount = document.getElementById('historyCount');
+            
+            if (!historyContainer) return;
+            
+            // Обновляем счетчик
+            if (historyCount) {
+                historyCount.textContent = transfersHistory.length;
+            }
+            
+            // Очищаем контейнер
+            historyContainer.innerHTML = '';
+            
+            if (transfersHistory.length === 0) {
+                historyContainer.innerHTML = '<div class="no-transfers">История переводов пуста</div>';
+                return;
+            }
+            
+            // Сортируем по дате (новые сверху)
+            const sortedTransfers = [...transfersHistory].sort((a, b) => 
+                new Date(b.timestamp) - new Date(a.timestamp)
+            );
+            
+            // Создаем элементы истории
+            sortedTransfers.forEach(transfer => {
+                const transferElement = createTransferElement(transfer);
+                historyContainer.appendChild(transferElement);
+            });
+        }
+        
+        function createTransferElement(transfer) {
+            const element = document.createElement('div');
+            element.className = 'transfer-item';
+            
+            const isIncome = transfer.recipient_index === getCurrentPlayerIndex();
+            const isOutgoing = transfer.sender_index === getCurrentPlayerIndex();
+            
+            element.innerHTML = `
+                <div class="transfer-info">
+                    <div class="transfer-participants">
+                        <span class="transfer-sender">${transfer.sender}</span>
+                        <span class="transfer-arrow">→</span>
+                        <span class="transfer-recipient">${transfer.recipient}</span>
+                    </div>
+                    <div class="transfer-description">${transfer.description || 'Перевод'}</div>
+                    <div class="transfer-time">${formatTransferTime(transfer.timestamp)}</div>
+                </div>
+                <div class="transfer-amount ${isIncome ? 'income' : 'outgoing'}">
+                    ${isIncome ? '+' : '-'}$${transfer.amount.toLocaleString()}
+                </div>
+            `;
+            
+            return element;
+        }
+        
+        function getCurrentPlayerIndex() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) return -1;
+            
+            // Получаем индекс игрока в комнате
+            const roomId = getRoomIdFromURL();
+            if (!roomId) return -1;
+            
+            // Для упрощения возвращаем 0, в реальном приложении нужно получить из сервера
+            return 0;
+        }
+        
+        function formatTransferTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) { // Меньше минуты
+                return 'только что';
+            } else if (diff < 3600000) { // Меньше часа
+                const minutes = Math.floor(diff / 60000);
+                return `${minutes} мин назад`;
+            } else if (diff < 86400000) { // Меньше дня
+                const hours = Math.floor(diff / 3600000);
+                return `${hours} ч назад`;
+            } else {
+                return date.toLocaleDateString('ru-RU', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
         }
         // Функции для карточки игрока
         function openPlayerProfileModal(playerIndex = 0) {
@@ -3952,18 +4463,147 @@
         }
         
         // Функция погашения кредита
-        function payOffLoan() {
-            // Bank logic removed - keeping design only
-        }        
-        // Получение названия кредита
+        async function payOffLoan(loanType) {
+            if (isLoading) return;
+            
+            try {
+                // Показываем индикатор загрузки
+                showLoadingIndicator();
+                isLoading = true;
+                
+                const roomId = getRoomIdFromURL();
+                const user = JSON.parse(localStorage.getItem('user'));
+                
+                if (!roomId || !user) {
+                    throw new Error('Данные комнаты или пользователя не найдены');
+                }
+                
+                // Отправляем запрос на погашение
+                const response = await fetch(`/api/rooms/${roomId}/payoff-loan`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: user.id,
+                        loanType: loanType
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Обновляем локальные данные
+                    currentBalance = data.new_balance;
+                    
+                    // Показываем успех
+                    showSuccess(`Кредит "${getLoanName(loanType)}" погашен успешно!`);
+                    
+                    // Обновляем UI
+                    updateBankUI();
+                    
+                    // Перезагружаем данные профиля
+                    await loadBankData();
+                    
+                } else {
+                    throw new Error(data.message || 'Ошибка при погашении кредита');
+                }
+                
+            } catch (error) {
+                console.error('Payoff loan error:', error);
+                showError(error.message);
+            } finally {
+                hideLoadingIndicator();
+                isLoading = false;
+            }
+        }
+        
         function getLoanName(loanType) {
             const names = {
-                'car': 'Кредит на авто',
+                'car': 'Автокредит',
                 'edu': 'Образовательный кредит',
                 'mortgage': 'Ипотека',
-                'credit': 'Кредитные карты'
+                'credit': 'Кредитная карта'
             };
-            return names[loanType] || loanType;
+            return names[loanType] || 'Кредит';
+        }
+        
+        // Вспомогательные функции UI
+        function showLoadingIndicator() {
+            const indicator = document.getElementById('loadingIndicator');
+            if (indicator) {
+                indicator.style.display = 'flex';
+            }
+        }
+        
+        function hideLoadingIndicator() {
+            const indicator = document.getElementById('loadingIndicator');
+            if (indicator) {
+                indicator.style.display = 'none';
+            }
+        }
+        
+        function showError(message) {
+            showNotification(message, 'error');
+        }
+        
+        function showSuccess(message) {
+            showNotification(message, 'success');
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Создаем элемент уведомления
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+            
+            // Добавляем стили
+            Object.assign(notification.style, {
+                position: 'fixed',
+                top: '20px',
+                right: '20px',
+                padding: '12px 20px',
+                borderRadius: '8px',
+                color: 'white',
+                fontWeight: '500',
+                zIndex: '10000',
+                transform: 'translateX(100%)',
+                transition: 'transform 0.3s ease',
+                maxWidth: '300px',
+                wordWrap: 'break-word'
+            });
+            
+            // Цвета в зависимости от типа
+            const colors = {
+                success: '#10b981',
+                error: '#ef4444',
+                info: '#3b82f6'
+            };
+            notification.style.backgroundColor = colors[type] || colors.info;
+            
+            // Добавляем в DOM
+            document.body.appendChild(notification);
+            
+            // Анимация появления
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // Автоматическое скрытие
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // Функция получения ID комнаты из URL
+        function getRoomIdFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('room');
         }
 
         async function loadPlayerProfileData(playerIndex) {
