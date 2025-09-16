@@ -1,30 +1,112 @@
-<!-- Bank Module v3 - Example-copy modal -->
-<div id="bankModal" class="bank-module">
+<!-- Bank Module v3 - Clean implementation matching example -->
+<div id="bankModal" class="bank-modal" style="display: none;">
     <div class="bank-modal-content">
         <div class="bank-modal-header">
-            <h2 class="bank-modal-title">Банковские операции</h2>
+            <div class="bank-header-left">
+                <div class="bank-icon">🏦</div>
+                <h2 class="bank-modal-title">Банковские операции</h2>
+            </div>
             <button class="bank-modal-close" onclick="closeBankModal()">&times;</button>
         </div>
+        
         <div class="bank-modal-body">
-            <!-- Left and right columns replicated from example (v2 body reused) -->
-            <div class="financial-summary" style="display:none"></div>
-            <div class="transfer-form">
-                <h3 class="transfer-form-title">Перевод средств</h3>
-                <form id="transferForm" onsubmit="event.preventDefault(); executeTransfer();">
-                    <div class="form-group">
-                        <label for="recipientSelect" class="form-label">Получатель</label>
-                        <select id="recipientSelect" class="form-select"></select>
+            <!-- Left Column - Bank Info -->
+            <div class="bank-info-column">
+                <!-- Bank Status -->
+                <div class="bank-status-section">
+                    <div class="bank-status-header">
+                        <div class="bank-icon-small">🏦</div>
+                        <span class="bank-status-label">Банк</span>
+                        <span class="bank-status-badge active">Активен</span>
                     </div>
-                    <div class="form-group">
-                        <label for="transferAmount" class="form-label">Сумма</label>
-                        <input type="number" id="transferAmount" class="form-input" placeholder="0" min="1">
+                </div>
+                
+                <!-- Current Balance -->
+                <div class="balance-section">
+                    <div class="current-balance" id="currentBalance">$3 000</div>
+                    <div class="balance-label">Доступно для операций</div>
+                </div>
+                
+                <!-- Financial Summary -->
+                <div class="financial-summary" id="financialSummary">
+                    <div class="summary-item income">
+                        <div class="summary-icon">📈</div>
+                        <span class="summary-label">Доход:</span>
+                        <span class="summary-value" id="totalIncome">$10,000</span>
                     </div>
-                    <button type="submit" class="form-button">Выполнить перевод</button>
-                </form>
+                    <div class="summary-item expenses">
+                        <div class="summary-icon">📉</div>
+                        <span class="summary-label">Расходы:</span>
+                        <span class="summary-value" id="totalExpenses">$6,200</span>
+                    </div>
+                    <div class="summary-item payday">
+                        <div class="summary-icon">💰</div>
+                        <span class="summary-label">PAYDAY:</span>
+                        <span class="summary-value" id="monthlyIncome">$3,800/мес</span>
+                    </div>
+                </div>
+                
+                <!-- Credit Section -->
+                <div class="credit-section">
+                    <div class="credit-info">
+                        <div class="credit-item">
+                            <div class="credit-icon">📄</div>
+                            <span class="credit-label">Кредит:</span>
+                            <span class="credit-value" id="currentCredit">$0</span>
+                        </div>
+                        <div class="credit-item">
+                            <span class="credit-label">Макс. кредит:</span>
+                            <span class="credit-value" id="maxCredit">$38,000</span>
+                        </div>
+                    </div>
+                    <div class="credit-buttons">
+                        <button class="credit-btn no-credit">✓ БЕЗ КРЕДИТОВ</button>
+                        <button class="credit-btn take-credit">📄 ВЗЯТЬ</button>
+                    </div>
+                </div>
             </div>
-            <div class="transfers-history">
-                <h3 class="transfers-history-title">История операций</h3>
-                <div id="transfersHistory"></div>
+            
+            <!-- Right Column - Operations -->
+            <div class="operations-column">
+                <!-- Transfer Form -->
+                <div class="transfer-section">
+                    <h3 class="section-title">Перевод средств</h3>
+                    <form id="transferForm" class="transfer-form" onsubmit="event.preventDefault(); executeTransfer();">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="recipientSelect" class="form-label">Получатель</label>
+                                <select id="recipientSelect" class="form-select">
+                                    <option value="">Выберите получателя</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="transferAmount" class="form-label">Сумма ($)</label>
+                                <div class="amount-input-wrapper">
+                                    <div class="amount-icon">💰</div>
+                                    <input type="number" id="transferAmount" class="form-input amount-input" placeholder="0" min="1">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="submit" class="transfer-btn primary">✈️ ВЫПОЛНИТЬ ПЕРЕВОД</button>
+                            <button type="button" class="transfer-btn secondary" onclick="resetTransferForm()">СБРОСИТЬ</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Operations History -->
+                <div class="history-section">
+                    <div class="section-header">
+                        <h3 class="section-title">История операций</h3>
+                        <div class="history-badge">
+                            <div class="history-icon">🕐</div>
+                            <span class="history-count" id="historyCount">1</span>
+                        </div>
+                    </div>
+                    <div class="transfers-history" id="transfersHistory">
+                        <!-- History items will be populated here -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>

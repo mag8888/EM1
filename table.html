@@ -7,8 +7,8 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="alternate icon" href="/favicon.ico">
     
-    <!-- Банковский модуль -->
-    <link rel="stylesheet" href="bank-module-v2/bank-styles.css">
+    <!-- Банковский модуль v3 -->
+    <link rel="stylesheet" href="bank-module-v3/bank-styles.css">
     <style>
         * {
             margin: 0;
@@ -752,144 +752,7 @@
             color: #e5e7eb;
         }
 
-        /* Превью банка */
-        .bank-preview {
-            background: rgba(30, 41, 59, 0.6);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 
-                0 4px 20px rgba(0, 0, 0, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .bank-preview:hover {
-            background: rgba(30, 41, 59, 0.8);
-            transform: translateY(-2px);
-            box-shadow: 
-                0 8px 25px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.15);
-        }
-
-        .bank-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-        }
-
-        .bank-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 16px;
-            font-weight: 700;
-            color: #e2e8f0;
-        }
-
-        .bank-icon {
-            width: 24px;
-            height: 24px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-        }
-
-        .bank-status {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .bank-balance {
-            text-align: center;
-            margin-bottom: 16px;
-        }
-
-        .balance-amount {
-            font-size: 24px;
-            font-weight: 800;
-            color: #10b981;
-            margin-bottom: 4px;
-        }
-
-        .balance-label {
-            font-size: 12px;
-            color: #94a3b8;
-        }
-
-        .bank-stats {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .bank-stat {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 12px;
-        }
-
-        .stat-label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: #e2e8f0;
-        }
-
-        .stat-value {
-            font-weight: 600;
-        }
-
-        .stat-value.income {
-            color: #10b981;
-        }
-
-        .stat-value.expenses {
-            color: #ef4444;
-        }
-
-        .stat-value.payday {
-            color: #f59e0b;
-        }
-
-        .bank-actions {
-            margin-top: 12px;
-            display: flex;
-            gap: 8px;
-        }
-
-        .bank-btn {
-            flex: 1;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .bank-btn.primary {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-        }
-
-        .bank-btn.secondary {
-            background: rgba(107, 114, 128, 0.3);
-            color: #e2e8f0;
-            border: 1px solid rgba(107, 114, 128, 0.5);
-        }
+        /* Bank preview removed - using v3 module */
 
         .exit-game-button {
             width: 100%;
@@ -2443,8 +2306,8 @@
 
         <!-- Боковая панель -->
         <div class="sidebar">
-            <!-- 1. Банк -->
-            <div class="bank-preview" onclick="openBank()">
+            <!-- Bank v3 - Simple button -->
+            <div class="bank-preview" onclick="openBankV3()">
                 <div class="bank-header">
                     <div class="bank-title">
                         <div class="bank-icon">🏦</div>
@@ -2452,42 +2315,12 @@
                     </div>
                     <div class="bank-status">Активен</div>
                 </div>
-                
                 <div class="bank-balance">
                     <div class="balance-amount" id="bankBalance">$0</div>
                     <div class="balance-label">Доступно для операций</div>
                 </div>
-                
-                <div class="bank-stats">
-                    <div class="bank-stat">
-                        <div class="stat-label">
-                            <span>📈</span>
-                            <span>Доход:</span>
-                        </div>
-                        <div class="stat-value income">$0</div>
-                    </div>
-                    <div class="bank-stat">
-                        <div class="stat-label">
-                            <span>📉</span>
-                            <span>Расходы:</span>
-                        </div>
-                        <div class="stat-value expenses">$0</div>
-                    </div>
-                    <div class="bank-stat">
-                        <div class="stat-label">
-                            <span>💰</span>
-                            <span>PAYDAY:</span>
-                        </div>
-                        <div class="stat-value payday">$0/мес</div>
-                    </div>
-                </div>
-                
                 <div class="bank-actions">
-                    <button class="bank-btn secondary" onclick="event.stopPropagation(); openCreditModal()">
-                        <span>💳</span>
-                        <span>Кредит</span>
-                    </button>
-                    <button class="bank-btn primary" onclick="event.stopPropagation(); openBank()">
+                    <button class="bank-btn primary" onclick="event.stopPropagation(); openBankV3()">
                         <span>🏦</span>
                         <span>Открыть</span>
                     </button>
@@ -2916,55 +2749,19 @@
         let playerPassiveIncome = {}; // Пассивный доход игроков
         let playerCash = {}; // Кеш игроков (обнуляется при выходе на большой круг)
 
-        // Глобальная переменная для банковского модуля
-        var bankModule = null;
-
-        // Глобальные функции-обертки для совместимости с HTML
-        function openBank() {
-            if (bankModule) {
-                bankModule.openBank();
+        // Bank v3 functions
+        function openBankV3() {
+            if (typeof window.openBankV3 === 'function') {
+                window.openBankV3();
             } else {
-                console.error('Bank module not initialized');
+                console.error('Bank v3 module not loaded');
             }
         }
         
         function closeBankModal() {
-            if (bankModule) {
-                bankModule.closeBankModal();
-            } else {
-                console.error('Bank module not initialized');
-            }
-        }
-        
-        function openCreditModal() {
-            if (bankModule) {
-                bankModule.openCreditModal();
-            } else {
-                console.error('Bank module not initialized');
-            }
-        }
-
-        function processTransfer() {
-            if (bankModule) {
-                bankModule.processTransfer();
-            } else {
-                console.error('Bank module not initialized');
-            }
-        }
-
-        function resetTransferForm() {
-            if (bankModule) {
-                bankModule.resetTransferForm();
-            } else {
-                console.error('Bank module not initialized');
-            }
-        }
-
-        function updateBankUI() {
-            if (bankModule) {
-                bankModule.updateBankUI();
-            } else {
-                console.error('Bank module not initialized');
+            const modal = document.getElementById('bankModal');
+            if (modal) {
+                modal.style.display = 'none';
             }
         }
 
@@ -2974,33 +2771,13 @@
             createInnerTrack();
             initializePlayerTokens(); // Инициализируем фишки игроков
             
-            // Инициализируем банковский модуль
-            try {
-                bankModule = new BankModule();
-                await bankModule.init();
-                console.log('✅ Bank module initialized successfully');
-            } catch (error) {
-                console.error('❌ Failed to initialize bank module:', error);
-                // Fallback к старому методу загрузки данных
-                if (bankModule) {
-                    bankModule.loadBankData(true);
-                }
-            }
+            // Bank v3 will auto-initialize when needed
             
             loadTurnInfo(); // Загружаем информацию о ходе
             startTimer();
             updateCurrentPlayer();
             
-            // Запускаем периодическое обновление данных
-            setInterval(() => {
-                if (bankModule) {
-                    bankModule.loadBankData(false);
-                } else {
-                    if (bankModule) {
-                    bankModule.loadBankData(true);
-                }
-                }
-            }, 30000); // Обновляем каждые 30 секунд
+            // Bank v3 handles its own updates
             setInterval(loadTurnInfo, 1000); // Обновляем информацию о ходе каждую секунду
         }
 
@@ -4459,14 +4236,13 @@
         </div>
     </div>
     
-    <!-- Банковский модуль v3 HTML -->
-    <!--#include file="bank-module-v3/bank-modal.html"-->
+    <!-- Bank v3 modal will be loaded dynamically -->
     
     <!-- Общие утилиты и константы -->
     <script src="shared-constants.js"></script>
     <script src="shared-utils.js"></script>
     
-    <!-- Банковский модуль v3 -->
+    <!-- Bank v3 module -->
     <script src="bank-module-v2/BankCore.js"></script>
     <script src="bank-module-v2/BankApiService.js"></script>
     <script src="bank-module-v2/BankUIService.js"></script>
