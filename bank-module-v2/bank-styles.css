@@ -38,6 +38,7 @@
     overflow: hidden;
     transform: translateY(-50px);
     transition: transform 0.3s ease;
+    position: relative;
 }
 
 #bankModal.modal-show .bank-modal-content {
@@ -88,6 +89,24 @@
     background: white;
     padding: 30px;
     min-height: 400px;
+    position: relative;
+}
+
+/* Debug badge */
+.debug-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    color: #0f172a;
+    background: #fde68a;
+    border: 1px solid #f59e0b;
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    z-index: 5;
 }
 
 /* Секция баланса */
@@ -99,6 +118,7 @@
     border-radius: 15px;
     color: white;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    position: relative;
 }
 
 .balance-amount {
@@ -141,6 +161,7 @@
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 20px;
     margin-bottom: 30px;
+    position: relative;
 }
 
 .financial-item {
@@ -179,6 +200,7 @@
     border-radius: 15px;
     margin-bottom: 30px;
     border: 2px solid #e2e8f0;
+    position: relative;
 }
 
 .transfer-form-title {
@@ -275,6 +297,7 @@
     padding: 25px;
     border-radius: 15px;
     border: 2px solid #e2e8f0;
+    position: relative;
 }
 
 .transfers-history-title {

@@ -9,14 +9,17 @@
         
         <!-- Тело модального окна -->
         <div class="bank-modal-body">
+            <div class="debug-badge">bank-modal-body</div>
             <!-- Секция баланса -->
             <div class="balance-section">
+                <div class="debug-badge">balance-section</div>
                 <p class="balance-label">Текущий баланс</p>
                 <div id="currentBalance" class="balance-amount">$0</div>
             </div>
             
             <!-- Финансовая сводка -->
             <div class="financial-summary">
+                <div class="debug-badge">financial-summary</div>
                 <div class="financial-item">
                     <p class="financial-item-label">Доходы</p>
                     <p id="totalIncome" class="financial-item-value">$0</p>
@@ -41,6 +44,7 @@
             
             <!-- Форма перевода -->
             <div class="transfer-form">
+                <div class="debug-badge">transfer-form</div>
                 <h3 class="transfer-form-title">💸 Перевод средств</h3>
                 <form id="transferForm" onsubmit="event.preventDefault(); executeTransfer();">
                     <div class="form-group">
@@ -68,6 +72,7 @@
             
             <!-- История переводов -->
             <div class="transfers-history">
+                <div class="debug-badge">transfers-history</div>
                 <h3 class="transfers-history-title">📋 История переводов</h3>
                 <div id="transfersHistory" class="transfers-list">
                     <!-- Переводы будут добавлены динамически -->
