@@ -524,28 +524,28 @@
             font-weight: bold;
         }
 
-        /* Позиционирование карточек по углам */
+        /* Позиционирование карточек по углам - симметрично */
         .big-deal-card {
-            top: 20%;
-            left: 30%;
+            top: 15%;
+            left: 15%;
             transform: translate(-50%, -50%);
         }
 
         .small-deal-card {
-            top: 20%;
-            right: 10%;
+            top: 15%;
+            right: 15%;
             transform: translate(50%, -50%);
         }
 
         .market-card {
-            bottom: 20%;
-            left: 30%;
+            bottom: 15%;
+            left: 15%;
             transform: translate(-50%, 50%);
         }
 
         .expenses-card {
-            bottom: 20%;
-            right: 10%;
+            bottom: 15%;
+            right: 15%;
             transform: translate(50%, 50%);
         }
 
@@ -2956,7 +2956,7 @@
         let timerInterval;
         let isRolling = false;
         let cellOwners = {}; // Владельцы клеток
-        let playerPositions = [0, 0, 0]; // Позиции игроков на поле (0 = малый круг)
+        let playerPositions = [1, 1, 1]; // Позиции игроков на поле (1 = клетка 1 малого круга)
         let diceRolled = false; // Флаг броска кубика
         let turnTransitionTimeout; // Таймаут для перехода хода
         let warningSoundPlayed = false; // Флаг для предотвращения повторных сигналов
@@ -3270,8 +3270,8 @@
                         for (let i = 0; i < players.length; i++) {
                             const player = players[i];
                             const color = colors[i % colors.length];
-                            const token = gameBoardUI.createPlayerToken(i, player.name, color, 0);
-                            console.log(`✅ Создана фишка для игрока ${i}: ${player.name}`);
+                            const token = gameBoardUI.createPlayerToken(i, player.name, color, 1); // Начинаем с клетки 1 малого круга
+                            console.log(`✅ Создана фишка для игрока ${i}: ${player.name} на клетке 1`);
                         }
                     } else {
                         // Fallback к старому методу если новый UI не доступен
@@ -3288,10 +3288,10 @@
                             gameBoard.appendChild(playerToken);
                         }
                         
-                        // Позиционируем фишку в центре клетки 0 (старт)
-                        const startCell = document.querySelector(`[data-cell="0"]`);
-                        console.log(`Initializing player ${i} token, startCell:`, startCell);
-                        if (startCell) {
+                            // Позиционируем фишку в центре клетки 1 (старт малого круга)
+                            const startCell = document.querySelector(`[data-cell="1"]`);
+                            console.log(`Initializing player ${i} token, startCell:`, startCell);
+                            if (startCell) {
                             const cellRect = startCell.getBoundingClientRect();
                             const boardRect = document.querySelector('.game-board').getBoundingClientRect();
                             
@@ -3522,60 +3522,82 @@
                 return;
             }
             
-            // Persist move on server to avoid overwrites by polling
-            try {
-                const roomId = getRoomIdFromURL();
-                const user = JSON.parse(localStorage.getItem('user') || '{}');
-                if (!roomId || !user.id) return;
+            console.log(`🎲 Перемещение игрока ${currentPlayer} на ${steps} клеток`);
+            
+            // Получаем текущую позицию
+            const currentPosition = playerPositions[currentPlayer] || 1; // Начинаем с клетки 1
+            const newPosition = ((currentPosition - 1 + steps) % 24) + 1; // Малый круг: 1-24
+            
+            console.log(`📍 Текущая позиция: ${currentPosition}, новая позиция: ${newPosition}`);
+            
+            // Анимированное перемещение по шагам
+            for (let i = 1; i <= steps; i++) {
+                const stepPosition = ((currentPosition - 1 + i) % 24) + 1;
+                await animateTokenToCell(playerToken, stepPosition, i === steps);
                 
-                const resp = await fetch(`/api/rooms/${roomId}/move`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: user.id, steps })
-                });
-                const data = await resp.json();
-                if (!resp.ok) {
-                    console.error('Move rejected:', data);
-                    return;
+                // Задержка 0.5 секунды между клетками
+                if (i < steps) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
                 }
-                
-                // Update local positions from server
-                if (Array.isArray(data.player_positions)) {
-                    playerPositions = data.player_positions;
-                }
-            } catch (e) {
-                console.error('Move error:', e);
-                return;
             }
             
-            // Animate token to its new cell using updated playerPositions
-            const newPosition = playerPositions[currentPlayer] || 0;
-            playerToken.classList.add('moving');
-            const targetCell = document.querySelector(`[data-cell="${newPosition}"]`);
-            if (targetCell) {
+            // Обновляем позицию
+            playerPositions[currentPlayer] = newPosition;
+            
+            // Показываем информацию о клетке
+            setTimeout(() => {
+                showCellInfo(newPosition);
+            }, 500);
+            
+            console.log(`✅ Игрок ${currentPlayer} перемещен на клетку ${newPosition}`);
+        }
+
+        // Анимация перемещения фишки к клетке
+        async function animateTokenToCell(token, cellNumber, isLastStep = false) {
+            return new Promise((resolve) => {
+                const targetCell = document.querySelector(`[data-cell="${cellNumber}"]`);
+                if (!targetCell) {
+                    console.warn(`Клетка ${cellNumber} не найдена`);
+                    resolve();
+                    return;
+                }
+
                 const cellRect = targetCell.getBoundingClientRect();
                 const boardRect = document.querySelector('.game-board').getBoundingClientRect();
-                const x = cellRect.left - boardRect.left + cellRect.width / 2;
-                const y = cellRect.top - boardRect.top + cellRect.height / 2;
+                
+                // Проверяем, есть ли другие фишки на этой клетке
                 const existingTokens = targetCell.querySelectorAll('.player-token');
+                const offset = cellRect.width * 0.15;
                 let offsetX = 0;
                 let offsetY = 0;
-                if (existingTokens.length > 1) {
-                    const offset = cellRect.width * 0.15;
-                    offsetX = (currentPlayer % 3) * offset;
-                    offsetY = Math.floor(currentPlayer / 3) * offset;
+
+                // Сдвигаем фишки если их несколько на одной клетке
+                if (existingTokens.length > 0) {
+                    const tokenIndex = Array.from(existingTokens).indexOf(token);
+                    if (tokenIndex >= 0) {
+                        offsetX = (tokenIndex % 2) * offset;
+                        offsetY = Math.floor(tokenIndex / 2) * offset;
+                    }
                 }
-                playerToken.style.left = `${x + offsetX - 12}px`;
-                playerToken.style.top = `${y + offsetY - 12}px`;
-                playerToken.style.position = 'absolute';
-                playerToken.style.zIndex = '100';
-                setTimeout(() => {
-                    showCellInfo(newPosition);
-                }, 500);
-            }
-            setTimeout(() => {
-                playerToken.classList.remove('moving');
-            }, 1000);
+
+                const x = cellRect.left - boardRect.left + cellRect.width / 2 + offsetX;
+                const y = cellRect.top - boardRect.top + cellRect.height / 2 + offsetY;
+
+                // Анимация перемещения
+                token.style.transition = 'all 0.3s ease';
+                token.style.left = `${x - 20}px`;
+                token.style.top = `${y - 20}px`;
+
+                // Эффект прыжка на последнем шаге
+                if (isLastStep) {
+                    token.style.transform = 'scale(1.2)';
+                    setTimeout(() => {
+                        token.style.transform = 'scale(1)';
+                    }, 150);
+                }
+
+                setTimeout(resolve, 300);
+            });
         }
 
         // Переход хода через сервер
