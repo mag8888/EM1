@@ -1410,11 +1410,11 @@ app.post('/api/rooms/:id/take-credit', async (req, res) => {
         const profession = room.game_data.player_professions[player_index];
         
         // Валидация
-        if (!amount || amount < serverConfig.getCredit().minAmount || amount % serverConfig.getCreditStep() !== 0) {
-            return res.status(400).json({ message: `Сумма должна быть кратной ${serverConfig.getCreditStep()}$` });
+        if (!amount || amount < serverConfig.getCredit().minAmount || amount % serverConfig.getCredit().step !== 0) {
+            return res.status(400).json({ message: `Сумма должна быть кратной ${serverConfig.getCredit().step}$` });
         }
 
-        const monthlyPayment = Math.floor(amount / serverConfig.getCreditStep()) * serverConfig.getCreditPaymentRate();
+        const monthlyPayment = Math.floor(amount / serverConfig.getCredit().step) * serverConfig.getCredit().paymentRate;
         const newCashFlow = profession.cashFlow - monthlyPayment;
 
         if (newCashFlow < 0) {
@@ -1484,7 +1484,7 @@ app.post('/api/rooms/:id/payoff-credit', async (req, res) => {
         }
 
         // Рассчитываем возврат денежного потока
-        const monthlyPayment = Math.floor(payoffAmount / serverConfig.getCreditStep()) * serverConfig.getCreditPaymentRate();
+        const monthlyPayment = Math.floor(payoffAmount / serverConfig.getCredit().step) * serverConfig.getCredit().paymentRate;
         const newCashFlow = profession.cashFlow + monthlyPayment;
 
         // Обновляем данные
