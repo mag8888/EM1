@@ -1053,16 +1053,17 @@ app.post('/api/rooms/:id/start', async (req, res) => {
             room.game_data.player_balances[i] = 0;
         }
         
-        // Начисляем стартовые сбережения сразу при старте игры
+        // Начисляем стартовые сбережения как первую транзакцию (переменная величина)
         // ТОЛЬКО если стартовые сбережения еще не начислены
         if (!room.game_data.starting_savings_given) {
-            console.log('💰 Начисляем стартовые сбережения всем игрокам...');
+            const startingBalance = (req.body && Number(req.body.starting_balance)) || serverConfig.getStartingBalance();
+            room.game_data.starting_savings_amount = startingBalance; // запоминаем величину в данных комнаты
+            console.log('💰 Начисляем стартовые сбережения всем игрокам...', { startingBalance });
             for (let i = 0; i < room.players.length; i++) {
-                // Используем функцию добавления баланса
-                addBalance(room, i, serverConfig.getStartingBalance(), STRING_CONSTANTS.STARTING_SAVINGS);
-                console.log(`✅ Игрок ${i + 1} (${room.players[i].name}): +$${serverConfig.getStartingBalance()} → Баланс: $${room.game_data.player_balances[i]}`);
+                // Добавляем как перевод от банка
+                addBalance(room, i, startingBalance, STRING_CONSTANTS.STARTING_SAVINGS);
+                console.log(`✅ Игрок ${i + 1} (${room.players[i].name}): +$${startingBalance} → Баланс: $${room.game_data.player_balances[i]}`);
             }
-            
             // Отмечаем, что стартовые сбережения начислены
             room.game_data.starting_savings_given = true;
             console.log(`🎉 Стартовые сбережения начислены всем ${room.players.length} игрокам!`);
