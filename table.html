@@ -3069,6 +3069,14 @@
         var bankModule = null;
 
         // Глобальные функции-обертки для совместимости с HTML
+        function openBank() {
+            if (bankModule) {
+                bankModule.openBank();
+            } else {
+                console.error('Bank module not initialized');
+            }
+        }
+        
         function openCreditModal() {
             if (bankModule) {
                 bankModule.openCreditModal();
