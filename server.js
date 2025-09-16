@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const path = require('path');
 const ServerConfig = require('./server-config');
+const { FINANCIAL_CONSTANTS, STRING_CONSTANTS } = require('./shared-constants');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -1058,7 +1059,7 @@ app.post('/api/rooms/:id/start', async (req, res) => {
             console.log('💰 Начисляем стартовые сбережения всем игрокам...');
             for (let i = 0; i < room.players.length; i++) {
                 // Используем функцию добавления баланса
-                addBalance(room, i, serverConfig.getStartingBalance(), 'Стартовые сбережения');
+                addBalance(room, i, serverConfig.getStartingBalance(), STRING_CONSTANTS.STARTING_SAVINGS);
                 console.log(`✅ Игрок ${i + 1} (${room.players[i].name}): +$${serverConfig.getStartingBalance()} → Баланс: $${room.game_data.player_balances[i]}`);
             }
             
@@ -1176,7 +1177,7 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
             // Начисляем стартовые сбережения сразу при инициализации
             console.log('💰 Начисляем стартовые сбережения всем игрокам...');
             for (let i = 0; i < room.players.length; i++) {
-                addBalance(room, i, serverConfig.getStartingBalance(), 'Стартовые сбережения');
+                addBalance(room, i, serverConfig.getStartingBalance(), STRING_CONSTANTS.STARTING_SAVINGS);
                 // Синхронизируем балансы в players[] с game_data.player_balances
                 room.players[i].balance = room.game_data.player_balances[i];
                 console.log(`✅ Игрок ${i + 1} (${room.players[i].name}): +$${serverConfig.getStartingBalance()} → Баланс: $${room.game_data.player_balances[i]}`);
@@ -1191,7 +1192,7 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
         if (!room.game_data.starting_savings_given) {
             console.log('💰 Начисляем стартовые сбережения для существующей комнаты...');
             for (let i = 0; i < room.players.length; i++) {
-                addBalance(room, i, serverConfig.getStartingBalance(), 'Стартовые сбережения');
+                addBalance(room, i, serverConfig.getStartingBalance(), STRING_CONSTANTS.STARTING_SAVINGS);
                 // Синхронизируем балансы в players[] с game_data.player_balances
                 room.players[i].balance = room.game_data.player_balances[i];
                 console.log(`✅ Игрок ${i + 1} (${room.players[i].name}): +$${serverConfig.getStartingBalance()} → Баланс: $${room.game_data.player_balances[i]}`);
@@ -1224,8 +1225,8 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
         console.log('Transfer amount:', amount);
         
         // Используем функции для работы с балансом
-        subtractBalance(room, senderIndex, amount, `Перевод игроку ${room.players[recipient_index].name}`);
-        addBalance(room, recipient_index, amount, `Перевод от игрока ${room.players[senderIndex].name}`);
+        subtractBalance(room, senderIndex, amount, `${STRING_CONSTANTS.TRANSFER_TO_PLAYER} ${room.players[recipient_index].name}`);
+        addBalance(room, recipient_index, amount, `${STRING_CONSTANTS.TRANSFER_FROM_PLAYER} ${room.players[senderIndex].name}`);
         
         // Синхронизируем балансы в players[] с game_data.player_balances
         room.players[senderIndex].balance = room.game_data.player_balances[senderIndex];

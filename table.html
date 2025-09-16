@@ -4270,24 +4270,7 @@
         
         // createTransferElement() - перенесено в bank-module/bank.js
         
-        function getCurrentPlayerIndex() {
-            try {
-                const user = JSON.parse(localStorage.getItem('user'));
-                if (!user) return -1;
-                
-                // Получаем индекс игрока из глобальной переменной currentPlayer
-                // которая устанавливается при загрузке данных комнаты
-                if (typeof currentPlayer !== 'undefined') {
-                    return currentPlayer;
-                }
-                
-                // Fallback: возвращаем 0 если currentPlayer не установлен
-                return 0;
-            } catch (error) {
-                console.error('Error getting current player index:', error);
-                return -1;
-            }
-        }
+        // getCurrentPlayerIndex() - перенесено в shared-utils.js
         
         // formatTransferTime() - перенесено в bank-module/bank.js
         // Функции для карточки игрока
@@ -4458,11 +4441,7 @@
             }, 3000);
         }
         
-        // Функция получения ID комнаты из URL
-        function getRoomIdFromURL() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('room');
-        }
+        // getRoomIdFromURL() - перенесено в shared-utils.js
         
         // Функция открытия модального окна кредита
         // openCreditModal() - перенесено в bank-module/bank.js
@@ -4631,6 +4610,10 @@
     
     <!-- Банковский модуль HTML -->
     <!--#include file="bank-module/bank.html"-->
+    
+    <!-- Общие утилиты и константы -->
+    <script src="shared-constants.js"></script>
+    <script src="shared-utils.js"></script>
     
     <!-- Банковский модуль JavaScript -->
     <script src="bank-module/config/financial-config.js"></script>
