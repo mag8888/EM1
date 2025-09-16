@@ -547,17 +547,36 @@ class BankModule {
                 // Показываем анимацию перевода
                 this.showTransferAnimation(transferAmount, recipientName);
                 
-                // Ждем обновления баланса с сервера
+                // Сразу обновляем локальный баланс
+                const oldBalance = this.currentBalance;
+                this.currentBalance -= transferAmount;
+                console.log('💰 Локальное обновление баланса:', oldBalance, '→', this.currentBalance);
+                
+                // Показываем анимацию изменения баланса
+                this.animateBalanceChange(oldBalance, this.currentBalance);
+                
+                // Добавляем перевод в локальную историю
+                const newTransfer = {
+                    sender_index: this.getCurrentPlayerIndex(),
+                    recipient_index: parseInt(recipientSelect.value),
+                    amount: transferAmount,
+                    description: `Перевод игроку ${recipientName}`,
+                    timestamp: new Date().toISOString()
+                };
+                this.transfersHistory.unshift(newTransfer);
+                console.log('📝 Добавлен перевод в локальную историю:', newTransfer);
+                
+                // Обновляем UI сразу
+                this.updateBankUI();
+                
+                // Ждем обновления с сервера
                 setTimeout(async () => {
                     console.log('🔄 Получаем обновленный баланс с сервера...');
                     await this.loadBankData(true); // Принудительное обновление для получения актуального баланса
                     
-                    // Обновляем историю переводов
-                    this.updateTransfersHistory();
-                    
                     // Показываем успех после обновления
                     this.showSuccess(`Перевод $${transferAmount} выполнен успешно!`);
-                }, 1000); // 1 секунда задержка для анимации
+                }, 2000); // 2 секунды задержка для сервера
                 
                 // Очищаем форму
                 this.resetTransferForm();
