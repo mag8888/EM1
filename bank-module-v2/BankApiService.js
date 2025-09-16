@@ -30,7 +30,12 @@ class BankApiService {
             clearTimeout(timeoutId);
             
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                let serverMsg = '';
+                try {
+                    const errJson = await response.json();
+                    serverMsg = errJson?.message || '';
+                } catch (_) {}
+                throw new Error(`HTTP ${response.status}: ${response.statusText}${serverMsg ? ' - ' + serverMsg : ''}`);
             }
             
             return await response.json();

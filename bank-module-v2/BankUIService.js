@@ -303,6 +303,7 @@ class BankUIService {
         
         const amountInput = document.getElementById('transferAmount');
         const recipientSelect = document.getElementById('recipientSelect');
+        const submitBtn = document.getElementById('submitTransferBtn');
         
         if (!amountInput || !recipientSelect) {
             return { isValid: false, error: 'Форма не найдена' };
@@ -311,9 +312,9 @@ class BankUIService {
         const amount = parseFloat(amountInput.value);
         const recipientIndex = parseInt(recipientSelect.value);
         
-        if (!amount || amount <= 0) {
-            return { isValid: false, error: 'Введите корректную сумму' };
-        }
+        const valid = !!amount && amount > 0 && !isNaN(recipientIndex) && recipientIndex >= 0;
+        if (submitBtn) submitBtn.disabled = !valid;
+        if (!amount || amount <= 0) return { isValid: false, error: 'Введите корректную сумму' };
         
         if (isNaN(recipientIndex) || recipientIndex < 0) {
             return { isValid: false, error: 'Выберите получателя' };

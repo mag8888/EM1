@@ -313,7 +313,14 @@ class BankModule {
             const roomId = this.getRoomId();
             const userId = this.getUserId();
             
-            await this.apiService.executeTransfer(roomId, userId, recipientIndex, amount);
+            try {
+                await this.apiService.executeTransfer(roomId, userId, recipientIndex, amount);
+            } catch (apiError) {
+                const msg = apiError?.message || 'Ошибка сервера';
+                // Показываем подробности для аудита
+                this.uiService.showNotification(`Ошибка перевода: ${msg}`, 'error');
+                throw apiError;
+            }
             
             // Обновляем локальное состояние
             const newBalance = currentBalance - amount;
