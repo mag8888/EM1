@@ -105,6 +105,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));
 
+// Middleware для логирования всех запросов
+app.use((req, res, next) => {
+    console.log(`📡 ${req.method} ${req.path}`, req.body ? { body: req.body } : '');
+    next();
+});
+
 // MongoDB connection
 const MONGODB_URI = 'mongodb+srv://xqrmedia_db_user:9URuHWBY9lUQPOsj@cluster0.wvumcaj.mongodb.net/energy_money_game?retryWrites=true&w=majority&appName=Cluster0';
 
