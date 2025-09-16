@@ -524,29 +524,29 @@
             font-weight: bold;
         }
 
-        /* Позиционирование карточек по углам - симметрично */
+        /* Позиционирование карточек по углам - смещены внутрь на 10% */
         .big-deal-card {
             top: 15%;
             left: 15%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%) translate(8px, 8px);
         }
 
         .small-deal-card {
             top: 15%;
             right: 15%;
-            transform: translate(50%, -50%);
+            transform: translate(50%, -50%) translate(-8px, 8px);
         }
 
         .market-card {
             bottom: 15%;
             left: 15%;
-            transform: translate(-50%, 50%);
+            transform: translate(-50%, 50%) translate(8px, -8px);
         }
 
         .expenses-card {
             bottom: 15%;
             right: 15%;
-            transform: translate(50%, 50%);
+            transform: translate(50%, 50%) translate(-8px, -8px);
         }
 
         /* Фишки игроков */
