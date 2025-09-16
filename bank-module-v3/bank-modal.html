@@ -10,8 +10,8 @@
         </div>
         
         <div class="bank-modal-body">
-            <!-- Left Column - Bank Info -->
-            <div class="bank-info-column">
+            <!-- Single Column Layout -->
+            <div class="bank-content">
                 <!-- Bank Status -->
                 <div class="bank-status-section">
                     <div class="bank-status-header">
@@ -32,17 +32,17 @@
                     <div class="summary-item income">
                         <div class="summary-icon">📈</div>
                         <span class="summary-label">Доход:</span>
-                        <span class="summary-value" id="totalIncome">$10,000</span>
+                        <span class="summary-value" id="totalIncome">$6 000</span>
                     </div>
                     <div class="summary-item expenses">
                         <div class="summary-icon">📉</div>
                         <span class="summary-label">Расходы:</span>
-                        <span class="summary-value" id="totalExpenses">$6,200</span>
+                        <span class="summary-value" id="totalExpenses">$2 500</span>
                     </div>
                     <div class="summary-item payday">
                         <div class="summary-icon">💰</div>
-                        <span class="summary-label">PAYDAY:</span>
-                        <span class="summary-value" id="monthlyIncome">$3,800/мес</span>
+                        <span class="summary-label">$ PAYDAY:</span>
+                        <span class="summary-value" id="monthlyIncome">$3 500/мес</span>
                     </div>
                 </div>
                 
@@ -50,61 +50,17 @@
                 <div class="credit-section">
                     <div class="credit-info">
                         <div class="credit-item">
-                            <div class="credit-icon">📄</div>
                             <span class="credit-label">Кредит:</span>
                             <span class="credit-value" id="currentCredit">$0</span>
                         </div>
                         <div class="credit-item">
                             <span class="credit-label">Макс. кредит:</span>
-                            <span class="credit-value" id="maxCredit">$38,000</span>
+                            <span class="credit-value" id="maxCredit">$10 000</span>
                         </div>
                     </div>
                     <div class="credit-buttons">
-                        <button class="credit-btn no-credit" onclick="payoffCredit()">✓ БЕЗ КРЕДИТОВ</button>
-                        <button class="credit-btn take-credit" onclick="requestCredit()">📄 ВЗЯТЬ</button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Right Column - Operations -->
-            <div class="operations-column">
-                <!-- Transfer Form -->
-                <div class="transfer-section">
-                    <h3 class="section-title">Перевод средств</h3>
-                    <form id="transferForm" class="transfer-form" onsubmit="event.preventDefault(); processTransfer();">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="recipientSelect" class="form-label">Получатель</label>
-                                <select id="recipientSelect" class="form-select">
-                                    <option value="">Выберите получателя</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="transferAmount" class="form-label">Сумма ($)</label>
-                                <div class="amount-input-wrapper">
-                                    <div class="amount-icon">💰</div>
-                                    <input type="number" id="transferAmount" class="form-input amount-input" placeholder="0" min="1">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-buttons">
-                            <button type="submit" class="transfer-btn primary">✈️ ВЫПОЛНИТЬ ПЕРЕВОД</button>
-                            <button type="button" class="transfer-btn secondary" onclick="resetTransferForm()">СБРОСИТЬ</button>
-                        </div>
-                    </form>
-                </div>
-                
-                <!-- Operations History -->
-                <div class="history-section">
-                    <div class="section-header">
-                        <h3 class="section-title">История операций</h3>
-                        <div class="history-badge">
-                            <div class="history-icon">🕐</div>
-                            <span class="history-count" id="historyCount">1</span>
-                        </div>
-                    </div>
-                    <div class="transfers-history" id="transfersHistory">
-                        <!-- History items will be populated here -->
+                        <button class="credit-btn no-credit" onclick="payoffCredit()">✓ Без кредитов</button>
+                        <button class="credit-btn take-credit" onclick="requestCredit()">📄 Взять</button>
                     </div>
                 </div>
             </div>
