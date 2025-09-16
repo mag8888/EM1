@@ -227,6 +227,22 @@
             left: 4px;
         }
 
+        /* Цифра в правом верхнем углу для клетки 24 */
+        .square-number.top-right {
+            top: 4px;
+            right: 4px;
+            bottom: auto;
+            left: auto;
+        }
+
+        /* Цифра в правом нижнем углу для клетки 2 */
+        .square-number.bottom-right {
+            top: auto;
+            right: 4px;
+            bottom: 4px;
+            left: auto;
+        }
+
         /* Крупные однотонные иконки */
         .square-icon {
             font-size: 32px;
@@ -3182,6 +3198,7 @@
                 // Поднимаем клетку 1 выше остальных
                 if (i === 1) {
                     radius = 35; // Уменьшаем радиус для клетки 1
+                    square.style.zIndex = '20'; // Выше всех остальных клеток
                 }
                 
                 const x = 50 + radius * Math.cos(angle);
@@ -3194,7 +3211,15 @@
                 
                 // Добавляем цифру в угол
                 const number = document.createElement('div');
-                number.className = i >= 11 ? 'square-number bottom-left' : 'square-number';
+                if (i === 24) {
+                    // Клетка 24 - цифра в правый верхний угол
+                    number.className = 'square-number top-right';
+                } else if (i === 2) {
+                    // Клетка 2 - цифра в правый нижний угол
+                    number.className = 'square-number bottom-right';
+                } else {
+                    number.className = i >= 11 ? 'square-number bottom-left' : 'square-number';
+                }
                 number.textContent = i;
                 square.appendChild(number);
                 
