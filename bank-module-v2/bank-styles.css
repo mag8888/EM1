@@ -201,6 +201,8 @@
     margin-bottom: 30px;
     border: 2px solid #e2e8f0;
     position: relative;
+    /* Контраст на темном фоне */
+    box-shadow: 0 2px 8px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.6);
 }
 
 .transfer-form-title {
@@ -298,6 +300,7 @@
     border-radius: 15px;
     border: 2px solid #e2e8f0;
     position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.6);
 }
 
 .transfers-history-title {
