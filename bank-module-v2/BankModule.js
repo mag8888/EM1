@@ -447,7 +447,33 @@ class BankModule {
      * Получить ID комнаты
      */
     getRoomId() {
-        return window.getRoomIdFromURL ? window.getRoomIdFromURL() : null;
+        try {
+            // 1) Предпочтительно из helper'а
+            if (typeof window.getRoomIdFromURL === 'function') {
+                const fromHelper = window.getRoomIdFromURL();
+                if (fromHelper) return fromHelper;
+            }
+            // 2) Глобальные переменные
+            if (window.room_id) return window.room_id;
+            if (window.roomId) return window.roomId;
+            // 3) data-атрибут на body или html
+            const attrRoom = document.body?.getAttribute('data-room-id') || document.documentElement?.getAttribute('data-room-id');
+            if (attrRoom) return attrRoom;
+            // 4) localStorage / sessionStorage
+            const lsRoom = localStorage.getItem('room_id') || localStorage.getItem('roomId');
+            if (lsRoom) return lsRoom;
+            const ssRoom = sessionStorage.getItem('room_id') || sessionStorage.getItem('roomId');
+            if (ssRoom) return ssRoom;
+            // 5) Попытка извлечь из URL пути /rooms/:id или ?id=
+            const url = new URL(window.location.href);
+            const byQuery = url.searchParams.get('id') || url.searchParams.get('room') || url.searchParams.get('roomId');
+            if (byQuery) return byQuery;
+            const pathMatch = url.pathname.match(/rooms\/(\w[\w-]*)/i);
+            if (pathMatch && pathMatch[1]) return pathMatch[1];
+        } catch (e) {
+            console.warn('BankModule: Ошибка при попытке получить roomId', e);
+        }
+        return null;
     }
     
     /**
@@ -455,12 +481,23 @@ class BankModule {
      */
     getUserId() {
         try {
-            const user = JSON.parse(localStorage.getItem('user'));
-            return user?.id || null;
+            // 1) Из объекта user в localStorage
+            const rawUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+            if (rawUser) {
+                const user = JSON.parse(rawUser);
+                const candidate = user?.id || user?._id || user?.user_id || user?.userId;
+                if (candidate) return candidate;
+            }
+            // 2) Отдельные ключи
+            const direct = localStorage.getItem('user_id') || localStorage.getItem('userId') || sessionStorage.getItem('user_id') || sessionStorage.getItem('userId');
+            if (direct) return direct;
+            // 3) Глобальные переменные
+            if (window.currentUser?.id) return window.currentUser.id;
+            if (window.user?.id) return window.user.id;
         } catch (error) {
             console.error('❌ BankModule: Ошибка получения ID пользователя:', error);
-            return null;
         }
+        return null;
     }
     
     /**
