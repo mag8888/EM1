@@ -70,3 +70,11 @@ window.resetTransferForm = resetTransferForm;
 window.requestCredit = requestCredit;
 window.payoffCredit = payoffCredit;
 
+// Автоинициализация для заполнения сайдбара значениями при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+  // Неблокирующая инициализация; ошибки в консоль
+  setTimeout(() => {
+    initBankModuleV3().catch(err => console.warn('Bank v3 auto-init failed:', err));
+  }, 0);
+});
+
