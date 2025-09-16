@@ -1172,6 +1172,28 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
             for (let i = 0; i < room.players.length; i++) {
                 room.game_data.player_balances[i] = 0;
             }
+            
+            // Начисляем стартовые сбережения сразу при инициализации
+            console.log('💰 Начисляем стартовые сбережения всем игрокам...');
+            for (let i = 0; i < room.players.length; i++) {
+                addBalance(room, i, serverConfig.getStartingBalance(), 'Стартовые сбережения');
+                console.log(`✅ Игрок ${i + 1} (${room.players[i].name}): +$${serverConfig.getStartingBalance()} → Баланс: $${room.game_data.player_balances[i]}`);
+            }
+            
+            // Отмечаем, что стартовые сбережения начислены
+            room.game_data.starting_savings_given = true;
+            console.log(`🎉 Стартовые сбережения начислены всем ${room.players.length} игрокам!`);
+        }
+        
+        // Проверяем, что стартовые сбережения начислены для существующих комнат
+        if (!room.game_data.starting_savings_given) {
+            console.log('💰 Начисляем стартовые сбережения для существующей комнаты...');
+            for (let i = 0; i < room.players.length; i++) {
+                addBalance(room, i, serverConfig.getStartingBalance(), 'Стартовые сбережения');
+                console.log(`✅ Игрок ${i + 1} (${room.players[i].name}): +$${serverConfig.getStartingBalance()} → Баланс: $${room.game_data.player_balances[i]}`);
+            }
+            room.game_data.starting_savings_given = true;
+            console.log(`🎉 Стартовые сбережения начислены всем ${room.players.length} игрокам!`);
         }
         
         console.log('Game data:', {
@@ -1192,8 +1214,10 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
         }
         
         // Execute transfer using balance functions
+        console.log('=== ПЕРЕВОД НАЧИНАЕТСЯ ===');
         console.log('Before transfer - sender balance:', room.game_data.player_balances[senderIndex]);
         console.log('Before transfer - recipient balance:', room.game_data.player_balances[recipient_index]);
+        console.log('Transfer amount:', amount);
         
         // Используем функции для работы с балансом
         subtractBalance(room, senderIndex, amount, `Перевод игроку ${room.players[recipient_index].name}`);
@@ -1201,6 +1225,7 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
         
         console.log('After transfer - sender balance:', room.game_data.player_balances[senderIndex]);
         console.log('After transfer - recipient balance:', room.game_data.player_balances[recipient_index]);
+        console.log('=== ПЕРЕВОД ЗАВЕРШЕН ===');
         
         // Transfer history is already added by addBalance/subtractBalance functions
         
