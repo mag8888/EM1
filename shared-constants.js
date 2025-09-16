@@ -61,3 +61,14 @@ if (typeof window !== 'undefined') {
     window.API_CONSTANTS = API_CONSTANTS;
     window.UI_CONSTANTS = UI_CONSTANTS;
 }
+
+// Экспорт для Node.js (CommonJS)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        FINANCIAL_CONSTANTS,
+        STRING_CONSTANTS,
+        GAME_CONSTANTS,
+        API_CONSTANTS,
+        UI_CONSTANTS
+    };
+}
