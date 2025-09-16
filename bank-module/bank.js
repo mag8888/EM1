@@ -12,7 +12,7 @@ class BankModule {
         this.totalExpenses = 0;
         this.monthlyIncome = 0;
         this.currentCredit = 0;
-        this.maxCredit = 10000;
+        this.maxCredit = this.financialConfig.getCreditConfig().maxAmount;
         this.isLoading = false;
         this.lastUpdateTime = 0;
         this.roomData = null; // Данные комнаты
@@ -465,7 +465,7 @@ class BankModule {
         }
         
         if (maxCreditEl) {
-            this.maxCredit = Math.floor(this.monthlyIncome / 100) * 1000;
+            this.maxCredit = Math.floor(this.monthlyIncome / 100) * this.financialConfig.getCreditConfig().step;
             maxCreditEl.textContent = `$${this.maxCredit.toLocaleString()}`;
         }
         

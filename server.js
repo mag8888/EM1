@@ -12,6 +12,25 @@ const PORT = process.env.PORT || 3001;
 // Инициализируем конфигурацию сервера
 const serverConfig = new ServerConfig();
 
+// Функция для получения данных профессии предпринимателя
+function getEntrepreneurData() {
+    return {
+        name: 'Предприниматель',
+        description: 'Владелец успешного бизнеса',
+        salary: serverConfig.getFinancial().defaultProfession.salary,
+        expenses: serverConfig.getFinancial().defaultProfession.expenses,
+        cash_flow: serverConfig.getFinancial().defaultProfession.cashFlow,
+        debts: [
+            { name: 'Налоги', monthly_payment: 1300, principal: 0 },
+            { name: 'Прочие расходы', monthly_payment: 1500, principal: 0 },
+            { name: 'Кредит на авто', monthly_payment: serverConfig.getDebts().carLoan.monthly_payment, principal: serverConfig.getDebts().carLoan.principal },
+            { name: 'Образовательный кредит', monthly_payment: serverConfig.getDebts().eduLoan.monthly_payment, principal: serverConfig.getDebts().eduLoan.principal },
+            { name: 'Ипотека', monthly_payment: serverConfig.getDebts().mortgage.monthly_payment, principal: serverConfig.getDebts().mortgage.principal },
+            { name: 'Кредитные карты', monthly_payment: serverConfig.getDebts().creditCards.monthly_payment, principal: serverConfig.getDebts().creditCards.principal }
+        ]
+    };
+}
+
 // Функции для работы с балансом
 function addBalance(room, playerIndex, amount, description = '') {
     if (!room.game_data) {
@@ -603,21 +622,7 @@ app.post('/api/rooms/create', async (req, res) => {
         }
         
         // Create room with entrepreneur profession data
-        const entrepreneurData = {
-            name: 'Предприниматель',
-            description: 'Владелец успешного бизнеса',
-            salary: 10000,
-            expenses: 6200,
-            cash_flow: 3800,
-            debts: [
-                { name: 'Налоги', monthly_payment: 1300, principal: 0 },
-                { name: 'Прочие расходы', monthly_payment: 1500, principal: 0 },
-                { name: 'Кредит на авто', monthly_payment: 700, principal: 14000 },
-                { name: 'Образовательный кредит', monthly_payment: 500, principal: 10000 },
-                { name: 'Ипотека', monthly_payment: 1200, principal: 240000 },
-                { name: 'Кредитные карты', monthly_payment: 1000, principal: 20000 }
-            ]
-        };
+        const entrepreneurData = getEntrepreneurData();
 
         console.log('Creating room with turn_time:', turn_time, 'type:', typeof turn_time);
         
@@ -635,7 +640,7 @@ app.post('/api/rooms/create', async (req, res) => {
                 profession: creator_profession,
                 profession_data: entrepreneurData,
                 position: 0,
-                balance: 10000,
+                balance: serverConfig.getRoom().defaultBalance,
                 is_ready: false
             }]
         });
@@ -705,21 +710,7 @@ app.post('/api/rooms/join', async (req, res) => {
         }
         
         // Add player to room with entrepreneur data
-        const entrepreneurData = {
-            name: 'Предприниматель',
-            description: 'Владелец успешного бизнеса',
-            salary: 10000,
-            expenses: 6200,
-            cash_flow: 3800,
-            debts: [
-                { name: 'Налоги', monthly_payment: 1300, principal: 0 },
-                { name: 'Прочие расходы', monthly_payment: 1500, principal: 0 },
-                { name: 'Кредит на авто', monthly_payment: 700, principal: 14000 },
-                { name: 'Образовательный кредит', monthly_payment: 500, principal: 10000 },
-                { name: 'Ипотека', monthly_payment: 1200, principal: 240000 },
-                { name: 'Кредитные карты', monthly_payment: 1000, principal: 20000 }
-            ]
-        };
+        const entrepreneurData = getEntrepreneurData();
 
         const newPlayer = {
             user_id: user_id,
@@ -779,21 +770,7 @@ app.post('/api/rooms/quick-join', async (req, res) => {
         }
         
         // Add player to room with entrepreneur data
-        const entrepreneurData = {
-            name: 'Предприниматель',
-            description: 'Владелец успешного бизнеса',
-            salary: 10000,
-            expenses: 6200,
-            cash_flow: 3800,
-            debts: [
-                { name: 'Налоги', monthly_payment: 1300, principal: 0 },
-                { name: 'Прочие расходы', monthly_payment: 1500, principal: 0 },
-                { name: 'Кредит на авто', monthly_payment: 700, principal: 14000 },
-                { name: 'Образовательный кредит', monthly_payment: 500, principal: 10000 },
-                { name: 'Ипотека', monthly_payment: 1200, principal: 240000 },
-                { name: 'Кредитные карты', monthly_payment: 1000, principal: 20000 }
-            ]
-        };
+        const entrepreneurData = getEntrepreneurData();
 
         const newPlayer = {
             user_id: user_id,
@@ -1052,19 +1029,19 @@ app.post('/api/rooms/:id/start', async (req, res) => {
             player_professions: Array.from({ length: room.players.length }, () => ({
                 name: 'Предприниматель',
                 description: 'Владелец успешного бизнеса',
-                salary: 10000,
-                expenses: 6200,
-                cashFlow: 3800,
+                salary: serverConfig.getFinancial().defaultProfession.salary,
+                expenses: serverConfig.getFinancial().defaultProfession.expenses,
+                cashFlow: serverConfig.getFinancial().defaultProfession.cashFlow,
                 taxes: 1300,
                 otherExpenses: 1500,
-                carLoan: 700,
-                carLoanPrincipal: 14000,
-                eduLoan: 500,
-                eduLoanPrincipal: 10000,
-                mortgage: 1200,
-                mortgagePrincipal: 240000,
-                creditCards: 1000,
-                creditCardsPrincipal: 20000,
+                carLoan: serverConfig.getDebts().carLoan.monthly_payment,
+                carLoanPrincipal: serverConfig.getDebts().carLoan.principal,
+                eduLoan: serverConfig.getDebts().eduLoan.monthly_payment,
+                eduLoanPrincipal: serverConfig.getDebts().eduLoan.principal,
+                mortgage: serverConfig.getDebts().mortgage.monthly_payment,
+                mortgagePrincipal: serverConfig.getDebts().mortgage.principal,
+                creditCards: serverConfig.getDebts().creditCards.monthly_payment,
+                creditCardsPrincipal: serverConfig.getDebts().creditCards.principal,
                 totalCredits: 284000
             })),
             transfers_history: []
@@ -1082,7 +1059,7 @@ app.post('/api/rooms/:id/start', async (req, res) => {
             for (let i = 0; i < room.players.length; i++) {
                 // Используем функцию добавления баланса
                 addBalance(room, i, serverConfig.getStartingBalance(), 'Стартовые сбережения');
-                console.log(`✅ Игрок ${i + 1} (${room.players[i].name}): +$3000 → Баланс: $${room.game_data.player_balances[i]}`);
+                console.log(`✅ Игрок ${i + 1} (${room.players[i].name}): +$${serverConfig.getStartingBalance()} → Баланс: $${room.game_data.player_balances[i]}`);
             }
             
             // Отмечаем, что стартовые сбережения начислены
@@ -1334,9 +1311,9 @@ app.get('/api/rooms/:id/player/:playerIndex/profession', async (req, res) => {
             room.game_data.player_professions[playerIndex] = {
                 name: 'Предприниматель',
                 description: 'Владелец успешного бизнеса',
-                salary: 10000,
-                expenses: 6200,
-                cashFlow: 3800,
+                salary: serverConfig.getFinancial().defaultProfession.salary,
+                expenses: serverConfig.getFinancial().defaultProfession.expenses,
+                cashFlow: serverConfig.getFinancial().defaultProfession.cashFlow,
                 totalCredits: 0,
                 currentCredit: 0,
                 creditHistory: [],
@@ -1376,9 +1353,9 @@ app.post('/api/rooms/:id/take-credit', async (req, res) => {
             room.game_data.player_professions[player_index] = {
                 name: 'Предприниматель',
                 description: 'Владелец успешного бизнеса',
-                salary: 10000,
-                expenses: 6200,
-                cashFlow: 3800,
+                salary: serverConfig.getFinancial().defaultProfession.salary,
+                expenses: serverConfig.getFinancial().defaultProfession.expenses,
+                cashFlow: serverConfig.getFinancial().defaultProfession.cashFlow,
                 totalCredits: 0,
                 currentCredit: 0,
                 creditHistory: [],
