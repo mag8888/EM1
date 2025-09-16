@@ -142,6 +142,9 @@ class BankModule {
                 this.monthlyIncome = 3800; // PAYDAY значение по умолчанию
             }
             
+            // Принудительно обновляем финансовую сводку
+            this.updateFinancialSummary();
+            
             // Обновляем UI
             this.updateBankUI();
             
@@ -268,34 +271,38 @@ class BankModule {
      * Обновление финансовой сводки
      */
     updateFinancialSummary() {
-        console.log('Updating financial summary:', {
+        console.log('=== UPDATING FINANCIAL SUMMARY ===');
+        console.log('Financial data:', {
             totalIncome: this.totalIncome,
             totalExpenses: this.totalExpenses,
             monthlyIncome: this.monthlyIncome
         });
         
         // Обновляем доходы
-        const totalIncomeEl = document.getElementById('totalIncome') || 
-                             document.querySelector('.finance-item:nth-child(1) .finance-value');
+        const totalIncomeEl = document.getElementById('totalIncome');
         if (totalIncomeEl) {
             totalIncomeEl.textContent = `$${this.totalIncome.toLocaleString()}`;
-            console.log('Updated totalIncome: $' + this.totalIncome.toLocaleString());
+            console.log('✅ Updated totalIncome: $' + this.totalIncome.toLocaleString());
+        } else {
+            console.warn('❌ totalIncome element not found');
         }
         
         // Обновляем расходы
-        const totalExpensesEl = document.getElementById('totalExpenses') || 
-                               document.querySelector('.finance-item:nth-child(2) .finance-value');
+        const totalExpensesEl = document.getElementById('totalExpenses');
         if (totalExpensesEl) {
             totalExpensesEl.textContent = `$${this.totalExpenses.toLocaleString()}`;
-            console.log('Updated totalExpenses: $' + this.totalExpenses.toLocaleString());
+            console.log('✅ Updated totalExpenses: $' + this.totalExpenses.toLocaleString());
+        } else {
+            console.warn('❌ totalExpenses element not found');
         }
         
         // Обновляем месячный доход
-        const monthlyIncomeEl = document.getElementById('monthlyIncome') || 
-                               document.querySelector('.finance-item:nth-child(3) .finance-value');
+        const monthlyIncomeEl = document.getElementById('monthlyIncome');
         if (monthlyIncomeEl) {
-            monthlyIncomeEl.textContent = `$${this.monthlyIncome.toLocaleString()}`;
-            console.log('Updated monthlyIncome: $' + this.monthlyIncome.toLocaleString());
+            monthlyIncomeEl.textContent = `$${this.monthlyIncome.toLocaleString()}/мес`;
+            console.log('Updated monthlyIncome: $' + this.monthlyIncome.toLocaleString() + '/мес');
+        } else {
+            console.warn('monthlyIncome element not found');
         }
     }
 
