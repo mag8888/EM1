@@ -1436,6 +1436,11 @@ app.post('/api/rooms/:id/take-credit', async (req, res) => {
         addBalance(room, player_index, amount, `Кредит на $${amount.toLocaleString()}`);
         console.log('💳 Server: Баланс после добавления:', room.game_data.player_balances[player_index]);
 
+        // Отмечаем изменения game_data для корректного сохранения Mixed-полей
+        if (typeof room.markModified === 'function') {
+            room.markModified('game_data');
+        }
+        room.updated_at = new Date();
         console.log('💳 Server: Сохраняем комнату');
         await room.save();
         console.log('💳 Server: Комната сохранена успешно');
@@ -1505,6 +1510,11 @@ app.post('/api/rooms/:id/payoff-credit', async (req, res) => {
         // Списываем деньги с баланса
         subtractBalance(room, player_index, payoffAmount, `Погашение кредита на $${payoffAmount.toLocaleString()}`);
 
+        // Отмечаем изменения game_data и обновляем метку времени
+        if (typeof room.markModified === 'function') {
+            room.markModified('game_data');
+        }
+        room.updated_at = new Date();
         await room.save();
 
         res.json({
@@ -1516,8 +1526,9 @@ app.post('/api/rooms/:id/payoff-credit', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error paying off credit:', error);
-        res.status(500).json({ message: 'Ошибка сервера' });
+        console.error('❌ Server: Ошибка при погашении кредита:', error);
+        console.error('❌ Server: Stack trace:', error.stack);
+        res.status(500).json({ message: 'Ошибка сервера', error: error.message });
     }
 });
 
