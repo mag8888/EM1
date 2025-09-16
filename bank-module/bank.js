@@ -16,6 +16,7 @@ class BankModule {
         this.isLoading = false;
         this.lastUpdateTime = 0;
         this.roomData = null; // Данные комнаты
+        this.hasLocalChanges = false; // Флаг локальных изменений
         
         // Конфигурация
         this.config = {
@@ -96,16 +97,22 @@ class BankModule {
                         console.log('Balance loaded from players[].balance:', newBalance, 'for player', playerIndex);
                     }
                     
-                    // ВСЕГДА обновляем баланс с сервера при принудительном обновлении
+                    // При принудительном обновлении обновляем только если сервер имеет более свежие данные
                     if (forceUpdate) {
-                        const oldBalance = this.currentBalance;
-                        this.currentBalance = newBalance;
-                        this.lastUpdateTime = Date.now();
-                        console.log('Balance updated from server (force):', oldBalance, '→', newBalance);
-                        
-                        // Показываем анимацию изменения баланса только если баланс изменился
-                        if (oldBalance !== newBalance) {
+                        // Если есть локальные изменения, не перезаписываем баланс
+                        if (this.hasLocalChanges) {
+                            console.log('🛡️ Локальные изменения обнаружены, сохраняем баланс:', this.currentBalance);
+                            this.hasLocalChanges = false; // Сбрасываем флаг
+                        } else if (newBalance !== this.currentBalance) {
+                            const oldBalance = this.currentBalance;
+                            this.currentBalance = newBalance;
+                            this.lastUpdateTime = Date.now();
+                            console.log('Balance updated from server (force):', oldBalance, '→', newBalance);
+                            
+                            // Показываем анимацию изменения баланса
                             this.animateBalanceChange(oldBalance, newBalance);
+                        } else {
+                            console.log('Server balance unchanged, keeping local balance:', this.currentBalance);
                         }
                     } else {
                         // При обычном обновлении обновляем только если баланс увеличился (пополнение)
@@ -557,6 +564,7 @@ class BankModule {
                 // Сразу обновляем локальный баланс
                 const oldBalance = this.currentBalance;
                 this.currentBalance -= transferAmount;
+                this.hasLocalChanges = true; // Отмечаем локальные изменения
                 console.log('💰 Локальное обновление баланса:', oldBalance, '→', this.currentBalance);
                 
                 // Показываем анимацию изменения баланса
@@ -579,11 +587,22 @@ class BankModule {
                 // Ждем обновления с сервера
                 setTimeout(async () => {
                     console.log('🔄 Получаем обновленный баланс с сервера...');
+                    
+                    // Сохраняем текущий баланс перед обновлением
+                    const currentBalanceBeforeUpdate = this.currentBalance;
+                    
                     await this.loadBankData(true); // Принудительное обновление для получения актуального баланса
+                    
+                    // Если сервер вернул старый баланс, восстанавливаем наш
+                    if (this.currentBalance > currentBalanceBeforeUpdate) {
+                        console.log('🔄 Сервер вернул старый баланс, восстанавливаем локальный:', currentBalanceBeforeUpdate);
+                        this.currentBalance = currentBalanceBeforeUpdate;
+                        this.updateBankUI();
+                    }
                     
                     // Показываем успех после обновления
                     this.showSuccess(`Перевод $${transferAmount} выполнен успешно!`);
-                }, 2000); // 2 секунды задержка для сервера
+                }, 3000); // 3 секунды задержка для сервера
                 
                 // Очищаем форму
                 this.resetTransferForm();
