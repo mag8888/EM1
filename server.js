@@ -1377,164 +1377,97 @@ app.get('/api/rooms/:id/player/:playerIndex/profession', async (req, res) => {
     }
 });
 
-// Взятие кредита
+// Новый модуль кредитов
+const CreditService = require('./credit-module/CreditService');
+const creditService = new CreditService();
+
+// Взятие кредита - новый API
 app.post('/api/rooms/:id/take-credit', async (req, res) => {
     try {
         console.log('💳 Server: Запрос на кредит', { roomId: req.params.id, body: req.body });
         
         const room = await Room.findById(req.params.id);
         if (!room) {
-            console.log('❌ Server: Комната не найдена');
             return res.status(404).json({ message: 'Комната не найдена' });
         }
 
         const { player_index, amount } = req.body;
-        console.log('💳 Server: Параметры кредита', { player_index, amount });
+        if (player_index < 0 || player_index >= room.players.length) {
+            return res.status(400).json({ message: 'Неверный индекс игрока' });
+        }
 
         if (!room.game_data) {
             return res.status(400).json({ message: 'Игра не начата' });
         }
 
-        // Инициализируем player_professions если не существует
-        if (!room.game_data.player_professions) {
-            room.game_data.player_professions = [];
-        }
-        if (!room.game_data.player_professions[player_index]) {
-            room.game_data.player_professions[player_index] = {
-                name: 'Предприниматель',
-                description: 'Владелец успешного бизнеса',
-                salary: serverConfig.getFinancial().defaultProfession.salary,
-                expenses: serverConfig.getFinancial().defaultProfession.expenses,
-                cashFlow: serverConfig.getFinancial().defaultProfession.cashFlow,
-                totalCredits: 0,
-                currentCredit: 0,
-                creditHistory: [],
-                loans: []
-            };
-        }
+        const result = await creditService.takeCredit(room, player_index, amount);
 
-        const profession = room.game_data.player_professions[player_index];
-        
-        // Валидация
-        if (!amount || amount < serverConfig.getCredit().minAmount || amount % serverConfig.getCredit().step !== 0) {
-            return res.status(400).json({ message: `Сумма должна быть кратной ${serverConfig.getCredit().step}$` });
-        }
-
-        const monthlyPayment = Math.floor(amount / serverConfig.getCredit().step) * serverConfig.getCredit().paymentRate;
-        const newCashFlow = profession.cashFlow - monthlyPayment;
-
-        if (newCashFlow < 0) {
-            return res.status(400).json({ message: 'Недостаточно денежного потока для такого кредита' });
-        }
-
-        // Обновляем данные
-        profession.currentCredit += amount;
-        profession.cashFlow = newCashFlow;
-        profession.creditHistory.push({
-            type: 'take',
-            amount: amount,
-            timestamp: new Date(),
-            description: `Взят кредит на $${amount.toLocaleString()}`
-        });
-
-        // Добавляем деньги на баланс
-        console.log('💳 Server: Добавляем деньги на баланс', { player_index, amount });
-        addBalance(room, player_index, amount, `Кредит на $${amount.toLocaleString()}`);
-        console.log('💳 Server: Баланс после добавления:', room.game_data.player_balances[player_index]);
-
-        // Отмечаем изменения game_data для корректного сохранения Mixed-полей
-        if (typeof room.markModified === 'function') {
-            room.markModified('game_data');
-        }
+        // Сохраняем изменения
+        room.markModified('game_data');
         room.updated_at = new Date();
-        console.log('💳 Server: Сохраняем комнату');
         await room.save();
-        console.log('💳 Server: Комната сохранена успешно');
 
-        res.json({
-            success: true,
-            new_balance: room.game_data.player_balances[player_index],
-            new_cash_flow: profession.cashFlow,
-            new_credit: profession.currentCredit,
-            monthly_payment: monthlyPayment
-        });
+        res.json(result);
 
     } catch (error) {
         console.error('❌ Server: Ошибка при взятии кредита:', error);
-        console.error('❌ Server: Stack trace:', error.stack);
-        res.status(500).json({ message: 'Ошибка сервера', error: error.message });
+        res.status(400).json({ message: error.message });
     }
 });
 
-// Погашение кредита
+// Погашение кредита - новый API
 app.post('/api/rooms/:id/payoff-credit', async (req, res) => {
     try {
+        console.log('💳 Server: Погашение кредита', { roomId: req.params.id, body: req.body });
+        
         const room = await Room.findById(req.params.id);
         if (!room) {
             return res.status(404).json({ message: 'Комната не найдена' });
         }
 
         const { player_index, amount } = req.body;
+        if (player_index < 0 || player_index >= room.players.length) {
+            return res.status(400).json({ message: 'Неверный индекс игрока' });
+        }
 
         if (!room.game_data) {
             return res.status(400).json({ message: 'Игра не начата' });
         }
 
-        const profession = room.game_data.player_professions[player_index];
-        if (!profession) {
-            return res.status(400).json({ message: 'Данные профессии не найдены' });
-        }
+        const result = await creditService.payoffCredit(room, player_index, amount);
 
-        const currentCredit = profession.currentCredit || 0;
-        if (currentCredit <= 0) {
-            return res.status(400).json({ message: 'У вас нет кредита для погашения' });
-        }
-
-        const payoffAmount = amount || currentCredit;
-        if (payoffAmount > currentCredit) {
-            return res.status(400).json({ message: 'Сумма погашения превышает текущий кредит' });
-        }
-
-        if (payoffAmount > room.game_data.player_balances[player_index]) {
-            return res.status(400).json({ message: 'Недостаточно средств для погашения' });
-        }
-
-        // Рассчитываем возврат денежного потока
-        const monthlyPayment = Math.floor(payoffAmount / serverConfig.getCredit().step) * serverConfig.getCredit().paymentRate;
-        const newCashFlow = profession.cashFlow + monthlyPayment;
-
-        // Обновляем данные
-        profession.currentCredit -= payoffAmount;
-        profession.cashFlow = newCashFlow;
-        profession.creditHistory.push({
-            type: 'payoff',
-            amount: payoffAmount,
-            timestamp: new Date(),
-            description: `Погашен кредит на $${payoffAmount.toLocaleString()}`
-        });
-
-        // Списываем деньги с баланса
-        subtractBalance(room, player_index, payoffAmount, `Погашение кредита на $${payoffAmount.toLocaleString()}`);
-
-        // Отмечаем изменения game_data и обновляем метку времени
-        if (typeof room.markModified === 'function') {
-            room.markModified('game_data');
-        }
+        // Сохраняем изменения
+        room.markModified('game_data');
         room.updated_at = new Date();
         await room.save();
 
-        res.json({
-            success: true,
-            new_balance: room.game_data.player_balances[player_index],
-            new_cash_flow: profession.cashFlow,
-            new_credit: profession.currentCredit,
-            paid_amount: payoffAmount
-        });
+        res.json(result);
 
     } catch (error) {
         console.error('❌ Server: Ошибка при погашении кредита:', error);
-        console.error('❌ Server: Stack trace:', error.stack);
-        res.status(500).json({ message: 'Ошибка сервера', error: error.message });
+        res.status(400).json({ message: error.message });
+    }
+});
+
+// Получение информации о кредите игрока
+app.get('/api/rooms/:id/credit/:player_index', async (req, res) => {
+    try {
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+
+        const playerIndex = parseInt(req.params.player_index);
+        if (playerIndex < 0 || playerIndex >= room.players.length) {
+            return res.status(400).json({ message: 'Неверный индекс игрока' });
+        }
+
+        const creditInfo = creditService.getPlayerCredit(room, playerIndex);
+        res.json(creditInfo);
+
+    } catch (error) {
+        console.error('❌ Server: Ошибка при получении информации о кредите:', error);
+        res.status(500).json({ message: 'Ошибка сервера' });
     }
 });
 
