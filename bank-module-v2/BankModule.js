@@ -561,7 +561,7 @@ class BankModule {
     /**
      * Запросить кредит
      */
-    async requestCredit() {
+    async requestCredit(amountOverride) {
         console.log('💳 BankModule: Запрос кредита');
         
         try {
@@ -574,8 +574,9 @@ class BankModule {
                 return;
             }
             
-            // Простой запрос на максимально доступную сумму
-            const amount = Math.min(availableCredit, 1000); // Максимум 1000 за раз
+            // Сумма: из параметра или дефолт 1000, но не больше доступного
+            const desired = amountOverride && amountOverride > 0 ? amountOverride : 1000;
+            const amount = Math.min(availableCredit, Math.ceil(desired / 1000) * 1000);
             
             const roomId = this.getRoomId();
             const userId = this.getUserId();

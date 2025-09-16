@@ -78,3 +78,27 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 0);
 });
 
+// Удобный вызов: открывает банк и показывает окно ввода суммы кредита
+async function openCreditModalV3() {
+  if (!bankModuleInstance) {
+    await initBankModuleV3();
+  }
+  await openBankV3();
+  const defaultAmount = 1000;
+  const input = prompt('Введите сумму кредита (шаг 1000)', String(defaultAmount));
+  if (input === null) return; // cancel
+  const amount = parseInt(input, 10);
+  if (Number.isNaN(amount) || amount <= 0) {
+    alert('Введите корректную сумму');
+    return;
+  }
+  if (bankModuleInstance?.requestCredit) {
+    // Обновлённый метод поддерживает сумму как параметр (fallback на авто)
+    try { await bankModuleInstance.requestCredit(amount); } catch (e) { console.error(e); }
+  } else {
+    alert('Кредитный модуль недоступен');
+  }
+}
+
+window.openCreditModalV3 = openCreditModalV3;
+
