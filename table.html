@@ -2802,6 +2802,10 @@
         let turnTransitionTimeout; // Таймаут для перехода хода
         let warningSoundPlayed = false; // Флаг для предотвращения повторных сигналов
         
+        // Игровое поле
+        let gameBoardUI = null;
+        let gameBoardService = null;
+        
         // Переменные для большого круга
         let playerOnBigCircle = {}; // Игроки на большом круге
         let playerBusinesses = {}; // Бизнесы игроков
@@ -2827,6 +2831,9 @@
 
         // Инициализация игры
         async function initGame() {
+            // Инициализируем игровое поле
+            await initializeGameBoard();
+            
             createOuterTrack();
             createInnerTrack();
             initializePlayerTokens(); // Инициализируем фишки игроков
@@ -2839,6 +2846,41 @@
             
             // Bank v3 handles its own updates
             setInterval(loadTurnInfo, 1000); // Обновляем информацию о ходе каждую секунду
+        }
+
+        // Инициализация игрового поля
+        async function initializeGameBoard() {
+            try {
+                console.log('🎲 Инициализация игрового поля');
+                
+                // Создаем экземпляры сервисов
+                gameBoardService = new GameBoardService();
+                gameBoardUI = new GameBoardUI();
+                
+                // Получаем ID комнаты
+                const roomId = getRoomIdFromURL();
+                if (!roomId) {
+                    console.error('❌ ID комнаты не найден');
+                    return;
+                }
+                
+                // Инициализируем поле на сервере
+                const response = await fetch(`/api/rooms/${roomId}/initialize-board`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Игровое поле инициализировано', data);
+                } else {
+                    console.error('❌ Ошибка инициализации поля');
+                }
+                
+            } catch (error) {
+                console.error('❌ Ошибка инициализации игрового поля:', error);
+            }
         }
 
         // Загрузка данных банка теперь в банковском модуле
@@ -2999,14 +3041,26 @@
                 const data = await response.json();
                 
                 if (response.ok && data.players) {
-                    const playerCount = data.players.length;
+                    const players = data.players;
+                    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FFB347', '#98D8C8'];
                     
                     // Удаляем все существующие фишки
                     const existingTokens = document.querySelectorAll('.player-token');
                     existingTokens.forEach(token => token.remove());
                     
-                    // Создаем фишки для каждого игрока
-                    for (let i = 0; i < playerCount; i++) {
+                    // Используем новый UI для создания фишек
+                    if (gameBoardUI) {
+                        console.log('🎨 Используем новый UI для создания фишек');
+                        for (let i = 0; i < players.length; i++) {
+                            const player = players[i];
+                            const color = colors[i % colors.length];
+                            const token = gameBoardUI.createPlayerToken(i, player.name, color, 0);
+                            console.log(`✅ Создана фишка для игрока ${i}: ${player.name}`);
+                        }
+                    } else {
+                        // Fallback к старому методу если новый UI не доступен
+                        console.warn('⚠️ GameBoardUI не доступен, используем старый метод');
+                        for (let i = 0; i < players.length; i++) {
                         const playerToken = document.createElement('div');
                         playerToken.className = 'player-token';
                         playerToken.id = `player${i}`;
@@ -3041,6 +3095,7 @@
                             console.log(`Positioned player ${i} token at start cell 0 (${x}, ${y})`);
                         } else {
                             console.warn(`Start cell not found for player ${i}`);
+                        }
                         }
                     }
                     tokensInitialized = true;
@@ -4308,5 +4363,9 @@
     <script src="bank-module-v2/BankUIService.js"></script>
     <script src="bank-module-v2/BankModule.js"></script>
     <script src="bank-module-v3/bank-module-v3.js"></script>
+    
+    <!-- Game Board Modules -->
+    <script src="game-board/GameBoardService.js"></script>
+    <script src="game-board/GameBoardUI.js"></script>
 </body>
 </html>

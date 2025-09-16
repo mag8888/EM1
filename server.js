@@ -1381,6 +1381,10 @@ app.get('/api/rooms/:id/player/:playerIndex/profession', async (req, res) => {
 const CreditService = require('./credit-module/CreditService');
 const creditService = new CreditService();
 
+// Модуль игрового поля
+const GameBoardService = require('./game-board/GameBoardService');
+const gameBoardService = new GameBoardService();
+
 // Взятие кредита - новый API
 app.post('/api/rooms/:id/take-credit', async (req, res) => {
     try {
@@ -1412,6 +1416,109 @@ app.post('/api/rooms/:id/take-credit', async (req, res) => {
     } catch (error) {
         console.error('❌ Server: Ошибка при взятии кредита:', error);
         res.status(400).json({ message: error.message });
+    }
+});
+
+// API для игрового поля
+app.post('/api/rooms/:id/initialize-board', async (req, res) => {
+    try {
+        console.log('🎲 Server: Инициализация игрового поля', { roomId: req.params.id });
+        
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+
+        if (!room.players || room.players.length === 0) {
+            return res.status(400).json({ message: 'Нет игроков в комнате' });
+        }
+
+        // Инициализируем игровое поле
+        gameBoardService.initializeBoard(room.players);
+
+        res.json({
+            success: true,
+            players: gameBoardService.getPlayers(),
+            stats: gameBoardService.getGameStats()
+        });
+
+    } catch (error) {
+        console.error('❌ Server: Ошибка инициализации поля:', error);
+        res.status(500).json({ message: 'Ошибка сервера' });
+    }
+});
+
+app.post('/api/rooms/:id/roll-dice', async (req, res) => {
+    try {
+        console.log('🎲 Server: Бросок кубика', { roomId: req.params.id });
+        
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+
+        const { player_index } = req.body;
+        if (player_index < 0 || player_index >= room.players.length) {
+            return res.status(400).json({ message: 'Неверный индекс игрока' });
+        }
+
+        // Бросаем кубик
+        const diceValue = gameBoardService.rollDice();
+        
+        res.json({
+            success: true,
+            dice_value: diceValue,
+            current_player: gameBoardService.getCurrentPlayer()
+        });
+
+    } catch (error) {
+        console.error('❌ Server: Ошибка броска кубика:', error);
+        res.status(500).json({ message: 'Ошибка сервера' });
+    }
+});
+
+app.post('/api/rooms/:id/move-player', async (req, res) => {
+    try {
+        console.log('🎲 Server: Перемещение игрока', { roomId: req.params.id, body: req.body });
+        
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+
+        const { player_index, steps } = req.body;
+        if (player_index < 0 || player_index >= room.players.length) {
+            return res.status(400).json({ message: 'Неверный индекс игрока' });
+        }
+
+        // Перемещаем игрока
+        const moveResult = gameBoardService.movePlayer(player_index, steps);
+        
+        res.json({
+            success: true,
+            move_result: moveResult,
+            player_position: gameBoardService.getPlayerPosition(player_index)
+        });
+
+    } catch (error) {
+        console.error('❌ Server: Ошибка перемещения игрока:', error);
+        res.status(500).json({ message: 'Ошибка сервера' });
+    }
+});
+
+app.get('/api/rooms/:id/board-stats', async (req, res) => {
+    try {
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+
+        const stats = gameBoardService.getGameStats();
+        res.json(stats);
+
+    } catch (error) {
+        console.error('❌ Server: Ошибка получения статистики поля:', error);
+        res.status(500).json({ message: 'Ошибка сервера' });
     }
 });
 
