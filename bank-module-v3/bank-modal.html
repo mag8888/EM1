@@ -1,0 +1,32 @@
+<!-- Bank Module v3 - Example-copy modal -->
+<div id="bankModal" class="bank-module">
+    <div class="bank-modal-content">
+        <div class="bank-modal-header">
+            <h2 class="bank-modal-title">Банковские операции</h2>
+            <button class="bank-modal-close" onclick="closeBankModal()">&times;</button>
+        </div>
+        <div class="bank-modal-body">
+            <!-- Left and right columns replicated from example (v2 body reused) -->
+            <div class="financial-summary" style="display:none"></div>
+            <div class="transfer-form">
+                <h3 class="transfer-form-title">Перевод средств</h3>
+                <form id="transferForm" onsubmit="event.preventDefault(); executeTransfer();">
+                    <div class="form-group">
+                        <label for="recipientSelect" class="form-label">Получатель</label>
+                        <select id="recipientSelect" class="form-select"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="transferAmount" class="form-label">Сумма</label>
+                        <input type="number" id="transferAmount" class="form-input" placeholder="0" min="1">
+                    </div>
+                    <button type="submit" class="form-button">Выполнить перевод</button>
+                </form>
+            </div>
+            <div class="transfers-history">
+                <h3 class="transfers-history-title">История операций</h3>
+                <div id="transfersHistory"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
