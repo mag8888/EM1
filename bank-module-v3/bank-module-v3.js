@@ -48,9 +48,25 @@ function resetTransferForm() {
   console.error('Bank module not initialized');
 }
 
+function requestCredit() {
+  if (bankModuleInstance) {
+    return bankModuleInstance.requestCredit();
+  }
+  console.error('Bank module not initialized');
+}
+
+function payoffCredit() {
+  if (bankModuleInstance) {
+    return bankModuleInstance.payoffCredit();
+  }
+  console.error('Bank module not initialized');
+}
+
 // Make functions globally available
 window.initBankModuleV3 = initBankModuleV3;
 window.openBankV3 = openBankV3;
 window.processTransfer = processTransfer;
 window.resetTransferForm = resetTransferForm;
+window.requestCredit = requestCredit;
+window.payoffCredit = payoffCredit;
 

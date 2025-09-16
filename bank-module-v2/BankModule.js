@@ -196,10 +196,10 @@ class BankModule {
     setupPeriodicUpdates() {
         console.log('⏰ BankModule: Настройка периодических обновлений');
         
-        // Основные обновления каждые 30 секунд
+        // Основные обновления каждые 60 секунд
         this.updateInterval = setInterval(() => {
             this.loadBankData(false);
-        }, 30000);
+        }, 60000);
         
         // Проверка входящих переводов каждые 5 секунд
         this.incomingTransfersInterval = setInterval(() => {
@@ -344,11 +344,11 @@ class BankModule {
             // Сбрасываем форму
             this.uiService.resetTransferForm();
             
-            // Синхронизируем с сервером через 2 секунды
+            // Синхронизируем с сервером через 5 секунд
             setTimeout(() => {
                 this.loadBankData(true);
                 this.core.setLocalChanges(false);
-            }, 2000);
+            }, 5000);
             
             console.log('✅ BankModule: Перевод выполнен успешно');
             
@@ -523,6 +523,116 @@ class BankModule {
     getPlayerName(playerIndex) {
         const player = this.core.roomData?.players?.[playerIndex];
         return player?.name || `Игрок ${playerIndex + 1}`;
+    }
+    
+    /**
+     * Запросить кредит
+     */
+    async requestCredit() {
+        console.log('💳 BankModule: Запрос кредита');
+        
+        try {
+            const maxCredit = this.core.state.maxCredit;
+            const currentCredit = this.core.state.currentCredit;
+            const availableCredit = maxCredit - currentCredit;
+            
+            if (availableCredit <= 0) {
+                this.uiService.showNotification('Кредитный лимит исчерпан', 'error');
+                return;
+            }
+            
+            // Простой запрос на максимально доступную сумму
+            const amount = Math.min(availableCredit, 1000); // Максимум 1000 за раз
+            
+            const roomId = this.getRoomId();
+            const userId = this.getUserId();
+            
+            if (!roomId || !userId) {
+                this.uiService.showNotification('Ошибка: не найдены ID комнаты или пользователя', 'error');
+                return;
+            }
+            
+            this.uiService.showLoadingIndicator('Запрос кредита...');
+            
+            await this.apiService.requestCredit(roomId, userId, amount);
+            
+            // Обновляем локальное состояние
+            const newCredit = currentCredit + amount;
+            this.core.updateState({
+                currentCredit: newCredit
+            });
+            
+            this.uiService.showNotification(`Кредит $${amount.toLocaleString()} одобрен!`, 'success');
+            
+            // Обновляем UI
+            this.updateUI();
+            
+            console.log('✅ BankModule: Кредит запрошен успешно');
+            
+        } catch (error) {
+            console.error('❌ BankModule: Ошибка запроса кредита:', error);
+            this.uiService.showNotification('Ошибка запроса кредита', 'error');
+        } finally {
+            this.uiService.hideLoadingIndicator();
+        }
+    }
+    
+    /**
+     * Погасить кредит
+     */
+    async payoffCredit() {
+        console.log('💳 BankModule: Погашение кредита');
+        
+        try {
+            const currentCredit = this.core.state.currentCredit;
+            const currentBalance = this.core.state.currentBalance;
+            
+            if (currentCredit <= 0) {
+                this.uiService.showNotification('У вас нет задолженности', 'info');
+                return;
+            }
+            
+            const payoffAmount = Math.min(currentCredit, currentBalance);
+            
+            if (payoffAmount <= 0) {
+                this.uiService.showNotification('Недостаточно средств для погашения', 'error');
+                return;
+            }
+            
+            const roomId = this.getRoomId();
+            const userId = this.getUserId();
+            
+            if (!roomId || !userId) {
+                this.uiService.showNotification('Ошибка: не найдены ID комнаты или пользователя', 'error');
+                return;
+            }
+            
+            this.uiService.showLoadingIndicator('Погашение кредита...');
+            
+            await this.apiService.payoffCredit(roomId, userId, payoffAmount);
+            
+            // Обновляем локальное состояние
+            const newCredit = currentCredit - payoffAmount;
+            const newBalance = currentBalance - payoffAmount;
+            
+            this.core.updateState({
+                currentCredit: newCredit,
+                currentBalance: newBalance
+            });
+            
+            this.uiService.showNotification(`Кредит погашен на $${payoffAmount.toLocaleString()}`, 'success');
+            
+            // Обновляем UI
+            this.updateUI();
+            
+            console.log('✅ BankModule: Кредит погашен успешно');
+            
+        } catch (error) {
+            console.error('❌ BankModule: Ошибка погашения кредита:', error);
+            this.uiService.showNotification('Ошибка погашения кредита', 'error');
+        } finally {
+            this.uiService.hideLoadingIndicator();
+        }
     }
     
     /**
