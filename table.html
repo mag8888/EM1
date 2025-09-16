@@ -8,7 +8,7 @@
     <link rel="alternate icon" href="/favicon.ico">
     
     <!-- Банковский модуль -->
-    <link rel="stylesheet" href="bank-module/bank.css">
+    <link rel="stylesheet" href="bank-module-v2/bank-styles.css">
     <style>
         * {
             margin: 0;
@@ -4608,23 +4608,18 @@
         </div>
     </div>
     
-    <!-- Банковский модуль HTML -->
-    <!--#include file="bank-module/bank.html"-->
+    <!-- Банковский модуль v2 HTML -->
+    <!--#include file="bank-module-v2/bank-modal.html"-->
     
     <!-- Общие утилиты и константы -->
     <script src="shared-constants.js"></script>
     <script src="shared-utils.js"></script>
     
-    <!-- Банковский модуль JavaScript -->
-    <script src="bank-module/config/financial-config.js"></script>
-    <script>
-        console.log('🔍 Проверка загрузки FinancialConfig:', typeof FinancialConfig);
-        if (typeof FinancialConfig !== 'undefined') {
-            console.log('✅ FinancialConfig загружен успешно');
-        } else {
-            console.error('❌ FinancialConfig не загружен!');
-        }
-    </script>
-    <script src="bank-module/bank.js"></script>
+    <!-- Банковский модуль v2 - Полностью переписанный -->
+    <script src="bank-module-v2/BankCore.js"></script>
+    <script src="bank-module-v2/BankApiService.js"></script>
+    <script src="bank-module-v2/BankUIService.js"></script>
+    <script src="bank-module-v2/BankModule.js"></script>
+    <script src="bank-module-v2/bank-module-v2.js"></script>
 </body>
 </html>

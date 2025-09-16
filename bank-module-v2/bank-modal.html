@@ -1,0 +1,87 @@
+<!-- Банковский модуль - HTML -->
+<div id="bankModal" class="bank-module">
+    <div class="bank-modal-content">
+        <!-- Заголовок -->
+        <div class="bank-modal-header">
+            <h2 class="bank-modal-title">🏦 Банк</h2>
+            <button class="bank-modal-close" onclick="closeBankModal()">&times;</button>
+        </div>
+        
+        <!-- Тело модального окна -->
+        <div class="bank-modal-body">
+            <!-- Секция баланса -->
+            <div class="balance-section">
+                <p class="balance-label">Текущий баланс</p>
+                <div id="currentBalance" class="balance-amount">$0</div>
+            </div>
+            
+            <!-- Финансовая сводка -->
+            <div class="financial-summary">
+                <div class="financial-item">
+                    <p class="financial-item-label">Доходы</p>
+                    <p id="totalIncome" class="financial-item-value">$0</p>
+                </div>
+                <div class="financial-item">
+                    <p class="financial-item-label">Расходы</p>
+                    <p id="totalExpenses" class="financial-item-value">$0</p>
+                </div>
+                <div class="financial-item">
+                    <p class="financial-item-label">Месячный доход</p>
+                    <p id="monthlyIncome" class="financial-item-value">$0/мес</p>
+                </div>
+                <div class="financial-item">
+                    <p class="financial-item-label">Текущий кредит</p>
+                    <p id="currentCredit" class="financial-item-value">$0</p>
+                </div>
+                <div class="financial-item">
+                    <p class="financial-item-label">Макс. кредит</p>
+                    <p id="maxCredit" class="financial-item-value">$0</p>
+                </div>
+            </div>
+            
+            <!-- Форма перевода -->
+            <div class="transfer-form">
+                <h3 class="transfer-form-title">💸 Перевод средств</h3>
+                <form id="transferForm" onsubmit="event.preventDefault(); executeTransfer();">
+                    <div class="form-group">
+                        <label for="recipientSelect" class="form-label">Получатель</label>
+                        <select id="recipientSelect" class="form-select" required>
+                            <option value="">Выберите получателя</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="transferAmount" class="form-label">Сумма</label>
+                        <input 
+                            type="number" 
+                            id="transferAmount" 
+                            class="form-input" 
+                            placeholder="Введите сумму"
+                            min="1"
+                            required
+                        >
+                    </div>
+                    <button type="submit" class="form-button">
+                        💸 Отправить перевод
+                    </button>
+                </form>
+            </div>
+            
+            <!-- История переводов -->
+            <div class="transfers-history">
+                <h3 class="transfers-history-title">📋 История переводов</h3>
+                <div id="transfersHistory" class="transfers-list">
+                    <!-- Переводы будут добавлены динамически -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Индикатор загрузки -->
+<div id="loadingIndicator" class="loading-indicator" style="display: none;">
+    <div class="loading-spinner"></div>
+    <div>Загрузка...</div>
+</div>
+
+<!-- Контейнер для уведомлений -->
+<div id="notificationsContainer"></div>
