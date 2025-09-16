@@ -752,7 +752,39 @@
             color: #e5e7eb;
         }
 
-        /* Bank preview removed - using v3 module */
+        /* Bank preview (external card) */
+        .bank-preview {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        }
+        .bank-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .bank-title { display: flex; align-items: center; gap: 8px; color: #e2e8f0; font-weight: 700; }
+        .bank-icon { width: 24px; height: 24px; background: linear-gradient(135deg,#10b981,#059669); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .bank-status { background: rgba(16,185,129,.2); color:#10b981; padding:4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+        .bank-balance { text-align:center; margin: 8px 0 12px; }
+        .bank-balance .balance-amount { font-size: 40px; font-weight: 800; color:#10b981; line-height: 1; }
+        .bank-balance .balance-label { color:#94a3b8; font-size:12px; }
+        .bank-card { background: rgba(0,0,0,.2); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:12px; }
+        .bank-stats { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+        .bank-stat { display:flex; align-items:center; justify-content:space-between; font-size:14px; }
+        .bank-stat .label { color:#94a3b8; display:flex; align-items:center; gap:8px; }
+        .bank-stat .value { font-weight:700; }
+        .value.income { color:#10b981; }
+        .value.expenses { color:#ef4444; }
+        .value.payday { color:#f59e0b; }
+        .credit-section { margin-top:12px; }
+        .credit-row { display:flex; align-items:center; justify-content:space-between; font-size:14px; padding:4px 0; }
+        .credit-row .label { color:#94a3b8; }
+        .credit-row .value { font-weight:700; color:#94a3b8; }
+        .credit-row .value.max { color:#8b5cf6; }
+        .bank-actions { display:flex; gap:10px; margin-top:12px; }
+        .bank-btn { flex:1; padding:10px 12px; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; }
+        .bank-btn.secondary { background: rgba(16,185,129,.15); color:#10b981; border:1px solid rgba(16,185,129,.35); display:flex; align-items:center; justify-content:center; gap:8px; }
+        .bank-btn.primary { background: linear-gradient(135deg,#ef4444,#dc2626); color:#fff; display:flex; align-items:center; justify-content:center; gap:8px; }
 
         .exit-game-button {
             width: 100%;
@@ -2306,8 +2338,8 @@
 
         <!-- Боковая панель -->
         <div class="sidebar">
-            <!-- Bank v3 - Simple button -->
-            <div class="bank-preview" onclick="openBankV3()">
+            <!-- Bank v3 - External preview card -->
+            <div class="bank-preview">
                 <div class="bank-header">
                     <div class="bank-title">
                         <div class="bank-icon">🏦</div>
@@ -2315,15 +2347,41 @@
                     </div>
                     <div class="bank-status">Активен</div>
                 </div>
+
                 <div class="bank-balance">
                     <div class="balance-amount" id="bankBalance">$0</div>
                     <div class="balance-label">Доступно для операций</div>
                 </div>
-                <div class="bank-actions">
-                    <button class="bank-btn primary" onclick="event.stopPropagation(); openBankV3()">
-                        <span>🏦</span>
-                        <span>Открыть</span>
-                    </button>
+
+                <div class="bank-card">
+                    <div class="bank-stats">
+                        <div class="bank-stat">
+                            <div class="label">📈 Доход:</div>
+                            <div class="value income" id="totalIncome">$0</div>
+                        </div>
+                        <div class="bank-stat">
+                            <div class="label">📉 Расходы:</div>
+                            <div class="value expenses" id="totalExpenses">$0</div>
+                        </div>
+                        <div class="bank-stat">
+                            <div class="label">💰 PAYDAY:</div>
+                            <div class="value payday" id="monthlyIncome">$0/мес</div>
+                        </div>
+                    </div>
+                    <div class="credit-section">
+                        <div class="credit-row">
+                            <div class="label">Кредит:</div>
+                            <div class="value" id="currentCredit">$0</div>
+                        </div>
+                        <div class="credit-row">
+                            <div class="label">Макс. кредит:</div>
+                            <div class="value max" id="maxCredit">$0</div>
+                        </div>
+                        <div class="bank-actions">
+                            <button class="bank-btn secondary" onclick="requestCredit()">✅ Без кредитов</button>
+                            <button class="bank-btn primary" onclick="openBankV3()">🧾 Взять</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
