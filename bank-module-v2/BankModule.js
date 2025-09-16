@@ -344,9 +344,11 @@ class BankModule {
             // Сбрасываем форму
             this.uiService.resetTransferForm();
 
-            // Немедленно синхронизируемся с сервером, чтобы зафиксировать перевод
-            await this.loadBankData(true);
-            this.core.setLocalChanges(false);
+            // Синхронизируем с сервером через 5 секунд
+            setTimeout(() => {
+                this.loadBankData(true);
+                this.core.setLocalChanges(false);
+            }, 5000);
             
             console.log('✅ BankModule: Перевод выполнен успешно');
             
