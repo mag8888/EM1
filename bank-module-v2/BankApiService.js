@@ -43,22 +43,24 @@ class BankApiService {
      * Получить ID пользователя
      */
     getUserId() {
-        // Попробуем получить из localStorage
-        const stored = localStorage.getItem('user_id');
-        if (stored) return stored;
-        
-        // Попробуем получить из URL параметров
-        const urlParams = new URLSearchParams(window.location.search);
-        const userId = urlParams.get('user_id');
-        if (userId) {
-            localStorage.setItem('user_id', userId);
-            return userId;
+        try {
+            // 1) Из объекта user в localStorage
+            const rawUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+            if (rawUser) {
+                const user = JSON.parse(rawUser);
+                const candidate = user?.id || user?._id || user?.user_id || user?.userId;
+                if (candidate) return candidate;
+            }
+            // 2) Отдельные ключи
+            const direct = localStorage.getItem('user_id') || localStorage.getItem('userId') || sessionStorage.getItem('user_id') || sessionStorage.getItem('userId');
+            if (direct) return direct;
+            // 3) Глобальные переменные
+            if (window.currentUser?.id) return window.currentUser.id;
+            if (window.user?.id) return window.user.id;
+        } catch (error) {
+            console.error('❌ BankApiService: Ошибка получения ID пользователя:', error);
         }
-        
-        // Fallback - генерируем случайный ID
-        const randomId = 'user_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('user_id', randomId);
-        return randomId;
+        return null;
     }
     
     /**
