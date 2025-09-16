@@ -5,6 +5,21 @@
 
 class BankModule {
     constructor() {
+        console.log('🏦 BankModule constructor started');
+        
+        // Проверяем, что FinancialConfig доступен
+        if (typeof FinancialConfig === 'undefined') {
+            console.error('❌ FinancialConfig не найден! Убедитесь, что financial-config.js загружен перед bank.js');
+            console.error('Available globals:', Object.keys(window).filter(k => k.includes('Config')));
+            throw new Error('FinancialConfig не найден');
+        }
+        
+        console.log('✅ FinancialConfig найден, создаем экземпляр...');
+        
+        // Инициализируем конфигурацию ПЕРВОЙ
+        this.financialConfig = new FinancialConfig();
+        console.log('✅ FinancialConfig создан успешно');
+        
         // Глобальные переменные для банка
         this.currentBalance = 0;
         this.transfersHistory = [];
@@ -17,9 +32,6 @@ class BankModule {
         this.lastUpdateTime = 0;
         this.roomData = null; // Данные комнаты
         this.hasLocalChanges = false; // Флаг локальных изменений
-        
-        // Инициализируем конфигурацию
-        this.financialConfig = new FinancialConfig();
         
         // Конфигурация
         this.config = {

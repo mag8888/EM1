@@ -4634,6 +4634,14 @@
     
     <!-- Банковский модуль JavaScript -->
     <script src="bank-module/config/financial-config.js"></script>
+    <script>
+        console.log('🔍 Проверка загрузки FinancialConfig:', typeof FinancialConfig);
+        if (typeof FinancialConfig !== 'undefined') {
+            console.log('✅ FinancialConfig загружен успешно');
+        } else {
+            console.error('❌ FinancialConfig не загружен!');
+        }
+    </script>
     <script src="bank-module/bank.js"></script>
 </body>
 </html>

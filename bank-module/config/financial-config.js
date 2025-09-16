@@ -114,3 +114,4 @@ class FinancialConfig {
 
 // Экспортируем как глобальный объект для совместимости
 window.FinancialConfig = FinancialConfig;
+console.log('✅ FinancialConfig загружен и доступен глобально');
