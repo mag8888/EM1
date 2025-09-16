@@ -449,6 +449,106 @@
             color: #000000;
         }
 
+        /* Угловые карточки */
+        .corner-cards {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .corner-card {
+            position: absolute;
+            width: 80px;
+            height: 100px;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 2px solid #475569;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        .corner-card:hover {
+            transform: scale(1.05);
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .card-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .card-title {
+            font-size: 10px;
+            font-weight: bold;
+            color: #e2e8f0;
+            text-align: center;
+            margin-bottom: 6px;
+            line-height: 1.2;
+        }
+
+        .card-counter {
+            display: flex;
+            gap: 4px;
+            font-size: 8px;
+            color: #94a3b8;
+        }
+
+        .deck-count {
+            background: #059669;
+            color: white;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .discard-count {
+            background: #dc2626;
+            color: white;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        /* Позиционирование карточек по углам */
+        .big-deal-card {
+            top: 20%;
+            left: 20%;
+            transform: translate(-50%, -50%);
+        }
+
+        .small-deal-card {
+            top: 20%;
+            right: 20%;
+            transform: translate(50%, -50%);
+        }
+
+        .market-card {
+            bottom: 20%;
+            left: 20%;
+            transform: translate(-50%, 50%);
+        }
+
+        .expenses-card {
+            bottom: 20%;
+            right: 20%;
+            transform: translate(50%, 50%);
+        }
+
         /* Фишки игроков */
         .player-token {
             position: absolute;
@@ -2347,6 +2447,49 @@
                     </div>
                 </div>
 
+                <!-- Угловые карточки -->
+                <div class="corner-cards">
+                    <!-- Большая сделка -->
+                    <div class="corner-card big-deal-card" id="bigDealCard">
+                        <div class="card-icon">🏢</div>
+                        <div class="card-title">Большая сделка</div>
+                        <div class="card-counter">
+                            <span class="deck-count" id="bigDealDeck">0</span>
+                            <span class="discard-count" id="bigDealDiscard">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Малая сделка -->
+                    <div class="corner-card small-deal-card" id="smallDealCard">
+                        <div class="card-icon">🏠</div>
+                        <div class="card-title">Малая сделка</div>
+                        <div class="card-counter">
+                            <span class="deck-count" id="smallDealDeck">0</span>
+                            <span class="discard-count" id="smallDealDiscard">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Рынок -->
+                    <div class="corner-card market-card" id="marketCard">
+                        <div class="card-icon">📈</div>
+                        <div class="card-title">Рынок</div>
+                        <div class="card-counter">
+                            <span class="deck-count" id="marketDeck">0</span>
+                            <span class="discard-count" id="marketDiscard">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Расходы -->
+                    <div class="corner-card expenses-card" id="expensesCard">
+                        <div class="card-icon">💸</div>
+                        <div class="card-title">Расходы</div>
+                        <div class="card-counter">
+                            <span class="deck-count" id="expensesDeck">0</span>
+                            <span class="discard-count" id="expensesDiscard">0</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Фишки игроков -->
                 <div class="player-token player-1" id="player1" style="top: 50%; left: 50%;">1</div>
                 <div class="player-token player-2" id="player2" style="top: 50%; left: 50%;">2</div>
@@ -2853,6 +2996,7 @@
             createOuterTrack();
             createInnerTrack();
             initializePlayerTokens(); // Инициализируем фишки игроков
+            initializeCornerCards(); // Инициализируем угловые карточки
             
             // Bank v3 will auto-initialize when needed
             
@@ -2897,6 +3041,62 @@
             } catch (error) {
                 console.error('❌ Ошибка инициализации игрового поля:', error);
             }
+        }
+
+        // Инициализация угловых карточек
+        function initializeCornerCards() {
+            try {
+                console.log('🃏 Инициализация угловых карточек');
+                
+                // Инициализируем счетчики карт
+                const cardTypes = ['bigDeal', 'smallDeal', 'market', 'expenses'];
+                
+                cardTypes.forEach(type => {
+                    const deckElement = document.getElementById(`${type}Deck`);
+                    const discardElement = document.getElementById(`${type}Discard`);
+                    
+                    if (deckElement && discardElement) {
+                        // Устанавливаем начальные значения
+                        deckElement.textContent = '10'; // Начальное количество карт в колоде
+                        discardElement.textContent = '0'; // Начальное количество карт в отбое
+                        
+                        // Добавляем обработчики клика
+                        const cardElement = document.getElementById(`${type}Card`);
+                        if (cardElement) {
+                            cardElement.addEventListener('click', () => {
+                                showCardInfo(type);
+                            });
+                        }
+                    }
+                });
+                
+                console.log('✅ Угловые карточки инициализированы');
+                
+            } catch (error) {
+                console.error('❌ Ошибка инициализации угловых карточек:', error);
+            }
+        }
+
+        // Показать информацию о карточке
+        function showCardInfo(cardType) {
+            const cardNames = {
+                'bigDeal': 'Большая сделка',
+                'smallDeal': 'Малая сделка',
+                'market': 'Рынок',
+                'expenses': 'Расходы'
+            };
+            
+            const cardDescriptions = {
+                'bigDeal': 'Карточки с крупными инвестиционными возможностями',
+                'smallDeal': 'Карточки с небольшими инвестиционными возможностями',
+                'market': 'Карточки рыночных событий и изменений',
+                'expenses': 'Карточки с расходами и обязательствами'
+            };
+            
+            const deckCount = document.getElementById(`${cardType}Deck`).textContent;
+            const discardCount = document.getElementById(`${cardType}Discard`).textContent;
+            
+            alert(`${cardNames[cardType]}\n\n${cardDescriptions[cardType]}\n\nКарт в колоде: ${deckCount}\nКарт в отбое: ${discardCount}`);
         }
 
         // Загрузка данных банка теперь в банковском модуле
