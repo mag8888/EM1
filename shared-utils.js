@@ -7,7 +7,7 @@
  * Получает ID комнаты из URL
  * @returns {string|null} ID комнаты или null
  */
-export function getRoomIdFromURL() {
+function getRoomIdFromURL() {
     try {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get('room_id');
@@ -21,7 +21,7 @@ export function getRoomIdFromURL() {
  * Получает индекс текущего игрока
  * @returns {number} Индекс текущего игрока
  */
-export function getCurrentPlayerIndex() {
+function getCurrentPlayerIndex() {
     try {
         const user = localStorage.getItem('user');
         if (!user) return 0;
@@ -40,7 +40,7 @@ export function getCurrentPlayerIndex() {
  * @param {string} type - Тип уведомления (success, error, info, warning)
  * @param {number} duration - Длительность показа в миллисекундах
  */
-export function showNotification(message, type = 'info', duration = 3000) {
+function showNotification(message, type = 'info', duration = 3000) {
     // Создаем элемент уведомления
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
@@ -96,7 +96,7 @@ export function showNotification(message, type = 'info', duration = 3000) {
  * Показывает индикатор загрузки
  * @param {string} message - Сообщение загрузки
  */
-export function showLoadingIndicator(message = 'Загрузка...') {
+function showLoadingIndicator(message = 'Загрузка...') {
     let indicator = document.getElementById('loadingIndicator');
     
     if (!indicator) {
@@ -138,7 +138,7 @@ export function showLoadingIndicator(message = 'Загрузка...') {
 /**
  * Скрывает индикатор загрузки
  */
-export function hideLoadingIndicator() {
+function hideLoadingIndicator() {
     const indicator = document.getElementById('loadingIndicator');
     if (indicator) {
         indicator.style.display = 'none';
@@ -149,7 +149,7 @@ export function hideLoadingIndicator() {
  * Показывает сообщение об ошибке
  * @param {string} message - Текст ошибки
  */
-export function showError(message) {
+function showError(message) {
     showNotification(message, 'error');
 }
 
@@ -157,7 +157,7 @@ export function showError(message) {
  * Показывает сообщение об успехе
  * @param {string} message - Текст сообщения
  */
-export function showSuccess(message) {
+function showSuccess(message) {
     showNotification(message, 'success');
 }
 
@@ -165,7 +165,7 @@ export function showSuccess(message) {
  * Показывает предупреждение
  * @param {string} message - Текст предупреждения
  */
-export function showWarning(message) {
+function showWarning(message) {
     showNotification(message, 'warning');
 }
 
@@ -175,7 +175,7 @@ export function showWarning(message) {
  * @param {string} currency - Валюта (по умолчанию $)
  * @returns {string} Отформатированная строка
  */
-export function formatCurrency(amount, currency = '$') {
+function formatCurrency(amount, currency = '$') {
     return `${currency}${amount.toLocaleString()}`;
 }
 
@@ -184,7 +184,7 @@ export function formatCurrency(amount, currency = '$') {
  * @param {number} seconds - Количество секунд
  * @returns {string} Отформатированное время (MM:SS)
  */
-export function formatTime(seconds) {
+function formatTime(seconds) {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
@@ -196,7 +196,7 @@ export function formatTime(seconds) {
  * @param {number} delay - Задержка в миллисекундах
  * @returns {Function} Дебаунсированная функция
  */
-export function debounce(func, delay) {
+function debounce(func, delay) {
     let timeoutId;
     return function (...args) {
         clearTimeout(timeoutId);
@@ -209,7 +209,7 @@ export function debounce(func, delay) {
  * @param {string} id - ID для проверки
  * @returns {boolean} true если ID валиден
  */
-export function isValidId(id) {
+function isValidId(id) {
     return id && typeof id === 'string' && id.length > 0;
 }
 
@@ -219,7 +219,7 @@ export function isValidId(id) {
  * @param {*} defaultValue - Значение по умолчанию
  * @returns {*} Распарсенный объект или значение по умолчанию
  */
-export function safeJsonParse(jsonString, defaultValue = null) {
+function safeJsonParse(jsonString, defaultValue = null) {
     try {
         return JSON.parse(jsonString);
     } catch (error) {

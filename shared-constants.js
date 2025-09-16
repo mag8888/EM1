@@ -4,7 +4,7 @@
  */
 
 // Финансовые константы
-export const FINANCIAL_CONSTANTS = {
+const FINANCIAL_CONSTANTS = {
     STARTING_BALANCE: 3000,
     DEFAULT_SALARY: 10000,
     DEFAULT_EXPENSES: 6200,
@@ -16,7 +16,7 @@ export const FINANCIAL_CONSTANTS = {
 };
 
 // Строковые константы
-export const STRING_CONSTANTS = {
+const STRING_CONSTANTS = {
     STARTING_SAVINGS: "Стартовые сбережения",
     TRANSFER_TO_PLAYER: "Перевод игроку",
     TRANSFER_FROM_PLAYER: "Перевод от игрока",
@@ -28,7 +28,7 @@ export const STRING_CONSTANTS = {
 };
 
 // Игровые константы
-export const GAME_CONSTANTS = {
+const GAME_CONSTANTS = {
     MAX_PLAYERS: 6,
     TURN_DURATION: 120, // секунды
     DICE_SIDES: 6,
@@ -37,7 +37,7 @@ export const GAME_CONSTANTS = {
 };
 
 // API константы
-export const API_CONSTANTS = {
+const API_CONSTANTS = {
     BASE_URL: "/api",
     ROOMS_ENDPOINT: "/api/rooms",
     AUTH_ENDPOINT: "/api/auth",
@@ -46,7 +46,7 @@ export const API_CONSTANTS = {
 };
 
 // UI константы
-export const UI_CONSTANTS = {
+const UI_CONSTANTS = {
     ANIMATION_DURATION: 1000,
     NOTIFICATION_DURATION: 3000,
     LOADING_TIMEOUT: 10000,

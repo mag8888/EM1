@@ -233,7 +233,10 @@ class BankUIService {
         }
         
         indicator.style.display = 'flex';
-        indicator.querySelector('div:last-child').textContent = message;
+        const messageElement = indicator.querySelector('div:last-child');
+        if (messageElement) {
+            messageElement.textContent = message;
+        }
     }
     
     /**
