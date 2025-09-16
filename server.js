@@ -1240,6 +1240,9 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
         console.log('=== ПЕРЕВОД ЗАВЕРШЕН ===');
         
         // Transfer history is already added by addBalance/subtractBalance functions
+        // Помечаем вложенные изменения и обновляем метку времени
+        room.updated_at = new Date();
+        room.markModified('game_data');
         
         console.log('Saving room to database...');
         console.log('Before save - player_balances:', room.game_data.player_balances);
