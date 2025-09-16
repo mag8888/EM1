@@ -15,10 +15,22 @@ class BankApiService {
      */
     getCurrentPlayerIndex(roomData) {
         const userId = this.getUserId();
-        if (!userId || !roomData?.players) return 0;
+        console.log('🔍 BankApiService: Поиск player_index', { userId, players: roomData?.players });
+        
+        if (!userId || !roomData?.players) {
+            console.warn('⚠️ BankApiService: userId или players не найдены, возвращаем 0');
+            return 0;
+        }
         
         const playerIndex = roomData.players.findIndex(player => player._id === userId);
-        return playerIndex >= 0 ? playerIndex : 0;
+        console.log('🔍 BankApiService: Найден player_index:', playerIndex);
+        
+        if (playerIndex < 0) {
+            console.warn('⚠️ BankApiService: Игрок не найден в списке, возвращаем 0');
+            return 0;
+        }
+        
+        return playerIndex;
     }
     
     /**
@@ -170,9 +182,11 @@ class BankApiService {
         
         try {
             // Сначала получаем данные комнаты чтобы найти player_index
+            console.log('📡 BankApiService: Загружаем данные комнаты для определения player_index');
             const roomData = await this.loadRoomData(roomId, userId);
             const playerIndex = this.getCurrentPlayerIndex(roomData);
             
+            console.log('📡 BankApiService: Отправляем запрос на кредит', { playerIndex, amount });
             const url = `${this.baseUrl}/rooms/${roomId}/take-credit`;
             const data = await this.makeRequest(url, {
                 method: 'POST',
@@ -182,10 +196,15 @@ class BankApiService {
                 })
             });
             
-            console.log('✅ BankApiService: Кредит запрошен успешно');
+            console.log('✅ BankApiService: Кредит запрошен успешно', data);
             return data;
         } catch (error) {
             console.error('❌ BankApiService: Ошибка запроса кредита:', error);
+            console.error('❌ BankApiService: Детали ошибки:', {
+                message: error.message,
+                status: error.status,
+                response: error.response
+            });
             throw error;
         }
     }

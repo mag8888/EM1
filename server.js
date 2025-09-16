@@ -1374,12 +1374,16 @@ app.get('/api/rooms/:id/player/:playerIndex/profession', async (req, res) => {
 // Взятие кредита
 app.post('/api/rooms/:id/take-credit', async (req, res) => {
     try {
+        console.log('💳 Server: Запрос на кредит', { roomId: req.params.id, body: req.body });
+        
         const room = await Room.findById(req.params.id);
         if (!room) {
+            console.log('❌ Server: Комната не найдена');
             return res.status(404).json({ message: 'Комната не найдена' });
         }
 
         const { player_index, amount } = req.body;
+        console.log('💳 Server: Параметры кредита', { player_index, amount });
 
         if (!room.game_data) {
             return res.status(400).json({ message: 'Игра не начата' });
