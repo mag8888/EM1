@@ -136,7 +136,7 @@ const userSchema = new mongoose.Schema({
     last_name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    balance: { type: Number, default: 3000 },
+    balance: { type: Number, default: 3000 }, // TODO: Вынести в конфигурацию
     level: { type: Number, default: 1 },
     experience: { type: Number, default: 0 },
     games_played: { type: Number, default: 0 },
@@ -1077,7 +1077,7 @@ app.post('/api/rooms/:id/start', async (req, res) => {
             console.log('💰 Начисляем стартовые сбережения всем игрокам...');
             for (let i = 0; i < room.players.length; i++) {
                 // Используем функцию добавления баланса
-                addBalance(room, i, 3000, 'Стартовые сбережения');
+                addBalance(room, i, 3000, 'Стартовые сбережения'); // TODO: Вынести в конфигурацию
                 console.log(`✅ Игрок ${i + 1} (${room.players[i].name}): +$3000 → Баланс: $${room.game_data.player_balances[i]}`);
             }
             

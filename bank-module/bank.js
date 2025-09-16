@@ -18,10 +18,13 @@ class BankModule {
         this.roomData = null; // Данные комнаты
         this.hasLocalChanges = false; // Флаг локальных изменений
         
+        // Инициализируем конфигурацию
+        this.financialConfig = new FinancialConfig();
+        
         // Конфигурация
         this.config = {
-            minTransferAmount: 1,
-            maxTransferAmount: 1000000,
+            minTransferAmount: this.financialConfig.getTransferConfig().minAmount,
+            maxTransferAmount: this.financialConfig.getTransferConfig().maxAmount,
             updateInterval: 30000, // 30 секунд
             animationDuration: 1000
         };
@@ -163,7 +166,7 @@ class BankModule {
                 console.log('Using default financial values');
                 this.totalIncome = 0;
                 this.totalExpenses = 0;
-                this.monthlyIncome = 3800; // PAYDAY значение по умолчанию
+                this.monthlyIncome = this.financialConfig.getDefaultProfession().cashFlow;
             }
             
             // Принудительно обновляем финансовую сводку
@@ -198,7 +201,7 @@ class BankModule {
                 if (player.profession_data) {
                     this.totalIncome = player.profession_data.salary || 0;
                     this.totalExpenses = player.profession_data.expenses || 0;
-                    this.monthlyIncome = player.profession_data.cash_flow || player.profession_data.cashFlow || 3800;
+                    this.monthlyIncome = player.profession_data.cash_flow || player.profession_data.cashFlow || this.financialConfig.getDefaultProfession().cashFlow;
                     this.currentCredit = 0;
                     console.log('Financial data loaded from room data:', {
                         totalIncome: this.totalIncome,
@@ -217,7 +220,7 @@ class BankModule {
                 const data = await response.json();
                 this.totalIncome = data.totalIncome || 0;
                 this.totalExpenses = data.totalExpenses || 0;
-                this.monthlyIncome = data.cashFlow || 3800;
+                this.monthlyIncome = data.cashFlow || this.financialConfig.getDefaultProfession().cashFlow;
                 this.currentCredit = data.currentCredit || 0;
                 console.log('Financial data loaded from API:', {
                     totalIncome: this.totalIncome,
@@ -229,7 +232,7 @@ class BankModule {
                 console.log('Using default financial values (API failed)');
                 this.totalIncome = 0;
                 this.totalExpenses = 0;
-                this.monthlyIncome = 3800;
+                this.monthlyIncome = this.financialConfig.getDefaultProfession().cashFlow;
                 this.currentCredit = 0;
             }
         } catch (error) {
