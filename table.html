@@ -3356,9 +3356,13 @@
             }
         }
 
-        // Создание внешнего периметра (46 квадратов) - 650x650
+        // Создание внешнего периметра (46 квадратов) - 650x650, начиная с №25
         function createOuterPerimeter() {
             const outerSquares = document.getElementById('outerSquares');
+            
+            // Очищаем существующие клетки
+            outerSquares.innerHTML = '';
+            
             const colors = ['square-green', 'square-pink', 'square-yellow', 'square-blue', 'square-orange'];
             const icons = ['📊', '💰', '🏠', '❤️', '🚗', '🎓', '☕', '🔧', '👤', '🎁', '💳', '📈', '🏢', '✈️', '🎯'];
             
@@ -3381,53 +3385,55 @@
             // Для левой и правой сторон: 11 клеток + 10 промежутков по 1px  
             const leftRightSpacing = (availableLength - (leftRightCells * cellSize)) / (leftRightCells - 1);
             
-            let cellIndex = 0;
+            let cellNumber = 25; // Начинаем с номера 25
             
-            // Верхняя сторона (12 клеток)
+            // Верхняя сторона (12 клеток) - слева направо
             for (let i = 0; i < topBottomCells; i++) {
-                const square = createOuterCell(cellIndex + 24, colors, icons);
+                const square = createOuterCell(cellNumber, colors, icons);
                 const x = cellSize/2 + i * (cellSize + topBottomSpacing);
                 const y = cellSize/2;
                 positionOuterCell(square, x, y);
                 outerSquares.appendChild(square);
-                cellIndex++;
+                cellNumber++;
             }
             
-            // Правая сторона (11 клеток)
+            // Правая сторона (11 клеток) - сверху вниз
             for (let i = 0; i < leftRightCells; i++) {
-                const square = createOuterCell(cellIndex + 24, colors, icons);
+                const square = createOuterCell(cellNumber, colors, icons);
                 const x = sideLength - cellSize/2;
                 const y = cellSize/2 + (i + 1) * (cellSize + leftRightSpacing);
                 positionOuterCell(square, x, y);
                 outerSquares.appendChild(square);
-                cellIndex++;
+                cellNumber++;
             }
             
-            // Нижняя сторона (12 клеток, справа налево)
+            // Нижняя сторона (12 клеток) - справа налево
             for (let i = 0; i < topBottomCells; i++) {
-                const square = createOuterCell(cellIndex + 24, colors, icons);
+                const square = createOuterCell(cellNumber, colors, icons);
                 const x = sideLength - cellSize/2 - i * (cellSize + topBottomSpacing);
                 const y = sideLength - cellSize/2;
                 positionOuterCell(square, x, y);
                 outerSquares.appendChild(square);
-                cellIndex++;
+                cellNumber++;
             }
             
-            // Левая сторона (11 клеток, снизу вверх)
+            // Левая сторона (11 клеток) - снизу вверх
             for (let i = 0; i < leftRightCells; i++) {
-                const square = createOuterCell(cellIndex + 24, colors, icons);
+                const square = createOuterCell(cellNumber, colors, icons);
                 const x = cellSize/2;
                 const y = sideLength - cellSize/2 - (i + 1) * (cellSize + leftRightSpacing);
                 positionOuterCell(square, x, y);
                 outerSquares.appendChild(square);
-                cellIndex++;
+                cellNumber++;
             }
+            
+            console.log(`✅ Создано ${totalSquares} клеток по периметру (номера 25-${cellNumber - 1})`);
         }
 
         // Создание внешней клетки
         function createOuterCell(cellNumber, colors, icons) {
             const square = document.createElement('div');
-            square.className = `outer-square ${colors[(cellNumber - 24) % colors.length]}`;
+            square.className = `outer-square ${colors[(cellNumber - 25) % colors.length]}`;
             square.dataset.cell = cellNumber;
             square.onclick = () => showCellInfo(cellNumber);
             
@@ -3440,7 +3446,7 @@
             // Добавляем иконку
             const icon = document.createElement('div');
             icon.className = 'square-icon';
-            icon.textContent = icons[(cellNumber - 24) % icons.length];
+            icon.textContent = icons[(cellNumber - 25) % icons.length];
             square.appendChild(icon);
             
             return square;
@@ -3560,7 +3566,7 @@
             return { missingCells, duplicateTypes };
         }
 
-        // Функция для получения данных внешней клетки (46 клеток: 24-69)
+        // Функция для получения данных внешней клетки (46 клеток: 25-70)
         function getOuterCellData(cellNumber) {
             const outerCellTypes = [
                 'Доход', 'Расход', 'Инвестиция', 'Недвижимость', 'Бизнес', 
@@ -3573,8 +3579,8 @@
                 '❤️', '🎯', '⚠️', '⭐'
             ];
             
-            const typeIndex = (cellNumber - 24) % outerCellTypes.length;
-            const iconIndex = (cellNumber - 24) % outerCellIcons.length;
+            const typeIndex = (cellNumber - 25) % outerCellTypes.length;
+            const iconIndex = (cellNumber - 25) % outerCellIcons.length;
             
             return {
                 name: `Клетка ${cellNumber}`,
@@ -3999,7 +4005,7 @@
                 // Малый круг (0-23)
                 cell = innerCellData[cellNumber];
             } else {
-                // Внешний периметр (24-69)
+                // Внешний периметр (25-70)
                 cell = getOuterCellData(cellNumber);
             }
             
