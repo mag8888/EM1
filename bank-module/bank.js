@@ -143,6 +143,11 @@ class BankModule {
                 console.log('Transfers history loaded from server:', this.transfersHistory.length, 'transfers');
             } else if (this.hasLocalChanges) {
                 console.log('🛡️ Локальные изменения в истории, сохраняем текущую историю');
+                // Не перезаписываем историю, но проверяем, есть ли новые переводы на сервере
+                if (data.game_data?.transfers_history && data.game_data.transfers_history.length > this.transfersHistory.length) {
+                    console.log('🔄 Обнаружены новые переводы на сервере, обновляем историю');
+                    this.transfersHistory = data.game_data.transfers_history;
+                }
             }
             
             // Загружаем финансовые данные
@@ -600,8 +605,8 @@ class BankModule {
                 this.transfersHistory.unshift(newTransfer);
                 console.log('📝 Добавлен перевод в локальную историю:', newTransfer);
                 
-                // Показываем уведомление получателю (если это другой игрок)
-                this.showRecipientNotification(recipientName, transferAmount);
+                // Показываем уведомление отправителю о том, что перевод отправлен
+                this.showTransferSentNotification(recipientName, transferAmount);
                 
                 // Обновляем UI сразу
                 this.updateBankUI();
@@ -938,11 +943,14 @@ class BankModule {
             
             if (playerIndex === -1) return;
             
+            console.log('🔍 Проверка входящих переводов для игрока:', playerIndex, 'Текущий баланс:', this.currentBalance);
+            
             // Проверяем, изменился ли баланс (получен перевод)
             const serverBalance = data.game_data?.player_balances?.[playerIndex] || 0;
             if (serverBalance > this.currentBalance) {
                 const difference = serverBalance - this.currentBalance;
                 console.log('💰 Получен перевод! Баланс увеличился на:', difference);
+                console.log('💰 Текущий игрок:', playerIndex, 'Баланс:', this.currentBalance, '→', serverBalance);
                 
                 // Обновляем баланс
                 const oldBalance = this.currentBalance;
@@ -956,6 +964,9 @@ class BankModule {
                 
                 // Показываем уведомление
                 this.showIncomingTransferNotification(difference);
+                
+                // Обновляем историю переводов
+                this.updateTransfersHistory();
             }
             
         } catch (error) {
@@ -1012,6 +1023,60 @@ class BankModule {
                 notification.parentNode.removeChild(notification);
             }
         }, 3000);
+    }
+
+    /**
+     * Показать уведомление об отправке перевода
+     */
+    showTransferSentNotification(recipientName, amount) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: bold;
+            z-index: 2000;
+            animation: slideInDown 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        `;
+        
+        notification.innerHTML = `
+            <div style="font-size: 1.1rem; text-align: center;">
+                ✈️ Перевод отправлен
+            </div>
+            <div style="font-size: 1.3rem; text-align: center; margin-top: 5px;">
+                $${amount.toLocaleString()} → ${recipientName}
+            </div>
+        `;
+        
+        // Добавляем CSS анимацию
+        if (!document.getElementById('transferSentCSS')) {
+            const style = document.createElement('style');
+            style.id = 'transferSentCSS';
+            style.textContent = `
+                @keyframes slideInDown {
+                    from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+                    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(notification);
+        
+        // Удаляем уведомление через 3 секунды
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 3000);
+        
+        console.log(`✈️ Уведомление об отправке: $${amount} → ${recipientName}`);
     }
 
     /**
