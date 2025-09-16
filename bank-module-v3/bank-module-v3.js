@@ -3,6 +3,8 @@ if (typeof window.BankModule === 'undefined') {
   console.warn('BankModule base not found. Load bank-module-v2 core files first.');
 }
 
+let bankModuleInstance = null;
+
 async function ensureBankModalV3() {
   if (!document.getElementById('bankModal')) {
     const resp = await fetch('/bank-module-v3/bank-modal.html', { cache: 'no-store' });
@@ -17,18 +19,38 @@ async function ensureBankModalV3() {
 async function initBankModuleV3() {
   await ensureBankModalV3();
   if (!window.BankModule) return null;
-  const instance = new window.BankModule();
-  await instance.init();
-  return instance;
+  bankModuleInstance = new window.BankModule();
+  await bankModuleInstance.init();
+  return bankModuleInstance;
 }
 
 async function openBankV3() {
-  const m = window.getBankModule ? window.getBankModule() : null;
-  if (m) return m.openBank();
-  const created = await initBankModuleV3();
-  return created?.openBank();
+  if (!bankModuleInstance) {
+    await initBankModuleV3();
+  }
+  if (bankModuleInstance) {
+    return bankModuleInstance.openBank();
+  }
+  console.error('Failed to initialize bank module');
 }
 
+function processTransfer() {
+  if (bankModuleInstance) {
+    return bankModuleInstance.executeTransfer();
+  }
+  console.error('Bank module not initialized');
+}
+
+function resetTransferForm() {
+  if (bankModuleInstance) {
+    return bankModuleInstance.resetTransferForm();
+  }
+  console.error('Bank module not initialized');
+}
+
+// Make functions globally available
 window.initBankModuleV3 = initBankModuleV3;
 window.openBankV3 = openBankV3;
+window.processTransfer = processTransfer;
+window.resetTransferForm = resetTransferForm;
 
