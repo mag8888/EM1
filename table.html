@@ -3077,6 +3077,14 @@
             }
         }
         
+        function closeBankModal() {
+            if (bankModule) {
+                bankModule.closeBankModal();
+            } else {
+                console.error('Bank module not initialized');
+            }
+        }
+        
         function openCreditModal() {
             if (bankModule) {
                 bankModule.openCreditModal();
@@ -3678,6 +3686,12 @@
                 
                 const userData = JSON.parse(user);
                 const response = await fetch(`/api/rooms/${roomId}?user_id=${userData.id}`);
+                
+                if (!response.ok) {
+                    console.warn('Failed to load room data for updateCurrentPlayer:', response.status);
+                    return;
+                }
+                
                 const data = await response.json();
                 
                 if (response.ok && data.players && data.players.length > 0) {

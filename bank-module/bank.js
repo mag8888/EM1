@@ -132,10 +132,12 @@ class BankModule {
                     console.log('Player not found in room, user.id:', user.id, 'players:', data.players.map(p => p.user_id));
                 }
             
-            // Загружаем историю переводов
-            if (data.game_data?.transfers_history) {
+            // Загружаем историю переводов только если нет локальных изменений
+            if (data.game_data?.transfers_history && !this.hasLocalChanges) {
                 this.transfersHistory = data.game_data.transfers_history;
-                console.log('Transfers history loaded:', this.transfersHistory.length, 'transfers');
+                console.log('Transfers history loaded from server:', this.transfersHistory.length, 'transfers');
+            } else if (this.hasLocalChanges) {
+                console.log('🛡️ Локальные изменения в истории, сохраняем текущую историю');
             }
             
             // Загружаем финансовые данные
@@ -459,6 +461,18 @@ class BankModule {
         console.log('Opening credit modal...');
         // Простая реализация - можно расширить позже
         alert('Кредитный модуль в разработке');
+    }
+
+    /**
+     * Закрытие банковского модального окна
+     */
+    closeBankModal() {
+        const modal = document.getElementById('bankModal');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('modal-show');
+            console.log('Bank modal closed');
+        }
     }
 
     /**

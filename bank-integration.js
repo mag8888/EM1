@@ -3,7 +3,7 @@
  * Подключение банковского модуля к table.html
  */
 
-let bankModule;
+// bankModule объявлена в table.html
 
 // Инициализация банковского модуля
 async function initBankModule() {
