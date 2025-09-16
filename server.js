@@ -1432,9 +1432,13 @@ app.post('/api/rooms/:id/take-credit', async (req, res) => {
         });
 
         // Добавляем деньги на баланс
+        console.log('💳 Server: Добавляем деньги на баланс', { player_index, amount });
         addBalance(room, player_index, amount, `Кредит на $${amount.toLocaleString()}`);
+        console.log('💳 Server: Баланс после добавления:', room.game_data.player_balances[player_index]);
 
+        console.log('💳 Server: Сохраняем комнату');
         await room.save();
+        console.log('💳 Server: Комната сохранена успешно');
 
         res.json({
             success: true,
@@ -1445,8 +1449,9 @@ app.post('/api/rooms/:id/take-credit', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error taking credit:', error);
-        res.status(500).json({ message: 'Ошибка сервера' });
+        console.error('❌ Server: Ошибка при взятии кредита:', error);
+        console.error('❌ Server: Stack trace:', error.stack);
+        res.status(500).json({ message: 'Ошибка сервера', error: error.message });
     }
 });
 
