@@ -538,6 +538,15 @@
                     localStorage.setItem('authToken', data.token);
                     localStorage.setItem('user', JSON.stringify(normalizedUser));
                     
+                    // Сохраняем email и rememberMe если выбрано
+                    if (rememberMe) {
+                        localStorage.setItem('rememberedEmail', email);
+                        localStorage.setItem('rememberMe', 'true');
+                    } else {
+                        localStorage.removeItem('rememberedEmail');
+                        localStorage.removeItem('rememberMe');
+                    }
+                    
                     console.log('User logged in successfully:', normalizedUser);
                     console.log('User ID:', normalizedUser.id);
                     
@@ -630,8 +639,25 @@
             if (token) {
                 // Пользователь уже авторизован, перенаправляем
                 window.location.href = '/';
+            } else {
+                // Загружаем сохраненные данные для формы входа
+                loadSavedCredentials();
             }
         });
+        
+        // Загрузка сохраненных данных для формы входа
+        function loadSavedCredentials() {
+            const rememberedEmail = localStorage.getItem('rememberedEmail');
+            const rememberMe = localStorage.getItem('rememberMe');
+            
+            if (rememberedEmail) {
+                document.getElementById('loginEmail').value = rememberedEmail;
+            }
+            
+            if (rememberMe === 'true') {
+                document.getElementById('rememberMe').checked = true;
+            }
+        }
     </script>
 </body>
 </html>

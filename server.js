@@ -318,7 +318,7 @@ app.post('/api/auth/login', async (req, res) => {
             });
         }
 
-        const { email, password } = req.body;
+        const { email, password, rememberMe } = req.body;
 
         // Поиск пользователя
         const user = await User.findOne({
@@ -340,7 +340,8 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(401).json({ message: 'Аккаунт заблокирован' });
         }
 
-        // Генерация токена
+        // Генерация токена с разным временем жизни в зависимости от rememberMe
+        const tokenExpiry = rememberMe ? '30d' : '24h';
         const token = jwt.sign(
             { 
                 userId: user._id, 
@@ -348,7 +349,7 @@ app.post('/api/auth/login', async (req, res) => {
                 telegramId: user.telegram_id 
             },
             JWT_SECRET,
-            { expiresIn: '24h' }
+            { expiresIn: tokenExpiry }
         );
 
         // Возврат данных пользователя (без пароля)
