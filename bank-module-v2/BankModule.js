@@ -16,6 +16,9 @@ class BankModule {
         this.isInitialized = false;
         this.updateInterval = null;
         this.incomingTransfersInterval = null;
+        // Отслеживание версии и ожидаемого состояния
+        this.serverVersion = 0; // timestamp updated_at
+        this.expectedBalanceAfterTransfer = null;
         
         // Привязываем контекст методов
         this.handleStateChange = this.handleStateChange.bind(this);
@@ -226,16 +229,33 @@ class BankModule {
             
             const roomData = await this.apiService.loadRoomData(roomId, userId);
             const playerIndex = this.getCurrentPlayerIndex(roomData);
-            
+
+            // Метка версии
+            const version = new Date(roomData.updated_at || roomData.game_start_time || Date.now()).getTime();
+            const serverBalance = roomData?.game_data?.player_balances?.[playerIndex] ?? 0;
+
             // Обновляем данные комнаты
             this.core.setRoomData(roomData);
             this.core.setCurrentPlayerIndex(playerIndex);
-            
-            // Обновляем состояние если нужно
-            if (forceUpdate || !this.core.state.hasLocalChanges) {
-                this.updateStateFromRoomData(roomData, playerIndex);
+
+            if (this.core.state.hasLocalChanges && this.expectedBalanceAfterTransfer !== null) {
+                if (serverBalance === this.expectedBalanceAfterTransfer) {
+                    console.log('✅ Server confirmed expected balance:', serverBalance);
+                    this.updateStateFromRoomData(roomData, playerIndex);
+                    this.core.setLocalChanges(false);
+                    this.expectedBalanceAfterTransfer = null;
+                    this.serverVersion = version;
+                } else {
+                    console.log('🛡️ Waiting for server confirmation. Server:', serverBalance, 'Expected:', this.expectedBalanceAfterTransfer);
+                    return; // не перезаписываем локальные изменения
+                }
             } else {
-                console.log('🛡️ BankModule: Локальные изменения обнаружены, пропускаем обновление');
+                if (forceUpdate || version > this.serverVersion || !this.serverVersion) {
+                    this.updateStateFromRoomData(roomData, playerIndex);
+                    this.serverVersion = version;
+                } else {
+                    console.log('⏭️ Skip stale update. serverVersion:', version, 'localVersion:', this.serverVersion);
+                }
             }
             
             console.log('✅ BankModule: Данные банка загружены');
@@ -322,10 +342,11 @@ class BankModule {
                 throw apiError;
             }
             
-            // Обновляем локальное состояние
+            // Обновляем локальное состояние и ожидаем подтверждения сервера
             const newBalance = currentBalance - amount;
             this.core.updateBalance(newBalance, 'outgoingTransfer');
             this.core.setLocalChanges(true);
+            this.expectedBalanceAfterTransfer = newBalance;
             
             // Добавляем перевод в историю
             const transfer = {
@@ -344,11 +365,8 @@ class BankModule {
             // Сбрасываем форму
             this.uiService.resetTransferForm();
 
-            // Синхронизируем с сервером через 5 секунд
-            setTimeout(() => {
-                this.loadBankData(true);
-                this.core.setLocalChanges(false);
-            }, 5000);
+            // Дожидаемся подтверждения сервера несколькими попытками
+            await this.waitForServerConfirmation(5, 1000);
             
             console.log('✅ BankModule: Перевод выполнен успешно');
             
@@ -359,6 +377,21 @@ class BankModule {
             this.uiService.hideLoadingIndicator();
             this.core.setLoading(false);
         }
+    }
+
+    /**
+     * Дождаться подтверждения баланса с сервера (ретраи)
+     */
+    async waitForServerConfirmation(maxTries = 5, delayMs = 1000) {
+        for (let i = 1; i <= maxTries; i++) {
+            await this.loadBankData(true);
+            if (!this.core.state.hasLocalChanges && this.expectedBalanceAfterTransfer === null) {
+                return true;
+            }
+            await new Promise(r => setTimeout(r, delayMs));
+        }
+        console.warn('⚠️ Server confirmation timed out. Local changes remain protected.');
+        return false;
     }
 
     /**
