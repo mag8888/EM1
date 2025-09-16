@@ -83,7 +83,6 @@ async function openCreditModalV3() {
   if (!bankModuleInstance) {
     await initBankModuleV3();
   }
-  await openBankV3();
   const defaultAmount = 1000;
   const input = prompt('Введите сумму кредита (шаг 1000)', String(defaultAmount));
   if (input === null) return; // cancel
@@ -94,7 +93,15 @@ async function openCreditModalV3() {
   }
   if (bankModuleInstance?.requestCredit) {
     // Обновлённый метод поддерживает сумму как параметр (fallback на авто)
-    try { await bankModuleInstance.requestCredit(amount); } catch (e) { console.error(e); }
+    try {
+      await bankModuleInstance.requestCredit(amount);
+      // Обновляем данные без открытия окна банка
+      if (bankModuleInstance.loadBankData) {
+        await bankModuleInstance.loadBankData(true);
+      }
+      // Ненавязчивое уведомление
+      try { console.log('✅ Кредит зачислен: ' + amount); } catch (_) {}
+    } catch (e) { console.error(e); }
   } else {
     alert('Кредитный модуль недоступен');
   }
