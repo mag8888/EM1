@@ -4,9 +4,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const path = require('path');
+const ServerConfig = require('./server-config');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Инициализируем конфигурацию сервера
+const serverConfig = new ServerConfig();
 
 // Функции для работы с балансом
 function addBalance(room, playerIndex, amount, description = '') {
@@ -91,8 +95,8 @@ console.log('MongoDB URI:', MONGODB_URI ? 'Set' : 'Not set');
 mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 10000, // Увеличиваем timeout до 10 секунд
-    socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+    serverSelectionTimeoutMS: serverConfig.getDatabase().serverSelectionTimeoutMS,
+    socketTimeoutMS: serverConfig.getDatabase().socketTimeoutMS,
     maxPoolSize: 10, // Maintain up to 10 socket connections
     serverApi: { version: '1', strict: true, deprecationErrors: true }
 })
@@ -136,7 +140,7 @@ const userSchema = new mongoose.Schema({
     last_name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    balance: { type: Number, default: 3000 }, // TODO: Вынести в конфигурацию
+    balance: { type: Number, default: serverConfig.getStartingBalance() },
     level: { type: Number, default: 1 },
     experience: { type: Number, default: 0 },
     games_played: { type: Number, default: 0 },
@@ -176,9 +180,9 @@ const roomSchema = new mongoose.Schema({
         profession_data: {
             name: { type: String, default: 'Предприниматель' },
             description: { type: String, default: 'Владелец успешного бизнеса' },
-            salary: { type: Number, default: 10000 },
-            expenses: { type: Number, default: 6200 },
-            cash_flow: { type: Number, default: 3800 },
+            salary: { type: Number, default: serverConfig.getFinancial().defaultProfession.salary },
+            expenses: { type: Number, default: serverConfig.getFinancial().defaultProfession.expenses },
+            cash_flow: { type: Number, default: serverConfig.getFinancial().defaultProfession.cashFlow },
             debts: [{
                 name: { type: String },
                 monthly_payment: { type: Number },
@@ -186,7 +190,7 @@ const roomSchema = new mongoose.Schema({
             }]
         },
         position: { type: Number, default: 0 },
-        balance: { type: Number, default: 10000 },
+        balance: { type: Number, default: serverConfig.getRoom().defaultBalance },
         is_ready: { type: Boolean, default: false },
         selected_dream: { type: Number, default: null }
     }],
@@ -1043,7 +1047,7 @@ app.post('/api/rooms/:id/start', async (req, res) => {
                 totalExpenses: 0,
                 monthlyIncome: 0,
                 currentCredit: 0,
-                maxCredit: 10000
+                maxCredit: serverConfig.getMaxCredit()
             })),
             player_professions: Array.from({ length: room.players.length }, () => ({
                 name: 'Предприниматель',
@@ -1077,7 +1081,7 @@ app.post('/api/rooms/:id/start', async (req, res) => {
             console.log('💰 Начисляем стартовые сбережения всем игрокам...');
             for (let i = 0; i < room.players.length; i++) {
                 // Используем функцию добавления баланса
-                addBalance(room, i, 3000, 'Стартовые сбережения'); // TODO: Вынести в конфигурацию
+                addBalance(room, i, serverConfig.getStartingBalance(), 'Стартовые сбережения');
                 console.log(`✅ Игрок ${i + 1} (${room.players[i].name}): +$3000 → Баланс: $${room.game_data.player_balances[i]}`);
             }
             
@@ -1182,7 +1186,7 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
                     totalExpenses: 0,
                     monthlyIncome: 0,
                     currentCredit: 0,
-                    maxCredit: 10000
+                    maxCredit: serverConfig.getMaxCredit()
                 })),
                 transfers_history: []
             };
@@ -1385,11 +1389,11 @@ app.post('/api/rooms/:id/take-credit', async (req, res) => {
         const profession = room.game_data.player_professions[player_index];
         
         // Валидация
-        if (!amount || amount < 1000 || amount % 1000 !== 0) {
-            return res.status(400).json({ message: 'Сумма должна быть кратной 1000$' });
+        if (!amount || amount < serverConfig.getCredit().minAmount || amount % serverConfig.getCreditStep() !== 0) {
+            return res.status(400).json({ message: `Сумма должна быть кратной ${serverConfig.getCreditStep()}$` });
         }
 
-        const monthlyPayment = Math.floor(amount / 1000) * 100;
+        const monthlyPayment = Math.floor(amount / serverConfig.getCreditStep()) * serverConfig.getCreditPaymentRate();
         const newCashFlow = profession.cashFlow - monthlyPayment;
 
         if (newCashFlow < 0) {
@@ -1459,7 +1463,7 @@ app.post('/api/rooms/:id/payoff-credit', async (req, res) => {
         }
 
         // Рассчитываем возврат денежного потока
-        const monthlyPayment = Math.floor(payoffAmount / 1000) * 100;
+        const monthlyPayment = Math.floor(payoffAmount / serverConfig.getCreditStep()) * serverConfig.getCreditPaymentRate();
         const newCashFlow = profession.cashFlow + monthlyPayment;
 
         // Обновляем данные
@@ -1891,8 +1895,8 @@ app.get('/api/admin/all-rooms', async (req, res) => {
 // Функция очистки старых комнат
 async function cleanupOldRooms() {
     try {
-        const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
-        const oneHourAgo = new Date(Date.now() - 1 * 60 * 60 * 1000);
+        const sixHoursAgo = new Date(Date.now() - serverConfig.getRoom().oldRoomThreshold);
+        const oneHourAgo = new Date(Date.now() - serverConfig.getRoom().oneHourThreshold);
         
         // Удаляем только комнаты, где игра началась более 6 часов назад
         // ИЛИ комнаты без игроков старше 1 часа (игра не началась)
@@ -1977,7 +1981,7 @@ const server = app.listen(PORT, () => {
     cleanupOldRooms();
     
     // Очищаем старые комнаты каждые 2 часа
-    setInterval(cleanupOldRooms, 2 * 60 * 60 * 1000);
+    setInterval(cleanupOldRooms, serverConfig.getRoom().cleanupInterval);
     
     // Мониторинг памяти каждые 5 минут
     setInterval(() => {
@@ -1988,5 +1992,5 @@ const server = app.listen(PORT, () => {
             heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + ' MB',
             external: Math.round(memUsage.external / 1024 / 1024) + ' MB'
         });
-    }, 5 * 60 * 1000);
+    }, serverConfig.getRoom().healthCheckInterval);
 });
