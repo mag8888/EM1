@@ -11,6 +11,39 @@ class BankApiService {
     }
     
     /**
+     * Получить индекс текущего игрока
+     */
+    getCurrentPlayerIndex(roomData) {
+        const userId = this.getUserId();
+        if (!userId || !roomData?.players) return 0;
+        
+        const playerIndex = roomData.players.findIndex(player => player._id === userId);
+        return playerIndex >= 0 ? playerIndex : 0;
+    }
+    
+    /**
+     * Получить ID пользователя
+     */
+    getUserId() {
+        // Попробуем получить из localStorage
+        const stored = localStorage.getItem('user_id');
+        if (stored) return stored;
+        
+        // Попробуем получить из URL параметров
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('user_id');
+        if (userId) {
+            localStorage.setItem('user_id', userId);
+            return userId;
+        }
+        
+        // Fallback - генерируем случайный ID
+        const randomId = 'user_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('user_id', randomId);
+        return randomId;
+    }
+    
+    /**
      * Выполнить HTTP запрос
      */
     async makeRequest(url, options = {}) {
@@ -136,11 +169,15 @@ class BankApiService {
         console.log('💳 BankApiService: Запрос кредита', { roomId, userId, amount });
         
         try {
-            const url = `${this.baseUrl}/rooms/${roomId}/credit`;
+            // Сначала получаем данные комнаты чтобы найти player_index
+            const roomData = await this.loadRoomData(roomId, userId);
+            const playerIndex = this.getCurrentPlayerIndex(roomData);
+            
+            const url = `${this.baseUrl}/rooms/${roomId}/take-credit`;
             const data = await this.makeRequest(url, {
                 method: 'POST',
                 body: JSON.stringify({
-                    user_id: userId,
+                    player_index: playerIndex,
                     amount: amount
                 })
             });
@@ -160,11 +197,15 @@ class BankApiService {
         console.log('💳 BankApiService: Погашение кредита', { roomId, userId, amount });
         
         try {
+            // Сначала получаем данные комнаты чтобы найти player_index
+            const roomData = await this.loadRoomData(roomId, userId);
+            const playerIndex = this.getCurrentPlayerIndex(roomData);
+            
             const url = `${this.baseUrl}/rooms/${roomId}/payoff-credit`;
             const data = await this.makeRequest(url, {
                 method: 'POST',
                 body: JSON.stringify({
-                    user_id: userId,
+                    player_index: playerIndex,
                     amount: amount
                 })
             });
