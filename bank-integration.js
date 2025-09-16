@@ -8,15 +8,14 @@
 // Инициализация банковского модуля
 async function initBankModule() {
     try {
-        // Загружаем банковский модуль
-        const script = document.createElement('script');
-        script.src = 'bank-module/bank.js';
-        script.onload = async () => {
+        // Банковский модуль уже загружен через script tag в table.html
+        if (typeof BankModule !== 'undefined') {
             bankModule = new BankModule();
             await bankModule.init();
             console.log('✅ Bank Module initialized successfully');
-        };
-        document.head.appendChild(script);
+        } else {
+            console.warn('BankModule class not found. Make sure bank-module/bank.js is loaded.');
+        }
     } catch (error) {
         console.error('❌ Error initializing Bank Module:', error);
     }
@@ -73,10 +72,7 @@ async function processTransfer() {
     }
 }
 
-// Инициализируем модуль при загрузке страницы
-document.addEventListener('DOMContentLoaded', () => {
-    initBankModule();
-});
+// Инициализация происходит в table.html
 
 // Экспортируем функции для глобального использования
 window.loadBankData = loadBankData;
