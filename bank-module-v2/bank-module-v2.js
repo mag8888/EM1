@@ -30,10 +30,33 @@ let bankModuleInstance = null;
 /**
  * Инициализировать банковский модуль
  */
+async function ensureBankModalInDOM() {
+    try {
+        if (!document.getElementById('bankModal')) {
+            console.log('🧩 BankModule v2: Вставляю разметку модала в DOM');
+            const response = await fetch('/bank-module-v2/bank-modal.html', { cache: 'no-store' });
+            const html = await response.text();
+            const temp = document.createElement('div');
+            temp.innerHTML = html.trim();
+            const modal = temp.firstElementChild;
+            if (modal) {
+                document.body.appendChild(modal);
+            } else {
+                console.warn('⚠️ BankModule v2: Не удалось распарсить bank-modal.html');
+            }
+        }
+    } catch (e) {
+        console.error('❌ BankModule v2: Ошибка вставки модала в DOM', e);
+    }
+}
+
 async function initBankModule() {
     console.log('🚀 Инициализация BankModule v2');
     
     try {
+        // Убедимся, что разметка модала присутствует
+        await ensureBankModalInDOM();
+        
         // Создаем экземпляр модуля
         bankModuleInstance = new window.BankModule();
         
