@@ -22,7 +22,11 @@ class BankApiService {
             return 0;
         }
         
-        const playerIndex = roomData.players.findIndex(player => player._id === userId);
+        // Показываем все ID игроков для отладки
+        const playerIds = roomData.players.map((player, index) => ({ index, _id: player._id, user_id: player.user_id, name: player.name }));
+        console.log('🔍 BankApiService: Все игроки:', playerIds);
+        
+        const playerIndex = roomData.players.findIndex(player => player.user_id === userId);
         console.log('🔍 BankApiService: Найден player_index:', playerIndex);
         
         if (playerIndex < 0) {
