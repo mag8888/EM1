@@ -16,13 +16,24 @@ class BankUIService {
     updateBalanceDisplay(balance) {
         console.log('💰 BankUIService: Обновление отображения баланса', balance);
         
+        const formatted = `$${Number(balance || 0).toLocaleString()}`;
+        // Модальное окно
         const balanceElement = document.getElementById('currentBalance');
         if (balanceElement) {
-            balanceElement.textContent = `$${balance.toLocaleString()}`;
-            console.log('✅ BankUIService: Баланс обновлен в UI');
+            balanceElement.textContent = formatted;
         } else {
-            console.warn('⚠️ BankUIService: Элемент баланса не найден');
+            console.warn('⚠️ BankUIService: Элемент баланса (modal) не найден');
         }
+
+        // Внешняя карточка на боковой панели
+        const previewBalance = document.getElementById('bankBalance');
+        if (previewBalance) {
+            previewBalance.textContent = formatted;
+        } else {
+            console.warn('⚠️ BankUIService: Элемент баланса (sidebar) не найден');
+        }
+        
+        console.log('✅ BankUIService: Баланс обновлен в UI');
     }
     
     /**
