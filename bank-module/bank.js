@@ -79,38 +79,51 @@ class BankModule {
             // Сохраняем данные комнаты в глобальную переменную
             this.roomData = data;
             
-            // Обновляем баланс
-            const playerIndex = data.players.findIndex(p => p.user_id === user.id);
-            
-            if (playerIndex !== -1) {
-                let newBalance = this.currentBalance; // Сохраняем текущий баланс по умолчанию
+                // Обновляем баланс
+                const playerIndex = data.players.findIndex(p => p.user_id === user.id);
                 
-                // Сначала проверяем новую структуру (game_data.player_balances)
-                if (data.game_data?.player_balances?.[playerIndex] !== undefined) {
-                    newBalance = data.game_data.player_balances[playerIndex];
-                    console.log('Balance loaded from game_data.player_balances:', newBalance, 'for player', playerIndex);
-                } 
-                // Если нет, используем старую структуру (players[].balance)
-                else if (data.players[playerIndex]?.balance !== undefined) {
-                    newBalance = data.players[playerIndex].balance;
-                    console.log('Balance loaded from players[].balance:', newBalance, 'for player', playerIndex);
-                }
-                
-                // Обновляем баланс с сервера (принудительно или если это пополнение)
-                if (forceUpdate || newBalance > this.currentBalance) {
-                    const oldBalance = this.currentBalance;
-                    this.currentBalance = newBalance;
-                    this.lastUpdateTime = Date.now();
-                    console.log('Balance updated from server:', oldBalance, '→', newBalance, 'forceUpdate:', forceUpdate);
+                if (playerIndex !== -1) {
+                    let newBalance = this.currentBalance; // Сохраняем текущий баланс по умолчанию
                     
-                    // Показываем анимацию изменения баланса
-                    this.animateBalanceChange(oldBalance, newBalance);
+                    // Сначала проверяем новую структуру (game_data.player_balances)
+                    if (data.game_data?.player_balances?.[playerIndex] !== undefined) {
+                        newBalance = data.game_data.player_balances[playerIndex];
+                        console.log('Balance loaded from game_data.player_balances:', newBalance, 'for player', playerIndex);
+                    } 
+                    // Если нет, используем старую структуру (players[].balance)
+                    else if (data.players[playerIndex]?.balance !== undefined) {
+                        newBalance = data.players[playerIndex].balance;
+                        console.log('Balance loaded from players[].balance:', newBalance, 'for player', playerIndex);
+                    }
+                    
+                    // ВСЕГДА обновляем баланс с сервера при принудительном обновлении
+                    if (forceUpdate) {
+                        const oldBalance = this.currentBalance;
+                        this.currentBalance = newBalance;
+                        this.lastUpdateTime = Date.now();
+                        console.log('Balance updated from server (force):', oldBalance, '→', newBalance);
+                        
+                        // Показываем анимацию изменения баланса только если баланс изменился
+                        if (oldBalance !== newBalance) {
+                            this.animateBalanceChange(oldBalance, newBalance);
+                        }
+                    } else {
+                        // При обычном обновлении обновляем только если баланс увеличился (пополнение)
+                        if (newBalance > this.currentBalance) {
+                            const oldBalance = this.currentBalance;
+                            this.currentBalance = newBalance;
+                            this.lastUpdateTime = Date.now();
+                            console.log('Balance updated from server (increase):', oldBalance, '→', newBalance);
+                            
+                            // Показываем анимацию изменения баланса
+                            this.animateBalanceChange(oldBalance, newBalance);
+                        } else {
+                            console.log('Keeping current balance:', this.currentBalance, '(new:', newBalance, ')');
+                        }
+                    }
                 } else {
-                    console.log('Keeping current balance:', this.currentBalance, '(new:', newBalance, ')', 'forceUpdate:', forceUpdate);
+                    console.log('Player not found in room, user.id:', user.id, 'players:', data.players.map(p => p.user_id));
                 }
-            } else {
-                console.log('Player not found in room, user.id:', user.id, 'players:', data.players.map(p => p.user_id));
-            }
             
             // Загружаем историю переводов
             if (data.game_data?.transfers_history) {
@@ -120,6 +133,14 @@ class BankModule {
             
             // Загружаем финансовые данные
             await this.loadFinancialData(roomId, playerIndex);
+            
+            // Если финансовые данные не загрузились, используем значения по умолчанию
+            if (this.totalIncome === 0 && this.totalExpenses === 0 && this.monthlyIncome === 0) {
+                console.log('Using default financial values');
+                this.totalIncome = 0;
+                this.totalExpenses = 0;
+                this.monthlyIncome = 3800; // PAYDAY значение по умолчанию
+            }
             
             // Обновляем UI
             this.updateBankUI();
@@ -144,13 +165,32 @@ class BankModule {
             const user = JSON.parse(localStorage.getItem('user'));
             if (!user) return;
             
+            // Сначала пытаемся загрузить из room data
+            if (this.roomData && this.roomData.players && this.roomData.players[playerIndex]) {
+                const player = this.roomData.players[playerIndex];
+                if (player.profession_data) {
+                    this.totalIncome = player.profession_data.salary || 0;
+                    this.totalExpenses = player.profession_data.expenses || 0;
+                    this.monthlyIncome = player.profession_data.cash_flow || player.profession_data.cashFlow || 3800;
+                    this.currentCredit = 0;
+                    console.log('Financial data loaded from room data:', {
+                        totalIncome: this.totalIncome,
+                        totalExpenses: this.totalExpenses,
+                        monthlyIncome: this.monthlyIncome,
+                        currentCredit: this.currentCredit
+                    });
+                    return;
+                }
+            }
+            
+            // Если нет данных в room, пытаемся API
             const response = await fetch(`/api/rooms/${roomId}/player/${playerIndex}/profession?user_id=${user.id}`);
             
             if (response.ok) {
                 const data = await response.json();
                 this.totalIncome = data.totalIncome || 0;
                 this.totalExpenses = data.totalExpenses || 0;
-                this.monthlyIncome = data.cashFlow || 0;
+                this.monthlyIncome = data.cashFlow || 3800;
                 this.currentCredit = data.currentCredit || 0;
                 console.log('Financial data loaded from API:', {
                     totalIncome: this.totalIncome,
@@ -159,23 +199,19 @@ class BankModule {
                     currentCredit: this.currentCredit
                 });
             } else {
-                console.log('Failed to load profession data from API, trying local data');
-                // Если API не работает, используем данные из room data
-                const user = JSON.parse(localStorage.getItem('user'));
-                const roomResponse = await fetch(`/api/rooms/${roomId}?user_id=${user.id}`);
-                if (roomResponse.ok) {
-                    const roomData = await roomResponse.json();
-                    const player = roomData.players[playerIndex];
-                    if (player?.profession_data) {
-                        this.totalIncome = player.profession_data.salary || 0;
-                        this.totalExpenses = player.profession_data.expenses || 0;
-                        this.monthlyIncome = player.profession_data.cash_flow || player.profession_data.cashFlow || 0;
-                        this.currentCredit = 0; // Пока нет данных о кредитах в старой структуре
-                    }
-                }
+                console.log('Using default financial values (API failed)');
+                this.totalIncome = 0;
+                this.totalExpenses = 0;
+                this.monthlyIncome = 3800;
+                this.currentCredit = 0;
             }
         } catch (error) {
             console.error('Error loading financial data:', error);
+            // Устанавливаем значения по умолчанию при ошибке
+            this.totalIncome = 0;
+            this.totalExpenses = 0;
+            this.monthlyIncome = 3800;
+            this.currentCredit = 0;
         }
     }
 
@@ -515,6 +551,9 @@ class BankModule {
                 setTimeout(async () => {
                     console.log('🔄 Получаем обновленный баланс с сервера...');
                     await this.loadBankData(true); // Принудительное обновление для получения актуального баланса
+                    
+                    // Обновляем историю переводов
+                    this.updateTransfersHistory();
                     
                     // Показываем успех после обновления
                     this.showSuccess(`Перевод $${transferAmount} выполнен успешно!`);
