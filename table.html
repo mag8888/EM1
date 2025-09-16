@@ -3066,7 +3066,7 @@
         let playerCash = {}; // Кеш игроков (обнуляется при выходе на большой круг)
 
         // Глобальная переменная для банковского модуля
-        let bankModule = null;
+        var bankModule = null;
 
         // Глобальные функции-обертки для совместимости с HTML
         function openCreditModal() {
@@ -3145,6 +3145,12 @@
                 if (!roomId) return;
 
                 const response = await fetch(`/api/rooms/${roomId}/turn`);
+                
+                if (!response.ok) {
+                    console.warn('Failed to load turn info:', response.status, response.statusText);
+                    return;
+                }
+                
                 const data = await response.json();
                 
                 if (response.ok) {

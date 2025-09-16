@@ -1,18 +1,11 @@
 /**
- * БАНКОВСКИЙ МОДУЛЬ - ОСНОВНОЙ ФАЙЛ
- * Импортирует и экспортирует рефакторенный модуль для обратной совместимости
+ * БАНКОВСКИЙ МОДУЛЬ
+ * Полная реализация всех банковских операций
  */
 
-// Импортируем новый рефакторенный модуль
-import { BankModule as RefactoredBankModule } from './BankModule.js';
-
-// Для обратной совместимости создаем класс-обертку
 class BankModule {
     constructor() {
-        // Создаем экземпляр рефакторенного модуля
-        this.refactoredModule = new RefactoredBankModule();
-        
-        // Делегируем все вызовы к рефакторенному модулю
+        // Глобальные переменные для банка
         this.currentBalance = 0;
         this.transfersHistory = [];
         this.totalIncome = 0;
@@ -22,13 +15,13 @@ class BankModule {
         this.maxCredit = 10000;
         this.isLoading = false;
         this.lastUpdateTime = 0;
-        this.roomData = null;
+        this.roomData = null; // Данные комнаты
         
-        // Конфигурация для обратной совместимости
+        // Конфигурация
         this.config = {
             minTransferAmount: 1,
             maxTransferAmount: 1000000,
-            updateInterval: 30000,
+            updateInterval: 30000, // 30 секунд
             animationDuration: 1000
         };
     }
@@ -37,120 +30,553 @@ class BankModule {
      * Инициализация банковского модуля
      */
     async init() {
-        // Инициализируем рефакторенный модуль
-        await this.refactoredModule.init();
+        console.log('🏦 Initializing Bank Module...');
         
-        // Синхронизируем состояние для обратной совместимости
-        this.syncState();
+        // Загружаем начальные данные
+        await this.loadBankData(true);
+        
+        // Устанавливаем периодическое обновление
+        setInterval(() => {
+            this.loadBankData(false);
+        }, this.config.updateInterval);
         
         console.log('✅ Bank Module initialized successfully');
-    }
-
-    /**
-     * Синхронизация состояния с рефакторенным модулем
-     */
-    syncState() {
-        const state = this.refactoredModule.getState();
-        this.currentBalance = state.currentBalance;
-        this.transfersHistory = state.transfersHistory;
-        this.totalIncome = state.totalIncome;
-        this.totalExpenses = state.totalExpenses;
-        this.monthlyIncome = state.monthlyIncome;
-        this.currentCredit = state.currentCredit;
-        this.roomData = state.roomData;
-        this.isLoading = state.isLoading;
-        this.lastUpdateTime = state.lastUpdateTime;
     }
 
     /**
      * Загрузка данных банка с сервера
      */
     async loadBankData(forceUpdate = false) {
-        await this.refactoredModule.loadBankData(forceUpdate);
-        this.syncState();
+        console.log('=== LOADING BANK DATA ===');
+        
+        try {
+            const roomId = this.getRoomIdFromURL();
+            if (!roomId) {
+                console.error('Room ID not found in URL');
+                return;
+            }
+            
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user || !user.id) {
+                console.error('User not found in localStorage');
+                return;
+            }
+            
+            // Простая проверка: загружаем только если принудительно или это первая загрузка
+            if (!forceUpdate && this.currentBalance > 0) {
+                console.log('⏭️ Пропускаем загрузку данных - баланс уже установлен');
+                return;
+            }
+            
+            const response = await fetch(`/api/rooms/${roomId}?user_id=${user.id}`);
+            if (!response.ok) {
+                console.log(`Failed to load room data: HTTP ${response.status}`);
+                return;
+            }
+            
+            const data = await response.json();
+            
+            // Сохраняем данные комнаты в глобальную переменную
+            this.roomData = data;
+            
+            // Обновляем баланс
+            const playerIndex = data.players.findIndex(p => p.user_id === user.id);
+            
+            if (playerIndex !== -1) {
+                let newBalance = this.currentBalance; // Сохраняем текущий баланс по умолчанию
+                
+                // Сначала проверяем новую структуру (game_data.player_balances)
+                if (data.game_data?.player_balances?.[playerIndex] !== undefined) {
+                    newBalance = data.game_data.player_balances[playerIndex];
+                    console.log('Balance loaded from game_data.player_balances:', newBalance, 'for player', playerIndex);
+                } 
+                // Если нет, используем старую структуру (players[].balance)
+                else if (data.players[playerIndex]?.balance !== undefined) {
+                    newBalance = data.players[playerIndex].balance;
+                    console.log('Balance loaded from players[].balance:', newBalance, 'for player', playerIndex);
+                }
+                
+                // Обновляем баланс с сервера (принудительно или если это пополнение)
+                if (forceUpdate || newBalance > this.currentBalance) {
+                    const oldBalance = this.currentBalance;
+                    this.currentBalance = newBalance;
+                    this.lastUpdateTime = Date.now();
+                    console.log('Balance updated from server:', oldBalance, '→', newBalance, 'forceUpdate:', forceUpdate);
+                    
+                    // Показываем анимацию изменения баланса
+                    this.animateBalanceChange(oldBalance, newBalance);
+                } else {
+                    console.log('Keeping current balance:', this.currentBalance, '(new:', newBalance, ')', 'forceUpdate:', forceUpdate);
+                }
+            } else {
+                console.log('Player not found in room, user.id:', user.id, 'players:', data.players.map(p => p.user_id));
+            }
+            
+            // Загружаем историю переводов
+            if (data.game_data?.transfers_history) {
+                this.transfersHistory = data.game_data.transfers_history;
+                console.log('Transfers history loaded:', this.transfersHistory.length, 'transfers');
+            }
+            
+            // Загружаем финансовые данные
+            await this.loadFinancialData(roomId, playerIndex);
+            
+            // Обновляем UI
+            this.updateBankUI();
+            
+            console.log('=== BANK DATA LOADED ===');
+            console.log('Balance:', this.currentBalance);
+            console.log('Income:', this.totalIncome);
+            console.log('Expenses:', this.totalExpenses);
+            console.log('Cash Flow:', this.monthlyIncome);
+            console.log('Credit:', this.currentCredit);
+            
+        } catch (error) {
+            console.error('Error loading bank data:', error);
+        }
     }
 
     /**
      * Загрузка финансовых данных игрока
      */
     async loadFinancialData(roomId, playerIndex) {
-        await this.refactoredModule.loadFinancialData(roomId, playerIndex);
-        this.syncState();
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) return;
+            
+            const response = await fetch(`/api/rooms/${roomId}/player/${playerIndex}/profession?user_id=${user.id}`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.totalIncome = data.totalIncome || 0;
+                this.totalExpenses = data.totalExpenses || 0;
+                this.monthlyIncome = data.cashFlow || 0;
+                this.currentCredit = data.currentCredit || 0;
+                console.log('Financial data loaded from API:', {
+                    totalIncome: this.totalIncome,
+                    totalExpenses: this.totalExpenses,
+                    monthlyIncome: this.monthlyIncome,
+                    currentCredit: this.currentCredit
+                });
+            } else {
+                console.log('Failed to load profession data from API, trying local data');
+                // Если API не работает, используем данные из room data
+                const user = JSON.parse(localStorage.getItem('user'));
+                const roomResponse = await fetch(`/api/rooms/${roomId}?user_id=${user.id}`);
+                if (roomResponse.ok) {
+                    const roomData = await roomResponse.json();
+                    const player = roomData.players[playerIndex];
+                    if (player?.profession_data) {
+                        this.totalIncome = player.profession_data.salary || 0;
+                        this.totalExpenses = player.profession_data.expenses || 0;
+                        this.monthlyIncome = player.profession_data.cash_flow || player.profession_data.cashFlow || 0;
+                        this.currentCredit = 0; // Пока нет данных о кредитах в старой структуре
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading financial data:', error);
+        }
     }
 
     /**
      * Обновление UI банка
      */
     updateBankUI() {
-        this.refactoredModule.updateBankUI();
-        this.syncState();
+        console.log('=== UPDATING BANK UI ===');
+        console.log('Current data:', {
+            currentBalance: this.currentBalance,
+            totalIncome: this.totalIncome,
+            totalExpenses: this.totalExpenses,
+            monthlyIncome: this.monthlyIncome,
+            currentCredit: this.currentCredit
+        });
+        
+        // Обновляем отображение баланса
+        this.updateBalanceDisplay();
+        
+        // Обновляем финансовую сводку
+        this.updateFinancialSummary();
+        
+        // Обновляем историю переводов
+        this.updateTransfersHistory();
+        
+        // Обновляем кредитную информацию
+        this.updateCreditInfo();
+        
+        console.log('=== BANK UI UPDATE COMPLETE ===');
     }
 
     /**
      * Обновление отображения баланса
      */
     updateBalanceDisplay() {
-        this.refactoredModule.updateBalanceDisplay();
+        const balanceElements = [
+            document.getElementById('currentBalance'),
+            document.querySelector('.bank-preview .balance-amount')
+        ];
+        
+        balanceElements.forEach(el => {
+            if (el) {
+                el.textContent = `$${this.currentBalance.toLocaleString()}`;
+                // Анимация обновления
+                el.classList.add('balance-updated');
+                setTimeout(() => el.classList.remove('balance-updated'), 500);
+            }
+        });
+        
+        console.log('Balance updated to:', this.currentBalance);
     }
 
     /**
      * Обновление финансовой сводки
      */
     updateFinancialSummary() {
-        this.refactoredModule.updateFinancialSummary();
+        console.log('Updating financial summary:', {
+            totalIncome: this.totalIncome,
+            totalExpenses: this.totalExpenses,
+            monthlyIncome: this.monthlyIncome
+        });
+        
+        // Обновляем доходы
+        const totalIncomeEl = document.getElementById('totalIncome') || 
+                             document.querySelector('.finance-item:nth-child(1) .finance-value');
+        if (totalIncomeEl) {
+            totalIncomeEl.textContent = `$${this.totalIncome.toLocaleString()}`;
+            console.log('Updated totalIncome: $' + this.totalIncome.toLocaleString());
+        }
+        
+        // Обновляем расходы
+        const totalExpensesEl = document.getElementById('totalExpenses') || 
+                               document.querySelector('.finance-item:nth-child(2) .finance-value');
+        if (totalExpensesEl) {
+            totalExpensesEl.textContent = `$${this.totalExpenses.toLocaleString()}`;
+            console.log('Updated totalExpenses: $' + this.totalExpenses.toLocaleString());
+        }
+        
+        // Обновляем месячный доход
+        const monthlyIncomeEl = document.getElementById('monthlyIncome') || 
+                               document.querySelector('.finance-item:nth-child(3) .finance-value');
+        if (monthlyIncomeEl) {
+            monthlyIncomeEl.textContent = `$${this.monthlyIncome.toLocaleString()}`;
+            console.log('Updated monthlyIncome: $' + this.monthlyIncome.toLocaleString());
+        }
     }
 
     /**
      * Обновление истории переводов
      */
     updateTransfersHistory() {
-        this.refactoredModule.updateTransfersHistory();
+        const historyContainer = document.getElementById('transfersHistory');
+        const historyCount = document.getElementById('historyCount');
+        
+        if (!historyContainer) return;
+        
+        // Очищаем контейнер
+        historyContainer.innerHTML = '';
+        
+        if (this.transfersHistory.length === 0) {
+            historyContainer.innerHTML = '<div class="no-transfers">История переводов пуста</div>';
+            return;
+        }
+        
+        // Получаем текущего игрока
+        const currentPlayerIndex = this.getCurrentPlayerIndex();
+        
+        // Получаем данные игрока из глобальных переменных
+        let currentPlayerName = `Player ${currentPlayerIndex}`;
+        
+        // Пытаемся получить имя игрока из roomData
+        if (this.roomData?.players?.[currentPlayerIndex]?.name) {
+            currentPlayerName = this.roomData.players[currentPlayerIndex].name;
+        }
+        
+        console.log(`🔍 Filtering transfers for current player: ${currentPlayerName} (index: ${currentPlayerIndex})`);
+        console.log(`📋 Total transfers available: ${this.transfersHistory.length}`);
+        console.log(`📋 Transfers data:`, this.transfersHistory);
+        
+        // Фильтруем только операции текущего игрока
+        const myTransfers = this.transfersHistory.filter(transfer => {
+            // Показываем операции где текущий игрок - отправитель или получатель
+            const isSender = transfer.sender_index === currentPlayerIndex;
+            const isRecipient = transfer.recipient_index === currentPlayerIndex;
+            
+            // Для банковских операций показываем только если они касаются текущего игрока
+            const isBankToPlayer = transfer.sender_index === -1 && transfer.recipient_index === currentPlayerIndex;
+            const isPlayerToBank = transfer.sender_index === currentPlayerIndex && transfer.recipient_index === -1;
+            
+            console.log(`🔍 Transfer ${transfer.description}: sender=${transfer.sender_index}, recipient=${transfer.recipient_index}, currentPlayer=${currentPlayerIndex}, isSender=${isSender}, isRecipient=${isRecipient}, isBankToPlayer=${isBankToPlayer}, isPlayerToBank=${isPlayerToBank}`);
+            
+            return isSender || isRecipient || isBankToPlayer || isPlayerToBank;
+        });
+        
+        console.log(`📊 Found ${myTransfers.length} transfers for current player out of ${this.transfersHistory.length} total`);
+        
+        if (myTransfers.length === 0) {
+            historyContainer.innerHTML = '<div class="no-transfers">У вас пока нет операций</div>';
+            return;
+        }
+        
+        // Обновляем счетчик только для своих операций
+        if (historyCount) {
+            historyCount.textContent = myTransfers.length;
+        }
+        
+        // Сортируем по дате (новые сверху)
+        const sortedTransfers = [...myTransfers].sort((a, b) => 
+            new Date(b.timestamp) - new Date(a.timestamp)
+        );
+        
+        // Создаем элементы истории
+        sortedTransfers.forEach(transfer => {
+            const transferElement = this.createTransferElement(transfer);
+            historyContainer.appendChild(transferElement);
+        });
+        
+        console.log(`✅ Updated transfers history with ${sortedTransfers.length} transfers for current player`);
     }
 
     /**
      * Создание элемента перевода для истории
      */
     createTransferElement(transfer) {
-        return this.refactoredModule.createTransferElement(transfer);
+        const element = document.createElement('div');
+        element.className = 'transfer-item';
+        
+        // Получаем ID текущего пользователя
+        const user = JSON.parse(localStorage.getItem('user'));
+        const currentUserId = user ? user.id : null;
+        
+        // Определяем, является ли перевод доходом или расходом
+        const isIncome = transfer.sender_index === -1 || 
+                        (transfer.recipient_index === this.getCurrentPlayerIndex() && transfer.sender_index !== this.getCurrentPlayerIndex());
+        const isOutgoing = transfer.sender_index === this.getCurrentPlayerIndex() && transfer.recipient_index !== -1;
+        
+        const amount = transfer.amount || 0;
+        const amountText = isIncome ? `+$${amount.toLocaleString()}` : `-$${amount.toLocaleString()}`;
+        const amountClass = isIncome ? 'income' : 'expense';
+        
+        // Форматируем время
+        const date = new Date(transfer.timestamp);
+        const timeAgo = this.getTimeAgo(date);
+        
+        // Определяем отправителя и получателя
+        let senderName = 'Банк';
+        let recipientName = 'Банк';
+        
+        if (transfer.sender_index !== -1 && this.roomData?.players?.[transfer.sender_index]) {
+            senderName = this.roomData.players[transfer.sender_index].name;
+        }
+        if (transfer.recipient_index !== -1 && this.roomData?.players?.[transfer.recipient_index]) {
+            recipientName = this.roomData.players[transfer.recipient_index].name;
+        }
+        
+        element.innerHTML = `
+            <div class="transfer-info">
+                <div class="transfer-parties">${senderName} → ${recipientName}</div>
+                <div class="transfer-description">${transfer.description || 'Перевод'}</div>
+                <div class="transfer-time">${timeAgo}</div>
+            </div>
+            <div class="transfer-amount ${amountClass}">${amountText}</div>
+        `;
+        
+        return element;
     }
 
     /**
      * Обновление кредитной информации
      */
     updateCreditInfo() {
-        this.refactoredModule.updateCreditInfo();
+        const currentCreditEl = document.getElementById('currentCredit');
+        const maxCreditEl = document.getElementById('maxCredit');
+        
+        if (currentCreditEl) {
+            currentCreditEl.textContent = `$${this.currentCredit.toLocaleString()}`;
+        }
+        
+        if (maxCreditEl) {
+            this.maxCredit = Math.floor(this.monthlyIncome / 100) * 1000;
+            maxCreditEl.textContent = `$${this.maxCredit.toLocaleString()}`;
+        }
+        
+        console.log('Credit:', this.currentCredit);
     }
 
     /**
      * Открытие банковского модального окна
      */
     async openBank() {
-        await this.refactoredModule.openBank();
+        console.log('=== OPENING BANK MODAL ===');
+        
+        try {
+            // Показываем индикатор загрузки
+            this.showLoadingIndicator();
+            
+            // Загружаем данные
+            await this.loadBankData(true);
+            
+            // Загружаем получателей
+            await this.loadRecipients();
+            
+            // Показываем модальное окно
+            const modal = document.getElementById('bankModal');
+            if (modal) {
+                modal.style.display = 'block';
+                modal.classList.add('modal-show');
+                
+                // Принудительное обновление UI
+                setTimeout(() => {
+                    this.updateBankUI();
+                }, 100);
+            }
+            
+            console.log('=== BANK MODAL OPENED SUCCESSFULLY ===');
+            
+        } catch (error) {
+            console.error('Error opening bank modal:', error);
+        } finally {
+            this.hideLoadingIndicator();
+        }
     }
 
     /**
      * Загрузка списка получателей
      */
     async loadRecipients() {
-        // Делегируем к рефакторенному модулю
-        // Пока оставляем пустым, так как этот метод не реализован в новом модуле
-        console.log('Loading recipients...');
+        const recipientSelect = document.getElementById('recipientSelect');
+        if (!recipientSelect) return;
+        
+        // Очищаем существующие опции
+        recipientSelect.innerHTML = '<option value="">Выберите получателя</option>';
+        
+        if (!this.roomData || !this.roomData.players) {
+            console.log('No room data available for recipients');
+            return;
+        }
+        
+        const currentPlayerIndex = this.getCurrentPlayerIndex();
+        
+        this.roomData.players.forEach((player, index) => {
+            if (index !== currentPlayerIndex) {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = player.name || `Игрок ${index + 1}`;
+                recipientSelect.appendChild(option);
+            }
+        });
+        
+        console.log('Recipients loaded:', this.roomData.players.length - 1);
     }
 
     /**
      * Обработка перевода
      */
     async processTransfer() {
-        await this.refactoredModule.processTransfer();
-        this.syncState();
+        if (this.isLoading) return;
+        
+        try {
+            // Валидация формы
+            const validation = this.validateTransferForm();
+            if (!validation.valid) {
+                this.showError(validation.message);
+                return;
+            }
+            
+            // Показываем индикатор загрузки
+            this.showLoadingIndicator();
+            this.isLoading = true;
+            
+            // Подготавливаем данные
+            const transferData = this.prepareTransferData();
+            
+            // Отправляем запрос
+            const response = await this.sendTransferRequest(transferData);
+            
+            if (response.ok) {
+                // Получаем данные из формы для анимации
+                const amountInput = document.getElementById('transferAmount');
+                const recipientSelect = document.getElementById('recipientSelect');
+                const transferAmount = parseFloat(amountInput.value);
+                const recipientName = recipientSelect.options[recipientSelect.selectedIndex].text;
+                
+                // Показываем анимацию перевода
+                this.showTransferAnimation(transferAmount, recipientName);
+                
+                // Ждем обновления баланса с сервера
+                setTimeout(async () => {
+                    console.log('🔄 Получаем обновленный баланс с сервера...');
+                    await this.loadBankData(true); // Принудительное обновление для получения актуального баланса
+                    
+                    // Показываем успех после обновления
+                    this.showSuccess(`Перевод $${transferAmount} выполнен успешно!`);
+                }, 1000); // 1 секунда задержка для анимации
+                
+                // Очищаем форму
+                this.resetTransferForm();
+                
+            } else {
+                throw new Error(response.data?.message || 'Ошибка при выполнении перевода');
+            }
+            
+        } catch (error) {
+            console.error('Transfer error:', error);
+            this.showError(error.message);
+        } finally {
+            this.hideLoadingIndicator();
+            this.isLoading = false;
+        }
     }
 
     /**
      * Валидация формы перевода
      */
     validateTransferForm() {
-        // Делегируем к рефакторенному модулю
-        // Пока оставляем пустым, так как этот метод не реализован в новом модуле
+        const recipientSelect = document.getElementById('recipientSelect');
+        const amountInput = document.getElementById('transferAmount');
+        
+        console.log('Validating transfer form:', {
+            recipientSelect: !!recipientSelect,
+            amountInput: !!amountInput,
+            recipientValue: recipientSelect?.value,
+            amountValue: amountInput?.value
+        });
+        
+        if (!recipientSelect || !amountInput) {
+            return { valid: false, message: 'Форма не найдена' };
+        }
+        
+        const recipientIndex = recipientSelect.value;
+        const amount = parseFloat(amountInput.value);
+        
+        console.log('Validation values:', {
+            recipientIndex,
+            amount,
+            amountInputValue: amountInput.value,
+            minAmount: this.config.minTransferAmount,
+            currentBalance: this.currentBalance
+        });
+        
+        if (!recipientIndex || recipientIndex === '') {
+            return { valid: false, message: 'Выберите получателя' };
+        }
+        
+        if (!amountInput.value || amountInput.value.trim() === '') {
+            return { valid: false, message: 'Введите сумму перевода' };
+        }
+        
+        if (isNaN(amount) || amount < 1) {
+            return { valid: false, message: `Минимальная сумма: $1` };
+        }
+        
+        if (amount > this.config.maxTransferAmount) {
+            return { valid: false, message: `Максимальная сумма: $${this.config.maxTransferAmount.toLocaleString()}` };
+        }
+        
+        if (amount > this.currentBalance) {
+            return { valid: false, message: 'Недостаточно средств на балансе' };
+        }
+        
+        console.log('Transfer validation passed');
         return { valid: true };
     }
 
@@ -158,183 +584,279 @@ class BankModule {
      * Подготовка данных перевода
      */
     prepareTransferData() {
-        // Делегируем к рефакторенному модулю
-        // Пока оставляем пустым, так как этот метод не реализован в новом модуле
-        return {};
+        const roomId = this.getRoomIdFromURL();
+        const user = JSON.parse(localStorage.getItem('user'));
+        const recipientSelect = document.getElementById('recipientSelect');
+        const amountInput = document.getElementById('transferAmount');
+        
+        const transferData = {
+            roomId,
+            userId: user.id,
+            recipientIndex: parseInt(recipientSelect.value),
+            amount: parseInt(amountInput.value)
+        };
+        
+        console.log('Prepared transfer data:', transferData);
+        return transferData;
     }
 
     /**
      * Отправка запроса перевода
      */
     async sendTransferRequest(transferData) {
-        // Делегируем к рефакторенному модулю
-        // Пока оставляем пустым, так как этот метод не реализован в новом модуле
-        return { ok: true, data: {} };
-    }
-
-    /**
-     * Обновление локальных данных
-     */
-    updateLocalData(responseData) {
-        // Делегируем к рефакторенному модулю
-        // Пока оставляем пустым, так как этот метод не реализован в новом модуле
-    }
-
-    /**
-     * Обновление локального баланса
-     */
-    updateLocalBalance(amount, description = '') {
-        // Делегируем к рефакторенному модулю
-        // Пока оставляем пустым, так как этот метод не реализован в новом модуле
-    }
-
-    /**
-     * Анимация изменения баланса
-     */
-    animateBalanceChange(oldBalance, newBalance) {
-        this.refactoredModule.animationManager.animateBalanceChange(oldBalance, newBalance);
-    }
-
-    /**
-     * Анимация перевода
-     */
-    showTransferAnimation(amount, recipientName) {
-        this.refactoredModule.animationManager.showTransferAnimation(amount, recipientName);
+        const requestBody = {
+            user_id: transferData.userId,
+            recipient_index: transferData.recipientIndex,
+            amount: transferData.amount
+        };
+        
+        console.log('Sending transfer request:', {
+            url: `/api/rooms/${transferData.roomId}/transfer`,
+            body: requestBody
+        });
+        
+        const response = await fetch(`/api/rooms/${transferData.roomId}/transfer`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody)
+        });
+        
+        const data = await response.json();
+        console.log('Transfer response:', { status: response.status, data });
+        return { ok: response.ok, data };
     }
 
     /**
      * Сброс формы перевода
      */
     resetTransferForm() {
-        this.refactoredModule.resetTransferForm();
+        const recipientSelect = document.getElementById('recipientSelect');
+        const amountInput = document.getElementById('transferAmount');
+        
+        if (recipientSelect) recipientSelect.value = '';
+        if (amountInput) amountInput.value = '';
     }
 
     /**
-     * Открытие модального окна кредита
+     * Анимация изменения баланса
      */
-    openCreditModal() {
-        // Делегируем к рефакторенному модулю
-        // Пока оставляем пустым, так как этот метод не реализован в новом модуле
-        console.log('Opening credit modal...');
+    animateBalanceChange(oldBalance, newBalance) {
+        const difference = newBalance - oldBalance;
+        const isIncrease = difference > 0;
+        
+        console.log(`💰 Анимация изменения баланса: ${oldBalance} → ${newBalance} (${isIncrease ? '+' : ''}${difference})`);
+        
+        // Находим элементы баланса
+        const balanceElements = document.querySelectorAll('[data-balance], .balance-amount, #currentBalance');
+        
+        balanceElements.forEach(element => {
+            // Добавляем класс анимации
+            element.classList.add('balance-updated');
+            
+            // Убираем класс через 500ms
+            setTimeout(() => {
+                element.classList.remove('balance-updated');
+            }, 500);
+        });
+        
+        // Показываем уведомление об изменении
+        if (Math.abs(difference) > 0) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${isIncrease ? 'linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%)' : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'};
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                font-weight: bold;
+                z-index: 2000;
+                animation: slideInRight 0.3s ease;
+            `;
+            
+            notification.innerHTML = `
+                <div style="font-size: 1.1rem;">
+                    ${isIncrease ? '💰' : '💸'} ${isIncrease ? '+' : ''}$${difference.toLocaleString()}
+                </div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">
+                    Баланс: $${newBalance.toLocaleString()}
+                </div>
+            `;
+            
+            // Добавляем CSS анимацию
+            if (!document.getElementById('balanceAnimationCSS')) {
+                const style = document.createElement('style');
+                style.id = 'balanceAnimationCSS';
+                style.textContent = `
+                    @keyframes slideInRight {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                    .balance-updated {
+                        animation: balancePulse 0.5s ease;
+                    }
+                    @keyframes balancePulse {
+                        0% { transform: scale(1); }
+                        50% { transform: scale(1.05); }
+                        100% { transform: scale(1); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            document.body.appendChild(notification);
+            
+            // Удаляем уведомление через 3 секунды
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+        }
     }
 
     /**
-     * Закрытие модального окна кредита
+     * Анимация перевода
      */
-    closeCreditModal() {
-        // Делегируем к рефакторенному модулю
-        // Пока оставляем пустым, так как этот метод не реализован в новом модуле
-        console.log('Closing credit modal...');
-    }
-
-    /**
-     * Обновление модального окна кредита
-     */
-    updateCreditModal() {
-        // Делегируем к рефакторенному модулю
-        // Пока оставляем пустым, так как этот метод не реализован в новом модуле
-        console.log('Updating credit modal...');
-    }
-
-    /**
-     * Установка суммы кредита
-     */
-    setCreditAmount(amount) {
-        // Делегируем к рефакторенному модулю
-        // Пока оставляем пустым, так как этот метод не реализован в новом модуле
-        console.log('Setting credit amount:', amount);
-    }
-
-    /**
-     * Установка максимальной суммы кредита
-     */
-    setMaxCreditAmount() {
-        // Делегируем к рефакторенному модулю
-        // Пока оставляем пустым, так как этот метод не реализован в новом модуле
-        console.log('Setting max credit amount...');
-    }
-
-    /**
-     * Обновление превью кредита
-     */
-    updateCreditPreview() {
-        // Делегируем к рефакторенному модулю
-        // Пока оставляем пустым, так как этот метод не реализован в новом модуле
-        console.log('Updating credit preview...');
-    }
-
-    /**
-     * Взятие кредита
-     */
-    async takeCredit() {
-        // Делегируем к рефакторенному модулю
-        // Пока оставляем пустым, так как этот метод не реализован в новом модуле
-        console.log('Taking credit...');
-    }
-
-    /**
-     * Погашение кредита
-     */
-    async payOffCredit() {
-        // Делегируем к рефакторенному модулю
-        // Пока оставляем пустым, так как этот метод не реализован в новом модуле
-        console.log('Paying off credit...');
-    }
-
-    /**
-     * Получение индекса текущего игрока
-     */
-    getCurrentPlayerIndex() {
-        return this.refactoredModule.getCurrentPlayerIndex();
-    }
-
-    /**
-     * Получение ID комнаты из URL
-     */
-    getRoomIdFromURL() {
-        return this.refactoredModule.storageService.getRoomIdFromURL();
-    }
-
-    /**
-     * Форматирование времени перевода
-     */
-    formatTransferTime(timestamp) {
-        return this.refactoredModule.formatTransferTime(timestamp);
+    showTransferAnimation(amount, recipientName) {
+        console.log(`💸 Анимация перевода: $${amount} → ${recipientName}`);
+        
+        // Создаем элемент анимации
+        const animation = document.createElement('div');
+        animation.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 3000;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            animation: transferPulse 1s ease-in-out;
+        `;
+        
+        animation.innerHTML = `
+            <div style="font-size: 2rem; margin-bottom: 10px;">💸</div>
+            <div>Перевод $${amount.toLocaleString()}</div>
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 5px;">→ ${recipientName}</div>
+        `;
+        
+        // Добавляем CSS анимацию
+        if (!document.getElementById('transferAnimationCSS')) {
+            const style = document.createElement('style');
+            style.id = 'transferAnimationCSS';
+            style.textContent = `
+                @keyframes transferPulse {
+                    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+                    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+                    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Добавляем на страницу
+        document.body.appendChild(animation);
+        
+        // Удаляем через 1 секунду
+        setTimeout(() => {
+            if (animation.parentNode) {
+                animation.parentNode.removeChild(animation);
+            }
+        }, 1000);
     }
 
     /**
      * Показать индикатор загрузки
      */
     showLoadingIndicator() {
-        this.refactoredModule.animationManager.showLoadingIndicator();
+        // Простая реализация индикатора загрузки
+        console.log('Showing loading indicator');
     }
 
     /**
      * Скрыть индикатор загрузки
      */
     hideLoadingIndicator() {
-        this.refactoredModule.animationManager.hideLoadingIndicator();
+        // Простая реализация скрытия индикатора загрузки
+        console.log('Hiding loading indicator');
     }
 
     /**
-     * Получение конфигурации
+     * Показать сообщение об успехе
+     */
+    showSuccess(message) {
+        console.log('Success:', message);
+    }
+
+    /**
+     * Показать сообщение об ошибке
+     */
+    showError(message) {
+        console.error('Error:', message);
+    }
+
+    /**
+     * Получить ID комнаты из URL
+     */
+    getRoomIdFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('room');
+    }
+
+    /**
+     * Получить индекс текущего игрока
+     */
+    getCurrentPlayerIndex() {
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) return 0;
+            
+            if (this.roomData && this.roomData.players) {
+                return this.roomData.players.findIndex(p => p.user_id === user.id);
+            }
+            
+            return 0;
+        } catch (error) {
+            console.error('Error getting current player index:', error);
+            return 0;
+        }
+    }
+
+    /**
+     * Форматирование времени
+     */
+    getTimeAgo(date) {
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+        
+        if (diffInSeconds < 60) {
+            return 'только что';
+        } else if (diffInSeconds < 3600) {
+            const minutes = Math.floor(diffInSeconds / 60);
+            return `${minutes} мин назад`;
+        } else if (diffInSeconds < 86400) {
+            const hours = Math.floor(diffInSeconds / 3600);
+            return `${hours} ч назад`;
+        } else {
+            const days = Math.floor(diffInSeconds / 86400);
+            return `${days} дн назад`;
+        }
+    }
+
+    /**
+     * Получить конфигурацию
      */
     getConfig() {
-        return this.refactoredModule.getConfig();
-    }
-
-    /**
-     * Получение текущего состояния
-     */
-    getState() {
-        return this.refactoredModule.getState();
-    }
-
-    /**
-     * Очистка ресурсов
-     */
-    destroy() {
-        this.refactoredModule.destroy();
+        return this.config;
     }
 }
 
