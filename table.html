@@ -3526,13 +3526,28 @@
             
             // Получаем текущую позицию
             const currentPosition = playerPositions[currentPlayer] || 1; // Начинаем с клетки 1
-            const newPosition = ((currentPosition - 1 + steps) % 24) + 1; // Малый круг: 1-24
+            const isOnBigCircle = playerOnBigCircle[currentPlayer] || false;
             
-            console.log(`📍 Текущая позиция: ${currentPosition}, новая позиция: ${newPosition}`);
+            let newPosition;
+            if (isOnBigCircle) {
+                // Большой круг: 1-51
+                newPosition = ((currentPosition - 1 + steps) % 51) + 1;
+            } else {
+                // Малый круг: 1-24
+                newPosition = ((currentPosition - 1 + steps) % 24) + 1;
+            }
+            
+            console.log(`📍 Текущая позиция: ${currentPosition}, новая позиция: ${newPosition}, большой круг: ${isOnBigCircle}`);
             
             // Анимированное перемещение по шагам
             for (let i = 1; i <= steps; i++) {
-                const stepPosition = ((currentPosition - 1 + i) % 24) + 1;
+                let stepPosition;
+                if (isOnBigCircle) {
+                    stepPosition = ((currentPosition - 1 + i) % 51) + 1;
+                } else {
+                    stepPosition = ((currentPosition - 1 + i) % 24) + 1;
+                }
+                
                 await animateTokenToCell(playerToken, stepPosition, i === steps);
                 
                 // Задержка 0.5 секунды между клетками
@@ -3543,6 +3558,11 @@
             
             // Обновляем позицию
             playerPositions[currentPlayer] = newPosition;
+            
+            // Проверяем условия перехода на большой круг
+            if (!isOnBigCircle && checkBigCircleConditions(currentPlayer).canEnter) {
+                enterBigCircle(currentPlayer);
+            }
             
             // Показываем информацию о клетке
             setTimeout(() => {
@@ -3882,7 +3902,155 @@
                 buyButton.style.display = 'none';
             }
 
+            // Обрабатываем действие клетки
+            processCellAction(cellNumber, cell);
+            
             document.getElementById('cellModal').style.display = 'block';
+        }
+
+        // Обработка действий клетки
+        function processCellAction(cellNumber, cell) {
+            console.log(`🎯 Обработка клетки ${cellNumber}:`, cell);
+            
+            switch (cell.type) {
+                case 'Доход':
+                    processIncomeCell(cell);
+                    break;
+                case 'Мечта':
+                    processDreamCell(cellNumber, cell);
+                    break;
+                case 'Бизнес':
+                    processBusinessCell(cellNumber, cell);
+                    break;
+                case 'Потеря':
+                    processLossCell(cell);
+                    break;
+                case 'Благотворительность':
+                    processCharityCell(cell);
+                    break;
+                case 'Пустая':
+                    console.log('Пустая клетка - никаких действий');
+                    break;
+                default:
+                    console.log(`Неизвестный тип клетки: ${cell.type}`);
+            }
+        }
+
+        // Обработка клеток дохода
+        function processIncomeCell(cell) {
+            if (cell.income === "Все пассивные доходы") {
+                // Получаем все пассивные доходы игрока
+                const passiveIncome = totalIncome || 0;
+                addBalance(passiveIncome, `Доход от инвестиций: $${passiveIncome.toLocaleString()}`);
+                alert(`💰 Вы получили доход от инвестиций: $${passiveIncome.toLocaleString()}`);
+            } else if (typeof cell.income === 'number' && cell.income > 0) {
+                addBalance(cell.income, `Доход: $${cell.income.toLocaleString()}`);
+                alert(`💰 Вы получили доход: $${cell.income.toLocaleString()}`);
+            }
+        }
+
+        // Обработка клеток мечты
+        function processDreamCell(cellNumber, cell) {
+            if (cell.cost > 0) {
+                const canAfford = (currentBalance || 0) >= cell.cost;
+                if (canAfford) {
+                    const buy = confirm(`🎯 ${cell.name}\n\nСтоимость: $${cell.cost.toLocaleString()}\n\n${cell.description}\n\nКупить мечту?`);
+                    if (buy) {
+                        subtractBalance(cell.cost, `Покупка мечты: ${cell.name}`);
+                        playerDreams[currentPlayer] = playerDreams[currentPlayer] || [];
+                        playerDreams[currentPlayer].push({
+                            name: cell.name,
+                            cost: cell.cost,
+                            cellNumber: cellNumber
+                        });
+                        alert(`🎉 Поздравляем! Вы купили мечту: ${cell.name}`);
+                    }
+                } else {
+                    alert(`❌ Недостаточно средств для покупки мечты.\nНужно: $${cell.cost.toLocaleString()}\nУ вас: $${(currentBalance || 0).toLocaleString()}`);
+                }
+            }
+        }
+
+        // Обработка клеток бизнеса
+        function processBusinessCell(cellNumber, cell) {
+            if (cell.cost > 0) {
+                const canAfford = (currentBalance || 0) >= cell.cost;
+                if (canAfford) {
+                    const buy = confirm(`🏢 ${cell.name}\n\nСтоимость: $${cell.cost.toLocaleString()}\nДоход: $${cell.income}/мес\n\n${cell.description}\n\nКупить бизнес?`);
+                    if (buy) {
+                        subtractBalance(cell.cost, `Покупка бизнеса: ${cell.name}`);
+                        playerBusinesses[currentPlayer] = playerBusinesses[currentPlayer] || [];
+                        playerBusinesses[currentPlayer].push({
+                            name: cell.name,
+                            cost: cell.cost,
+                            income: cell.income,
+                            cellNumber: cellNumber
+                        });
+                        // Увеличиваем пассивный доход
+                        totalIncome = (totalIncome || 0) + cell.income;
+                        alert(`🎉 Поздравляем! Вы купили бизнес: ${cell.name}\nНовый пассивный доход: $${totalIncome.toLocaleString()}/мес`);
+                    }
+                } else {
+                    alert(`❌ Недостаточно средств для покупки бизнеса.\nНужно: $${cell.cost.toLocaleString()}\nУ вас: $${(currentBalance || 0).toLocaleString()}`);
+                }
+            }
+        }
+
+        // Обработка клеток потерь
+        function processLossCell(cell) {
+            let lossAmount = 0;
+            
+            if (cell.loss === "-50% активов") {
+                lossAmount = Math.floor((currentBalance || 0) * 0.5);
+            } else if (cell.loss === "-100% наличных") {
+                lossAmount = currentBalance || 0;
+            } else if (cell.loss === "-100% бизнеса") {
+                // Потеря всех бизнесов
+                const businessIncome = playerBusinesses[currentPlayer]?.reduce((sum, biz) => sum + biz.income, 0) || 0;
+                totalIncome = Math.max(0, (totalIncome || 0) - businessIncome);
+                playerBusinesses[currentPlayer] = [];
+                alert(`💔 ${cell.name}\n\nВы потеряли все свои бизнесы!`);
+                return;
+            } else if (cell.loss === "-100% счетов") {
+                lossAmount = currentBalance || 0;
+            }
+            
+            if (lossAmount > 0) {
+                subtractBalance(lossAmount, `Потеря: ${cell.name}`);
+                alert(`💔 ${cell.name}\n\nВы потеряли: $${lossAmount.toLocaleString()}`);
+            }
+        }
+
+        // Обработка клеток благотворительности
+        function processCharityCell(cell) {
+            const donate = confirm(`🎗️ ${cell.name}\n\n${cell.description}\n\nПожертвовать $10,000 на благотворительность?`);
+            if (donate) {
+                subtractBalance(10000, `Благотворительность: ${cell.name}`);
+                alert(`🎗️ Спасибо за ваше пожертвование! Вы помогли нуждающимся.`);
+            }
+        }
+
+        // Вспомогательные функции для работы с балансом
+        function addBalance(amount, description) {
+            currentBalance = (currentBalance || 0) + amount;
+            console.log(`💰 Добавлено к балансу: $${amount.toLocaleString()} - ${description}`);
+            // Обновляем отображение баланса
+            updateBalanceDisplay();
+        }
+
+        function subtractBalance(amount, description) {
+            currentBalance = Math.max(0, (currentBalance || 0) - amount);
+            console.log(`💸 Списано с баланса: $${amount.toLocaleString()} - ${description}`);
+            // Обновляем отображение баланса
+            updateBalanceDisplay();
+        }
+
+        function updateBalanceDisplay() {
+            // Обновляем отображение баланса в UI
+            const balanceElements = document.querySelectorAll('#bankBalance, .balance-amount');
+            balanceElements.forEach(el => {
+                if (el) el.textContent = `$${(currentBalance || 0).toLocaleString()}`;
+            });
         }
 
         function closeCellModal() {
@@ -4075,14 +4243,25 @@
             // 2. Погасить ипотеку (если есть)
             // 3. Погасить кредит (если есть)
             
-            const passiveIncome = totalIncome;
-            const expenses = totalExpenses;
+            const passiveIncome = totalIncome || 0;
+            const expenses = totalExpenses || 0;
             const hasMortgage = false; // TODO: добавить проверку ипотеки
             const hasCredit = currentCredit > 0;
             
             const incomeCondition = passiveIncome >= expenses * 2;
             const mortgageCondition = !hasMortgage;
             const creditCondition = !hasCredit;
+            
+            console.log(`🔍 Проверка условий перехода на большой круг для игрока ${playerIndex}:`, {
+                passiveIncome,
+                expenses,
+                required: expenses * 2,
+                hasMortgage,
+                hasCredit,
+                incomeCondition,
+                mortgageCondition,
+                creditCondition
+            });
             
             return {
                 canEnter: incomeCondition && mortgageCondition && creditCondition,
