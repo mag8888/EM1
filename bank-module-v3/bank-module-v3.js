@@ -48,7 +48,12 @@ function resetTransferForm() {
   console.error('Bank module not initialized');
 }
 
-function requestCredit() {
+async function requestCredit() {
+  if (!bankModuleInstance) {
+    console.log('🔄 BankModule v3: Инициализация модуля для запроса кредита');
+    await initBankModuleV3();
+  }
+  
   if (bankModuleInstance) {
     return bankModuleInstance.requestCredit();
   }
