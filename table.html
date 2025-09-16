@@ -72,7 +72,86 @@
             filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.1));
         }
 
+        /* Внешний периметр - 650x650 */
+        .outer-perimeter {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 650px;
+            height: 650px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+                0 0 20px rgba(255, 255, 255, 0.05);
+        }
 
+        .outer-squares {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .outer-square {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 2px 8px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .outer-square::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .outer-square:hover {
+            transform: scale(1.1) translateY(-2px);
+            z-index: 10;
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.3),
+                0 0 15px rgba(255, 255, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .outer-square:hover::before {
+            opacity: 1;
+        }
+
+        .outer-square .square-icon {
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+
+        .outer-square .square-number {
+            font-size: 10px;
+            color: #9ca3af;
+        }
 
         /* Внутренний спиральный трек */
         .inner-track {
@@ -2341,6 +2420,11 @@
         <!-- Игровое поле -->
         <div class="game-board">
             <div class="board-wrapper">
+                <!-- Внешний периметр -->
+                <div class="outer-perimeter">
+                    <div class="outer-squares" id="outerSquares"></div>
+                </div>
+
                 <!-- Внутренний трек -->
                 <div class="inner-track">
                     <div class="inner-squares" id="innerSquares"></div>
@@ -2943,6 +3027,7 @@
             // Проверяем клетки малого круга
             validateInnerCells();
             
+            createOuterPerimeter();
             createInnerTrack();
             initializePlayerTokens(); // Инициализируем фишки игроков
             initializeCornerCards(); // Инициализируем угловые карточки
@@ -3271,7 +3356,64 @@
             }
         }
 
-        // Создание внешнего трека (51 квадрат) - квадратное поле
+        // Создание внешнего периметра (51 квадрат) - 650x650
+        function createOuterPerimeter() {
+            const outerSquares = document.getElementById('outerSquares');
+            const colors = ['square-green', 'square-pink', 'square-yellow', 'square-blue', 'square-orange'];
+            const icons = ['📊', '💰', '🏠', '❤️', '🚗', '🎓', '☕', '🔧', '👤', '🎁', '💳', '📈', '🏢', '✈️', '🎯'];
+            
+            // 51 клетка по периметру 650x650
+            const totalSquares = 51;
+            const perimeter = 650 * 4; // Периметр квадрата
+            const cellSpacing = perimeter / totalSquares; // Расстояние между центрами клеток
+            
+            for (let i = 1; i <= totalSquares; i++) {
+                const square = document.createElement('div');
+                square.className = `outer-square ${colors[(i - 1) % colors.length]}`;
+                square.dataset.cell = i + 23; // Клетки 24-74 (внешний периметр)
+                square.onclick = () => showCellInfo(i + 23);
+                
+                // Позиционирование по периметру
+                let x, y;
+                const position = (i - 1) * cellSpacing;
+                
+                if (position < 650) {
+                    // Верхняя сторона
+                    x = 20 + (position / 650) * 610; // Отступ 20px от краев
+                    y = 20;
+                } else if (position < 1300) {
+                    // Правая сторона
+                    x = 630;
+                    y = 20 + ((position - 650) / 650) * 610;
+                } else if (position < 1950) {
+                    // Нижняя сторона (справа налево)
+                    x = 630 - ((position - 1300) / 650) * 610;
+                    y = 630;
+                } else {
+                    // Левая сторона (снизу вверх)
+                    x = 20;
+                    y = 630 - ((position - 1950) / 650) * 610;
+                }
+                
+                square.style.left = `${x}px`;
+                square.style.top = `${y}px`;
+                square.style.transform = 'translate(-50%, -50%)';
+                
+                // Добавляем цифру
+                const number = document.createElement('div');
+                number.className = 'square-number';
+                number.textContent = i + 23;
+                square.appendChild(number);
+                
+                // Добавляем иконку
+                const icon = document.createElement('div');
+                icon.className = 'square-icon';
+                icon.textContent = icons[(i - 1) % icons.length];
+                square.appendChild(icon);
+                
+                outerSquares.appendChild(square);
+            }
+        }
 
         // Создание внутреннего трека (24 квадрата) - ровный круг
         function createInnerTrack() {
@@ -3378,6 +3520,33 @@
             });
             
             return { missingCells, duplicateTypes };
+        }
+
+        // Функция для получения данных внешней клетки
+        function getOuterCellData(cellNumber) {
+            const outerCellTypes = [
+                'Доход', 'Расход', 'Инвестиция', 'Недвижимость', 'Бизнес', 
+                'Образование', 'Страхование', 'Кредит', 'Пенсия', 'Путешествие',
+                'Благотворительность', 'Мечта', 'Потеря', 'Специальная'
+            ];
+            
+            const outerCellIcons = [
+                '💰', '📊', '📈', '🏠', '🏢', '🎓', '🛡️', '💳', '👴', '✈️',
+                '❤️', '🎯', '⚠️', '⭐'
+            ];
+            
+            const typeIndex = (cellNumber - 24) % outerCellTypes.length;
+            const iconIndex = (cellNumber - 24) % outerCellIcons.length;
+            
+            return {
+                name: `Клетка ${cellNumber}`,
+                type: outerCellTypes[typeIndex],
+                cost: Math.floor(Math.random() * 50000) + 10000,
+                income: Math.floor(Math.random() * 2000) + 500,
+                description: `Описание клетки ${cellNumber}`,
+                color: 'gray',
+                icon: outerCellIcons[iconIndex]
+            };
         }
 
         // Бросок кубика
@@ -3786,8 +3955,15 @@
 
         // Функции для работы с модальным окном клетки
         function showCellInfo(cellNumber) {
-            // Малый круг (0-23)
-            const cell = innerCellData[cellNumber];
+            // Определяем, из какого круга клетка
+            let cell;
+            if (cellNumber < 24) {
+                // Малый круг (0-23)
+                cell = innerCellData[cellNumber];
+            } else {
+                // Внешний периметр (24-74)
+                cell = getOuterCellData(cellNumber);
+            }
             
             if (!cell) return;
 
