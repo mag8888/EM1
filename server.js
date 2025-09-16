@@ -1951,12 +1951,16 @@ process.on('unhandledRejection', (reason, promise) => {
 // Обработка сигналов для graceful shutdown
 process.on('SIGTERM', () => {
     console.log('🔄 SIGTERM received, shutting down gracefully...');
-    server.close(() => {
+    server.close(async () => {
         console.log('✅ Server closed');
-        mongoose.connection.close(() => {
+        try {
+            await mongoose.connection.close();
             console.log('✅ Database connection closed');
             process.exit(0);
-        });
+        } catch (error) {
+            console.error('❌ Error closing database connection:', error);
+            process.exit(1);
+        }
     });
     
     // Принудительное завершение через 10 секунд
@@ -1968,12 +1972,16 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
     console.log('🔄 SIGINT received, shutting down gracefully...');
-    server.close(() => {
+    server.close(async () => {
         console.log('✅ Server closed');
-        mongoose.connection.close(() => {
+        try {
+            await mongoose.connection.close();
             console.log('✅ Database connection closed');
             process.exit(0);
-        });
+        } catch (error) {
+            console.error('❌ Error closing database connection:', error);
+            process.exit(1);
+        }
     });
     
     // Принудительное завершение через 10 секунд
