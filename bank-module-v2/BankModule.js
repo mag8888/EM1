@@ -343,12 +343,10 @@ class BankModule {
             
             // Сбрасываем форму
             this.uiService.resetTransferForm();
-            
-            // Синхронизируем с сервером через 5 секунд
-            setTimeout(() => {
-                this.loadBankData(true);
-                this.core.setLocalChanges(false);
-            }, 5000);
+
+            // Немедленно синхронизируемся с сервером, чтобы зафиксировать перевод
+            await this.loadBankData(true);
+            this.core.setLocalChanges(false);
             
             console.log('✅ BankModule: Перевод выполнен успешно');
             
