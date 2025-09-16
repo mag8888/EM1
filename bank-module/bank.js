@@ -632,9 +632,8 @@ class BankModule {
                         this.updateBankUI();
                     }
                     
-                    // Сбрасываем флаг локальных изменений только после успешной синхронизации
-                    this.hasLocalChanges = false;
-                    console.log('🔄 Флаг локальных изменений сброшен');
+                    // НЕ сбрасываем флаг локальных изменений - оставляем защиту активной
+                    console.log('🔄 Защита локальных изменений остается активной');
                     
                     // Показываем успех после обновления
                     this.showSuccess(`Перевод $${transferAmount} выполнен успешно!`);
@@ -958,6 +957,17 @@ class BankModule {
             const serverBalance = data.game_data?.player_balances?.[playerIndex] || 0;
             console.log('🔍 Проверка баланса: локальный =', this.currentBalance, 'сервер =', serverBalance);
             
+            // Проверяем, есть ли недавние переводы от этого игрока
+            const recentTransfer = this.transfersHistory.find(transfer => 
+                transfer.sender_index === playerIndex && 
+                (Date.now() - new Date(transfer.timestamp).getTime()) < 10000 // 10 секунд
+            );
+            
+            if (recentTransfer) {
+                console.log('🛡️ Обнаружен недавний перевод от этого игрока, пропускаем обновление баланса');
+                return;
+            }
+            
             if (serverBalance > this.currentBalance) {
                 const difference = serverBalance - this.currentBalance;
                 console.log('💰 Получен перевод! Баланс увеличился на:', difference);
@@ -980,6 +990,7 @@ class BankModule {
                 this.updateTransfersHistory();
             } else if (serverBalance < this.currentBalance) {
                 console.log('⚠️ Серверный баланс меньше локального, сохраняем локальный:', this.currentBalance);
+                console.log('🛡️ Защита: не перезаписываем баланс отправителя');
             } else {
                 console.log('✅ Баланс синхронизирован:', this.currentBalance);
             }
