@@ -72,75 +72,6 @@
             filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.1));
         }
 
-        /* Внешний трек - квадратное поле */
-        .outer-track {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 0;
-            background: rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-            box-shadow: 
-                inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-                0 0 20px rgba(255, 255, 255, 0.05);
-        }
-
-        .outer-squares {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        .outer-square {
-            position: absolute;
-            width: 44px;
-            height: 44px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: 600;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(10px);
-            box-shadow: 
-                0 2px 8px rgba(0, 0, 0, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            overflow: hidden;
-        }
-
-        .outer-square::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .outer-square:hover {
-            transform: scale(1.15) translateY(-2px);
-            z-index: 10;
-            box-shadow: 
-                0 8px 25px rgba(0, 0, 0, 0.3),
-                0 0 20px rgba(255, 255, 255, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        }
-
-        .outer-square:hover::before {
-            opacity: 1;
-        }
 
 
         /* Внутренний спиральный трек */
@@ -2410,12 +2341,6 @@
         <!-- Игровое поле -->
         <div class="game-board">
             <div class="board-wrapper">
-                <!-- Внешний трек -->
-                <div class="outer-track">
-                    <div class="outer-squares" id="outerSquares"></div>
-                </div>
-
-
                 <!-- Внутренний трек -->
                 <div class="inner-track">
                     <div class="inner-squares" id="innerSquares"></div>
@@ -2993,12 +2918,6 @@
         let gameBoardUI = null;
         let gameBoardService = null;
         
-        // Переменные для большого круга
-        let playerOnBigCircle = {}; // Игроки на большом круге
-        let playerBusinesses = {}; // Бизнесы игроков
-        let playerDreams = {}; // Мечты игроков
-        let playerPassiveIncome = {}; // Пассивный доход игроков
-        let playerCash = {}; // Кеш игроков (обнуляется при выходе на большой круг)
 
         // Bank v3 functions
         function openBankV3() {
@@ -3024,7 +2943,6 @@
             // Проверяем клетки малого круга
             validateInnerCells();
             
-            createOuterTrack();
             createInnerTrack();
             initializePlayerTokens(); // Инициализируем фишки игроков
             initializeCornerCards(); // Инициализируем угловые карточки
@@ -3354,62 +3272,6 @@
         }
 
         // Создание внешнего трека (51 квадрат) - квадратное поле
-        function createOuterTrack() {
-            const outerSquares = document.getElementById('outerSquares');
-            const colors = ['square-green', 'square-pink', 'square-yellow'];
-            const icons = ['📊', '💰', '🏠', '❤️', '🚗', '🎓', '☕', '🔧', '👤', '🎁', '💳', '📈'];
-            
-            // Квадратное поле: 13 квадратов на каждую сторону
-            const squaresPerSide = 13;
-            const totalSquares = 51;
-            
-            for (let i = 1; i <= totalSquares; i++) {
-                const square = document.createElement('div');
-                square.className = `outer-square ${colors[(i - 1) % colors.length]}`;
-                square.dataset.cellNumber = i;
-                square.dataset.cell = i; // Добавляем для позиционирования фишек
-                square.onclick = () => showCellInfo(i);
-                
-                // Позиционирование по квадратному периметру
-                let x, y;
-                
-                if (i <= squaresPerSide) {
-                    // Верхняя сторона
-                    x = 5 + (i - 1) * (90 / (squaresPerSide - 1));
-                    y = 5;
-                } else if (i <= squaresPerSide * 2) {
-                    // Правая сторона
-                    x = 95;
-                    y = 5 + (i - squaresPerSide - 1) * (90 / (squaresPerSide - 1));
-                } else if (i <= squaresPerSide * 3) {
-                    // Нижняя сторона (справа налево)
-                    x = 95 - ((i - squaresPerSide * 2 - 1) * (90 / (squaresPerSide - 1)));
-                    y = 95;
-                } else {
-                    // Левая сторона (снизу вверх)
-                    x = 5;
-                    y = 95 - ((i - squaresPerSide * 3 - 1) * (90 / (squaresPerSide - 1)));
-                }
-                
-                square.style.left = `${x}%`;
-                square.style.top = `${y}%`;
-                square.style.transform = 'translate(-50%, -50%)';
-                
-                // Добавляем цифру в угол
-                const number = document.createElement('div');
-                number.className = 'square-number';
-                number.textContent = i;
-                square.appendChild(number);
-                
-                // Добавляем крупную иконку
-                const icon = document.createElement('div');
-                icon.className = 'square-icon';
-                icon.textContent = icons[(i - 1) % icons.length];
-                square.appendChild(icon);
-                
-                outerSquares.appendChild(square);
-            }
-        }
 
         // Создание внутреннего трека (24 квадрата) - ровный круг
         function createInnerTrack() {
@@ -3611,27 +3473,15 @@
             
             // Получаем текущую позицию
             const currentPosition = playerPositions[currentPlayer] || 1; // Начинаем с клетки 1
-            const isOnBigCircle = playerOnBigCircle[currentPlayer] || false;
             
-            let newPosition;
-            if (isOnBigCircle) {
-                // Большой круг: 1-51
-                newPosition = ((currentPosition - 1 + steps) % 51) + 1;
-            } else {
-                // Малый круг: 1-24
-                newPosition = ((currentPosition - 1 + steps) % 24) + 1;
-            }
+            // Малый круг: 1-24
+            const newPosition = ((currentPosition - 1 + steps) % 24) + 1;
             
-            console.log(`📍 Текущая позиция: ${currentPosition}, новая позиция: ${newPosition}, большой круг: ${isOnBigCircle}`);
+            console.log(`📍 Текущая позиция: ${currentPosition}, новая позиция: ${newPosition}`);
             
             // Анимированное перемещение по шагам
             for (let i = 1; i <= steps; i++) {
-                let stepPosition;
-                if (isOnBigCircle) {
-                    stepPosition = ((currentPosition - 1 + i) % 51) + 1;
-                } else {
-                    stepPosition = ((currentPosition - 1 + i) % 24) + 1;
-                }
+                const stepPosition = ((currentPosition - 1 + i) % 24) + 1;
                 
                 await animateTokenToCell(playerToken, stepPosition, i === steps);
                 
@@ -3643,11 +3493,6 @@
             
             // Обновляем позицию
             playerPositions[currentPlayer] = newPosition;
-            
-            // Проверяем условия перехода на большой круг
-            if (!isOnBigCircle && checkBigCircleConditions(currentPlayer).canEnter) {
-                enterBigCircle(currentPlayer);
-            }
             
             // Показываем информацию о клетке
             setTimeout(() => {
@@ -3941,15 +3786,8 @@
 
         // Функции для работы с модальным окном клетки
         function showCellInfo(cellNumber) {
-            // Определяем, из какого круга клетка
-            let cell;
-            if (cellNumber < 24) {
-                // Малый круг
-                cell = innerCellData[cellNumber];
-            } else {
-                // Большой круг
-                cell = cellData[cellNumber];
-            }
+            // Малый круг (0-23)
+            const cell = innerCellData[cellNumber];
             
             if (!cell) return;
 
@@ -4321,62 +4159,6 @@
 
         // resetTransferForm() - перенесено в bank-module/bank.js
 
-        // Функции для работы с большим кругом
-        function checkBigCircleConditions(playerIndex) {
-            // Проверяем условия перехода на большой круг:
-            // 1. Пассивный доход должен в 2 раза превышать расходы
-            // 2. Погасить ипотеку (если есть)
-            // 3. Погасить кредит (если есть)
-            
-            const passiveIncome = totalIncome || 0;
-            const expenses = totalExpenses || 0;
-            const hasMortgage = false; // TODO: добавить проверку ипотеки
-            const hasCredit = currentCredit > 0;
-            
-            const incomeCondition = passiveIncome >= expenses * 2;
-            const mortgageCondition = !hasMortgage;
-            const creditCondition = !hasCredit;
-            
-            console.log(`🔍 Проверка условий перехода на большой круг для игрока ${playerIndex}:`, {
-                passiveIncome,
-                expenses,
-                required: expenses * 2,
-                hasMortgage,
-                hasCredit,
-                incomeCondition,
-                mortgageCondition,
-                creditCondition
-            });
-            
-            return {
-                canEnter: incomeCondition && mortgageCondition && creditCondition,
-                conditions: {
-                    income: { met: incomeCondition, required: expenses * 2, current: passiveIncome },
-                    mortgage: { met: mortgageCondition, hasMortgage: hasMortgage },
-                    credit: { met: creditCondition, hasCredit: hasCredit }
-                }
-            };
-        }
-
-        function enterBigCircle(playerIndex) {
-            // Игрок переходит на большой круг
-            playerOnBigCircle[playerIndex] = true;
-            
-            // Обнуляем кеш
-            playerCash[playerIndex] = 0;
-            
-            // Увеличиваем пассивный доход в 10 раз
-            const newPassiveIncome = totalIncome * 10;
-            playerPassiveIncome[playerIndex] = newPassiveIncome;
-            
-            // Начисляем стартовый доход на большой круг
-            // Bank logic removed
-            
-            // Обновляем отображение
-            // Bank logic removed
-            
-            alert(`Поздравляем! Вы перешли на большой круг!\nПассивный доход увеличен в 10 раз: $${newPassiveIncome.toLocaleString()}\nНачислено на баланс: $${newPassiveIncome.toLocaleString()}`);
-        }
 
         function buyBusiness(cellNumber, playerIndex) {
             const cell = cellData[cellNumber];
