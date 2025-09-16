@@ -588,10 +588,17 @@ class BankModule {
             
             this.uiService.showLoadingIndicator('Запрос кредита...');
             
-            await this.apiService.requestCredit(roomId, userId, amount);
+            console.log('💳 BankModule: Отправляем запрос на кредит', { roomId, userId, amount });
+            const result = await this.apiService.requestCredit(roomId, userId, amount);
+            console.log('💳 BankModule: Результат запроса кредита', result);
             
             // Обновляем локальное состояние
             const newCredit = currentCredit + amount;
+            console.log('💳 BankModule: Обновляем локальное состояние', { 
+                oldCredit: currentCredit, 
+                newCredit, 
+                amount 
+            });
             this.core.updateState({
                 currentCredit: newCredit
             });

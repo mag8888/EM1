@@ -196,6 +196,7 @@ class BankApiService {
             
             console.log('📡 BankApiService: Отправляем запрос на кредит', { playerIndex, amount });
             const url = `${this.baseUrl}/rooms/${roomId}/take-credit`;
+            console.log('📡 BankApiService: URL запроса', url);
             const data = await this.makeRequest(url, {
                 method: 'POST',
                 body: JSON.stringify({
