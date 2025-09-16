@@ -181,13 +181,37 @@ class BankUIService {
     showNotification(message, type = 'info') {
         console.log('🔔 BankUIService: Показ уведомления', { message, type });
         
-        // Используем общую функцию уведомлений
-        if (typeof window.showNotification === 'function') {
-            window.showNotification(message, type);
-        } else {
-            // Fallback уведомление
-            alert(message);
+        // Создаем уведомление
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        
+        // Добавляем в контейнер уведомлений
+        let container = document.getElementById('notificationsContainer');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'notificationsContainer';
+            container.style.position = 'fixed';
+            container.style.top = '20px';
+            container.style.right = '20px';
+            container.style.zIndex = '10000';
+            document.body.appendChild(container);
         }
+        
+        container.appendChild(notification);
+        
+        // Показываем уведомление
+        setTimeout(() => notification.classList.add('show'), 100);
+        
+        // Убираем уведомление через 5 секунд
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 5000);
     }
     
     /**
@@ -196,9 +220,20 @@ class BankUIService {
     showLoadingIndicator(message = 'Загрузка...') {
         console.log('⏳ BankUIService: Показ индикатора загрузки', message);
         
-        if (typeof window.showLoadingIndicator === 'function') {
-            window.showLoadingIndicator(message);
+        let indicator = document.getElementById('loadingIndicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'loadingIndicator';
+            indicator.className = 'loading-indicator';
+            indicator.innerHTML = `
+                <div class="loading-spinner"></div>
+                <div>${message}</div>
+            `;
+            document.body.appendChild(indicator);
         }
+        
+        indicator.style.display = 'flex';
+        indicator.querySelector('div:last-child').textContent = message;
     }
     
     /**
@@ -207,8 +242,9 @@ class BankUIService {
     hideLoadingIndicator() {
         console.log('✅ BankUIService: Скрытие индикатора загрузки');
         
-        if (typeof window.hideLoadingIndicator === 'function') {
-            window.hideLoadingIndicator();
+        const indicator = document.getElementById('loadingIndicator');
+        if (indicator) {
+            indicator.style.display = 'none';
         }
     }
     

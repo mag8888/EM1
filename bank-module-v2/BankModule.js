@@ -353,6 +353,13 @@ class BankModule {
             this.core.setLoading(false);
         }
     }
+
+    /**
+     * Обратная совместимость: старое имя метода
+     */
+    async processTransfer() {
+        return this.executeTransfer();
+    }
     
     /**
      * Обновить UI

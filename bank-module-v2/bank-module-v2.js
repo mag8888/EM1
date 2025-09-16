@@ -111,6 +111,11 @@ async function executeTransfer() {
     }
 }
 
+// Обратная совместимость для старых страниц/обработчиков
+async function processTransfer() {
+    return executeTransfer();
+}
+
 /**
  * Сбросить форму перевода
  */
@@ -174,6 +179,7 @@ window.getBankModule = getBankModule;
 window.openBank = openBank;
 window.closeBankModal = closeBankModal;
 window.executeTransfer = executeTransfer;
+window.processTransfer = processTransfer; // совместимость
 window.resetTransferForm = resetTransferForm;
 window.updateBankUI = updateBankUI;
 window.openCreditModal = openCreditModal;
