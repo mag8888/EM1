@@ -3356,63 +3356,101 @@
             }
         }
 
-        // Создание внешнего периметра (51 квадрат) - 650x650
+        // Создание внешнего периметра (46 квадратов) - 650x650
         function createOuterPerimeter() {
             const outerSquares = document.getElementById('outerSquares');
             const colors = ['square-green', 'square-pink', 'square-yellow', 'square-blue', 'square-orange'];
             const icons = ['📊', '💰', '🏠', '❤️', '🚗', '🎓', '☕', '🔧', '👤', '🎁', '💳', '📈', '🏢', '✈️', '🎯'];
             
-            // 51 клетка по периметру 650x650
-            const totalSquares = 51;
-            const perimeter = 650 * 4; // Периметр квадрата
-            const cellSpacing = perimeter / totalSquares; // Расстояние между центрами клеток
+            // 46 клеток по периметру: 12 сверху, 12 снизу, 11 слева, 11 справа
+            const topBottomCells = 12; // Верх и низ
+            const leftRightCells = 11; // Лево и право
+            const totalSquares = topBottomCells * 2 + leftRightCells * 2; // 46 клеток
             
-            for (let i = 1; i <= totalSquares; i++) {
-                const square = document.createElement('div');
-                square.className = `outer-square ${colors[(i - 1) % colors.length]}`;
-                square.dataset.cell = i + 23; // Клетки 24-74 (внешний периметр)
-                square.onclick = () => showCellInfo(i + 23);
-                
-                // Позиционирование по периметру
-                let x, y;
-                const position = (i - 1) * cellSpacing;
-                
-                if (position < 650) {
-                    // Верхняя сторона
-                    x = 20 + (position / 650) * 610; // Отступ 20px от краев
-                    y = 20;
-                } else if (position < 1300) {
-                    // Правая сторона
-                    x = 630;
-                    y = 20 + ((position - 650) / 650) * 610;
-                } else if (position < 1950) {
-                    // Нижняя сторона (справа налево)
-                    x = 630 - ((position - 1300) / 650) * 610;
-                    y = 630;
-                } else {
-                    // Левая сторона (снизу вверх)
-                    x = 20;
-                    y = 630 - ((position - 1950) / 650) * 610;
-                }
-                
-                square.style.left = `${x}px`;
-                square.style.top = `${y}px`;
-                square.style.transform = 'translate(-50%, -50%)';
-                
-                // Добавляем цифру
-                const number = document.createElement('div');
-                number.className = 'square-number';
-                number.textContent = i + 23;
-                square.appendChild(number);
-                
-                // Добавляем иконку
-                const icon = document.createElement('div');
-                icon.className = 'square-icon';
-                icon.textContent = icons[(i - 1) % icons.length];
-                square.appendChild(icon);
-                
+            // Размер клетки и расстояние между ними
+            const cellSize = 40; // Размер клетки
+            const spacing = 1; // Расстояние между клетками
+            
+            // Вычисляем общую длину сторон с учетом клеток и расстояний
+            const sideLength = 650;
+            const availableLength = sideLength - cellSize; // Доступная длина для размещения клеток
+            
+            // Для верхней и нижней сторон: 12 клеток + 11 промежутков по 1px
+            const topBottomSpacing = (availableLength - (topBottomCells * cellSize)) / (topBottomCells - 1);
+            
+            // Для левой и правой сторон: 11 клеток + 10 промежутков по 1px  
+            const leftRightSpacing = (availableLength - (leftRightCells * cellSize)) / (leftRightCells - 1);
+            
+            let cellIndex = 0;
+            
+            // Верхняя сторона (12 клеток)
+            for (let i = 0; i < topBottomCells; i++) {
+                const square = createOuterCell(cellIndex + 24, colors, icons);
+                const x = cellSize/2 + i * (cellSize + topBottomSpacing);
+                const y = cellSize/2;
+                positionOuterCell(square, x, y);
                 outerSquares.appendChild(square);
+                cellIndex++;
             }
+            
+            // Правая сторона (11 клеток)
+            for (let i = 0; i < leftRightCells; i++) {
+                const square = createOuterCell(cellIndex + 24, colors, icons);
+                const x = sideLength - cellSize/2;
+                const y = cellSize/2 + (i + 1) * (cellSize + leftRightSpacing);
+                positionOuterCell(square, x, y);
+                outerSquares.appendChild(square);
+                cellIndex++;
+            }
+            
+            // Нижняя сторона (12 клеток, справа налево)
+            for (let i = 0; i < topBottomCells; i++) {
+                const square = createOuterCell(cellIndex + 24, colors, icons);
+                const x = sideLength - cellSize/2 - i * (cellSize + topBottomSpacing);
+                const y = sideLength - cellSize/2;
+                positionOuterCell(square, x, y);
+                outerSquares.appendChild(square);
+                cellIndex++;
+            }
+            
+            // Левая сторона (11 клеток, снизу вверх)
+            for (let i = 0; i < leftRightCells; i++) {
+                const square = createOuterCell(cellIndex + 24, colors, icons);
+                const x = cellSize/2;
+                const y = sideLength - cellSize/2 - (i + 1) * (cellSize + leftRightSpacing);
+                positionOuterCell(square, x, y);
+                outerSquares.appendChild(square);
+                cellIndex++;
+            }
+        }
+
+        // Создание внешней клетки
+        function createOuterCell(cellNumber, colors, icons) {
+            const square = document.createElement('div');
+            square.className = `outer-square ${colors[(cellNumber - 24) % colors.length]}`;
+            square.dataset.cell = cellNumber;
+            square.onclick = () => showCellInfo(cellNumber);
+            
+            // Добавляем цифру
+            const number = document.createElement('div');
+            number.className = 'square-number';
+            number.textContent = cellNumber;
+            square.appendChild(number);
+            
+            // Добавляем иконку
+            const icon = document.createElement('div');
+            icon.className = 'square-icon';
+            icon.textContent = icons[(cellNumber - 24) % icons.length];
+            square.appendChild(icon);
+            
+            return square;
+        }
+
+        // Позиционирование внешней клетки
+        function positionOuterCell(square, x, y) {
+            square.style.left = `${x}px`;
+            square.style.top = `${y}px`;
+            square.style.transform = 'translate(-50%, -50%)';
         }
 
         // Создание внутреннего трека (24 квадрата) - ровный круг
@@ -3522,7 +3560,7 @@
             return { missingCells, duplicateTypes };
         }
 
-        // Функция для получения данных внешней клетки
+        // Функция для получения данных внешней клетки (46 клеток: 24-69)
         function getOuterCellData(cellNumber) {
             const outerCellTypes = [
                 'Доход', 'Расход', 'Инвестиция', 'Недвижимость', 'Бизнес', 
@@ -3961,7 +3999,7 @@
                 // Малый круг (0-23)
                 cell = innerCellData[cellNumber];
             } else {
-                // Внешний периметр (24-74)
+                // Внешний периметр (24-69)
                 cell = getOuterCellData(cellNumber);
             }
             
