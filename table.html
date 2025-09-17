@@ -3283,11 +3283,19 @@
             }
         }
 
-        // Получение ID комнаты из URL c резервом из localStorage
+        // Получение ID комнаты из URL/пути с резервом из localStorage
         function getRoomIdFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
             let roomId = urlParams.get('room');
             
+            // Если нет в query, пытаемся вытащить из пути вида /room/<id>
+            if (!roomId) {
+                const pathMatch = window.location.pathname.match(/\/room\/([^\/?#]+)/);
+                if (pathMatch && pathMatch[1]) {
+                    roomId = pathMatch[1];
+                }
+            }
+
             // Если в URL нет ID комнаты, пробуем взять из localStorage
             if (!roomId) {
                 try {
@@ -4311,8 +4319,7 @@
         function exitGame() {
             if (confirm('Вы уверены, что хотите выйти из игры? Ваш прогресс будет потерян.')) {
                 // Получаем ID комнаты из URL
-                const urlParams = new URLSearchParams(window.location.search);
-                const roomId = urlParams.get('room');
+                const roomId = getRoomIdFromURL();
                 
                 if (roomId) {
                     // Перенаправляем в лобби
@@ -4334,9 +4341,10 @@
                 
                 // Получаем данные пользователя
                 const currentUser = JSON.parse(localStorage.getItem('user'));
-                if (!currentUser || !currentUser.id) return;
+                const userId = currentUser && (currentUser.id || currentUser._id);
+                if (!userId) return;
                 
-                const response = await fetch(`/api/rooms/${roomId}?user_id=${currentUser.id}`);
+                const response = await fetch(`/api/rooms/${roomId}?user_id=${userId}`);
                 const roomData = await response.json();
                 
                 if (response.ok && roomData.players) {
