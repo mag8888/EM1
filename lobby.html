@@ -1209,6 +1209,11 @@
                 card.classList.remove('selected');
             });
             document.querySelector('.profession-card').classList.add('selected');
+            
+            // Автоматически фокусируемся на поле ввода названия комнаты
+            setTimeout(() => {
+                document.getElementById('roomName').focus();
+            }, 100); // Небольшая задержка для корректного отображения модального окна
         }
 
         // Hide create room modal
