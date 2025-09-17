@@ -563,14 +563,19 @@ app.post('/api/user/game-result', authenticateToken, async (req, res) => {
 // Get all rooms
 app.get('/api/rooms', async (req, res) => {
     try {
-        const { user_id } = req.query;
+        const { user_id, q } = req.query;
         
         // НЕ удаляем комнаты здесь - это делается в cleanupOldRooms()
         // Показываем все комнаты, где игра не началась
-        const rooms = await Room.find({ game_started: false })
+        const filter = { game_started: false };
+        if (q && q.trim()) {
+            // Поиск по названию комнаты (частичное совпадение)
+            filter.name = { $regex: q.trim(), $options: 'i' };
+        }
+
+        const rooms = await Room.find(filter)
             .populate('creator_id', 'first_name last_name')
-            .sort({ created_at: -1 })
-            .limit(20);
+            .sort({ created_at: -1 });
             
         console.log('Found rooms in lobby:', rooms.length);
         rooms.forEach(room => {
