@@ -3386,7 +3386,10 @@
                 const playerToken = document.getElementById(`player${i}`);
                 if (playerToken && playerPositions[i] !== undefined) {
                     const position = playerPositions[i];
-                    const targetCell = document.querySelector(`[data-cell="${position}"]`);
+                    const playerTrack = playerTracks[i] || 'inner';
+                    const targetCell = playerTrack === 'inner'
+                        ? document.querySelector(`.inner-squares [data-cell="${position}"]`)
+                        : document.querySelector(`.outer-squares [data-cell="${position}"]`);
                     
                     console.log(`Player ${i} position: ${position}, targetCell:`, targetCell);
                     
@@ -3464,7 +3467,7 @@
                         }
                         
                             // Позиционируем фишку в центре клетки 1 (старт малого круга)
-                            const startCell = document.querySelector(`[data-cell="1"]`);
+                        const startCell = document.querySelector(`.inner-squares [data-cell="1"]`);
                         console.log(`Initializing player ${i} token, startCell:`, startCell);
                         if (startCell) {
                             const cellRect = startCell.getBoundingClientRect();
@@ -3996,7 +3999,9 @@
                 // Для inner и outer оба используют data-cell, но набор клеток разный.
                 // На внутреннем круге data-cell 1..24 находятся в .inner-squares.
                 // На внешнем – 1..44 находятся в .outer-squares (после наших преобразований нумерация 1..44).
-                let targetCell = document.querySelector(`[data-cell="${cellNumber}"]`);
+                let targetCell = track === 'inner'
+                    ? document.querySelector(`.inner-squares [data-cell="${cellNumber}"]`)
+                    : document.querySelector(`.outer-squares [data-cell="${cellNumber}"]`);
                 if (!targetCell) {
                     console.warn(`Клетка ${cellNumber} не найдена`);
                     resolve();
