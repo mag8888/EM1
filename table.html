@@ -81,7 +81,7 @@
             width: 650px;
             height: 650px;
             border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 0;
+            border-radius: 50%;
             background: rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(10px);
             box-shadow: 
@@ -99,13 +99,13 @@
 
         .outer-square {
             position: absolute;
-            width: 40px;
-            height: 40px;
+            width: 46px;
+            height: 46px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 600;
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 6px;
@@ -144,12 +144,12 @@
         }
 
         .outer-square .square-icon {
-            font-size: 16px;
+            font-size: 18px;
             margin-bottom: 2px;
         }
 
         .outer-square .square-number {
-            font-size: 10px;
+            font-size: 12px;
             color: #9ca3af;
         }
 
@@ -3378,72 +3378,44 @@
             }
         }
 
-        // Создание внешнего периметра (48 квадратов) - 650x650, номера 1-48
+        // Создание внешнего периметра (48 квадратов) - круглое расположение, номера 1-48
         function createOuterPerimeter() {
             const outerSquares = document.getElementById('outerSquares');
             
             // Очищаем существующие клетки
             outerSquares.innerHTML = '';
             
-            // 48 клеток по периметру: 12 сверху, 12 снизу, 12 слева, 12 справа
-            const topBottomCells = 12; // Верх и низ
-            const leftRightCells = 12; // Лево и право
-            const totalSquares = topBottomCells * 2 + leftRightCells * 2; // 48 клеток
-            
-            // Размер клетки и расстояние между ними
-            const cellSize = 40; // Размер клетки
-            const spacing = 1; // Расстояние между клетками
-            
-            // Вычисляем общую длину сторон с учетом клеток и расстояний
-            const sideLength = 650;
-            const availableLength = sideLength - cellSize; // Доступная длина для размещения клеток
-            
-            // Для всех сторон: 12 клеток + 11 промежутков по 1px
-            const cellSpacing = (availableLength - (topBottomCells * cellSize)) / (topBottomCells - 1);
+            // 48 клеток по кругу
+            const totalSquares = 48;
+            const cellSize = 46; // Увеличенный размер клетки (+15%)
+            const radius = 300; // Радиус круга для размещения клеток
+            const centerX = 325; // Центр по X (650/2)
+            const centerY = 325; // Центр по Y (650/2)
             
             let cellNumber = 1; // Начинаем с номера 1
             
-            // Верхняя сторона (12 клеток) - слева направо
-            for (let i = 0; i < topBottomCells; i++) {
+            // Создаем клетки по кругу
+            for (let i = 0; i < totalSquares; i++) {
                 const square = createOuterCell(cellNumber);
-                const x = cellSize/2 + i * (cellSize + cellSpacing);
-                const y = cellSize/2;
-                positionOuterCell(square, x, y);
+                
+                // Вычисляем угол для каждой клетки
+                const angle = (i * 360 / totalSquares) * (Math.PI / 180);
+                
+                // Вычисляем позицию на окружности
+                const x = centerX + radius * Math.cos(angle) - cellSize / 2;
+                const y = centerY + radius * Math.sin(angle) - cellSize / 2;
+                
+                // Позиционируем клетку
+                square.style.left = `${x}px`;
+                square.style.top = `${y}px`;
+                square.style.position = 'absolute';
+                square.style.transform = 'translate(0, 0)';
+                
                 outerSquares.appendChild(square);
                 cellNumber++;
             }
             
-            // Правая сторона (12 клеток) - сверху вниз
-            for (let i = 0; i < leftRightCells; i++) {
-                const square = createOuterCell(cellNumber);
-                const x = sideLength - cellSize/2;
-                const y = cellSize/2 + (i + 1) * (cellSize + cellSpacing);
-                positionOuterCell(square, x, y);
-                outerSquares.appendChild(square);
-                cellNumber++;
-            }
-            
-            // Нижняя сторона (12 клеток) - справа налево
-            for (let i = 0; i < topBottomCells; i++) {
-                const square = createOuterCell(cellNumber);
-                const x = sideLength - cellSize/2 - i * (cellSize + cellSpacing);
-                const y = sideLength - cellSize/2;
-                positionOuterCell(square, x, y);
-                outerSquares.appendChild(square);
-                cellNumber++;
-            }
-            
-            // Левая сторона (12 клеток) - снизу вверх
-            for (let i = 0; i < leftRightCells; i++) {
-                const square = createOuterCell(cellNumber);
-                const x = cellSize/2;
-                const y = sideLength - cellSize/2 - (i + 1) * (cellSize + cellSpacing);
-                positionOuterCell(square, x, y);
-                outerSquares.appendChild(square);
-                cellNumber++;
-            }
-            
-            console.log(`✅ Создано ${totalSquares} клеток по периметру (номера 1-${cellNumber - 1})`);
+            console.log(`✅ Создано ${totalSquares} клеток по кругу (номера 1-${cellNumber - 1})`);
         }
 
         // Создание внешней клетки
@@ -3469,12 +3441,6 @@
             return square;
         }
 
-        // Позиционирование внешней клетки
-        function positionOuterCell(square, x, y) {
-            square.style.left = `${x}px`;
-            square.style.top = `${y}px`;
-            square.style.transform = 'translate(-50%, -50%)';
-        }
 
         // Создание внутреннего трека (24 квадрата) - ровный круг
         function createInnerTrack() {
