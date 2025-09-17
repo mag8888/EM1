@@ -3022,6 +3022,13 @@
         let turnTransitionTimeout; // Таймаут для перехода хода
         let warningSoundPlayed = false; // Флаг для предотвращения повторных сигналов
         
+        // Переменные для кредитов
+        let currentBalance = 0; // Текущий баланс
+        let totalCredit = 0; // Общая сумма кредита
+        let creditPayment = 0; // Ежемесячный платеж по кредиту
+        let monthlyIncome = 0; // Ежемесячный доход
+        let monthlyExpenses = 0; // Ежемесячные расходы
+        
         // Игровое поле
         let gameBoardUI = null;
         let gameBoardService = null;
@@ -3043,6 +3050,27 @@
             }
         }
 
+        // Инициализация финансовых переменных
+        function initializeFinances() {
+            // Устанавливаем начальные значения
+            currentBalance = 8000; // Начальный баланс
+            monthlyIncome = 10000; // Начальный доход
+            monthlyExpenses = 6200; // Начальные расходы
+            totalCredit = 0; // Начальный кредит
+            creditPayment = 0; // Начальный платеж по кредиту
+            
+            console.log('💰 Финансы инициализированы:');
+            console.log(`💵 Баланс: $${currentBalance.toLocaleString()}`);
+            console.log(`📈 Доход: $${monthlyIncome.toLocaleString()}`);
+            console.log(`💸 Расходы: $${monthlyExpenses.toLocaleString()}`);
+            console.log(`💳 Кредит: $${totalCredit.toLocaleString()}`);
+            
+            // Обновляем отображение
+            updateBalanceDisplay();
+            updateFinancesDisplay();
+            updateCreditDisplay();
+        }
+
         // Инициализация игры
         async function initGame() {
             // Инициализируем игровое поле
@@ -3055,6 +3083,9 @@
             createInnerTrack();
             initializePlayerTokens(); // Инициализируем фишки игроков
             initializeCornerCards(); // Инициализируем угловые карточки
+            
+            // Инициализируем финансовые переменные
+            initializeFinances();
             
             // Bank v3 will auto-initialize when needed
             
@@ -4158,6 +4189,17 @@
             // Обновляем отображение баланса
             updateBalanceDisplay();
         }
+        
+        // Добавить ежемесячный доход
+        function addMonthlyIncome(amount, description) {
+            monthlyIncome += amount;
+            console.log(`📈 Добавлен ежемесячный доход: $${amount.toLocaleString()} - ${description}`);
+            console.log(`📊 Общий ежемесячный доход: $${monthlyIncome.toLocaleString()}`);
+            
+            // Обновляем отображение
+            updateFinancesDisplay();
+            updateCreditDisplay();
+        }
 
         function subtractBalance(amount, description) {
             currentBalance = Math.max(0, (currentBalance || 0) - amount);
@@ -4771,6 +4813,198 @@
             alert('Функция Сложный будет реализована позже');
         }
 
+        // Функции для работы с кредитами
+        
+        // Взять кредит
+        function takeCredit(amount) {
+            if (amount <= 0) return;
+            
+            // Добавляем кредит к балансу
+            totalCredit += amount;
+            currentBalance += amount;
+            
+            // Рассчитываем ежемесячный платеж (10% от суммы кредита)
+            creditPayment = Math.floor(amount * 0.1);
+            
+            // Обновляем расходы и PAYDAY
+            monthlyExpenses += creditPayment;
+            
+            console.log(`💰 Взят кредит: $${amount.toLocaleString()}`);
+            console.log(`💸 Ежемесячный платеж: $${creditPayment.toLocaleString()}`);
+            console.log(`📊 Новые расходы: $${monthlyExpenses.toLocaleString()}`);
+            
+            // Обновляем отображение
+            updateCreditDisplay();
+            updateBalanceDisplay();
+            
+            // Показываем уведомление
+            alert(`✅ Кредит взят на $${amount.toLocaleString()}\n💸 Ежемесячный платеж: $${creditPayment.toLocaleString()}\n📊 Расходы увеличены на $${creditPayment.toLocaleString()}`);
+        }
+        
+        // Погасить кредит
+        function payoffCredit() {
+            if (totalCredit <= 0) {
+                alert('❌ У вас нет активных кредитов');
+                return;
+            }
+            
+            const canAfford = currentBalance >= totalCredit;
+            if (!canAfford) {
+                alert(`❌ Недостаточно средств для погашения кредита.\nНужно: $${totalCredit.toLocaleString()}\nУ вас: $${currentBalance.toLocaleString()}`);
+                return;
+            }
+            
+            const confirmPayoff = confirm(`Погасить кредит на $${totalCredit.toLocaleString()}?`);
+            if (confirmPayoff) {
+                // Списываем кредит с баланса
+                currentBalance -= totalCredit;
+                
+                // Уменьшаем расходы на сумму платежа
+                monthlyExpenses -= creditPayment;
+                
+                console.log(`✅ Кредит погашен: $${totalCredit.toLocaleString()}`);
+                console.log(`📊 Расходы уменьшены на: $${creditPayment.toLocaleString()}`);
+                
+                // Сбрасываем кредитные переменные
+                totalCredit = 0;
+                creditPayment = 0;
+                
+                // Обновляем отображение
+                updateCreditDisplay();
+                updateBalanceDisplay();
+                
+                alert(`✅ Кредит успешно погашен!\n📊 Расходы уменьшены на $${creditPayment.toLocaleString()}`);
+            }
+        }
+        
+        // Обновить отображение кредитов
+        function updateCreditDisplay() {
+            // Обновляем отображение кредита
+            const currentCreditElement = document.getElementById('currentCredit');
+            const maxCreditElement = document.getElementById('maxCredit');
+            
+            if (currentCreditElement) {
+                currentCreditElement.textContent = `$${totalCredit.toLocaleString()}`;
+            }
+            
+            if (maxCreditElement) {
+                // Максимальный кредит = 10 * месячный доход
+                const maxCredit = monthlyIncome * 10;
+                maxCreditElement.textContent = `$${maxCredit.toLocaleString()}`;
+            }
+            
+            // Обновляем расходы и PAYDAY
+            updateFinancesDisplay();
+        }
+        
+        // Обновить отображение финансов
+        function updateFinancesDisplay() {
+            // Находим элементы расходов и PAYDAY
+            const expensesElement = document.querySelector('.value.expenses');
+            const paydayElement = document.querySelector('.value.payday');
+            
+            if (expensesElement) {
+                expensesElement.textContent = `$${monthlyExpenses.toLocaleString()}`;
+            }
+            
+            if (paydayElement) {
+                // PAYDAY = доход - расходы
+                const payday = monthlyIncome - monthlyExpenses;
+                paydayElement.textContent = `$${payday.toLocaleString()}/мес`;
+                
+                // Меняем цвет в зависимости от значения
+                if (payday < 0) {
+                    paydayElement.style.color = '#ef4444'; // Красный для отрицательного
+                } else if (payday > 0) {
+                    paydayElement.style.color = '#10b981'; // Зеленый для положительного
+                } else {
+                    paydayElement.style.color = '#f59e0b'; // Оранжевый для нуля
+                }
+            }
+        }
+        
+        // Открыть модальное окно кредитов
+        function openCreditModalV3() {
+            // Обновляем отображение
+            updateCreditDisplay();
+            
+            // Показываем модальное окно
+            document.getElementById('creditModal').style.display = 'block';
+        }
+        
+        // Закрыть модальное окно кредитов
+        function closeCreditModal() {
+            document.getElementById('creditModal').style.display = 'none';
+        }
+        
+        // Установить сумму кредита
+        function setCreditAmount(amount) {
+            const creditAmountInput = document.getElementById('creditAmount');
+            if (creditAmountInput) {
+                creditAmountInput.value = amount;
+                updateCreditPreview();
+            }
+        }
+        
+        // Установить максимальную сумму кредита
+        function setMaxCreditAmount() {
+            const maxCredit = monthlyIncome * 10;
+            setCreditAmount(maxCredit);
+        }
+        
+        // Обновить предварительный просмотр кредита
+        function updateCreditPreview() {
+            const creditAmountInput = document.getElementById('creditAmount');
+            if (!creditAmountInput) return;
+            
+            const amount = parseInt(creditAmountInput.value) || 0;
+            const monthlyPayment = Math.floor(amount * 0.1);
+            
+            // Обновляем информацию о кредите
+            const maxCreditAmountElement = document.getElementById('maxCreditAmount');
+            if (maxCreditAmountElement) {
+                const maxCredit = monthlyIncome * 10;
+                maxCreditAmountElement.textContent = `$${maxCredit.toLocaleString()}`;
+            }
+            
+            console.log(`Предварительный просмотр кредита: $${amount.toLocaleString()}, платеж: $${monthlyPayment.toLocaleString()}`);
+        }
+        
+        // Запросить кредит
+        function requestCredit() {
+            const creditAmountInput = document.getElementById('creditAmount');
+            if (!creditAmountInput) return;
+            
+            const amount = parseInt(creditAmountInput.value) || 0;
+            
+            if (amount <= 0) {
+                alert('❌ Введите сумму кредита');
+                return;
+            }
+            
+            if (amount < 1000) {
+                alert('❌ Минимальная сумма кредита: $1,000');
+                return;
+            }
+            
+            if (amount % 1000 !== 0) {
+                alert('❌ Сумма кредита должна быть кратна $1,000');
+                return;
+            }
+            
+            const maxCredit = monthlyIncome * 10;
+            if (amount > maxCredit) {
+                alert(`❌ Максимальная сумма кредита: $${maxCredit.toLocaleString()}`);
+                return;
+            }
+            
+            // Берем кредит
+            takeCredit(amount);
+            
+            // Закрываем модальное окно
+            closeCreditModal();
+        }
+        
         // Функции для работы с поп-апами клеток
         
         // Показать поп-ап клетки
