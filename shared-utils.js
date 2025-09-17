@@ -9,8 +9,49 @@
  */
 function getRoomIdFromURL() {
     try {
+        const href = window.location.href;
         const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('room_id');
+        // Поддерживаем оба имени параметра: room и room_id
+        let roomId = urlParams.get('room') || urlParams.get('room_id');
+        let source = 'query';
+        
+        // Если нет в query, пробуем путь /room/<24hex> или /table/<24hex>
+        if (!roomId) {
+            const pathMatch = window.location.pathname.match(/\/(?:room|table)\/([0-9a-fA-F]{24})/);
+            if (pathMatch && pathMatch[1]) {
+                roomId = pathMatch[1];
+                source = 'path';
+            }
+        }
+        
+        // Если всё ещё нет, пробуем найти любую 24-hex строку в href
+        if (!roomId) {
+            const anyHex = href.match(/[0-9a-fA-F]{24}/);
+            if (anyHex) {
+                roomId = anyHex[0];
+                source = 'href-hex';
+            }
+        }
+        
+        // Fallback: localStorage
+        if (!roomId) {
+            const saved = localStorage.getItem('lastRoomId');
+            if (saved) {
+                roomId = saved;
+                source = 'localStorage';
+                // Поддерживаем единый параметр room в URL
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.set('room', roomId);
+                window.history.replaceState({}, '', newUrl.toString());
+            }
+        }
+        
+        if (roomId === 'undefined' || roomId === 'null' || roomId === '') {
+            roomId = null;
+        }
+        
+        console.log('Room ID detection (utils):', { source, value: roomId });
+        return roomId;
     } catch (error) {
         console.error('Error getting room ID from URL:', error);
         return null;
