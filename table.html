@@ -3272,16 +3272,19 @@
             const cellsPerSide = Math.floor(totalCells / 4); // 11 клеток на сторону
             
             // Создаем массив клеток с последовательной нумерацией от 1 до 44
+            // Сдвигаем нумерацию влево на одну позицию (1 -> 44, 44 -> 43, и т.д.)
             const cellNumbers = [];
             for (let i = 1; i <= totalCells; i++) {
-                cellNumbers.push(i);
+                // Сдвигаем на одну позицию влево: 1->44, 2->1, 3->2, ..., 44->43
+                const shiftedNumber = i === 1 ? totalCells : i - 1;
+                cellNumbers.push(shiftedNumber);
             }
             
-            // Разделяем клетки по сторонам квадрата
-            const topCells = cellNumbers.slice(0, cellsPerSide); // 1-11
-            const rightCells = cellNumbers.slice(cellsPerSide, cellsPerSide * 2); // 12-22
-            const bottomCells = cellNumbers.slice(cellsPerSide * 2, cellsPerSide * 3); // 23-33
-            const leftCells = cellNumbers.slice(cellsPerSide * 3, cellsPerSide * 4); // 34-44
+            // Разделяем клетки по сторонам квадрата (сдвинутая нумерация)
+            const topCells = cellNumbers.slice(0, cellsPerSide); // 44, 1-10
+            const rightCells = cellNumbers.slice(cellsPerSide, cellsPerSide * 2); // 11-21
+            const bottomCells = cellNumbers.slice(cellsPerSide * 2, cellsPerSide * 3); // 22-32
+            const leftCells = cellNumbers.slice(cellsPerSide * 3, cellsPerSide * 4); // 33-43
             
             // Вычисляем размеры для центрирования
             const totalCellWidth = (cellsPerSide * cellSize) + ((cellsPerSide - 1) * spacing);
@@ -3343,12 +3346,12 @@
                 outerSquares.appendChild(square);
             });
             
-            console.log(`✅ Создано ${totalCells} клеток по квадрату:`);
-            console.log(`🔝 Верхняя сторона: ${topCells.join(', ')} (начинаем с цифры 1)`);
+            console.log(`✅ Создано ${totalCells} клеток по квадрату (сдвинутая нумерация):`);
+            console.log(`🔝 Верхняя сторона: ${topCells.join(', ')} (начинаем с цифры 44)`);
             console.log(`➡️ Правая сторона: ${rightCells.join(', ')}`);
             console.log(`🔽 Нижняя сторона: ${bottomCells.join(', ')}`);
             console.log(`⬅️ Левая сторона: ${leftCells.join(', ')}`);
-            console.log(`🔄 Последовательная нумерация: 1-${totalCells}`);
+            console.log(`🔄 Сдвинутая нумерация: 1->44, 2->1, 3->2, ..., 44->43`);
         }
 
         // Создание внешней клетки
