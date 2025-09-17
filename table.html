@@ -3379,7 +3379,7 @@
             }
         }
 
-        // Создание внешнего периметра (48 квадратов) - квадратное расположение, номера 1-48
+        // Создание внешнего периметра (48 квадратов) - симметричное расположение, номера 1-48
         function createOuterPerimeter() {
             const outerSquares = document.getElementById('outerSquares');
             
@@ -3393,22 +3393,24 @@
             
             // Размер клетки и расстояние между ними
             const cellSize = 46; // Увеличенный размер клетки (+15%)
-            const spacing = 1; // Расстояние между клетками
+            const spacing = 1; // Расстояние между клетками 1px
             
             // Вычисляем общую длину сторон с учетом клеток и расстояний
             const sideLength = 650;
-            const availableLength = sideLength - cellSize; // Доступная длина для размещения клеток
+            const totalCellWidth = (topBottomCells * cellSize) + ((topBottomCells - 1) * spacing);
+            const totalCellHeight = (leftRightCells * cellSize) + ((leftRightCells - 1) * spacing);
             
-            // Для всех сторон: 12 клеток + 11 промежутков по 1px
-            const cellSpacing = (availableLength - (topBottomCells * cellSize)) / (topBottomCells - 1);
+            // Вычисляем отступы для центрирования
+            const offsetX = (sideLength - totalCellWidth) / 2;
+            const offsetY = (sideLength - totalCellHeight) / 2;
             
             let cellNumber = 1; // Начинаем с номера 1
             
             // Верхняя сторона (12 клеток) - слева направо
             for (let i = 0; i < topBottomCells; i++) {
                 const square = createOuterCell(cellNumber);
-                const x = cellSize/2 + i * (cellSize + cellSpacing);
-                const y = cellSize/2;
+                const x = offsetX + i * (cellSize + spacing);
+                const y = offsetY;
                 square.style.left = `${x}px`;
                 square.style.top = `${y}px`;
                 square.style.position = 'absolute';
@@ -3417,11 +3419,11 @@
                 cellNumber++;
             }
             
-            // Правая сторона (12 клеток) - сверху вниз, сдвинута вверх на одну клетку
+            // Правая сторона (12 клеток) - сверху вниз
             for (let i = 0; i < leftRightCells; i++) {
                 const square = createOuterCell(cellNumber);
-                const x = sideLength - cellSize/2;
-                const y = cellSize/2 + i * (cellSize + cellSpacing); // Убрали +1, чтобы сдвинуть вверх
+                const x = offsetX + totalCellWidth - cellSize;
+                const y = offsetY + i * (cellSize + spacing);
                 square.style.left = `${x}px`;
                 square.style.top = `${y}px`;
                 square.style.position = 'absolute';
@@ -3433,8 +3435,8 @@
             // Нижняя сторона (12 клеток) - справа налево
             for (let i = 0; i < topBottomCells; i++) {
                 const square = createOuterCell(cellNumber);
-                const x = sideLength - cellSize/2 - i * (cellSize + cellSpacing);
-                const y = sideLength - cellSize/2;
+                const x = offsetX + totalCellWidth - cellSize - i * (cellSize + spacing);
+                const y = offsetY + totalCellHeight - cellSize;
                 square.style.left = `${x}px`;
                 square.style.top = `${y}px`;
                 square.style.position = 'absolute';
@@ -3443,11 +3445,11 @@
                 cellNumber++;
             }
             
-            // Левая сторона (12 клеток) - снизу вверх, сдвинута вниз на одну клетку
+            // Левая сторона (12 клеток) - снизу вверх
             for (let i = 0; i < leftRightCells; i++) {
                 const square = createOuterCell(cellNumber);
-                const x = cellSize/2;
-                const y = sideLength - cellSize/2 - i * (cellSize + cellSpacing); // Убрали +1, чтобы сдвинуть вниз
+                const x = offsetX;
+                const y = offsetY + totalCellHeight - cellSize - i * (cellSize + spacing);
                 square.style.left = `${x}px`;
                 square.style.top = `${y}px`;
                 square.style.position = 'absolute';
