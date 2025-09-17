@@ -1670,6 +1670,131 @@
             animation: modalShow 0.3s ease-out;
         }
         
+        /* Cell Popup Modal Styles */
+        .cell-popup-modal {
+            display: none;
+            position: fixed;
+            z-index: 1002;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            animation: modalShow 0.3s ease-out;
+        }
+
+        .cell-popup-content {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            margin: 10% auto;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        .cell-popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .cell-popup-header h3 {
+            margin: 0;
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .cell-popup-close {
+            color: #94a3b8;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .cell-popup-close:hover {
+            color: #fff;
+        }
+
+        .cell-popup-body {
+            padding: 30px;
+        }
+
+        .cell-popup-info {
+            margin-bottom: 30px;
+        }
+
+        .cell-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .cell-info-row:last-child {
+            border-bottom: none;
+        }
+
+        .cell-label {
+            color: #94a3b8;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .cell-value {
+            color: #fff;
+            font-weight: 500;
+            font-size: 14px;
+            text-align: right;
+        }
+
+        .cell-popup-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .cell-btn-primary, .cell-btn-secondary {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cell-btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+        }
+
+        .cell-btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            transform: translateY(-2px);
+        }
+
+        .cell-btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .cell-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+        
         /* Credit Modal Styles */
         .credit-modal {
             max-width: 500px;
@@ -3362,18 +3487,19 @@
             const square = document.createElement('div');
             square.className = `outer-square ${getCellColorClass(cellData.type)}`;
             square.dataset.cell = cellNumber;
+            square.onclick = () => showCellPopup(cellNumber);
             
             // Добавляем цифру
-            const number = document.createElement('div');
-            number.className = 'square-number';
+                const number = document.createElement('div');
+                number.className = 'square-number';
             number.textContent = cellNumber;
-            square.appendChild(number);
+                square.appendChild(number);
                 
             // Добавляем иконку
-            const icon = document.createElement('div');
-            icon.className = 'square-icon';
+                const icon = document.createElement('div');
+                icon.className = 'square-icon';
             icon.textContent = cellData.icon;
-            square.appendChild(icon);
+                square.appendChild(icon);
                 
             return square;
         }
@@ -3442,6 +3568,7 @@
                 const square = document.createElement('div');
                 square.className = `inner-square ${getCellColorClass(cellData.type)}`;
                 square.dataset.cell = i; // Добавляем data-cell для позиционирования фишек (1-24)
+                square.onclick = () => showCellPopup(i, true);
                 
                 // Ровное круговое позиционирование
                 const angle = (i - 1) * (360 / 24) * (Math.PI / 180);
@@ -4644,12 +4771,146 @@
             alert('Функция Сложный будет реализована позже');
         }
 
+        // Функции для работы с поп-апами клеток
+        
+        // Показать поп-ап клетки
+        function showCellPopup(cellNumber, isInnerCell = false) {
+            // Определяем, из какого круга клетка
+            let cell;
+            
+            // Проверяем, является ли клетка внутренней (малый круг)
+            if (isInnerCell || (cellNumber >= 1 && cellNumber <= 24 && !isOuterCell(cellNumber))) {
+                // Малый круг (1-24)
+                cell = innerCellData[cellNumber - 1];
+                console.log(`Показываем поп-ап для внутренней клетки ${cellNumber}:`, cell);
+            } else if (cellNumber >= 1 && cellNumber <= 44) {
+                // Внешний периметр (1-44) - новые данные
+                cell = getOuterCellDataNew(cellNumber);
+                console.log(`Показываем поп-ап для внешней клетки ${cellNumber}:`, cell);
+            } else {
+                console.warn(`Неизвестный номер клетки: ${cellNumber}`);
+                return;
+            }
+            
+            // Проверяем наличие клетки
+            function isOuterCell(cellNum) {
+                // Проверяем, есть ли такая клетка во внешнем периметре
+                return getOuterCellDataNew(cellNum) !== null;
+            }
+            
+            if (!cell) return;
+
+            // Заполняем поп-ап данными
+            document.getElementById('cellPopupTitle').textContent = cell.name;
+            document.getElementById('cellPopupType').textContent = cell.type;
+            document.getElementById('cellPopupCost').textContent = cell.cost > 0 ? `$${cell.cost.toLocaleString()}` : 'Бесплатно';
+            
+            // Отображение дохода или потерь
+            if (cell.loss) {
+                document.getElementById('cellPopupIncome').textContent = cell.loss;
+            } else if (cell.income > 0) {
+                document.getElementById('cellPopupIncome').textContent = `$${cell.income.toLocaleString()}/мес`;
+            } else if (typeof cell.income === 'string') {
+                document.getElementById('cellPopupIncome').textContent = cell.income;
+            } else if (cell.income < 0) {
+                document.getElementById('cellPopupIncome').textContent = `$${cell.income.toLocaleString()}/мес`;
+            } else {
+                document.getElementById('cellPopupIncome').textContent = 'Нет дохода';
+            }
+            
+            document.getElementById('cellPopupDescription').textContent = cell.description;
+
+            // Показываем кнопку покупки только если клетка имеет стоимость
+            const buyButton = document.getElementById('cellBuyButton');
+            if (cell.cost > 0) {
+                buyButton.style.display = 'inline-block';
+                buyButton.onclick = () => buyCellFromPopup(cellNumber);
+            } else {
+                buyButton.style.display = 'none';
+            }
+
+            // Показываем поп-ап
+            document.getElementById('cellPopupModal').style.display = 'block';
+        }
+
+        // Закрыть поп-ап клетки
+        function closeCellPopup() {
+            document.getElementById('cellPopupModal').style.display = 'none';
+        }
+
+        // Покупка клетки из поп-апа
+        function buyCellFromPopup(cellNumber) {
+            const cell = getOuterCellDataNew(cellNumber);
+            if (!cell || cell.cost <= 0) return;
+
+            const canAfford = (currentBalance || 0) >= cell.cost;
+            if (canAfford) {
+                const buy = confirm(`Купить "${cell.name}" за $${cell.cost.toLocaleString()}?`);
+                if (buy) {
+                    subtractBalance(cell.cost, `Покупка: ${cell.name}`);
+                    
+                    if (cell.type === 'Бизнес' && cell.income > 0) {
+                        addMonthlyIncome(cell.income, `Бизнес: ${cell.name}`);
+                        alert(`🏢 Поздравляем! Вы купили бизнес: ${cell.name}\nДоход: $${cell.income}/мес`);
+                    } else if (cell.type === 'Мечта') {
+                        alert(`🎯 Поздравляем! Вы реализовали мечту: ${cell.name}`);
+                    }
+                    
+                    closeCellPopup();
+                }
+            } else {
+                alert(`❌ Недостаточно средств для покупки.\nНужно: $${cell.cost.toLocaleString()}\nУ вас: $${(currentBalance || 0).toLocaleString()}`);
+            }
+        }
+
+        // Закрытие поп-апа при клике на фон
+        window.onclick = function(event) {
+            const modal = document.getElementById('cellPopupModal');
+            if (event.target === modal) {
+                closeCellPopup();
+            }
+        }
+
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', () => {
             initGame();
             loadRoomPlayers();
         });
     </script>
+
+    <!-- Cell Popup Modal -->
+    <div id="cellPopupModal" class="cell-popup-modal">
+        <div class="cell-popup-content">
+            <div class="cell-popup-header">
+                <h3 id="cellPopupTitle">Информация о клетке</h3>
+                <span class="cell-popup-close" onclick="closeCellPopup()">&times;</span>
+            </div>
+            <div class="cell-popup-body">
+                <div class="cell-popup-info">
+                    <div class="cell-info-row">
+                        <span class="cell-label">Тип:</span>
+                        <span class="cell-value" id="cellPopupType">-</span>
+                    </div>
+                    <div class="cell-info-row">
+                        <span class="cell-label">Стоимость:</span>
+                        <span class="cell-value" id="cellPopupCost">-</span>
+                    </div>
+                    <div class="cell-info-row">
+                        <span class="cell-label">Доход:</span>
+                        <span class="cell-value" id="cellPopupIncome">-</span>
+                    </div>
+                    <div class="cell-info-row">
+                        <span class="cell-label">Описание:</span>
+                        <span class="cell-value" id="cellPopupDescription">-</span>
+                    </div>
+                </div>
+                <div class="cell-popup-actions">
+                    <button class="cell-btn-primary" onclick="buyCellFromPopup()" id="cellBuyButton" style="display: none;">Купить</button>
+                    <button class="cell-btn-secondary" onclick="closeCellPopup()">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Credit Modal -->
     <div id="creditModal" class="modal">
