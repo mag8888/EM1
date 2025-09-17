@@ -173,4 +173,9 @@ class GameBoardService {
     }
 }
 
-module.exports = GameBoardService;
+// Экспорт для Node.js и браузера
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = GameBoardService;
+} else {
+    window.GameBoardService = GameBoardService;
+}
