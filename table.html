@@ -2295,94 +2295,7 @@
             animation: moveToken 0.5s ease-in-out;
         }
 
-        /* Модальное окно для информации о клетке */
-        .cell-modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-        }
 
-        .modal-content {
-            background: rgba(30, 41, 59, 0.95);
-            backdrop-filter: blur(20px);
-            margin: 5% auto;
-            padding: 0;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 30px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .modal-header h3 {
-            margin: 0;
-            color: white;
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        .close {
-            color: #aaa;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: color 0.3s ease;
-        }
-
-        .close:hover {
-            color: white;
-        }
-
-        .modal-body {
-            padding: 30px;
-        }
-
-        .cell-info {
-            margin-bottom: 30px;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
-        .label {
-            color: #94a3b8;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .value {
-            color: white;
-            font-weight: 500;
-            font-size: 14px;
-            text-align: right;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 15px;
             justify-content: flex-end;
         }
 
@@ -2651,43 +2564,6 @@
         </div>
     </div>
 
-    <!-- Модальное окно для информации о клетке -->
-    <div class="cell-modal" id="cellModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="cellTitle">Информация о клетке</h3>
-                <span class="close" onclick="closeCellModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div class="cell-info">
-                    <div class="info-row">
-                        <span class="label">Тип:</span>
-                        <span class="value" id="cellType">-</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="label">Стоимость:</span>
-                        <span class="value" id="cellCost">-</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="label">Доход:</span>
-                        <span class="value" id="cellIncome">-</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="label">Владелец:</span>
-                        <span class="value" id="cellOwner">-</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="label">Описание:</span>
-                        <span class="value" id="cellDescription">-</span>
-                    </div>
-                </div>
-                <div class="modal-actions">
-                    <button class="btn-primary" onclick="buyCell()" id="buyButton" style="display: none;">Купить</button>
-                    <button class="btn-secondary" onclick="closeCellModal()">Закрыть</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Удалён встроенный банк-модал; используется v2 из bank-module-v2/bank-modal.html -->
 
@@ -3483,7 +3359,6 @@
             const square = document.createElement('div');
             square.className = `outer-square ${getCellColorClass(cellData.type)}`;
             square.dataset.cell = cellNumber;
-            square.onclick = () => showCellInfo(cellNumber);
             
             // Добавляем цифру
             const number = document.createElement('div');
@@ -3581,7 +3456,6 @@
                 square.style.left = `${x}%`;
                 square.style.top = `${y}%`;
                 square.style.transform = 'translate(-50%, -50%)';
-                square.onclick = () => showCellInfo(cellIndex); // Добавляем обработчик клика
                 
                 // Добавляем цифру в угол
                 const number = document.createElement('div');
@@ -4139,183 +4013,13 @@
         document.getElementById('rollDiceBtn').addEventListener('click', rollDice);
 
         // Функции для работы с модальным окном клетки
-        function showCellInfo(cellNumber) {
-            // Определяем, из какого круга клетка
-            let cell;
-            if (cellNumber >= 1 && cellNumber <= 24) {
-                // Малый круг (1-24)
-                cell = innerCellData[cellNumber - 1];
-            } else if (cellNumber >= 1 && cellNumber <= 44) {
-                // Внешний периметр (1-44) - новые данные
-                cell = getOuterCellDataNew(cellNumber);
-            } else {
-                console.warn(`Неизвестный номер клетки: ${cellNumber}`);
-                return;
-            }
-            
-            if (!cell) return;
 
-            document.getElementById('cellTitle').textContent = cell.name;
-            document.getElementById('cellType').textContent = cell.type;
-            document.getElementById('cellCost').textContent = cell.cost > 0 ? `$${cell.cost.toLocaleString()}` : 'Бесплатно';
-            
-            // Отображение дохода или потерь
-            if (cell.loss) {
-                document.getElementById('cellIncome').textContent = cell.loss;
-            } else if (cell.income > 0) {
-                document.getElementById('cellIncome').textContent = `$${cell.income.toLocaleString()}/мес`;
-            } else if (typeof cell.income === 'string') {
-                document.getElementById('cellIncome').textContent = cell.income;
-            } else if (cell.income < 0) {
-                document.getElementById('cellIncome').textContent = `$${cell.income.toLocaleString()}/мес`;
-            } else {
-                document.getElementById('cellIncome').textContent = 'Нет дохода';
-            }
-            
-            document.getElementById('cellOwner').textContent = cellOwners[cellNumber] ? `Игрок ${cellOwners[cellNumber]}` : 'Свободно';
-            document.getElementById('cellDescription').textContent = cell.description;
 
-            // Показываем кнопку покупки только если клетка не куплена и имеет стоимость
-            const buyButton = document.getElementById('buyButton');
-            if (cell.cost > 0 && !cellOwners[cellNumber]) {
-                buyButton.style.display = 'inline-block';
-                buyButton.onclick = () => buyCell(cellNumber);
-            } else if (cell.cost > 0 && cellOwners[cellNumber]) {
-                // Клетка уже куплена - показываем кнопку перекупки
-                buyButton.style.display = 'inline-block';
-                buyButton.textContent = 'Перекупить (x2)';
-                buyButton.onclick = () => buyCell(cellNumber);
-            } else {
-                buyButton.style.display = 'none';
-            }
 
-            // Обрабатываем действие клетки
-            processCellAction(cellNumber, cell);
 
-            document.getElementById('cellModal').style.display = 'block';
-        }
-
-        // Обработка действий клетки
-        function processCellAction(cellNumber, cell) {
-            console.log(`🎯 Обработка клетки ${cellNumber}:`, cell);
-            
-            switch (cell.type) {
-                case 'Доход':
-                    processIncomeCell(cell);
-                    break;
-                case 'Мечта':
-                    processDreamCell(cellNumber, cell);
-                    break;
-                case 'Бизнес':
-                    processBusinessCell(cellNumber, cell);
-                    break;
-                case 'Потеря':
-                    processLossCell(cell);
-                    break;
-                case 'Благотворительность':
-                    processCharityCell(cell);
-                    break;
-                case 'Пустая':
-                    console.log('Пустая клетка - никаких действий');
-                    break;
-                default:
-                    console.log(`Неизвестный тип клетки: ${cell.type}`);
-            }
-        }
-
-        // Обработка клеток дохода
-        function processIncomeCell(cell) {
-            if (cell.income === "Все пассивные доходы") {
-                // Получаем все пассивные доходы игрока
-                const passiveIncome = totalIncome || 0;
-                addBalance(passiveIncome, `Доход от инвестиций: $${passiveIncome.toLocaleString()}`);
-                alert(`💰 Вы получили доход от инвестиций: $${passiveIncome.toLocaleString()}`);
-            } else if (typeof cell.income === 'number' && cell.income > 0) {
-                addBalance(cell.income, `Доход: $${cell.income.toLocaleString()}`);
-                alert(`💰 Вы получили доход: $${cell.income.toLocaleString()}`);
-            }
-        }
-
-        // Обработка клеток мечты
-        function processDreamCell(cellNumber, cell) {
-            if (cell.cost > 0) {
-                const canAfford = (currentBalance || 0) >= cell.cost;
-                if (canAfford) {
-                    const buy = confirm(`🎯 ${cell.name}\n\nСтоимость: $${cell.cost.toLocaleString()}\n\n${cell.description}\n\nКупить мечту?`);
-                    if (buy) {
-                        subtractBalance(cell.cost, `Покупка мечты: ${cell.name}`);
-                        playerDreams[currentPlayer] = playerDreams[currentPlayer] || [];
-                        playerDreams[currentPlayer].push({
-                            name: cell.name,
-                            cost: cell.cost,
-                            cellNumber: cellNumber
-                        });
-                        alert(`🎉 Поздравляем! Вы купили мечту: ${cell.name}`);
-                    }
-                } else {
-                    alert(`❌ Недостаточно средств для покупки мечты.\nНужно: $${cell.cost.toLocaleString()}\nУ вас: $${(currentBalance || 0).toLocaleString()}`);
-                }
-            }
-        }
-
-        // Обработка клеток бизнеса
-        function processBusinessCell(cellNumber, cell) {
-            if (cell.cost > 0) {
-                const canAfford = (currentBalance || 0) >= cell.cost;
-                if (canAfford) {
-                    const buy = confirm(`🏢 ${cell.name}\n\nСтоимость: $${cell.cost.toLocaleString()}\nДоход: $${cell.income}/мес\n\n${cell.description}\n\nКупить бизнес?`);
-                    if (buy) {
-                        subtractBalance(cell.cost, `Покупка бизнеса: ${cell.name}`);
-                        playerBusinesses[currentPlayer] = playerBusinesses[currentPlayer] || [];
-                        playerBusinesses[currentPlayer].push({
-                            name: cell.name,
-                            cost: cell.cost,
-                            income: cell.income,
-                            cellNumber: cellNumber
-                        });
-                        // Увеличиваем пассивный доход
-                        totalIncome = (totalIncome || 0) + cell.income;
-                        alert(`🎉 Поздравляем! Вы купили бизнес: ${cell.name}\nНовый пассивный доход: $${totalIncome.toLocaleString()}/мес`);
-                    }
-                } else {
-                    alert(`❌ Недостаточно средств для покупки бизнеса.\nНужно: $${cell.cost.toLocaleString()}\nУ вас: $${(currentBalance || 0).toLocaleString()}`);
-                }
-            }
-        }
 
         // Обработка клеток потерь
-        function processLossCell(cell) {
-            let lossAmount = 0;
-            
-            if (cell.loss === "-50% активов") {
-                lossAmount = Math.floor((currentBalance || 0) * 0.5);
-            } else if (cell.loss === "-100% наличных") {
-                lossAmount = currentBalance || 0;
-            } else if (cell.loss === "-100% бизнеса") {
-                // Потеря всех бизнесов
-                const businessIncome = playerBusinesses[currentPlayer]?.reduce((sum, biz) => sum + biz.income, 0) || 0;
-                totalIncome = Math.max(0, (totalIncome || 0) - businessIncome);
-                playerBusinesses[currentPlayer] = [];
-                alert(`💔 ${cell.name}\n\nВы потеряли все свои бизнесы!`);
-                return;
-            } else if (cell.loss === "-100% счетов") {
-                lossAmount = currentBalance || 0;
-            }
-            
-            if (lossAmount > 0) {
-                subtractBalance(lossAmount, `Потеря: ${cell.name}`);
-                alert(`💔 ${cell.name}\n\nВы потеряли: $${lossAmount.toLocaleString()}`);
-            }
-        }
 
-        // Обработка клеток благотворительности
-        function processCharityCell(cell) {
-            const donate = confirm(`🎗️ ${cell.name}\n\n${cell.description}\n\nПожертвовать $10,000 на благотворительность?`);
-            if (donate) {
-                subtractBalance(10000, `Благотворительность: ${cell.name}`);
-                alert(`🎗️ Спасибо за ваше пожертвование! Вы помогли нуждающимся.`);
-            }
-        }
 
         // Вспомогательные функции для работы с балансом
         function addBalance(amount, description) {
