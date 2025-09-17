@@ -3386,11 +3386,6 @@
             // Очищаем существующие клетки
             outerSquares.innerHTML = '';
             
-            // 44 клетки по периметру: 11 сверху, 11 снизу, 11 слева, 11 справа
-            const topBottomCells = 11; // Верх и низ
-            const leftRightCells = 11; // Лево и право
-            const totalSquares = topBottomCells * 2 + leftRightCells * 2; // 44 клетки
-            
             // Номера клеток для удаления
             const cellsToRemove = [13, 25, 37, 48];
             
@@ -3400,22 +3395,36 @@
             
             // Вычисляем общую длину сторон с учетом клеток и расстояний
             const sideLength = 650;
-            const totalCellWidth = (topBottomCells * cellSize) + ((topBottomCells - 1) * spacing);
-            const totalCellHeight = (leftRightCells * cellSize) + ((leftRightCells - 1) * spacing);
+            
+            // Создаем массив всех клеток от 1 до 48, исключая удаленные
+            const allCells = [];
+            for (let i = 1; i <= 48; i++) {
+                if (!cellsToRemove.includes(i)) {
+                    allCells.push(i);
+                }
+            }
+            
+            // Разделяем клетки по сторонам
+            const totalCells = allCells.length; // 44 клетки
+            const cellsPerSide = Math.floor(totalCells / 4); // 11 клеток на сторону
+            const remainingCells = totalCells % 4; // 0 оставшихся
+            
+            // Распределяем клетки по сторонам
+            const topCells = allCells.slice(0, cellsPerSide);
+            const rightCells = allCells.slice(cellsPerSide, cellsPerSide * 2);
+            const bottomCells = allCells.slice(cellsPerSide * 2, cellsPerSide * 3);
+            const leftCells = allCells.slice(cellsPerSide * 3, cellsPerSide * 4);
+            
+            // Вычисляем размеры для центрирования
+            const totalCellWidth = (cellsPerSide * cellSize) + ((cellsPerSide - 1) * spacing);
+            const totalCellHeight = (cellsPerSide * cellSize) + ((cellsPerSide - 1) * spacing);
             
             // Вычисляем отступы для центрирования
             const offsetX = (sideLength - totalCellWidth) / 2;
             const offsetY = (sideLength - totalCellHeight) / 2;
             
-            let cellNumber = 1; // Начинаем с номера 1
-            
-            // Верхняя сторона (11 клеток) - слева направо
-            for (let i = 0; i < topBottomCells; i++) {
-                // Пропускаем клетку 13 (последняя в верхнем ряду)
-                if (cellNumber === 13) {
-                    cellNumber++;
-                    continue;
-                }
+            // Верхняя сторона - слева направо
+            topCells.forEach((cellNumber, i) => {
                 const square = createOuterCell(cellNumber);
                 const x = offsetX + i * (cellSize + spacing);
                 const y = offsetY;
@@ -3424,16 +3433,10 @@
                 square.style.position = 'absolute';
                 square.style.transform = 'translate(0, 0)';
                 outerSquares.appendChild(square);
-                cellNumber++;
-            }
+            });
             
-            // Правая сторона (11 клеток) - сверху вниз
-            for (let i = 0; i < leftRightCells; i++) {
-                // Пропускаем клетку 25 (последняя в правом столбце)
-                if (cellNumber === 25) {
-                    cellNumber++;
-                    continue;
-                }
+            // Правая сторона - сверху вниз
+            rightCells.forEach((cellNumber, i) => {
                 const square = createOuterCell(cellNumber);
                 const x = offsetX + totalCellWidth - cellSize;
                 const y = offsetY + i * (cellSize + spacing);
@@ -3442,16 +3445,10 @@
                 square.style.position = 'absolute';
                 square.style.transform = 'translate(0, 0)';
                 outerSquares.appendChild(square);
-                cellNumber++;
-            }
+            });
             
-            // Нижняя сторона (11 клеток) - справа налево
-            for (let i = 0; i < topBottomCells; i++) {
-                // Пропускаем клетку 37 (последняя в нижнем ряду)
-                if (cellNumber === 37) {
-                    cellNumber++;
-                    continue;
-                }
+            // Нижняя сторона - справа налево
+            bottomCells.forEach((cellNumber, i) => {
                 const square = createOuterCell(cellNumber);
                 const x = offsetX + totalCellWidth - cellSize - i * (cellSize + spacing);
                 const y = offsetY + totalCellHeight - cellSize;
@@ -3460,16 +3457,10 @@
                 square.style.position = 'absolute';
                 square.style.transform = 'translate(0, 0)';
                 outerSquares.appendChild(square);
-                cellNumber++;
-            }
+            });
             
-            // Левая сторона (11 клеток) - снизу вверх
-            for (let i = 0; i < leftRightCells; i++) {
-                // Пропускаем клетку 48 (последняя в левом столбце)
-                if (cellNumber === 48) {
-                    cellNumber++;
-                    continue;
-                }
+            // Левая сторона - снизу вверх
+            leftCells.forEach((cellNumber, i) => {
                 const square = createOuterCell(cellNumber);
                 const x = offsetX;
                 const y = offsetY + totalCellHeight - cellSize - i * (cellSize + spacing);
@@ -3478,10 +3469,9 @@
                 square.style.position = 'absolute';
                 square.style.transform = 'translate(0, 0)';
                 outerSquares.appendChild(square);
-                cellNumber++;
-            }
+            });
             
-            console.log(`✅ Создано ${totalSquares} клеток по квадрату (номера 1-${cellNumber - 1})`);
+            console.log(`✅ Создано ${totalCells} клеток по квадрату (номера: ${allCells.join(', ')})`);
         }
 
         // Создание внешней клетки
