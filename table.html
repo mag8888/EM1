@@ -3379,17 +3379,20 @@
             }
         }
 
-        // Создание внешнего периметра (48 квадратов) - симметричное расположение, номера 1-48
+        // Создание внешнего периметра (44 квадрата) - симметричное расположение, номера 1-48 (без 13, 25, 37, 48)
         function createOuterPerimeter() {
             const outerSquares = document.getElementById('outerSquares');
             
             // Очищаем существующие клетки
             outerSquares.innerHTML = '';
             
-            // 48 клеток по периметру: 12 сверху, 12 снизу, 12 слева, 12 справа
-            const topBottomCells = 12; // Верх и низ
-            const leftRightCells = 12; // Лево и право
-            const totalSquares = topBottomCells * 2 + leftRightCells * 2; // 48 клеток
+            // 44 клетки по периметру: 11 сверху, 11 снизу, 11 слева, 11 справа
+            const topBottomCells = 11; // Верх и низ
+            const leftRightCells = 11; // Лево и право
+            const totalSquares = topBottomCells * 2 + leftRightCells * 2; // 44 клетки
+            
+            // Номера клеток для удаления
+            const cellsToRemove = [13, 25, 37, 48];
             
             // Размер клетки и расстояние между ними
             const cellSize = 53; // Увеличенный размер клетки (+15% от 46px)
@@ -3406,8 +3409,13 @@
             
             let cellNumber = 1; // Начинаем с номера 1
             
-            // Верхняя сторона (12 клеток) - слева направо
+            // Верхняя сторона (11 клеток) - слева направо
             for (let i = 0; i < topBottomCells; i++) {
+                // Пропускаем клетку 13 (последняя в верхнем ряду)
+                if (cellNumber === 13) {
+                    cellNumber++;
+                    continue;
+                }
                 const square = createOuterCell(cellNumber);
                 const x = offsetX + i * (cellSize + spacing);
                 const y = offsetY;
@@ -3419,8 +3427,13 @@
                 cellNumber++;
             }
             
-            // Правая сторона (12 клеток) - сверху вниз
+            // Правая сторона (11 клеток) - сверху вниз
             for (let i = 0; i < leftRightCells; i++) {
+                // Пропускаем клетку 25 (последняя в правом столбце)
+                if (cellNumber === 25) {
+                    cellNumber++;
+                    continue;
+                }
                 const square = createOuterCell(cellNumber);
                 const x = offsetX + totalCellWidth - cellSize;
                 const y = offsetY + i * (cellSize + spacing);
@@ -3432,8 +3445,13 @@
                 cellNumber++;
             }
             
-            // Нижняя сторона (12 клеток) - справа налево
+            // Нижняя сторона (11 клеток) - справа налево
             for (let i = 0; i < topBottomCells; i++) {
+                // Пропускаем клетку 37 (последняя в нижнем ряду)
+                if (cellNumber === 37) {
+                    cellNumber++;
+                    continue;
+                }
                 const square = createOuterCell(cellNumber);
                 const x = offsetX + totalCellWidth - cellSize - i * (cellSize + spacing);
                 const y = offsetY + totalCellHeight - cellSize;
@@ -3445,8 +3463,13 @@
                 cellNumber++;
             }
             
-            // Левая сторона (12 клеток) - снизу вверх
+            // Левая сторона (11 клеток) - снизу вверх
             for (let i = 0; i < leftRightCells; i++) {
+                // Пропускаем клетку 48 (последняя в левом столбце)
+                if (cellNumber === 48) {
+                    cellNumber++;
+                    continue;
+                }
                 const square = createOuterCell(cellNumber);
                 const x = offsetX;
                 const y = offsetY + totalCellHeight - cellSize - i * (cellSize + spacing);
@@ -3470,17 +3493,17 @@
             square.onclick = () => showCellInfo(cellNumber);
             
             // Добавляем цифру
-            const number = document.createElement('div');
-            number.className = 'square-number';
+                const number = document.createElement('div');
+                number.className = 'square-number';
             number.textContent = cellNumber;
-            square.appendChild(number);
-            
+                square.appendChild(number);
+                
             // Добавляем иконку
-            const icon = document.createElement('div');
-            icon.className = 'square-icon';
+                const icon = document.createElement('div');
+                icon.className = 'square-icon';
             icon.textContent = cellData.icon;
-            square.appendChild(icon);
-            
+                square.appendChild(icon);
+                
             return square;
         }
 
@@ -4072,17 +4095,24 @@
 
         // Функции для работы с модальным окном клетки
         function showCellInfo(cellNumber) {
+            // Проверяем, не удалена ли клетка
+            const removedCells = [13, 25, 37, 48];
+            if (removedCells.includes(cellNumber)) {
+                console.warn(`Клетка ${cellNumber} была удалена`);
+                return;
+            }
+            
             // Определяем, из какого круга клетка
             let cell;
             if (cellNumber >= 1 && cellNumber <= 24) {
                 // Малый круг (1-24)
                 cell = innerCellData[cellNumber - 1];
-            } else if (cellNumber >= 25 && cellNumber <= 72) {
-                // Внешний периметр (25-72) - старые номера
-                cell = getOuterCellData(cellNumber - 24); // Конвертируем в 1-48
-            } else {
+            } else if (cellNumber >= 1 && cellNumber <= 48) {
                 // Внешний периметр (1-48) - новые номера
                 cell = getOuterCellData(cellNumber);
+            } else {
+                console.warn(`Неизвестный номер клетки: ${cellNumber}`);
+                return;
             }
             
             if (!cell) return;
