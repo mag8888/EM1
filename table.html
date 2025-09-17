@@ -3385,9 +3385,9 @@
                         let offsetX = 0;
                         let offsetY = 0;
                         
-                        // Если несколько фишек на одной клетке, сдвигаем их на 15% от размера клетки
+                        // Если несколько фишек на одной клетке, сдвигаем их на 10% от размера клетки
                         if (existingTokens.length > 1) {
-                            const offset = cellRect.width * 0.15;
+                            const offset = cellRect.width * 0.10;
                             offsetX = (i % 3) * offset;
                             offsetY = Math.floor(i / 3) * offset;
                         }
@@ -3467,8 +3467,8 @@
                             const x = cellRect.left - boardRect.left + cellRect.width / 2;
                             const y = cellRect.top - boardRect.top + cellRect.height / 2;
                             
-                            // Если несколько фишек на одной клетке, сдвигаем их на 15% от размера клетки
-                            const offset = cellRect.width * 0.15;
+                            // Если несколько фишек на одной клетке, сдвигаем их на 10% от размера клетки
+                            const offset = cellRect.width * 0.10;
                             const offsetX = (i % 3) * offset;
                             const offsetY = Math.floor(i / 3) * offset;
                             
@@ -4002,7 +4002,7 @@
                 
                 // Проверяем, есть ли другие фишки на этой клетке
                 const existingTokens = targetCell.querySelectorAll('.player-token');
-                const offset = cellRect.width * 0.15;
+                const offset = cellRect.width * 0.10;
                 let offsetX = 0;
                 let offsetY = 0;
 
