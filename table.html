@@ -3017,7 +3017,8 @@
         let timerInterval;
         let isRolling = false;
         let cellOwners = {}; // Владельцы клеток
-        let playerPositions = [1, 1, 1]; // Позиции игроков на поле (1 = клетка 1 малого круга)
+        let playerPositions = [1, 1, 1]; // Позиции игроков на поле
+        let playerTracks = ['inner', 'inner', 'inner']; // 'inner' | 'outer' по игрокам
         let diceRolled = false; // Флаг броска кубика
         let turnTransitionTimeout; // Таймаут для перехода хода
         let warningSoundPlayed = false; // Флаг для предотвращения повторных сигналов
@@ -3428,6 +3429,10 @@
                     const existingTokens = document.querySelectorAll('.player-token');
                     existingTokens.forEach(token => token.remove());
                     
+                    // Настраиваем массивы под фактическое число игроков
+                    playerPositions = new Array(players.length).fill(1);
+                    playerTracks = new Array(players.length).fill('inner');
+
                     // Используем новый UI для создания фишек
                     if (gameBoardUI) {
                         console.log('🎨 Используем новый UI для создания фишек');
@@ -3937,17 +3942,19 @@
             
             // Получаем текущую позицию
             const currentPosition = playerPositions[currentPlayer] || 1; // Начинаем с клетки 1
+            const track = playerTracks[currentPlayer] || 'inner';
             
-            // Малый круг: 1-24
-            const newPosition = ((currentPosition - 1 + steps) % 24) + 1;
+            // Определяем размер трека
+            const trackSize = track === 'inner' ? 24 : 44;
+            const newPosition = ((currentPosition - 1 + steps) % trackSize) + 1;
             
             console.log(`📍 Текущая позиция: ${currentPosition}, новая позиция: ${newPosition}`);
             
             // Анимированное перемещение по шагам
             for (let i = 1; i <= steps; i++) {
-                const stepPosition = ((currentPosition - 1 + i) % 24) + 1;
+                const stepPosition = ((currentPosition - 1 + i) % trackSize) + 1;
                 
-                await animateTokenToCell(playerToken, stepPosition, i === steps);
+                await animateTokenToCell(playerToken, stepPosition, i === steps, track);
                 
                 // Задержка 0.5 секунды между клетками
                 if (i < steps) {
@@ -3957,6 +3964,17 @@
             
             // Обновляем позицию
             playerPositions[currentPlayer] = newPosition;
+
+            // Проверяем условия перехода на большой круг
+            try {
+                const payday = monthlyIncome - monthlyExpenses;
+                if (track === 'inner' && totalCredit === 0 && payday > 0) {
+                    playerTracks[currentPlayer] = 'outer';
+                    showNotification('🎉 Вы перешли на Большой круг! Условия выполнены.', 'success');
+                }
+            } catch (e) {
+                console.warn('Не удалось проверить условия перехода на большой круг:', e);
+            }
             
             // Показываем информацию о клетке
             setTimeout(() => {
@@ -3967,9 +3985,12 @@
         }
 
         // Анимация перемещения фишки к клетке
-        async function animateTokenToCell(token, cellNumber, isLastStep = false) {
+        async function animateTokenToCell(token, cellNumber, isLastStep = false, track = 'inner') {
             return new Promise((resolve) => {
-                const targetCell = document.querySelector(`[data-cell="${cellNumber}"]`);
+                // Для inner и outer оба используют data-cell, но набор клеток разный.
+                // На внутреннем круге data-cell 1..24 находятся в .inner-squares.
+                // На внешнем – 1..44 находятся в .outer-squares (после наших преобразований нумерация 1..44).
+                let targetCell = document.querySelector(`[data-cell="${cellNumber}"]`);
                 if (!targetCell) {
                     console.warn(`Клетка ${cellNumber} не найдена`);
                     resolve();
