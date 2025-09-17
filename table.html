@@ -3993,9 +3993,9 @@
             }
             
             // Показываем информацию о клетке
-            setTimeout(() => {
-                showCellInfo(newPosition);
-            }, 500);
+                setTimeout(() => {
+                    showCellInfo(newPosition);
+                }, 500);
             
             console.log(`✅ Игрок ${currentPlayer} перемещен на клетку ${newPosition}`);
         }
@@ -5005,7 +5005,7 @@
             const creditEl = document.getElementById('expenseCredit');
             if (baseEl) baseEl.textContent = `$${(expensesBreakdown.base).toLocaleString()}`;
             if (creditEl) creditEl.textContent = `$${(expensesBreakdown.credit).toLocaleString()}`;
-            
+
             if (paydayElement) {
                 // PAYDAY = доход - расходы
                 const payday = monthlyIncome - monthlyExpenses;
@@ -5114,6 +5114,8 @@
             
             // Закрываем модальное окно
             closeCreditModal();
+            // Обновляем финансы, чтобы PAYDAY и детализация обновились немедленно
+            updateFinancesDisplay();
         }
 
         // Функции для работы с поп-апами клеток
