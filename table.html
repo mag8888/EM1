@@ -3435,10 +3435,10 @@
                 outerSquares.appendChild(square);
             });
             
-            // Правая сторона - сверху вниз
+            // Правая сторона - сверху вниз (отодвинута на 1 клетку вправо)
             rightCells.forEach((cellNumber, i) => {
                 const square = createOuterCell(cellNumber);
-                const x = offsetX + totalCellWidth - cellSize;
+                const x = offsetX + totalCellWidth - cellSize + (cellSize + spacing); // +1 клетка вправо
                 const y = offsetY + i * (cellSize + spacing);
                 square.style.left = `${x}px`;
                 square.style.top = `${y}px`;
@@ -3459,10 +3459,10 @@
                 outerSquares.appendChild(square);
             });
             
-            // Левая сторона - снизу вверх
+            // Левая сторона - снизу вверх (отодвинута на 1 клетку влево)
             leftCells.forEach((cellNumber, i) => {
                 const square = createOuterCell(cellNumber);
-                const x = offsetX;
+                const x = offsetX - (cellSize + spacing); // -1 клетка влево
                 const y = offsetY + totalCellHeight - cellSize - i * (cellSize + spacing);
                 square.style.left = `${x}px`;
                 square.style.top = `${y}px`;
