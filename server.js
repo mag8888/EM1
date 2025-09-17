@@ -1493,7 +1493,7 @@ app.post('/api/rooms/:id/move-player', async (req, res) => {
 
         // Перемещаем игрока
         const moveResult = gameBoardService.movePlayer(player_index, steps);
-        
+
         res.json({
             success: true,
             move_result: moveResult,
@@ -1978,23 +1978,23 @@ app.get('/api/admin/all-rooms', async (req, res) => {
 // Функция очистки старых комнат
 async function cleanupOldRooms() {
     try {
-        const sixHoursAgo = new Date(Date.now() - serverConfig.getRoom().oldRoomThreshold);
-        const oneHourAgo = new Date(Date.now() - serverConfig.getRoom().oneHourThreshold);
+        const startedThreshold = new Date(Date.now() - serverConfig.getRoom().oldRoomThreshold);
+        const idleThreshold = new Date(Date.now() - serverConfig.getRoom().oneHourThreshold);
         
         // Удаляем только комнаты, где игра началась более 6 часов назад
         // ИЛИ комнаты без игроков старше 1 часа (игра не началась)
         const result = await Room.deleteMany({
             $or: [
-                // Игра началась более 6 часов назад
+                // Игра началась и комната старше порога
                 {
                     game_started: true,
-                    game_start_time: { $lt: sixHoursAgo }
+                    game_start_time: { $lt: startedThreshold }
                 },
-                // Комната без игроков старше 1 часа (игра не началась)
+                // Комната без игроков старше порога (игра не началась)
                 {
                     game_started: false,
                     players: { $size: 0 },
-                    created_at: { $lt: oneHourAgo }
+                    created_at: { $lt: idleThreshold }
                 }
             ]
         });
