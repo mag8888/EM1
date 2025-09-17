@@ -3404,16 +3404,83 @@
                 }
             }
             
-            // Разделяем клетки по сторонам
+            // Определяем клетки "Деньги" для углов
+            const moneyCells = [1, 12, 27, 34]; // Клетки типа "Деньги"
+            const otherCells = allCells.filter(cell => !moneyCells.includes(cell));
+            
+            // Разделяем остальные клетки по типам
+            const dreamCells = [];
+            const businessCells = [];
+            
+            otherCells.forEach(cellNumber => {
+                const cellData = getOuterCellData(cellNumber);
+                if (cellData.type === "Мечта") {
+                    dreamCells.push(cellNumber);
+                } else if (cellData.type === "Бизнес") {
+                    businessCells.push(cellNumber);
+                }
+            });
+            
+            // Создаем чередующийся паттерн: мечта-бизнес-мечта-бизнес...
+            const alternatingCells = [];
+            const maxLength = Math.max(dreamCells.length, businessCells.length);
+            
+            for (let i = 0; i < maxLength; i++) {
+                if (i < dreamCells.length) alternatingCells.push(dreamCells[i]);
+                if (i < businessCells.length) alternatingCells.push(businessCells[i]);
+            }
+            
+            // Размещаем клетки по сторонам с деньгами по углам
             const totalCells = allCells.length; // 44 клетки
             const cellsPerSide = Math.floor(totalCells / 4); // 11 клеток на сторону
-            const remainingCells = totalCells % 4; // 0 оставшихся
             
-            // Распределяем клетки по сторонам
-            const topCells = allCells.slice(0, cellsPerSide);
-            const rightCells = allCells.slice(cellsPerSide, cellsPerSide * 2);
-            const bottomCells = allCells.slice(cellsPerSide * 2, cellsPerSide * 3);
-            const leftCells = allCells.slice(cellsPerSide * 3, cellsPerSide * 4);
+            // Создаем массивы для каждой стороны
+            const topCells = [];
+            const rightCells = [];
+            const bottomCells = [];
+            const leftCells = [];
+            
+            // Размещаем деньги по углам
+            topCells.push(moneyCells[0]); // Левый верхний угол
+            rightCells.push(moneyCells[1]); // Правый верхний угол  
+            bottomCells.push(moneyCells[2]); // Правый нижний угол
+            leftCells.push(moneyCells[3]); // Левый нижний угол
+            
+            // Заполняем остальные позиции чередующимися клетками
+            let alternatingIndex = 0;
+            const cellsPerSideWithoutCorners = cellsPerSide - 1; // 10 клеток без углов
+            
+            // Верхняя сторона (справа от левого угла)
+            for (let i = 0; i < cellsPerSideWithoutCorners; i++) {
+                if (alternatingIndex < alternatingCells.length) {
+                    topCells.push(alternatingCells[alternatingIndex]);
+                    alternatingIndex++;
+                }
+            }
+            
+            // Правая сторона (снизу от верхнего угла)
+            for (let i = 0; i < cellsPerSideWithoutCorners; i++) {
+                if (alternatingIndex < alternatingCells.length) {
+                    rightCells.push(alternatingCells[alternatingIndex]);
+                    alternatingIndex++;
+                }
+            }
+            
+            // Нижняя сторона (слева от правого угла)
+            for (let i = 0; i < cellsPerSideWithoutCorners; i++) {
+                if (alternatingIndex < alternatingCells.length) {
+                    bottomCells.push(alternatingCells[alternatingIndex]);
+                    alternatingIndex++;
+                }
+            }
+            
+            // Левая сторона (сверху от нижнего угла)
+            for (let i = 0; i < cellsPerSideWithoutCorners; i++) {
+                if (alternatingIndex < alternatingCells.length) {
+                    leftCells.push(alternatingCells[alternatingIndex]);
+                    alternatingIndex++;
+                }
+            }
             
             // Вычисляем размеры для центрирования
             const totalCellWidth = (cellsPerSide * cellSize) + ((cellsPerSide - 1) * spacing);
@@ -3423,7 +3490,7 @@
             const offsetX = (sideLength - totalCellWidth) / 2;
             const offsetY = (sideLength - totalCellHeight) / 2;
             
-            // Верхняя сторона - слева направо
+            // Верхняя сторона - слева направо (деньги в левом углу)
             topCells.forEach((cellNumber, i) => {
                 const square = createOuterCell(cellNumber);
                 const x = offsetX + i * (cellSize + spacing);
@@ -3435,7 +3502,7 @@
                 outerSquares.appendChild(square);
             });
             
-            // Правая сторона - сверху вниз (отодвинута на 1 клетку вправо)
+            // Правая сторона - сверху вниз (деньги в верхнем углу, отодвинута на 1 клетку вправо)
             rightCells.forEach((cellNumber, i) => {
                 const square = createOuterCell(cellNumber);
                 const x = offsetX + totalCellWidth - cellSize + (cellSize + spacing); // +1 клетка вправо
@@ -3447,7 +3514,7 @@
                 outerSquares.appendChild(square);
             });
             
-            // Нижняя сторона - справа налево
+            // Нижняя сторона - справа налево (деньги в правом углу)
             bottomCells.forEach((cellNumber, i) => {
                 const square = createOuterCell(cellNumber);
                 const x = offsetX + totalCellWidth - cellSize - i * (cellSize + spacing);
@@ -3459,7 +3526,7 @@
                 outerSquares.appendChild(square);
             });
             
-            // Левая сторона - снизу вверх (отодвинута на 1 клетку влево)
+            // Левая сторона - снизу вверх (деньги в нижнем углу, отодвинута на 1 клетку влево)
             leftCells.forEach((cellNumber, i) => {
                 const square = createOuterCell(cellNumber);
                 const x = offsetX - (cellSize + spacing); // -1 клетка влево
@@ -3471,7 +3538,13 @@
                 outerSquares.appendChild(square);
             });
             
-            console.log(`✅ Создано ${totalCells} клеток по квадрату (номера: ${allCells.join(', ')})`);
+            console.log(`✅ Создано ${totalCells} клеток по квадрату:`);
+            console.log(`💰 Деньги по углам: ${moneyCells.join(', ')}`);
+            console.log(`🔝 Верхняя сторона: ${topCells.join(', ')}`);
+            console.log(`➡️ Правая сторона: ${rightCells.join(', ')}`);
+            console.log(`🔽 Нижняя сторона: ${bottomCells.join(', ')}`);
+            console.log(`⬅️ Левая сторона: ${leftCells.join(', ')}`);
+            console.log(`🔄 Чередующийся паттерн: ${alternatingCells.slice(0, 10).join(', ')}...`);
         }
 
         // Создание внешней клетки
