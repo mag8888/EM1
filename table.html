@@ -2572,8 +2572,12 @@
                             <div class="value income" id="totalIncome">$0</div>
                     </div>
                     <div class="bank-stat">
-                            <div class="label">📉 Расходы:</div>
+                            <div class="label" style="cursor: pointer; display: flex; align-items: center; gap: 6px;" onclick="toggleExpensesDetails()">📉 Расходы <span id="expensesCaret">▾</span>:</div>
                             <div class="value expenses" id="totalExpenses">$0</div>
+                    </div>
+                    <div id="expensesDetails" style="display:none; margin: 6px 0 10px 0; padding: 10px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>Базовые расходы</span><span id="expenseBase">$0</span></div>
+                        <div style="display:flex; justify-content:space-between;"><span>Платежи по кредиту</span><span id="expenseCredit">$0</span></div>
                     </div>
                     <div class="bank-stat">
                             <div class="label">💰 PAYDAY:</div>
@@ -3029,6 +3033,7 @@
         let creditPayment = 0; // Ежемесячный платеж по кредиту
         let monthlyIncome = 0; // Ежемесячный доход
         let monthlyExpenses = 0; // Ежемесячные расходы
+        let expensesBreakdown = { base: 0, credit: 0 };
         
         // Игровое поле
         let gameBoardUI = null;
@@ -3043,6 +3048,8 @@
             monthlyExpenses = 6200; // Начальные расходы
             totalCredit = 0; // Начальный кредит
             creditPayment = 0; // Начальный платеж по кредиту
+            expensesBreakdown.base = 6200;
+            expensesBreakdown.credit = 0;
             
             console.log('💰 Финансы инициализированы:');
             console.log(`💵 Баланс: $${currentBalance.toLocaleString()}`);
@@ -4912,6 +4919,7 @@
             
             // Обновляем расходы и PAYDAY
             monthlyExpenses += newCreditPayment;
+            expensesBreakdown.credit += newCreditPayment;
             
             console.log(`💰 Взят кредит: $${amount.toLocaleString()}`);
             console.log(`💸 Ежемесячный платеж: $${newCreditPayment.toLocaleString()}`);
@@ -4946,6 +4954,7 @@
                 
                 // Уменьшаем расходы на сумму платежа
                 monthlyExpenses -= creditPayment;
+                expensesBreakdown.credit = Math.max(0, expensesBreakdown.credit - creditPayment);
                 
                 console.log(`✅ Кредит погашен: $${totalCredit.toLocaleString()}`);
                 console.log(`📊 Расходы уменьшены на: $${creditPayment.toLocaleString()}`);
@@ -4991,6 +5000,11 @@
             if (expensesElement) {
                 expensesElement.textContent = `$${monthlyExpenses.toLocaleString()}`;
             }
+            // Детализация расходов
+            const baseEl = document.getElementById('expenseBase');
+            const creditEl = document.getElementById('expenseCredit');
+            if (baseEl) baseEl.textContent = `$${(expensesBreakdown.base).toLocaleString()}`;
+            if (creditEl) creditEl.textContent = `$${(expensesBreakdown.credit).toLocaleString()}`;
             
             if (paydayElement) {
                 // PAYDAY = доход - расходы
@@ -5006,6 +5020,15 @@
                     paydayElement.style.color = '#f59e0b'; // Оранжевый для нуля
                 }
             }
+        }
+
+        function toggleExpensesDetails() {
+            const box = document.getElementById('expensesDetails');
+            const caret = document.getElementById('expensesCaret');
+            if (!box) return;
+            const isHidden = box.style.display === 'none' || box.style.display === '';
+            box.style.display = isHidden ? 'block' : 'none';
+            if (caret) caret.textContent = isHidden ? '▴' : '▾';
         }
         
         // Открыть модальное окно кредитов
