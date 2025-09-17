@@ -3090,6 +3090,16 @@
             // Проверяем клетки малого круга
             validateInnerCells();
             
+            // Сохраняем roomId в localStorage как резерв
+            try {
+                const roomIdForSave = getRoomIdFromURL();
+                if (roomIdForSave) {
+                    localStorage.setItem('lastRoomId', roomIdForSave);
+                }
+            } catch (e) {
+                console.warn('Cannot persist lastRoomId:', e);
+            }
+
             createOuterPerimeter();
             createInnerTrack();
             initializePlayerTokens(); // Инициализируем фишки игроков
@@ -3121,6 +3131,8 @@
                 const roomId = getRoomIdFromURL();
                 if (!roomId) {
                     console.error('❌ ID комнаты не найден');
+                    alert('ID комнаты не найден. Возврат в лобби.');
+                    window.location.href = '/lobby';
                     return;
                 }
                 
@@ -3271,10 +3283,28 @@
             }
         }
 
-        // Получение ID комнаты из URL
+        // Получение ID комнаты из URL c резервом из localStorage
         function getRoomIdFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('room');
+            let roomId = urlParams.get('room');
+            
+            // Если в URL нет ID комнаты, пробуем взять из localStorage
+            if (!roomId) {
+                try {
+                    const saved = localStorage.getItem('lastRoomId');
+                    if (saved) {
+                        roomId = saved;
+                        // Обновляем URL, чтобы не терять ID при дальнейших переходах
+                        const newUrl = new URL(window.location.href);
+                        newUrl.searchParams.set('room', roomId);
+                        window.history.replaceState({}, '', newUrl.toString());
+                    }
+                } catch (e) {
+                    console.warn('Cannot access localStorage for lastRoomId:', e);
+                }
+            }
+            
+            return roomId;
         }
 
         // Получение индекса текущего игрока
