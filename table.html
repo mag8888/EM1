@@ -3360,6 +3360,23 @@
 
         // Обновление позиций фишек игроков
         let tokensInitialized = false;
+
+        // Возвращает сдвиг фишки, если на одной клетке несколько игроков
+        function getTokenOffsetForPlayer(playerIndex, cellNumber, cellSizePx) {
+            const group = [];
+            for (let i = 0; i < playerPositions.length; i++) {
+                if (playerPositions[i] === cellNumber) group.push(i);
+            }
+            const posInGroup = group.indexOf(playerIndex);
+            if (posInGroup <= 0) return { x: 0, y: 0 };
+
+            const offset = cellSizePx * 0.10; // 10%
+            // Раскладываем по маленькой сетке 2x2, затем 3x2 и т.д.
+            const cols = 2;
+            const x = (posInGroup % cols) * offset;
+            const y = Math.floor(posInGroup / cols) * offset;
+            return { x, y };
+        }
         function updatePlayerTokenPositions() {
             if (!tokensInitialized) {
                 return;
@@ -3379,18 +3396,7 @@
                         
                         const x = cellRect.left - boardRect.left + cellRect.width / 2;
                         const y = cellRect.top - boardRect.top + cellRect.height / 2;
-                        
-                        // Проверяем, есть ли другие фишки на этой клетке
-                        const existingTokens = targetCell.querySelectorAll('.player-token');
-                        let offsetX = 0;
-                        let offsetY = 0;
-                        
-                        // Если несколько фишек на одной клетке, сдвигаем их на 10% от размера клетки
-                        if (existingTokens.length > 1) {
-                            const offset = cellRect.width * 0.10;
-                            offsetX = (i % 3) * offset;
-                            offsetY = Math.floor(i / 3) * offset;
-                        }
+                        const { x: offsetX, y: offsetY } = getTokenOffsetForPlayer(i, position, cellRect.width);
                         
                         playerToken.style.left = `${x + offsetX - 12}px`;
                         playerToken.style.top = `${y + offsetY - 12}px`;
@@ -3467,8 +3473,8 @@
                             const x = cellRect.left - boardRect.left + cellRect.width / 2;
                             const y = cellRect.top - boardRect.top + cellRect.height / 2;
                             
-                            // Если несколько фишек на одной клетке, сдвигаем их на 10% от размера клетки
-                            const offset = cellRect.width * 0.10;
+                            // Если несколько фишек на одной клетке, сдвигаем их на 15% от размера клетки
+                            const offset = cellRect.width * 0.15;
                             const offsetX = (i % 3) * offset;
                             const offsetY = Math.floor(i / 3) * offset;
                             
@@ -3999,21 +4005,8 @@
             
                 const cellRect = targetCell.getBoundingClientRect();
                 const boardRect = document.querySelector('.game-board').getBoundingClientRect();
-                
-                // Проверяем, есть ли другие фишки на этой клетке
-                const existingTokens = targetCell.querySelectorAll('.player-token');
-                const offset = cellRect.width * 0.10;
-                let offsetX = 0;
-                let offsetY = 0;
-
-                // Сдвигаем фишки если их несколько на одной клетке
-                if (existingTokens.length > 0) {
-                    const tokenIndex = Array.from(existingTokens).indexOf(token);
-                    if (tokenIndex >= 0) {
-                        offsetX = (tokenIndex % 2) * offset;
-                        offsetY = Math.floor(tokenIndex / 2) * offset;
-                    }
-                }
+                const playerIndex = parseInt(token.id.replace('player',''), 10);
+                const { x: offsetX, y: offsetY } = getTokenOffsetForPlayer(playerIndex, cellNumber, cellRect.width);
 
                 const x = cellRect.left - boardRect.left + cellRect.width / 2 + offsetX;
                 const y = cellRect.top - boardRect.top + cellRect.height / 2 + offsetY;
