@@ -3146,7 +3146,7 @@
                 if (response.ok) {
                     const data = await response.json();
                     console.log('✅ Игровое поле инициализировано', data);
-            } else {
+                } else {
                     console.error('❌ Ошибка инициализации поля');
                 }
                 
@@ -3285,14 +3285,28 @@
 
         // Получение ID комнаты из URL/пути с резервом из localStorage
         function getRoomIdFromURL() {
+            const href = window.location.href;
             const urlParams = new URLSearchParams(window.location.search);
             let roomId = urlParams.get('room');
+            const debug = { source: 'query', value: roomId };
             
             // Если нет в query, пытаемся вытащить из пути вида /room/<id>
             if (!roomId) {
-                const pathMatch = window.location.pathname.match(/\/room\/([^\/?#]+)/);
+                const pathMatch = window.location.pathname.match(/\/(?:room|table)\/([0-9a-fA-F]{24})/);
                 if (pathMatch && pathMatch[1]) {
                     roomId = pathMatch[1];
+                    debug.source = 'path';
+                    debug.value = roomId;
+                }
+            }
+
+            // Если всё ещё нет, пробуем вытащить 24-символьный hex из полной ссылки
+            if (!roomId) {
+                const anyHex = href.match(/[0-9a-fA-F]{24}/);
+                if (anyHex) {
+                    roomId = anyHex[0];
+                    debug.source = 'href-hex';
+                    debug.value = roomId;
                 }
             }
 
@@ -3306,11 +3320,23 @@
                         const newUrl = new URL(window.location.href);
                         newUrl.searchParams.set('room', roomId);
                         window.history.replaceState({}, '', newUrl.toString());
+                        debug.source = 'localStorage';
+                        debug.value = roomId;
                     }
                 } catch (e) {
                     console.warn('Cannot access localStorage for lastRoomId:', e);
                 }
             }
+            
+            // Фильтруем невалидные значения
+            if (roomId === 'undefined' || roomId === 'null' || roomId === '') {
+                roomId = null;
+            }
+            
+            console.log('Room ID detection:', {
+                href,
+                ...debug
+            });
             
             return roomId;
         }
