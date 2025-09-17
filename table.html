@@ -3417,11 +3417,11 @@
                 cellNumber++;
             }
             
-            // Правая сторона (12 клеток) - сверху вниз
+            // Правая сторона (12 клеток) - сверху вниз, сдвинута вверх на одну клетку
             for (let i = 0; i < leftRightCells; i++) {
                 const square = createOuterCell(cellNumber);
                 const x = sideLength - cellSize/2;
-                const y = cellSize/2 + (i + 1) * (cellSize + cellSpacing);
+                const y = cellSize/2 + i * (cellSize + cellSpacing); // Убрали +1, чтобы сдвинуть вверх
                 square.style.left = `${x}px`;
                 square.style.top = `${y}px`;
                 square.style.position = 'absolute';
@@ -3443,11 +3443,11 @@
                 cellNumber++;
             }
             
-            // Левая сторона (12 клеток) - снизу вверх
+            // Левая сторона (12 клеток) - снизу вверх, сдвинута вниз на одну клетку
             for (let i = 0; i < leftRightCells; i++) {
                 const square = createOuterCell(cellNumber);
                 const x = cellSize/2;
-                const y = sideLength - cellSize/2 - (i + 1) * (cellSize + cellSpacing);
+                const y = sideLength - cellSize/2 - i * (cellSize + cellSpacing); // Убрали +1, чтобы сдвинуть вниз
                 square.style.left = `${x}px`;
                 square.style.top = `${y}px`;
                 square.style.position = 'absolute';
