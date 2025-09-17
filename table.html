@@ -3390,13 +3390,10 @@
             const cellSize = 58; // Увеличенный размер клетки (+10% от 53px)
             const spacing = 1; // Расстояние между клетками 1px
             
-            // Параметры круга
-            const centerX = 325; // Центр по X (650/2)
-            const centerY = 325; // Центр по Y (650/2)
-            const radius = 280; // Радиус круга
-            
-            // Количество клеток в круге
+            // Параметры квадрата
+            const sideLength = 650;
             const totalCells = 44;
+            const cellsPerSide = Math.floor(totalCells / 4); // 11 клеток на сторону
             
             // Создаем массив клеток с последовательной нумерацией от 1 до 44
             const cellNumbers = [];
@@ -3404,15 +3401,15 @@
                 cellNumbers.push(i);
             }
             
-            // Определяем клетки "Деньги" для специального размещения
-            const moneyCellPositions = [0, 11, 22, 33]; // Позиции для денег (каждые 11 клеток)
+            // Определяем клетки "Деньги" для углов
+            const moneyCellPositions = [0, 11, 22, 33]; // Позиции для денег (углы)
             
             // Создаем данные для всех клеток с правильной нумерацией
             const cellData = [];
             cellNumbers.forEach((cellNumber, index) => {
                 let data;
                 if (moneyCellPositions.includes(index)) {
-                    // Клетки "Деньги" в специальных позициях
+                    // Клетки "Деньги" в углах
                     data = {
                         name: "Вам выплачивается доход от ваших инвестиций",
                         type: "Деньги",
@@ -3434,13 +3431,25 @@
                 cellData.push({ ...data, number: cellNumber });
             });
             
-            // Размещаем клетки по кругу
-            cellData.forEach((data, index) => {
-                const angle = (index / totalCells) * 2 * Math.PI - Math.PI / 2; // Начинаем сверху
-                const x = centerX + Math.cos(angle) * radius - cellSize / 2;
-                const y = centerY + Math.sin(angle) * radius - cellSize / 2;
-                
+            // Разделяем клетки по сторонам квадрата
+            const topCells = cellData.slice(0, cellsPerSide);
+            const rightCells = cellData.slice(cellsPerSide, cellsPerSide * 2);
+            const bottomCells = cellData.slice(cellsPerSide * 2, cellsPerSide * 3);
+            const leftCells = cellData.slice(cellsPerSide * 3, cellsPerSide * 4);
+            
+            // Вычисляем размеры для центрирования
+            const totalCellWidth = (cellsPerSide * cellSize) + ((cellsPerSide - 1) * spacing);
+            const totalCellHeight = (cellsPerSide * cellSize) + ((cellsPerSide - 1) * spacing);
+            
+            // Вычисляем отступы для центрирования
+            const offsetX = (sideLength - totalCellWidth) / 2;
+            const offsetY = (sideLength - totalCellHeight) / 2;
+            
+            // Верхняя сторона - слева направо
+            topCells.forEach((data, i) => {
                 const square = createOuterCell(data.number, data);
+                const x = offsetX + i * (cellSize + spacing);
+                const y = offsetY;
                 square.style.left = `${x}px`;
                 square.style.top = `${y}px`;
                 square.style.position = 'absolute';
@@ -3448,10 +3457,49 @@
                 outerSquares.appendChild(square);
             });
             
-            console.log(`✅ Создано ${totalCells} клеток по кругу:`);
-            console.log(`💰 Деньги в позициях: ${moneyCellPositions.map(p => p + 1).join(', ')}`);
+            // Правая сторона - сверху вниз (отодвинута на 1 клетку вправо)
+            rightCells.forEach((data, i) => {
+                const square = createOuterCell(data.number, data);
+                const x = offsetX + totalCellWidth - cellSize + (cellSize + spacing); // +1 клетка вправо
+                const y = offsetY + i * (cellSize + spacing);
+                square.style.left = `${x}px`;
+                square.style.top = `${y}px`;
+                square.style.position = 'absolute';
+                square.style.transform = 'translate(0, 0)';
+                outerSquares.appendChild(square);
+            });
+            
+            // Нижняя сторона - справа налево
+            bottomCells.forEach((data, i) => {
+                const square = createOuterCell(data.number, data);
+                const x = offsetX + totalCellWidth - cellSize - i * (cellSize + spacing);
+                const y = offsetY + totalCellHeight - cellSize;
+                square.style.left = `${x}px`;
+                square.style.top = `${y}px`;
+                square.style.position = 'absolute';
+                square.style.transform = 'translate(0, 0)';
+                outerSquares.appendChild(square);
+            });
+            
+            // Левая сторона - снизу вверх (отодвинута на 1 клетку влево)
+            leftCells.forEach((data, i) => {
+                const square = createOuterCell(data.number, data);
+                const x = offsetX - (cellSize + spacing); // -1 клетка влево
+                const y = offsetY + totalCellHeight - cellSize - i * (cellSize + spacing);
+                square.style.left = `${x}px`;
+                square.style.top = `${y}px`;
+                square.style.position = 'absolute';
+                square.style.transform = 'translate(0, 0)';
+                outerSquares.appendChild(square);
+            });
+            
+            console.log(`✅ Создано ${totalCells} клеток по квадрату:`);
+            console.log(`💰 Деньги в углах: ${moneyCellPositions.map(p => p + 1).join(', ')}`);
+            console.log(`🔝 Верхняя сторона: ${topCells.map(c => c.number).join(', ')}`);
+            console.log(`➡️ Правая сторона: ${rightCells.map(c => c.number).join(', ')}`);
+            console.log(`🔽 Нижняя сторона: ${bottomCells.map(c => c.number).join(', ')}`);
+            console.log(`⬅️ Левая сторона: ${leftCells.map(c => c.number).join(', ')}`);
             console.log(`🔄 Последовательная нумерация: 1-${totalCells}`);
-            console.log(`🎯 Круг с радиусом ${radius}px, центр (${centerX}, ${centerY})`);
         }
 
         // Создание внешней клетки
