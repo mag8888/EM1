@@ -3034,22 +3034,6 @@
         let gameBoardService = null;
         
 
-        // Bank v3 functions
-        function openBankV3() {
-            if (typeof window.openBankV3 === 'function') {
-                window.openBankV3();
-            } else {
-                console.error('Bank v3 module not loaded');
-            }
-        }
-        
-        function closeBankModal() {
-            const modal = document.getElementById('bankModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-        }
-
         // Инициализация финансовых переменных
         function initializeFinances() {
             // Устанавливаем начальные значения
@@ -3069,6 +3053,33 @@
             updateBalanceDisplay();
             updateFinancesDisplay();
             updateCreditDisplay();
+        }
+
+        // Добавить ежемесячный доход
+        function addMonthlyIncome(amount, description) {
+            monthlyIncome += amount;
+            console.log(`📈 Добавлен ежемесячный доход: $${amount.toLocaleString()} - ${description}`);
+            console.log(`📊 Общий ежемесячный доход: $${monthlyIncome.toLocaleString()}`);
+            
+            // Обновляем отображение
+            updateFinancesDisplay();
+            updateCreditDisplay();
+        }
+
+        // Bank v3 functions
+        function openBankV3() {
+            if (typeof window.openBankV3 === 'function') {
+                window.openBankV3();
+            } else {
+                console.error('Bank v3 module not loaded');
+            }
+        }
+        
+        function closeBankModal() {
+            const modal = document.getElementById('bankModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
         }
 
         // Инициализация игры
@@ -4189,17 +4200,6 @@
             // Обновляем отображение баланса
             updateBalanceDisplay();
         }
-        
-        // Добавить ежемесячный доход
-        function addMonthlyIncome(amount, description) {
-            monthlyIncome += amount;
-            console.log(`📈 Добавлен ежемесячный доход: $${amount.toLocaleString()} - ${description}`);
-            console.log(`📊 Общий ежемесячный доход: $${monthlyIncome.toLocaleString()}`);
-            
-            // Обновляем отображение
-            updateFinancesDisplay();
-            updateCreditDisplay();
-        }
 
         function subtractBalance(amount, description) {
             currentBalance = Math.max(0, (currentBalance || 0) - amount);
@@ -4824,13 +4824,15 @@
             currentBalance += amount;
             
             // Рассчитываем ежемесячный платеж (10% от суммы кредита)
-            creditPayment = Math.floor(amount * 0.1);
+            const newCreditPayment = Math.floor(amount * 0.1);
+            creditPayment += newCreditPayment;
             
             // Обновляем расходы и PAYDAY
-            monthlyExpenses += creditPayment;
+            monthlyExpenses += newCreditPayment;
             
             console.log(`💰 Взят кредит: $${amount.toLocaleString()}`);
-            console.log(`💸 Ежемесячный платеж: $${creditPayment.toLocaleString()}`);
+            console.log(`💸 Ежемесячный платеж: $${newCreditPayment.toLocaleString()}`);
+            console.log(`📊 Общий платеж по кредитам: $${creditPayment.toLocaleString()}`);
             console.log(`📊 Новые расходы: $${monthlyExpenses.toLocaleString()}`);
             
             // Обновляем отображение
@@ -4838,7 +4840,7 @@
             updateBalanceDisplay();
             
             // Показываем уведомление
-            alert(`✅ Кредит взят на $${amount.toLocaleString()}\n💸 Ежемесячный платеж: $${creditPayment.toLocaleString()}\n📊 Расходы увеличены на $${creditPayment.toLocaleString()}`);
+            alert(`✅ Кредит взят на $${amount.toLocaleString()}\n💸 Ежемесячный платеж: $${newCreditPayment.toLocaleString()}\n📊 Расходы увеличены на $${newCreditPayment.toLocaleString()}`);
         }
         
         // Погасить кредит
@@ -4992,9 +4994,12 @@
                 return;
             }
             
+            // Проверяем максимальный кредит (учитываем уже взятые кредиты)
             const maxCredit = monthlyIncome * 10;
-            if (amount > maxCredit) {
-                alert(`❌ Максимальная сумма кредита: $${maxCredit.toLocaleString()}`);
+            const availableCredit = maxCredit - totalCredit;
+            
+            if (amount > availableCredit) {
+                alert(`❌ Максимальная доступная сумма кредита: $${availableCredit.toLocaleString()}\n💳 Уже взято: $${totalCredit.toLocaleString()}\n📊 Максимум: $${maxCredit.toLocaleString()}`);
                 return;
             }
             
@@ -5004,7 +5009,7 @@
             // Закрываем модальное окно
             closeCreditModal();
         }
-        
+
         // Функции для работы с поп-апами клеток
         
         // Показать поп-ап клетки
