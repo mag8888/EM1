@@ -154,6 +154,20 @@
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
 
+        /* Маркер сердечка на клетке (мечта игрока) */
+        .cell-heart {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            font-size: 16px;
+            z-index: 20;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+            pointer-events: none;
+        }
+        .cell-heart.p0 { color: #ef4444; }
+        .cell-heart.p1 { color: #10b981; }
+        .cell-heart.p2 { color: #3b82f6; }
+
         /* Внутренний спиральный трек */
         .inner-track {
             position: absolute;
@@ -2420,6 +2434,25 @@
             animation: moveToken 0.5s ease-in-out;
         }
 
+        /* Кнопка перехода на скоростную дорогу */
+        .fast-track-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 16px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(34, 197, 94, 0.35);
+            display: none;
+            z-index: 30;
+        }
+        .fast-track-btn:hover { filter: brightness(1.05); }
+
 
             justify-content: flex-end;
         }
@@ -2545,6 +2578,7 @@
                 <div class="player-token player-1" id="player1" style="top: 50%; left: 50%;">1</div>
                 <div class="player-token player-2" id="player2" style="top: 50%; left: 50%;">2</div>
                 <div class="player-token player-3" id="player3" style="top: 50%; left: 50%;">3</div>
+                <button id="fastTrackBtn" class="fast-track-btn" onclick="switchToFastTrack()">Перейти на скоростную дорогу</button>
             </div>
         </div>
 
@@ -3446,8 +3480,22 @@
                     existingTokens.forEach(token => token.remove());
                     
                     // Настраиваем массивы под фактическое число игроков
-                    playerPositions = new Array(players.length).fill(1);
                     playerTracks = new Array(players.length).fill('inner');
+                    // Загружаем сохранённые позиции с сервера (0..23 на малом круге)
+                    let serverPositions = [];
+                    try {
+                        const posResp = await fetch(`/api/rooms/${roomId}/positions`);
+                        if (posResp.ok) {
+                            const posData = await posResp.json();
+                            serverPositions = Array.isArray(posData.player_positions) ? posData.player_positions : [];
+                        }
+                    } catch (e) { console.warn('Не удалось загрузить позиции игроков:', e); }
+                    // Преобразуем 0..23 → 1..24 для UI
+                    playerPositions = new Array(players.length).fill(1);
+                    for (let i = 0; i < players.length; i++) {
+                        const zeroBased = typeof serverPositions[i] === 'number' ? serverPositions[i] : 0;
+                        playerPositions[i] = (zeroBased % 24) + 1;
+                    }
 
                     // Используем новый UI для создания фишек
                     if (gameBoardUI) {
@@ -3455,8 +3503,8 @@
                         for (let i = 0; i < players.length; i++) {
                             const player = players[i];
                             const color = colors[i % colors.length];
-                            const token = gameBoardUI.createPlayerToken(i, player.name, color, 1); // Начинаем с клетки 1 малого круга
-                            console.log(`✅ Создана фишка для игрока ${i}: ${player.name} на клетке 1`);
+                            const token = gameBoardUI.createPlayerToken(i, player.name, color, playerPositions[i]);
+                            console.log(`✅ Создана фишка для игрока ${i}: ${player.name} на клетке ${playerPositions[i]}`);
                         }
                     } else {
                         // Fallback к старому методу если новый UI не доступен
@@ -3473,8 +3521,7 @@
                             gameBoard.appendChild(playerToken);
                         }
                         
-                            // Позиционируем фишку в центре клетки 1 (старт малого круга)
-                        const startCell = document.querySelector(`.inner-squares [data-cell="1"]`);
+                        const startCell = document.querySelector(`.inner-squares [data-cell="${playerPositions[i]}"]`);
                         console.log(`Initializing player ${i} token, startCell:`, startCell);
                         if (startCell) {
                             const cellRect = startCell.getBoundingClientRect();
@@ -3900,38 +3947,52 @@
             diceRolled = true;
             const dice = document.getElementById('dice');
             const rollDiceBtn = document.getElementById('rollDiceBtn');
-            
             rollDiceBtn.disabled = true;
-            dice.classList.add('rolling');
-            
-            // Начинаем с знака $
-            dice.textContent = '$';
-            
-            // Анимация вращения знака $
-            let rollCount = 0;
-            const rollInterval = setInterval(() => {
-                const randomValue = Math.floor(Math.random() * 6) + 1;
-                dice.textContent = randomValue;
-                rollCount++;
-                
-                if (rollCount >= 15) {
-                    clearInterval(rollInterval);
-                    const finalValue = Math.floor(Math.random() * 6) + 1;
-                    dice.textContent = finalValue;
-                    dice.classList.remove('rolling');
-                    
-                    // Перемещение фишки
-                    movePlayerToken(finalValue);
-                    
-                    // Сбрасываем флаг броска после завершения анимации
+
+            // Запрашиваем значение кубика у сервера
+            try {
+                const rollResp = await fetch(`/api/rooms/${roomId}/roll-dice`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ player_index: currentPlayer })
+                });
+                const rollData = await rollResp.json();
+                if (!rollResp.ok || !rollData.success) {
+                    alert('Ошибка броска кубика');
                     isRolling = false;
-                    
-                    // Через 10 секунд после броска кнопка становится "Переход хода"
-                    turnTransitionTimeout = setTimeout(() => {
-                        updateRollButton();
-                    }, 10000);
+                    rollDiceBtn.disabled = false;
+                    return;
                 }
-            }, 100);
+                const finalValue = rollData.dice_value;
+                // Короткая анимация и показ результата
+                dice.classList.add('rolling');
+                await new Promise(r => setTimeout(r, 500));
+                dice.classList.remove('rolling');
+                dice.textContent = finalValue;
+
+                // Двигаем локально
+                await movePlayerToken(finalValue);
+
+                // Сохраняем ход на сервере (для восстановления состояния)
+                const user = localStorage.getItem('user');
+                if (user) {
+                    const userData = JSON.parse(user);
+                    await fetch(`/api/rooms/${roomId}/move`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: userData.id, steps: finalValue })
+                    });
+                }
+
+                isRolling = false;
+                turnTransitionTimeout = setTimeout(() => {
+                    updateRollButton();
+                }, 10000);
+            } catch (e) {
+                console.error('Roll error:', e);
+                isRolling = false;
+                rollDiceBtn.disabled = false;
+            }
         }
 
         function updateRollButton() {
@@ -3983,10 +4044,11 @@
 
             // Проверяем условия перехода на большой круг
             try {
-                const payday = monthlyIncome - monthlyExpenses;
-                if (track === 'inner' && totalCredit === 0 && payday > 0) {
+                // Условие: дивиденды/пассивный доход игрока превышают расходы (НЕ зарплата)
+                const passive = (playerPassiveIncome && playerPassiveIncome[currentPlayer]) ? playerPassiveIncome[currentPlayer] : 0;
+                if (track === 'inner' && totalCredit === 0 && passive > monthlyExpenses) {
                     playerTracks[currentPlayer] = 'outer';
-                    showNotification('🎉 Вы перешли на Большой круг! Условия выполнены.', 'success');
+                    showNotification('🎉 Вы перешли на Большой круг! Пассивный доход превышает расходы и кредиты погашены.', 'success');
                 }
             } catch (e) {
                 console.warn('Не удалось проверить условия перехода на большой круг:', e);
@@ -4586,14 +4648,20 @@
         }
 
         function updateCellOwnership(cellNumber, playerIndex) {
-            // Обновляем цвет обводки клетки в зависимости от владельца
+            // Обновляем цвет обводки клетки и ставим сердечко для мечты
             const cellElement = document.querySelector(`[data-cell="${cellNumber}"]`);
             if (cellElement) {
-                // Убираем предыдущие классы владения
                 cellElement.classList.remove('owned-by-player-0', 'owned-by-player-1', 'owned-by-player-2');
-                
-                // Добавляем класс нового владельца
                 cellElement.classList.add(`owned-by-player-${playerIndex}`);
+
+                // Добавляем сердечко игрока (если ещё нет)
+                let heart = cellElement.querySelector(`.cell-heart.p${playerIndex}`);
+                if (!heart) {
+                    heart = document.createElement('div');
+                    heart.className = `cell-heart p${playerIndex}`;
+                    heart.textContent = '❤️';
+                    cellElement.appendChild(heart);
+                }
             }
         }
 
@@ -5020,6 +5088,29 @@
                     paydayElement.style.color = '#f59e0b'; // Оранжевый для нуля
                 }
             }
+
+            // Обновляем видимость кнопки скоростной дороги для текущего игрока
+            try {
+                const btn = document.getElementById('fastTrackBtn');
+                if (btn) {
+                    const passive = (playerPassiveIncome && playerPassiveIncome[currentPlayer]) ? playerPassiveIncome[currentPlayer] : 0;
+                    const canSwitch = (playerTracks[currentPlayer] === 'inner') && totalCredit === 0 && passive > monthlyExpenses;
+                    btn.style.display = canSwitch ? 'block' : 'none';
+                }
+            } catch (e) {
+                console.warn('FastTrack button toggle error:', e);
+            }
+        }
+
+        // Ручной переход на скоростную дорогу (внешний круг)
+        function switchToFastTrack() {
+            const passive = (playerPassiveIncome && playerPassiveIncome[currentPlayer]) ? playerPassiveIncome[currentPlayer] : 0;
+            if (playerTracks[currentPlayer] !== 'inner') return;
+            if (totalCredit !== 0 || passive <= monthlyExpenses) return;
+            playerTracks[currentPlayer] = 'outer';
+            showNotification('🚀 Вы вышли на Скоростную дорогу!', 'success');
+            const btn = document.getElementById('fastTrackBtn');
+            if (btn) btn.style.display = 'none';
         }
 
         function toggleExpensesDetails() {
@@ -5222,6 +5313,25 @@
         document.addEventListener('DOMContentLoaded', () => {
             initGame();
             loadRoomPlayers();
+            // Подписка на события комнаты (SSE)
+            try {
+                const roomId = getRoomIdFromURL();
+                if (roomId) {
+                    const evtSource = new EventSource(`/api/rooms/${roomId}/events`);
+                    evtSource.onmessage = (e) => {
+                        try {
+                            const msg = JSON.parse(e.data || '{}');
+                            if (msg.type === 'player-move' && Array.isArray(msg.player_positions)) {
+                                // Обновляем локальные позиции (0..23 → 1..24)
+                                for (let i = 0; i < msg.player_positions.length; i++) {
+                                    playerPositions[i] = (msg.player_positions[i] % 24) + 1;
+                                }
+                                updatePlayerTokenPositions();
+                            }
+                        } catch (err) { console.warn('Bad SSE message', err); }
+                    };
+                }
+            } catch (e) { console.warn('SSE init failed:', e); }
         });
     </script>
 

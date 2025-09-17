@@ -103,6 +103,48 @@ function subtractBalance(room, playerIndex, amount, description = '') {
 // Middleware
 app.use(cors());
 app.use(express.json());
+// ---------------- Realtime (SSE) ----------------
+/**
+ * Простые Server-Sent Events для комнат: клиенты подписываются на события,
+ * сервер транслирует ходы и другие обновления всем подписчикам комнаты.
+ */
+const roomClients = new Map(); // roomId -> Set(res)
+
+function broadcastToRoom(roomId, payload) {
+    const clients = roomClients.get(String(roomId));
+    if (!clients || clients.size === 0) return;
+    const data = `data: ${JSON.stringify(payload)}\n\n`;
+    for (const res of clients) {
+        try { res.write(data); } catch (_) {}
+    }
+}
+
+app.get('/api/rooms/:id/events', async (req, res) => {
+    // SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders && res.flushHeaders();
+
+    const roomId = String(req.params.id);
+    if (!roomClients.has(roomId)) roomClients.set(roomId, new Set());
+    roomClients.get(roomId).add(res);
+
+    // Heartbeat to keep connection open
+    const interval = setInterval(() => {
+        try { res.write('event: ping\n\n'); } catch (_) {}
+    }, 25000);
+
+    req.on('close', () => {
+        clearInterval(interval);
+        const set = roomClients.get(roomId);
+        if (set) {
+            set.delete(res);
+            if (set.size === 0) roomClients.delete(roomId);
+        }
+    });
+});
+
 app.use(express.static('.'));
 
 // Middleware для логирования всех запросов
@@ -563,19 +605,14 @@ app.post('/api/user/game-result', authenticateToken, async (req, res) => {
 // Get all rooms
 app.get('/api/rooms', async (req, res) => {
     try {
-        const { user_id, q } = req.query;
+        const { user_id } = req.query;
         
         // НЕ удаляем комнаты здесь - это делается в cleanupOldRooms()
         // Показываем все комнаты, где игра не началась
-        const filter = { game_started: false };
-        if (q && q.trim()) {
-            // Поиск по названию комнаты (частичное совпадение)
-            filter.name = { $regex: q.trim(), $options: 'i' };
-        }
-
-        const rooms = await Room.find(filter)
+        const rooms = await Room.find({ game_started: false })
             .populate('creator_id', 'first_name last_name')
-            .sort({ created_at: -1 });
+            .sort({ created_at: -1 })
+            .limit(20);
             
         console.log('Found rooms in lobby:', rooms.length);
         rooms.forEach(room => {
@@ -1888,7 +1925,18 @@ app.post('/api/rooms/:id/move', async (req, res) => {
         room.updated_at = new Date();
         
         await room.save();
-        
+
+        // Broadcast move to all subscribers
+        try {
+            broadcastToRoom(req.params.id, {
+                type: 'player-move',
+                player_index: playerIndex,
+                steps,
+                player_positions: room.game_data.player_positions,
+                current_player: room.current_player
+            });
+        } catch (e) { console.warn('Broadcast move failed:', e); }
+
         return res.json({
             message: 'Ход сохранен',
             player_positions: room.game_data.player_positions,
@@ -1900,6 +1948,24 @@ app.post('/api/rooms/:id/move', async (req, res) => {
     }
 });
 
+// Получить текущие позиции игроков (для восстановления после перезагрузки)
+app.get('/api/rooms/:id/positions', async (req, res) => {
+    try {
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: 'Комната не найдена' });
+        }
+        if (!room.game_data || !Array.isArray(room.game_data.player_positions)) {
+            // Инициализируем нулевыми позициями (старт до первого хода)
+            const positions = new Array(room.players.length).fill(0);
+            return res.json({ player_positions: positions, current_player: room.current_player });
+        }
+        return res.json({ player_positions: room.game_data.player_positions, current_player: room.current_player });
+    } catch (error) {
+        console.error('Get positions error:', error);
+        return res.status(500).json({ message: 'Ошибка сервера при получении позиций' });
+    }
+});
 
 // Запускаем очистку каждые 30 минут (отключено для отладки)
 // setInterval(cleanupOldRooms, 30 * 60 * 1000);

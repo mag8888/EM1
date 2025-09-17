@@ -30,8 +30,8 @@ class ServerConfig {
                 defaultBalance: 10000,
                 cleanupInterval: 2 * 60 * 60 * 1000, // 2 часа
                 healthCheckInterval: 5 * 60 * 1000, // 5 минут
-                oldRoomThreshold: 5 * 60 * 60 * 1000, // 5 часов (жизнь комнаты после старта)
-                oneHourThreshold: 5 * 60 * 60 * 1000 // 5 часов (для не начатых комнат без игроков)
+                oldRoomThreshold: 24 * 60 * 60 * 1000, // 24 часа (жизнь комнаты после старта)
+                oneHourThreshold: 24 * 60 * 60 * 1000 // 24 часа (для не начатых комнат без игроков)
             },
             
             // Настройки кредитов
