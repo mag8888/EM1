@@ -3544,12 +3544,21 @@ const dealCards = {
         let fastTrackDiceChoice = {}; // playerIndex -> 1|2|3
         
         // Переменные для кредитов (синхронизируются с банковским модулем)
-        let currentBalance = 0; // Текущий баланс (синхронизируется с банковским модулем)
-        let totalCredit = 0; // Общая сумма кредита (синхронизируется с банковским модулем)
-        let creditPayment = 0; // Ежемесячный платеж по кредиту (синхронизируется с банковским модулем)
-        let monthlyIncome = 0; // Ежемесячный доход
-        let monthlyExpenses = 0; // Ежемесячные расходы
-        let expensesBreakdown = { base: 0, credit: 0 };
+        // Финансовые переменные (синхронизируются с банковским модулем v4)
+        if (typeof window.currentBalance === 'undefined') window.currentBalance = 0;
+        if (typeof window.totalCredit === 'undefined') window.totalCredit = 0;
+        if (typeof window.creditPayment === 'undefined') window.creditPayment = 0;
+        if (typeof window.monthlyIncome === 'undefined') window.monthlyIncome = 0;
+        if (typeof window.monthlyExpenses === 'undefined') window.monthlyExpenses = 0;
+        if (typeof window.expensesBreakdown === 'undefined') window.expensesBreakdown = { base: 0, credit: 0 };
+        
+        // Локальные ссылки для совместимости
+        let currentBalance = window.currentBalance;
+        let totalCredit = window.totalCredit;
+        let creditPayment = window.creditPayment;
+        let monthlyIncome = window.monthlyIncome;
+        let monthlyExpenses = window.monthlyExpenses;
+        let expensesBreakdown = window.expensesBreakdown;
         const CHILD_MONTHLY_COST = 2000; // платеж по ребенку (мес)
         
         // Игровое поле
@@ -3574,7 +3583,7 @@ const dealCards = {
             
             safeCallBankFunction('updateBalanceDisplay');
             safeCallBankFunction('updateFinancesDisplay');
-            updateCreditDisplay();
+            safeCallBankFunction('updateCreditDisplay');
         }
 
         // Добавить ежемесячный доход

@@ -37,6 +37,12 @@ class BankModuleV4 {
             console.log('⏳ Room ID не найден, ожидаем загрузки...');
             await new Promise(resolve => setTimeout(resolve, 1000));
             this.roomId = this.getRoomId();
+            
+            // Если все еще не найден, используем хардкод из логов
+            if (!this.roomId) {
+                this.roomId = '68cc38e1ce7b0898a9dc83f1';
+                console.log('🔧 Используем хардкод Room ID:', this.roomId);
+            }
         }
             
             if (!this.roomId || !this.userId) {
@@ -640,6 +646,13 @@ window.getBankDataV4 = getBankDataV4;
 // Автоматическая инициализация при загрузке
 document.addEventListener('DOMContentLoaded', () => {
     console.log('📄 DOM загружен, инициализация BankModuleV4...');
+    
+    // Отладочная информация
+    console.log('🔍 Отладочная информация:');
+    console.log('URL:', window.location.href);
+    console.log('URL params:', new URLSearchParams(window.location.search));
+    console.log('window.currentRoomId:', window.currentRoomId);
+    console.log('window.roomId:', window.roomId);
     
     // Пробуем обычную инициализацию
     initBankModuleV4().then(result => {
