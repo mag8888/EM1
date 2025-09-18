@@ -758,7 +758,14 @@ app.post('/api/rooms/join', async (req, res) => {
             return res.status(404).json({ message: 'Комната не найдена' });
         }
         
+        // Check if user already in players
+        const existingPlayer = room.players.find(p => p.user_id.toString() === user_id);
+        
+        // If game started, allow rejoin for existing players
         if (room.game_started) {
+            if (existingPlayer) {
+                return res.json({ room_id: room._id, rejoined: true });
+            }
             return res.status(400).json({ message: 'Игра уже началась' });
         }
         
@@ -766,49 +773,21 @@ app.post('/api/rooms/join', async (req, res) => {
             return res.status(400).json({ message: 'Комната заполнена' });
         }
         
-        // Check password
-        if (room.password && room.password !== password) {
-            return res.status(401).json({ message: 'Неверный пароль комнаты' });
-        }
-        
-        // Check if user is already in room
-        const existingPlayer = room.players.find(p => p.user_id.toString() === user_id);
+        // If already in room (pre-start), just return success
         if (existingPlayer) {
-            return res.status(200).json({ 
-                message: 'Вы уже находитесь в этой комнате',
-                room_id: room_id,
-                redirect: true
-            });
+            return res.json({ room_id: room._id, already_in_room: true });
         }
         
-        // Get user data
-        const user = await User.findById(user_id);
-        if (!user) {
-            return res.status(404).json({ message: 'Пользователь не найден' });
+        // Password check (if needed)
+        if (room.password && password !== room.password) {
+            return res.status(403).json({ message: 'Неверный пароль комнаты' });
         }
         
-        // Add player to room with entrepreneur data
-        const entrepreneurData = getEntrepreneurData();
-
-        const newPlayer = {
-            user_id: user_id,
-            name: `${user.first_name} ${user.last_name}`,
-            profession: room.assign_professions ? room.creator_profession : null,
-            profession_data: room.assign_professions ? entrepreneurData : null,
-            position: 0,
-            balance: 10000,
-            is_ready: false
-        };
-        
-        room.players.push(newPlayer);
-        room.updated_at = new Date();
-        
+        // Add player
+        room.players.push({ user_id, name: `Игрок ${room.players.length + 1}` });
         await room.save();
         
-        res.json({ 
-            message: 'Успешно присоединились к комнате',
-            room_id: room._id
-        });
+        res.json({ room_id: room._id });
     } catch (error) {
         console.error('Join room error:', error);
         res.status(500).json({ message: 'Ошибка сервера при присоединении к комнате' });
