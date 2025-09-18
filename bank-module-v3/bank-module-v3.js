@@ -61,6 +61,9 @@ async function requestCredit() {
     await initBankModuleV3();
   }
   
+  // Принудительно обновляем данные перед запросом кредита
+  forceUpdateCreditData();
+  
   if (bankModuleInstance) {
     return bankModuleInstance.requestCredit();
   }
@@ -554,6 +557,19 @@ function initializeGlobalVariables() {
         syncCreditFromServer();
         updateCreditDisplay();
     }, 1000);
+    
+    // Дополнительная синхронизация через 3 секунды
+    setTimeout(() => {
+        forceUpdateCreditData();
+    }, 3000);
+    
+    // Периодическая синхронизация каждые 10 секунд
+    setInterval(() => {
+        if (globalTotalCredit === 0 && globalMonthlyIncome === 0) {
+            console.log('🔄 Периодическая синхронизация данных...');
+            forceUpdateCreditData();
+        }
+    }, 10000);
     
     console.log('🔄 Инициализированы глобальные переменные банка:', {
         balance: globalCurrentBalance,
