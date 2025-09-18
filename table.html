@@ -3671,10 +3671,23 @@ const dealCards = {
         }
 
         function updateDeckCounters() {
+            // Счетчики сделок
             document.getElementById('smallDealDeck').textContent = dealDecks.smallDeals.length;
             document.getElementById('smallDealDiscard').textContent = dealDecks.smallDealsDiscard.length;
             document.getElementById('bigDealDeck').textContent = dealDecks.bigDeals.length;
             document.getElementById('bigDealDiscard').textContent = dealDecks.bigDealsDiscard.length;
+            
+            // Счетчики рынка
+            if (gameDecks && gameDecks.market) {
+                document.getElementById('marketDeck').textContent = gameDecks.market.length;
+                document.getElementById('marketDiscard').textContent = gameDecks.marketDiscard.length;
+            }
+            
+            // Счетчики расходов
+            if (gameDecks && gameDecks.expense) {
+                document.getElementById('expensesDeck').textContent = gameDecks.expense.length;
+                document.getElementById('expensesDiscard').textContent = gameDecks.expenseDiscard.length;
+            }
         }
 
         // Функция для показа модального окна рынка
@@ -3812,6 +3825,210 @@ const dealCards = {
             
             showNotification('❌ Отказались от предложения рынка', 'info');
             closeMarketCardModal();
+        }
+        
+        // Функция для показа информации о картах
+        function showCardInfo(cardType) {
+            console.log(`📋 Показываем информацию о картах: ${cardType}`);
+            
+            let title = '';
+            let description = '';
+            let deckCount = 0;
+            let discardCount = 0;
+            
+            if (cardType === 'market') {
+                title = 'Карточки рынка';
+                description = 'Покупатели на разные активы. Карточки выдаются случайно при попадании на клетку "Рынок".';
+                deckCount = gameDecks.market ? gameDecks.market.length : 0;
+                discardCount = gameDecks.marketDiscard ? gameDecks.marketDiscard.length : 0;
+            } else if (cardType === 'expenses') {
+                title = 'Карточки расходов';
+                description = 'Обязательные траты. Карточки выдаются при попадании на клетки расходов.';
+                deckCount = gameDecks.expense ? gameDecks.expense.length : 0;
+                discardCount = gameDecks.expenseDiscard ? gameDecks.expenseDiscard.length : 0;
+            }
+            
+            // Создаем модальное окно
+            const modal = document.createElement('div');
+            modal.id = 'cardInfoModal';
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>${title}</h3>
+                        <span class="close" onclick="closeCardInfoModal()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <p>${description}</p>
+                        <div class="card-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">В колоде:</span>
+                                <span class="stat-value">${deckCount}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">В отбое:</span>
+                                <span class="stat-value">${discardCount}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Добавляем стили для статистики
+            const style = document.createElement('style');
+            style.textContent = `
+                .card-stats {
+                    margin-top: 20px;
+                    padding: 15px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 8px;
+                }
+                .stat-item {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 10px;
+                }
+                .stat-item:last-child {
+                    margin-bottom: 0;
+                }
+                .stat-label {
+                    color: #94a3b8;
+                    font-weight: 600;
+                }
+                .stat-value {
+                    color: #ffffff;
+                    font-weight: bold;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+        }
+        
+        // Функция для закрытия модального окна информации о картах
+        function closeCardInfoModal() {
+            const modal = document.getElementById('cardInfoModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        // Функция для показа модального окна расходов
+        function showExpenseModal() {
+            console.log('💸 Показываем модальное окно расходов');
+            
+            // Берем случайную карточку из колоды расходов
+            if (gameDecks.expense.length === 0) {
+                // Если колода пуста, перемешиваем отбой
+                if (gameDecks.expenseDiscard.length > 0) {
+                    gameDecks.expense = [...gameDecks.expenseDiscard];
+                    gameDecks.expenseDiscard = [];
+                    shuffleDeck(gameDecks.expense);
+                    console.log('🔄 Колода расходов перемешана из отбоя');
+                } else {
+                    // Если отбой тоже пуст, восстанавливаем из исходных карточек
+                    gameDecks.expense = [...expenseCards];
+                    shuffleDeck(gameDecks.expense);
+                    console.log('🔄 Колода расходов восстановлена из исходных карточек');
+                }
+            }
+            
+            const randomIndex = Math.floor(Math.random() * gameDecks.expense.length);
+            const expenseCard = gameDecks.expense[randomIndex];
+            
+            // Удаляем карточку из колоды
+            gameDecks.expense.splice(randomIndex, 1);
+            
+            // Показываем модальное окно с карточкой
+            showExpenseCardModal(expenseCard);
+        }
+        
+        // Функция для показа модального окна с карточкой расходов
+        function showExpenseCardModal(card) {
+            console.log('💸 Показываем карточку расходов:', card);
+            
+            // Создаем модальное окно если его нет
+            let modal = document.getElementById('expenseCardModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'expenseCardModal';
+                modal.className = 'modal';
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 id="expenseCardTitle">Карточка расходов</h3>
+                            <span class="close" onclick="closeExpenseCardModal()">&times;</span>
+                        </div>
+                        <div class="modal-body">
+                            <div class="card-info">
+                                <div class="card-name" id="expenseCardName">-</div>
+                                <div class="card-description" id="expenseCardDescription">-</div>
+                                <div class="card-amount" id="expenseCardAmount">-</div>
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn-primary" id="expenseCardPayBtn" onclick="payExpense()">Оплатить</button>
+                                <button class="btn-secondary" id="expenseCardCreditBtn" onclick="takeCreditForExpense()">Взять кредит</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+            
+            // Заполняем данными
+            document.getElementById('expenseCardName').textContent = card.name;
+            document.getElementById('expenseCardDescription').textContent = card.description;
+            document.getElementById('expenseCardAmount').textContent = `Сумма: $${card.amount.toLocaleString()}`;
+            
+            // Сохраняем карточку для обработки
+            window.currentExpenseCard = card;
+            
+            // Показываем модальное окно
+            modal.style.display = 'block';
+        }
+        
+        // Функция для закрытия модального окна расходов
+        function closeExpenseCardModal() {
+            const modal = document.getElementById('expenseCardModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        // Функция для оплаты расходов
+        function payExpense() {
+            const card = window.currentExpenseCard;
+            if (!card) return;
+            
+            console.log('💸 Оплачиваем расходы:', card);
+            
+            if ((currentBalance || 0) >= card.amount) {
+                subtractBalance(card.amount, `Расходы: ${card.name}`);
+                showNotification(`✅ Расходы оплачены: $${card.amount.toLocaleString()}`, 'success');
+                
+                // Отправляем карточку в отбой
+                gameDecks.expenseDiscard.push(card);
+                updateDeckCounters();
+                
+                closeExpenseCardModal();
+            } else {
+                alert(`Недостаточно средств: нужно $${card.amount.toLocaleString()}\nВаш баланс: $${(currentBalance || 0).toLocaleString()}`);
+            }
+        }
+        
+        // Функция для взятия кредита на расходы
+        function takeCreditForExpense() {
+            const card = window.currentExpenseCard;
+            if (!card) return;
+            
+            console.log('💳 Берем кредит на расходы:', card);
+            
+            // Открываем модальное окно кредита
+            openCreditModalV3();
+            
+            // Сохраняем информацию о расходах для последующей оплаты
+            window.pendingExpense = card;
         }
 
         function showDealChoiceModal() {
@@ -4568,9 +4785,18 @@ const dealCards = {
                     const discardElement = document.getElementById(`${type}Discard`);
                     
                     if (deckElement && discardElement) {
-                        // Устанавливаем начальные значения
-                        deckElement.textContent = '10'; // Начальное количество карт в колоде
-                        discardElement.textContent = '0'; // Начальное количество карт в отбое
+                        // Устанавливаем начальные значения из gameDecks
+                        if (type === 'market' && gameDecks.market) {
+                            deckElement.textContent = gameDecks.market.length;
+                            discardElement.textContent = gameDecks.marketDiscard.length;
+                        } else if (type === 'expenses' && gameDecks.expense) {
+                            deckElement.textContent = gameDecks.expense.length;
+                            discardElement.textContent = gameDecks.expenseDiscard.length;
+                        } else {
+                            // Fallback значения
+                            deckElement.textContent = '24'; // 24 карточки в каждой колоде
+                            discardElement.textContent = '0';
+                        }
                         
                         // Добавляем обработчики клика
                         const cardElement = document.getElementById(`${type}Card`);
@@ -6700,6 +6926,11 @@ const dealCards = {
             
             if (cell.type === 'Рынок') {
                 showMarketModal();
+                return;
+            }
+            
+            if (cell.type === 'Расходы' || cell.isExpense) {
+                showExpenseModal();
                 return;
             }
 
