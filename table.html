@@ -4053,7 +4053,7 @@ const dealCards = {
             }
         }
         
-        // Функция взятия кредита на расходы перенесена в bank-module-v3.js
+        // Функция взятия кредита на расходы перенесена в bank-module-v4
 
         function showDealChoiceModal() {
             const modal = document.getElementById('dealChoiceModal');
@@ -5266,63 +5266,7 @@ const dealCards = {
                 console.error('Error loading turn info:', error);
             }
         }
-        // Получение ID комнаты из URL/пути с резервом из localStorage
-        function getRoomIdFromURL() {
-            const href = window.location.href;
-            const urlParams = new URLSearchParams(window.location.search);
-            let roomId = urlParams.get('room');
-            const debug = { source: 'query', value: roomId };
-            
-            // Если нет в query, пытаемся вытащить из пути вида /room/<id>
-            if (!roomId) {
-                const pathMatch = window.location.pathname.match(/\/(?:room|table)\/([0-9a-fA-F]{24})/);
-                if (pathMatch && pathMatch[1]) {
-                    roomId = pathMatch[1];
-                    debug.source = 'path';
-                    debug.value = roomId;
-                }
-            }
-
-            // Если всё ещё нет, пробуем вытащить 24-символьный hex из полной ссылки
-            if (!roomId) {
-                const anyHex = href.match(/[0-9a-fA-F]{24}/);
-                if (anyHex) {
-                    roomId = anyHex[0];
-                    debug.source = 'href-hex';
-                    debug.value = roomId;
-                }
-            }
-
-            // Если в URL нет ID комнаты, пробуем взять из localStorage
-            if (!roomId) {
-                try {
-                    const saved = localStorage.getItem('lastRoomId');
-                    if (saved) {
-                        roomId = saved;
-                        // Обновляем URL, чтобы не терять ID при дальнейших переходах
-                        const newUrl = new URL(window.location.href);
-                        newUrl.searchParams.set('room', roomId);
-                        window.history.replaceState({}, '', newUrl.toString());
-                        debug.source = 'localStorage';
-                        debug.value = roomId;
-                    }
-                } catch (e) {
-                    console.warn('Cannot access localStorage for lastRoomId:', e);
-                }
-            }
-            
-            // Фильтруем невалидные значения
-            if (roomId === 'undefined' || roomId === 'null' || roomId === '') {
-                roomId = null;
-            }
-            
-            console.log('Room ID detection:', {
-                href,
-                ...debug
-            });
-            
-            return roomId;
-        }
+        // getRoomIdFromURL() - функция перенесена в shared-utils.js
 
         // Получение индекса текущего игрока
         function getCurrentPlayerIndex() {
@@ -6357,7 +6301,7 @@ const dealCards = {
         // Обработка клеток потерь
 
 
-        // Банковские функции перенесены в bank-module-v3.js
+        // Банковские функции перенесены в bank-module-v4
         
         // Безопасные обертки для вызова банковских функций
         function safeCallBankFunction(functionName, ...args) {
@@ -6590,7 +6534,7 @@ const dealCards = {
             openPlayerProfileModal(index);
         }
         // Банковские функции теперь в банковском модуле
-        // resetTransferForm() - перенесено в bank-module/bank.js
+        // resetTransferForm() - перенесено в bank-module-v4
 
 
         function buyBusiness(cellNumber, playerIndex) {
@@ -6706,47 +6650,47 @@ const dealCards = {
             }
         }
         // Bank functions removed - keeping design only
-        // loadFinancialData() - перенесено в bank-module/bank.js
+        // loadFinancialData() - перенесено в bank-module-v4
         
-        // updateBankUI() - перенесено в bank-module/bank.js
+        // updateBankUI() - перенесено в bank-module-v4
         
-        // updateBalanceDisplay() - перенесено в bank-module/bank.js
+        // updateBalanceDisplay() - перенесено в bank-module-v4
         
-        // updateFinancialSummary() - перенесено в bank-module/bank.js
+        // updateFinancialSummary() - перенесено в bank-module-v4
         
-        // updateCreditInfo() - перенесено в bank-module/bank.js
-        // loadRecipients() - перенесено в bank-module/bank.js
-        // processTransfer() - перенесено в bank-module/bank.js
+        // updateCreditInfo() - перенесено в bank-module-v4
+        // loadRecipients() - перенесено в bank-module-v4
+        // processTransfer() - перенесено в bank-module-v4
         
-        // validateTransferForm() - перенесено в bank-module/bank.js
+        // validateTransferForm() - перенесено в bank-module-v4
         
-        // prepareTransferData() - перенесено в bank-module/bank.js
+        // prepareTransferData() - перенесено в bank-module-v4
         
-        // sendTransferRequest() - перенесено в bank-module/bank.js
+        // sendTransferRequest() - перенесено в bank-module-v4
         
-        // updateLocalData() - перенесено в bank-module/bank.js
-        // updateLocalBalance() - перенесено в bank-module/bank.js
+        // updateLocalData() - перенесено в bank-module-v4
+        // updateLocalBalance() - перенесено в bank-module-v4
         
         // Функция shouldLoadBankData() удалена - больше не нужна
         
-        // showTransferAnimation() - перенесено в bank-module/bank.js
+        // showTransferAnimation() - перенесено в bank-module-v4
         
         // Функция анимации изменения баланса
-        // animateBalanceChange() - перенесено в bank-module/bank.js
+        // animateBalanceChange() - перенесено в bank-module-v4
         
         // Пример использования для других операций:
         // updateLocalBalance(-100, 'Списание за покупку'); // Списание 100$
         // updateLocalBalance(500, 'Выигрыш в лотерее'); // Пополнение 500$
         // updateLocalBalance(-50, 'Комиссия банка'); // Списание 50$
-        // resetTransferForm() - перенесено в bank-module/bank.js
+        // resetTransferForm() - перенесено в bank-module-v4
 
-        // updateTransfersHistory() - перенесено в bank-module/bank.js
+        // updateTransfersHistory() - перенесено в bank-module-v4
         
-        // createTransferElement() - перенесено в bank-module/bank.js
+        // createTransferElement() - перенесено в bank-module-v4
         
         // getCurrentPlayerIndex() - перенесено в shared-utils.js
         
-        // formatTransferTime() - перенесено в bank-module/bank.js
+        // formatTransferTime() - перенесено в bank-module-v4
         // Функции для карточки игрока
         function openPlayerProfileModal(playerIndex = 0) {
             const modal = document.getElementById('playerProfileModal');
@@ -6858,72 +6802,33 @@ const dealCards = {
         }
         
         function showError(message) {
-            showNotification(message, 'error');
+            if (typeof window.showNotification === 'function') {
+                window.showNotification(message, 'error');
+            } else {
+                console.error('❌ Error:', message);
+            }
         }
         
         function showSuccess(message) {
-            showNotification(message, 'success');
+            if (typeof window.showNotification === 'function') {
+                window.showNotification(message, 'success');
+            } else {
+                console.log('✅ Success:', message);
+            }
         }
-        function showNotification(message, type = 'info') {
-            // Создаем элемент уведомления
-            const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
-            notification.textContent = message;
-            
-            // Добавляем стили
-            Object.assign(notification.style, {
-                position: 'fixed',
-                top: '20px',
-                right: '20px',
-                padding: '12px 20px',
-                borderRadius: '8px',
-                color: 'white',
-                fontWeight: '500',
-                zIndex: '10000',
-                transform: 'translateX(100%)',
-                transition: 'transform 0.3s ease',
-                maxWidth: '300px',
-                wordWrap: 'break-word'
-            });
-            
-            // Цвета в зависимости от типа
-            const colors = {
-                success: '#10b981',
-                error: '#ef4444',
-                info: '#3b82f6'
-            };
-            notification.style.backgroundColor = colors[type] || colors.info;
-            
-            // Добавляем в DOM
-            document.body.appendChild(notification);
-            
-            // Анимация появления
-            setTimeout(() => {
-                notification.style.transform = 'translateX(0)';
-            }, 10);
-            
-            // Автоматическое скрытие
-            setTimeout(() => {
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 300);
-            }, 3000);
-        }
+        // showNotification() - функция перенесена в shared-utils.js
         
         // getRoomIdFromURL() - перенесено в shared-utils.js
         
         // Функция открытия модального окна кредита
-        // openCreditModal() - перенесено в bank-module/bank.js
-        // closeCreditModal() - перенесено в bank-module/bank.js
-        // updateCreditModal() - перенесено в bank-module/bank.js
-        // setCreditAmount() - перенесено в bank-module/bank.js
-        // setMaxCreditAmount() - перенесено в bank-module/bank.js
-        // updateCreditPreview() - перенесено в bank-module/bank.js
-        // takeCredit() - перенесено в bank-module/bank.js
-        // payOffCredit() - перенесено в bank-module/bank.js
+        // openCreditModal() - перенесено в bank-module-v4
+        // closeCreditModal() - перенесено в bank-module-v4
+        // updateCreditModal() - перенесено в bank-module-v4
+        // setCreditAmount() - перенесено в bank-module-v4
+        // setMaxCreditAmount() - перенесено в bank-module-v4
+        // updateCreditPreview() - перенесено в bank-module-v4
+        // takeCredit() - перенесено в bank-module-v4
+        // payOffCredit() - перенесено в bank-module-v4
 
         async function loadPlayerProfileData(playerIndex) {
             try {
@@ -7009,9 +6914,9 @@ const dealCards = {
             alert('Функция Сложный будет реализована позже');
         }
 
-        // Кредитные функции перенесены в bank-module-v3.js
+        // Кредитные функции перенесены в bank-module-v4
         
-        // Функции отображения перенесены в bank-module-v3.js
+        // Функции отображения перенесены в bank-module-v4
 
         // Ручной переход на скоростную дорогу (внешний круг)
         function switchToFastTrack() {
@@ -7079,7 +6984,7 @@ const dealCards = {
             
             console.log(`Предварительный просмотр кредита: $${amount.toLocaleString()}, платеж: $${monthlyPayment.toLocaleString()}`);
         }
-        // Функция запроса кредита перенесена в bank-module-v3.js
+        // Функция запроса кредита перенесена в bank-module-v4
         // Функции для работы с поп-апами клеток
         // Показать поп-ап клетки
         function showCellPopup(cellNumber, isInnerCell = false) {
@@ -7590,11 +7495,7 @@ const dealCards = {
     <script src="shared-constants.js"></script>
     <script src="shared-utils.js"></script>
     
-    <!-- Bank v3 module -->
-    <script src="bank-module-v2/BankCore.js"></script>
-    <script src="bank-module-v2/BankApiService.js"></script>
-    <script src="bank-module-v2/BankUIService.js"></script>
-    <script src="bank-module-v2/BankModule.js"></script>
+    <!-- Bank v2 module removed - using v4 -->
     <!-- Bank Module v4 - New Implementation -->
     <link rel="stylesheet" href="bank-module-v4/bank-styles-v4.css">
     <script src="bank-module-v4/bank-module-v4.js"></script>
