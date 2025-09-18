@@ -1117,6 +1117,7 @@ app.post('/api/rooms/:id/start', async (req, res) => {
         room.game_data = {
             player_positions: new Array(room.players.length).fill(0),
             player_balances: new Array(room.players.length).fill(0), // Стартовый баланс 0
+            player_assets: Array.from({ length: room.players.length }, () => []),
             player_finances: Array.from({ length: room.players.length }, () => ({
                 totalIncome: 0,
                 totalExpenses: 0,
@@ -1257,6 +1258,7 @@ app.post('/api/rooms/:id/transfer', async (req, res) => {
             room.game_data = {
                 player_positions: new Array(room.players.length).fill(0),
                 player_balances: new Array(room.players.length).fill(0), // Стартовый баланс 0
+                player_assets: Array.from({ length: room.players.length }, () => []),
                 player_finances: Array.from({ length: room.players.length }, () => ({
                     totalIncome: 0,
                     totalExpenses: 0,
@@ -2061,6 +2063,83 @@ app.get('/api/rooms/:id/positions', async (req, res) => {
     } catch (error) {
         console.error('Get positions error:', error);
         return res.status(500).json({ message: 'Ошибка сервера при получении позиций' });
+    }
+});
+
+// Передача актива между игроками (серверная фиксация)
+app.post('/api/rooms/:id/transfer-asset', async (req, res) => {
+    try {
+        const { user_id, recipient_index, card, quantity } = req.body || {};
+        if (!user_id || typeof recipient_index !== 'number' || !card) {
+            return res.status(400).json({ message: 'Некорректные данные передачи' });
+        }
+        const qty = Math.max(1, parseInt(quantity || 1, 10));
+        const room = await Room.findById(req.params.id);
+        if (!room) return res.status(404).json({ message: 'Комната не найдена' });
+        if (!room.game_started) return res.status(400).json({ message: 'Игра еще не началась' });
+
+        const senderIndex = room.players.findIndex(p => p.user_id.toString() === user_id);
+        if (senderIndex === -1) return res.status(403).json({ message: 'Вы не являетесь участником этой комнаты' });
+        if (recipient_index < 0 || recipient_index >= room.players.length) return res.status(400).json({ message: 'Неверный получатель' });
+        if (recipient_index === senderIndex) return res.status(400).json({ message: 'Нельзя передать актив самому себе' });
+
+        // Инициализируем структуры
+        if (!room.game_data) room.game_data = {};
+        if (!Array.isArray(room.game_data.player_assets)) room.game_data.player_assets = Array.from({ length: room.players.length }, () => []);
+        while (room.game_data.player_assets.length < room.players.length) room.game_data.player_assets.push([]);
+        if (!Array.isArray(room.game_data.transfers_history)) room.game_data.transfers_history = [];
+
+        const senderAssets = room.game_data.player_assets[senderIndex] || [];
+        const recipientAssets = room.game_data.player_assets[recipient_index] || [];
+
+        // Пытаемся уменьшить у отправителя
+        let removed = false;
+        for (let i = 0; i < senderAssets.length; i++) {
+            const a = senderAssets[i];
+            if (a && a.id === card.id && a.name === card.name) {
+                if (a.type === 'stocks' || a.type === 'crypto') {
+                    a.quantity = Math.max(0, (a.quantity || 1) - qty);
+                    if (a.quantity === 0) senderAssets.splice(i, 1);
+                } else {
+                    senderAssets.splice(i, 1);
+                }
+                removed = true;
+                break;
+            }
+        }
+        // Даже если на сервере не нашли — продолжаем, чтобы синхронизироваться от клиента
+
+        // Добавляем получателю
+        const toAdd = {
+            id: card.id,
+            name: card.name,
+            type: card.type,
+            cost: card.cost,
+            income: card.income,
+            quantity: (card.type === 'stocks' || card.type === 'crypto') ? qty : undefined
+        };
+        recipientAssets.push(toAdd);
+        room.game_data.player_assets[senderIndex] = senderAssets;
+        room.game_data.player_assets[recipient_index] = recipientAssets;
+
+        // Лог
+        room.game_data.transfers_history.unshift({
+            ts: new Date(),
+            type: 'asset-transfer',
+            from: senderIndex,
+            to: recipient_index,
+            card: toAdd,
+            quantity: qty
+        });
+
+        await room.save();
+        try {
+            broadcastToRoom(req.params.id, { type: 'asset-transfer', from: senderIndex, to: recipient_index, card: toAdd, quantity: qty });
+        } catch (_) {}
+        return res.json({ success: true });
+    } catch (error) {
+        console.error('Asset transfer error:', error);
+        return res.status(500).json({ message: 'Ошибка сервера при передаче актива' });
     }
 });
 

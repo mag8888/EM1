@@ -4605,21 +4605,34 @@ const dealCards = {
                 if (idx !== -1) playerCards.splice(idx, 1);
             }
 
-            // Добавляем получателю
-            if (!playerAssets[recipientIndex]) playerAssets[recipientIndex] = [];
-            const receiveCard = { ...card };
-            if (card.type === 'stocks' || card.type === 'crypto') {
-                receiveCard.quantity = qtyToSend;
-            }
-            playerAssets[recipientIndex].push(receiveCard);
-            const recPassive = playerPassiveIncome[recipientIndex] || 0;
-            playerPassiveIncome[recipientIndex] = recPassive + perUnitIncome * qtyToSend;
+            // Серверная фиксация передачи
+            (async () => {
+                try {
+                    const roomId = getRoomIdFromURL();
+                    const user = JSON.parse(localStorage.getItem('user') || '{}');
+                    await fetch(`/api/rooms/${roomId}/transfer-asset`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: user.id, recipient_index: recipientIndex, card, quantity: qtyToSend })
+                    });
+                } catch (e) { console.warn('Server transfer sync failed:', e); }
+                
+                // Локально добавляем получателю для мгновенного UI
+                if (!playerAssets[recipientIndex]) playerAssets[recipientIndex] = [];
+                const receiveCard = { ...card };
+                if (card.type === 'stocks' || card.type === 'crypto') {
+                    receiveCard.quantity = qtyToSend;
+                }
+                playerAssets[recipientIndex].push(receiveCard);
+                const recPassive = playerPassiveIncome[recipientIndex] || 0;
+                playerPassiveIncome[recipientIndex] = recPassive + perUnitIncome * qtyToSend;
 
-            updateFinancesDisplay();
-            showNotification(`🔁 Передано: ${card.name}${(card.type === 'stocks' || card.type === 'crypto') ? ` x${qtyToSend}` : ''}`, 'success');
-            closeTransferModal();
-            closeAssetsModal();
-            showPlayerAssets();
+                updateFinancesDisplay();
+                showNotification(`🔁 Передано: ${card.name}${(card.type === 'stocks' || card.type === 'crypto') ? ` x${qtyToSend}` : ''}`, 'success');
+                closeTransferModal();
+                closeAssetsModal();
+                showPlayerAssets();
+            })();
         }
 
         // Получить название типа карточки
