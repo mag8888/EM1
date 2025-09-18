@@ -3,13 +3,21 @@
  * Интеграция нового банковского модуля с игровым полем
  */
 
-// Переменные для совместимости
-let currentBalance = 0;
-let monthlyIncome = 0;
-let monthlyExpenses = 0;
-let totalCredit = 0;
-let creditPayment = 0;
-let expensesBreakdown = { base: 0, credit: 0 };
+// Переменные для совместимости (если они еще не объявлены)
+if (typeof window.currentBalance === 'undefined') window.currentBalance = 0;
+if (typeof window.monthlyIncome === 'undefined') window.monthlyIncome = 0;
+if (typeof window.monthlyExpenses === 'undefined') window.monthlyExpenses = 0;
+if (typeof window.totalCredit === 'undefined') window.totalCredit = 0;
+if (typeof window.creditPayment === 'undefined') window.creditPayment = 0;
+if (typeof window.expensesBreakdown === 'undefined') window.expensesBreakdown = { base: 0, credit: 0 };
+
+// Локальные ссылки для удобства
+let currentBalance = window.currentBalance;
+let monthlyIncome = window.monthlyIncome;
+let monthlyExpenses = window.monthlyExpenses;
+let totalCredit = window.totalCredit;
+let creditPayment = window.creditPayment;
+let expensesBreakdown = window.expensesBreakdown;
 
 /**
  * Синхронизация данных из банковского модуля v4

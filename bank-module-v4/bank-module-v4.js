@@ -28,9 +28,16 @@ class BankModuleV4 {
         try {
             console.log('🏦 BankModuleV4: Инициализация...');
             
-            // Получаем ID комнаты и пользователя
+        // Получаем ID комнаты и пользователя
+        this.roomId = this.getRoomId();
+        this.userId = this.getUserId();
+        
+        // Если Room ID все еще не найден, ждем немного и пробуем снова
+        if (!this.roomId) {
+            console.log('⏳ Room ID не найден, ожидаем загрузки...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
             this.roomId = this.getRoomId();
-            this.userId = this.getUserId();
+        }
             
             if (!this.roomId || !this.userId) {
                 throw new Error('Не удалось получить ID комнаты или пользователя');
@@ -58,15 +65,62 @@ class BankModuleV4 {
      * Получение ID комнаты
      */
     getRoomId() {
+        // Пробуем разные способы получения room ID
         const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('room_id') || urlParams.get('roomId');
+        let roomId = urlParams.get('room_id') || urlParams.get('roomId') || urlParams.get('room');
+        
+        // Если не найдено в URL, пробуем получить из глобальных переменных
+        if (!roomId && window.currentRoomId) {
+            roomId = window.currentRoomId;
+        }
+        
+        // Если все еще не найдено, пробуем из других источников
+        if (!roomId && window.roomId) {
+            roomId = window.roomId;
+        }
+        
+        console.log('🔍 Поиск Room ID:', { 
+            fromUrl: urlParams.get('room_id') || urlParams.get('roomId'),
+            fromWindow: window.currentRoomId || window.roomId,
+            result: roomId 
+        });
+        
+        return roomId;
     }
 
     /**
      * Получение ID пользователя
      */
     getUserId() {
-        return localStorage.getItem('userId') || 'unknown';
+        // Пробуем разные способы получения user ID
+        let userId = localStorage.getItem('userId');
+        
+        if (!userId) {
+            userId = localStorage.getItem('user_id');
+        }
+        
+        if (!userId && window.userId) {
+            userId = window.userId;
+        }
+        
+        if (!userId && window.currentUserId) {
+            userId = window.currentUserId;
+        }
+        
+        // Если все еще не найдено, генерируем временный ID
+        if (!userId) {
+            userId = 'user_' + Date.now();
+            localStorage.setItem('userId', userId);
+            console.log('🆔 Сгенерирован временный User ID:', userId);
+        }
+        
+        console.log('🔍 Поиск User ID:', { 
+            fromLocalStorage: localStorage.getItem('userId'),
+            fromWindow: window.userId || window.currentUserId,
+            result: userId 
+        });
+        
+        return userId;
     }
 
     /**
@@ -471,6 +525,32 @@ async function initBankModuleV4() {
 }
 
 /**
+ * Принудительная инициализация с известным Room ID
+ */
+async function forceInitBankModuleV4(roomId, userId) {
+    try {
+        console.log('🚀 Принудительная инициализация BankModuleV4...', { roomId, userId });
+        
+        bankModuleV4 = new BankModuleV4();
+        bankModuleV4.roomId = roomId;
+        bankModuleV4.userId = userId;
+        
+        const success = await bankModuleV4.init();
+        
+        if (success) {
+            console.log('✅ BankModuleV4: Принудительная инициализация успешна');
+            return bankModuleV4;
+        } else {
+            console.error('❌ BankModuleV4: Принудительная инициализация не удалась');
+            return null;
+        }
+    } catch (error) {
+        console.error('❌ BankModuleV4: Критическая ошибка принудительной инициализации:', error);
+        return null;
+    }
+}
+
+/**
  * Открытие банка v4
  */
 async function openBankV4() {
@@ -549,6 +629,7 @@ function getBankDataV4() {
 
 // Экспорт функций в глобальную область
 window.initBankModuleV4 = initBankModuleV4;
+window.forceInitBankModuleV4 = forceInitBankModuleV4;
 window.openBankV4 = openBankV4;
 window.closeBankV4 = closeBankV4;
 window.requestCreditV4 = requestCreditV4;
@@ -559,7 +640,20 @@ window.getBankDataV4 = getBankDataV4;
 // Автоматическая инициализация при загрузке
 document.addEventListener('DOMContentLoaded', () => {
     console.log('📄 DOM загружен, инициализация BankModuleV4...');
-    initBankModuleV4();
+    
+    // Пробуем обычную инициализацию
+    initBankModuleV4().then(result => {
+        if (!result) {
+            // Если не удалось, ждем 2 секунды и пробуем принудительную инициализацию
+            setTimeout(async () => {
+                const roomId = '68cc38e1ce7b0898a9dc83f1'; // Из логов
+                const userId = localStorage.getItem('userId') || 'user_' + Date.now();
+                
+                console.log('🔄 Попытка принудительной инициализации...', { roomId, userId });
+                await forceInitBankModuleV4(roomId, userId);
+            }, 2000);
+        }
+    });
 });
 
 console.log('🏦 BankModuleV4 загружен');
