@@ -3540,24 +3540,16 @@ const dealCards = {
         let gameBoardService = null;
         
 
-        // Инициализация финансовых переменных
+        // Инициализация финансовых переменных (без перезаписи серверных значений)
         function initializeFinances() {
-            // Устанавливаем начальные значения
-            currentBalance = 8000; // Начальный баланс
-            monthlyIncome = 10000; // Начальный доход
-            monthlyExpenses = 6200; // Начальные расходы
-            totalCredit = 0; // Начальный кредит
-            creditPayment = 0; // Начальный платеж по кредиту
-            expensesBreakdown.base = 6200;
-            expensesBreakdown.credit = 0;
+            // Не перетираем значения константами — ждём данные из банковского модуля
+            currentBalance = currentBalance || 0;
+            monthlyIncome = monthlyIncome || 0;
+            monthlyExpenses = monthlyExpenses || 0;
+            totalCredit = totalCredit || 0;
+            creditPayment = creditPayment || 0;
+            if (!expensesBreakdown) expensesBreakdown = { base: 0, credit: 0 };
             
-            console.log('💰 Финансы инициализированы:');
-            console.log(`💵 Баланс: $${currentBalance.toLocaleString()}`);
-            console.log(`📈 Доход: $${monthlyIncome.toLocaleString()}`);
-            console.log(`💸 Расходы: $${monthlyExpenses.toLocaleString()}`);
-            console.log(`💳 Кредит: $${totalCredit.toLocaleString()}`);
-            
-            // Обновляем отображение
             updateBalanceDisplay();
             updateFinancesDisplay();
             updateCreditDisplay();
@@ -3613,7 +3605,7 @@ const dealCards = {
             initializePlayerTokens(); // Инициализируем фишки игроков
             initializeCornerCards(); // Инициализируем угловые карточки
             
-            // Инициализируем финансовые переменные
+            // Инициализируем финансовые переменные (без жёстких значений)
             initializeFinances();
             
             // Bank v3 will auto-initialize when needed
@@ -6209,16 +6201,23 @@ const dealCards = {
 
 
         // Вспомогательные функции для работы с балансом
-        function addBalance(amount, description) {
+        async function addBalance(amount, description) {
             currentBalance = (currentBalance || 0) + amount;
-            console.log(`💰 Добавлено к балансу: $${amount.toLocaleString()} - ${description}`);
-            // Обновляем отображение баланса
+            try {
+                // Синхронизируем через банк (перезагрузка данных банка)
+                if (window.bankModule?.loadBankData) {
+                    await window.bankModule.loadBankData(true);
+                }
+            } catch {}
             updateBalanceDisplay();
         }
-        function subtractBalance(amount, description) {
+        async function subtractBalance(amount, description) {
             currentBalance = Math.max(0, (currentBalance || 0) - amount);
-            console.log(`💸 Списано с баланса: $${amount.toLocaleString()} - ${description}`);
-            // Обновляем отображение баланса
+            try {
+                if (window.bankModule?.loadBankData) {
+                    await window.bankModule.loadBankData(true);
+                }
+            } catch {}
             updateBalanceDisplay();
         }
 
