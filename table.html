@@ -4167,6 +4167,22 @@ const dealCards = {
                 }
             }
 
+            // Обновим баланс и покажем текущий баланс в модале
+            (async () => { await getFreshBalance(); })();
+
+            // Добавим строку текущего баланса в инфо
+            const info = modal.querySelector('.card-info');
+            if (info && !document.getElementById('dealBalanceRow')) {
+                const row = document.createElement('div');
+                row.className = 'card-info-row';
+                row.id = 'dealBalanceRow';
+                row.innerHTML = `<span class="card-label">Ваш баланс:</span><span class="card-value" id="dealCurrentBalance">$${(currentBalance||0).toLocaleString()}</span>`;
+                info.prepend(row);
+            } else if (info) {
+                const bal = info.querySelector('#dealCurrentBalance');
+                if (bal) bal.textContent = `$${(currentBalance||0).toLocaleString()}`;
+            }
+
             // Показываем кнопки покупки/отказа
             const buyButton = document.getElementById('cardBuyButton');
             const refuseButton = document.getElementById('cardRefuseButton');
@@ -4225,7 +4241,7 @@ const dealCards = {
             }
         }
 
-        function buyCard() {
+        async function buyCard() {
             if (!currentPlayerCard) return;
 
             // Количество для акций/крипты
@@ -4240,13 +4256,7 @@ const dealCards = {
             }
 
             // Актуализируем баланс перед покупкой из BankModule, если доступен
-            try {
-                const bm = window.bankModule || window.BankModule || null;
-                const state = bm?.core?.getState ? bm.core.getState() : (bm?.getState ? bm.getState() : null);
-                if (state && typeof state.currentBalance === 'number') {
-                    currentBalance = state.currentBalance;
-                }
-            } catch {}
+            await getFreshBalance();
 
             const totalCost = currentPlayerCard.cost * quantity;
             const canAfford = (currentBalance || 0) >= totalCost;
@@ -6302,10 +6312,38 @@ const dealCards = {
 
         function updateBalanceDisplay() {
             // Обновляем отображение баланса в UI
-            const balanceElements = document.querySelectorAll('#bankBalance, .balance-amount');
+            const balanceElements = document.querySelectorAll('#bankBalance, .balance-amount, #dealCurrentBalance');
             balanceElements.forEach(el => {
                 if (el) el.textContent = `$${(currentBalance || 0).toLocaleString()}`;
             });
+        }
+
+        async function getFreshBalance() {
+            try {
+                const bm = window.bankModule || window.BankModule || null;
+                const state = bm?.core?.getState ? bm.core.getState() : (bm?.getState ? bm.getState() : null);
+                if (state && typeof state.currentBalance === 'number') {
+                    currentBalance = state.currentBalance;
+                    updateBalanceDisplay();
+                    return currentBalance;
+                }
+            } catch {}
+            // Fallback: запросим комнату напрямую
+            try {
+                const roomId = getRoomIdFromURL();
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                const resp = await fetch(`/api/rooms/${roomId}?user_id=${user.id}`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const idx = (data.players || []).findIndex(p => (p.user_id||'').toString() === (user.id||'').toString());
+                    if (idx >= 0 && data.game_data && Array.isArray(data.game_data.player_balances)) {
+                        currentBalance = Number(data.game_data.player_balances[idx] || 0);
+                        updateBalanceDisplay();
+                        return currentBalance;
+                    }
+                }
+            } catch {}
+            return currentBalance || 0;
         }
 
         function closeCellModal() {
