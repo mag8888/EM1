@@ -3543,10 +3543,10 @@ const dealCards = {
         // На внешнем круге: 1..3 (после оплаты $100,000)
         let fastTrackDiceChoice = {}; // playerIndex -> 1|2|3
         
-        // Переменные для кредитов
-        let currentBalance = 0; // Текущий баланс
-        let totalCredit = 0; // Общая сумма кредита
-        let creditPayment = 0; // Ежемесячный платеж по кредиту
+        // Переменные для кредитов (синхронизируются с банковским модулем)
+        let currentBalance = 0; // Текущий баланс (синхронизируется с банковским модулем)
+        let totalCredit = 0; // Общая сумма кредита (синхронизируется с банковским модулем)
+        let creditPayment = 0; // Ежемесячный платеж по кредиту (синхронизируется с банковским модулем)
         let monthlyIncome = 0; // Ежемесячный доход
         let monthlyExpenses = 0; // Ежемесячные расходы
         let expensesBreakdown = { base: 0, credit: 0 };
@@ -3567,8 +3567,13 @@ const dealCards = {
             creditPayment = creditPayment || 0;
             if (!expensesBreakdown) expensesBreakdown = { base: 0, credit: 0 };
             
-            updateBalanceDisplay();
-            updateFinancesDisplay();
+            // Синхронизируем переменные с банковским модулем
+            if (window.syncVariablesToTable) {
+                window.syncVariablesToTable();
+            }
+            
+            safeCallBankFunction('updateBalanceDisplay');
+            safeCallBankFunction('updateFinancesDisplay');
             updateCreditDisplay();
         }
 
@@ -3578,9 +3583,12 @@ const dealCards = {
             console.log(`📈 Добавлен ежемесячный доход: $${amount.toLocaleString()} - ${description}`);
             console.log(`📊 Общий ежемесячный доход: $${monthlyIncome.toLocaleString()}`);
             
+            // Используем функцию из банковского модуля
+            safeCallBankFunction('addMonthlyIncome', amount, description);
+            
             // Обновляем отображение
-            updateFinancesDisplay();
-            updateCreditDisplay();
+            safeCallBankFunction('updateFinancesDisplay');
+            safeCallBankFunction('updateCreditDisplay');
         }
 
         // Bank v3 functions
@@ -4250,7 +4258,7 @@ const dealCards = {
                 const state = bm?.core?.getState ? bm.core.getState() : (bm?.getState ? bm.getState() : null);
                 if (state && typeof state.currentBalance === 'number') {
                     currentBalance = state.currentBalance;
-                    updateBalanceDisplay();
+                    safeCallBankFunction('updateBalanceDisplay');
                 }
             } catch {}
 
@@ -4298,6 +4306,12 @@ const dealCards = {
                     return;
                 }
                 
+                // Обрабатываем обычные благотворительные карточки
+                if (currentPlayerCard.type === 'charity') {
+                    handleCharityCard(currentPlayerCard);
+                    return;
+                }
+                
                 // Добавляем в активы игрока
                 const cardToAdd = { ...currentPlayerCard };
                 if (currentPlayerCard.type === 'stocks' || currentPlayerCard.type === 'crypto') {
@@ -4325,8 +4339,8 @@ const dealCards = {
                     playerPassiveIncome[currentPlayer] = currentPlayerCard.income * (cardToAdd.quantity || 1);
                 }
                 
-                updateFinancesDisplay();
-                updateBalanceDisplay();
+                safeCallBankFunction('updateFinancesDisplay');
+                safeCallBankFunction('updateBalanceDisplay');
                 
                 showNotification(`✅ Куплено: ${currentPlayerCard.name} за $${currentPlayerCard.cost.toLocaleString()}`, 'success');
                 
@@ -4371,7 +4385,24 @@ const dealCards = {
             // Очищаем текущую карточку
             currentPlayerCard = null;
             closeCardModal();
-            updateBalanceDisplay();
+            safeCallBankFunction('updateBalanceDisplay');
+        }
+
+        // Обработка обычных благотворительных карточек (Приют для кошек, Накормить бездомных и т.д.)
+        function handleCharityCard(card) {
+            // Списываем деньги за благотворительность
+            subtractBalance(card.cost, `Благотворительность: ${card.name}`);
+            
+            // Показываем уведомление о благотворительности
+            showNotification(`💝 Благотворительность: ${card.name} за $${card.cost.toLocaleString()}`, 'info');
+            
+            // Обновляем отображение
+            safeCallBankFunction('updateFinancesDisplay');
+            safeCallBankFunction('updateBalanceDisplay');
+            
+            // Очищаем текущую карточку
+            currentPlayerCard = null;
+            closeCardModal();
         }
 
         // Показать модал для броска кубика
@@ -4450,8 +4481,8 @@ const dealCards = {
                 playerPassiveIncome[currentPlayer] = currentPlayerCard.income;
             }
             
-            updateFinancesDisplay();
-            updateBalanceDisplay();
+            safeCallBankFunction('updateFinancesDisplay');
+            safeCallBankFunction('updateBalanceDisplay');
             
             showNotification(`✅ Куплено: ${currentPlayerCard.name} за $${currentPlayerCard.cost.toLocaleString()}. Доход: $${currentPlayerCard.income.toLocaleString()}/мес`, 'success');
             
@@ -4525,8 +4556,8 @@ const dealCards = {
                     playerPassiveIncome[currentPlayer] = card.income;
                 }
                 
-                updateFinancesDisplay();
-                updateBalanceDisplay();
+                safeCallBankFunction('updateFinancesDisplay');
+                safeCallBankFunction('updateBalanceDisplay');
                 
                 showNotification(`🎁 Получена бесплатная карточка: ${card.name}`, 'success');
             }
@@ -4731,7 +4762,7 @@ const dealCards = {
                 const recPassive = playerPassiveIncome[recipientIndex] || 0;
                 playerPassiveIncome[recipientIndex] = recPassive + perUnitIncome * qtyToSend;
 
-                updateFinancesDisplay();
+                safeCallBankFunction('updateFinancesDisplay');
                 showNotification(`🔁 Передано: ${card.name}${(card.type === 'stocks' || card.type === 'crypto') ? ` x${qtyToSend}` : ''}`, 'success');
                 closeTransferModal();
                 closeAssetsModal();
@@ -4792,8 +4823,8 @@ const dealCards = {
             const sellPrice = Math.floor(card.cost * 0.5);
             addBalance(sellPrice, `Продажа: ${card.name}`);
             
-            updateFinancesDisplay();
-            updateBalanceDisplay();
+            safeCallBankFunction('updateFinancesDisplay');
+            safeCallBankFunction('updateBalanceDisplay');
             showNotification(`✅ Продано: ${card.name} за $${sellPrice.toLocaleString()}`, 'success');
             
             // Обновляем модал активов
@@ -5972,9 +6003,14 @@ const dealCards = {
                     // Ребенок родился
                     monthlyExpenses += CHILD_MONTHLY_COST;
                     expensesBreakdown.base += CHILD_MONTHLY_COST;
-                    currentBalance += 5000; // разовая выплата
-                    updateFinancesDisplay();
-                    updateBalanceDisplay();
+                    // Используем функцию из банковского модуля для добавления средств
+                    if (window.addBalance) {
+                        window.addBalance(5000, 'Рождение ребенка - разовая выплата');
+                    } else {
+                        currentBalance += 5000; // fallback
+                    }
+                    safeCallBankFunction('updateFinancesDisplay');
+                    safeCallBankFunction('updateBalanceDisplay');
                     showCelebration(`🎉 Поздравляем! У вас родился ребенок. +$5,000 разово и +$${CHILD_MONTHLY_COST.toLocaleString()}/мес к расходам.`);
                 } else {
                     showNotification('👶 Ребенок не родился (выпало 5 или 6).', 'info');
@@ -6314,13 +6350,26 @@ const dealCards = {
 
         // Банковские функции перенесены в bank-module-v3.js
         
+        // Безопасные обертки для вызова банковских функций
+        function safeCallBankFunction(functionName, ...args) {
+            try {
+                if (window[functionName] && typeof window[functionName] === 'function') {
+                    return window[functionName](...args);
+                } else {
+                    console.warn(`Банковская функция ${functionName} не найдена`);
+                    return null;
+                }
+            } catch (error) {
+                console.error(`Ошибка при вызове банковской функции ${functionName}:`, error);
+                return null;
+            }
+        }
+        
         // Инициализируем банковские переменные при загрузке
         document.addEventListener('DOMContentLoaded', () => {
             // Инициализируем глобальные переменные банка после загрузки
             setTimeout(() => {
-                if (window.initializeGlobalVariables) {
-                    window.initializeGlobalVariables();
-                }
+                safeCallBankFunction('initializeGlobalVariables');
             }, 1000);
         });
 
@@ -6330,7 +6379,7 @@ const dealCards = {
                 const state = bm?.core?.getState ? bm.core.getState() : (bm?.getState ? bm.getState() : null);
                 if (state && typeof state.currentBalance === 'number') {
                     currentBalance = state.currentBalance;
-                    updateBalanceDisplay();
+                    safeCallBankFunction('updateBalanceDisplay');
                     return currentBalance;
                 }
             } catch {}
@@ -6344,7 +6393,7 @@ const dealCards = {
                     const idx = (data.players || []).findIndex(p => (p.user_id||'').toString() === (user.id||'').toString());
                     if (idx >= 0 && data.game_data && Array.isArray(data.game_data.player_balances)) {
                         currentBalance = Number(data.game_data.player_balances[idx] || 0);
-                        updateBalanceDisplay();
+                        safeCallBankFunction('updateBalanceDisplay');
                         return currentBalance;
                     }
                 }
