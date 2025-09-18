@@ -619,6 +619,42 @@ function syncCreditFromServer() {
                 return globalTotalCredit;
             }
         }
+        
+        // Если модуль v2 недоступен, пытаемся получить данные из table.html
+        if (typeof window.totalCredit !== 'undefined' && window.totalCredit > 0) {
+            const oldCredit = globalTotalCredit;
+            globalTotalCredit = window.totalCredit;
+            
+            if (oldCredit !== globalTotalCredit) {
+                console.log(`🔄 Синхронизация кредита из table.html: ${oldCredit} → ${globalTotalCredit}`);
+                updateCreditDisplay();
+            }
+        }
+        
+        // Если и это не работает, пытаемся получить данные из истории операций
+        const historyContainer = document.getElementById('transfersHistory');
+        if (historyContainer) {
+            const creditEntries = historyContainer.querySelectorAll('[class*="transfer-item"]');
+            let totalCreditFromHistory = 0;
+            
+            creditEntries.forEach(entry => {
+                const text = entry.textContent;
+                if (text.includes('Кредит на')) {
+                    const match = text.match(/\$([\d,]+)/);
+                    if (match) {
+                        const amount = parseInt(match[1].replace(/,/g, ''));
+                        totalCreditFromHistory += amount;
+                    }
+                }
+            });
+            
+            if (totalCreditFromHistory > 0 && globalTotalCredit === 0) {
+                globalTotalCredit = totalCreditFromHistory;
+                console.log(`🔄 Синхронизация кредита из истории: 0 → ${globalTotalCredit}`);
+                updateCreditDisplay();
+            }
+        }
+        
     } catch (e) {
         console.warn('Ошибка синхронизации кредита с сервера:', e);
     }
@@ -731,4 +767,52 @@ function forceUpdateCreditData() {
 
 // Добавляем в глобальный доступ
 window.forceUpdateCreditData = forceUpdateCreditData;
+
+// Функция для принудительного обновления всех финансовых данных
+function forceUpdateAllFinancialData() {
+    console.log('🔄 Принудительное обновление всех финансовых данных...');
+    
+    // Обновляем кредитные данные
+    syncCreditFromServer();
+    
+    // Обновляем данные о доходах и расходах из table.html
+    if (typeof window.monthlyIncome !== 'undefined' && window.monthlyIncome > 0) {
+        globalMonthlyIncome = window.monthlyIncome;
+        console.log(`🔄 Синхронизация дохода: ${globalMonthlyIncome}`);
+    }
+    
+    if (typeof window.monthlyExpenses !== 'undefined' && window.monthlyExpenses > 0) {
+        globalMonthlyExpenses = window.monthlyExpenses;
+        console.log(`🔄 Синхронизация расходов: ${globalMonthlyExpenses}`);
+    }
+    
+    if (typeof window.currentBalance !== 'undefined' && window.currentBalance > 0) {
+        globalCurrentBalance = window.currentBalance;
+        console.log(`🔄 Синхронизация баланса: ${globalCurrentBalance}`);
+    }
+    
+    // Обновляем отображение
+    updateCreditDisplay();
+    updateFinancesDisplay();
+    updateBalanceDisplay();
+    
+    // Синхронизируем с table.html
+    syncVariablesToTable();
+    
+    // Проверяем состояние
+    const status = checkCreditStatus();
+    console.log('📊 Обновленное состояние всех данных:', {
+        balance: globalCurrentBalance,
+        income: globalMonthlyIncome,
+        expenses: globalMonthlyExpenses,
+        credit: globalTotalCredit,
+        maxCredit: globalMonthlyIncome * 10,
+        payday: globalMonthlyIncome - globalMonthlyExpenses
+    });
+    
+    return status;
+}
+
+// Добавляем в глобальный доступ
+window.forceUpdateAllFinancialData = forceUpdateAllFinancialData;
 
