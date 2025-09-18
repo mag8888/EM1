@@ -99,34 +99,51 @@ class BankModuleV4 {
      */
     getUserId() {
         // Пробуем разные способы получения user ID
-        let userId = localStorage.getItem('userId');
+        let userId = null;
         
-        if (!userId) {
-            userId = localStorage.getItem('user_id');
+        // 1. Из localStorage (авторизованный пользователь)
+        const userData = localStorage.getItem('user');
+        if (userData) {
+            try {
+                const user = JSON.parse(userData);
+                userId = user.id || user._id;
+                if (userId) {
+                    console.log('🆔 User ID из авторизованного пользователя:', userId);
+                    return userId;
+                }
+            } catch (e) {
+                console.warn('Ошибка парсинга user data:', e);
+            }
         }
         
-        if (!userId && window.userId) {
-            userId = window.userId;
+        // 2. Из других источников localStorage
+        userId = localStorage.getItem('userId') || localStorage.getItem('user_id');
+        if (userId) {
+            console.log('🆔 User ID из localStorage:', userId);
+            return userId;
         }
         
-        if (!userId && window.currentUserId) {
-            userId = window.currentUserId;
+        // 3. Из глобальных переменных
+        if (window.userId) {
+            console.log('🆔 User ID из window.userId:', window.userId);
+            return window.userId;
         }
         
-        // Если все еще не найдено, генерируем временный ID
-        if (!userId) {
-            userId = 'user_' + Date.now();
-            localStorage.setItem('userId', userId);
-            console.log('🆔 Сгенерирован временный User ID:', userId);
+        if (window.currentUserId) {
+            console.log('🆔 User ID из window.currentUserId:', window.currentUserId);
+            return window.currentUserId;
         }
         
-        console.log('🔍 Поиск User ID:', { 
-            fromLocalStorage: localStorage.getItem('userId'),
-            fromWindow: window.userId || window.currentUserId,
-            result: userId 
-        });
+        // 4. Если все еще не найдено, пробуем найти в URL или других местах
+        const urlParams = new URLSearchParams(window.location.search);
+        userId = urlParams.get('user_id');
+        if (userId) {
+            console.log('🆔 User ID из URL параметров:', userId);
+            return userId;
+        }
         
-        return userId;
+        console.warn('⚠️ User ID не найден! Проверьте авторизацию пользователя.');
+        return null;
     }
 
     /**
@@ -508,6 +525,25 @@ class BankModuleV4 {
 let bankModuleV4 = null;
 
 /**
+ * Получение User ID из localStorage (вспомогательная функция)
+ */
+function getUserIdFromStorage() {
+    // 1. Из localStorage (авторизованный пользователь)
+    const userData = localStorage.getItem('user');
+    if (userData) {
+        try {
+            const user = JSON.parse(userData);
+            return user.id || user._id;
+        } catch (e) {
+            console.warn('Ошибка парсинга user data:', e);
+        }
+    }
+    
+    // 2. Из других источников localStorage
+    return localStorage.getItem('userId') || localStorage.getItem('user_id');
+}
+
+/**
  * Инициализация банковского модуля v4
  */
 async function initBankModuleV4() {
@@ -660,10 +696,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Если не удалось, ждем 2 секунды и пробуем принудительную инициализацию
             setTimeout(async () => {
                 const roomId = '68cc38e1ce7b0898a9dc83f1'; // Из логов
-                const userId = localStorage.getItem('userId') || 'user_' + Date.now();
+                const userId = getUserIdFromStorage(); // Получаем реальный user_id
                 
-                console.log('🔄 Попытка принудительной инициализации...', { roomId, userId });
-                await forceInitBankModuleV4(roomId, userId);
+                if (userId) {
+                    console.log('🔄 Попытка принудительной инициализации...', { roomId, userId });
+                    await forceInitBankModuleV4(roomId, userId);
+                } else {
+                    console.warn('⚠️ Не удалось получить User ID для принудительной инициализации');
+                }
             }, 2000);
         }
     });
