@@ -5540,7 +5540,11 @@ const dealCards = {
             diceRolled = true;
             const dice = document.getElementById('dice');
             const rollDiceBtn = document.getElementById('rollDiceBtn');
+            
+            // Сразу делаем кнопку недоступной и меняем текст
             rollDiceBtn.disabled = true;
+            rollDiceBtn.innerHTML = '<span>🎲</span><span>Кубик брошен</span>';
+            rollDiceBtn.style.opacity = '0.5';
 
             // Определяем количество кубиков (с учётом благотворительности)
             const diceCount = (fastTrackDiceChoice[currentPlayer] || (playerTracks[currentPlayer] === 'outer' ? 1 : 1));
@@ -5555,7 +5559,10 @@ const dealCards = {
                 if (!rollResp.ok || !rollData.success) {
                     alert('Ошибка броска кубика');
                     isRolling = false;
+                    diceRolled = false;
                     rollDiceBtn.disabled = false;
+                    rollDiceBtn.innerHTML = '<span>🎲</span><span>Бросить кубик</span>';
+                    rollDiceBtn.style.opacity = '1';
                     return;
                 }
                 const finalValue = rollData.dice_value;
@@ -5586,7 +5593,10 @@ const dealCards = {
             } catch (e) {
                 console.error('Roll error:', e);
                 isRolling = false;
+                diceRolled = false;
                 rollDiceBtn.disabled = false;
+                rollDiceBtn.innerHTML = '<span>🎲</span><span>Бросить кубик</span>';
+                rollDiceBtn.style.opacity = '1';
                 }
         }
 
@@ -5595,6 +5605,7 @@ const dealCards = {
             if (diceRolled) {
                 rollDiceBtn.innerHTML = '<span>⏭️</span><span>Переход хода</span>';
                 rollDiceBtn.disabled = false;
+                rollDiceBtn.style.opacity = '1';
                 rollDiceBtn.onclick = () => {
                     nextPlayer();
                 };
@@ -5836,6 +5847,7 @@ const dealCards = {
             rollDiceBtn.innerHTML = '<span>🎲</span><span>Бросить кубик</span>';
             rollDiceBtn.onclick = rollDice;
             rollDiceBtn.disabled = false;
+            rollDiceBtn.style.opacity = '1';
             diceRolled = false;
             isRolling = false; // Сбрасываем флаг броска
         }
@@ -5870,7 +5882,11 @@ const dealCards = {
                         if (isCurrentUserTurn) {
                             // Показываем кнопку броска кубика для текущего игрока
                             rollDiceBtn.style.display = 'flex';
-                            rollDiceBtn.disabled = false;
+                            // Если кубик уже брошен, кнопка остается недоступной
+                            if (!diceRolled) {
+                                rollDiceBtn.disabled = false;
+                                rollDiceBtn.style.opacity = '1';
+                            }
                         } else {
                             // Скрываем кнопку для других игроков
                             rollDiceBtn.style.display = 'none';
