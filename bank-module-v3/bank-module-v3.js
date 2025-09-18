@@ -529,6 +529,19 @@ function initializeGlobalVariables() {
         globalExpensesBreakdown = window.expensesBreakdown;
     }
     
+    // Синхронизируем с данными из банковского модуля v2 если доступен
+    try {
+        if (window.bankModule && window.bankModule.core && window.bankModule.core.state) {
+            const bankState = window.bankModule.core.state;
+            if (bankState.currentCredit !== undefined) {
+                globalTotalCredit = bankState.currentCredit;
+                console.log('🔄 Синхронизирован кредит из банковского модуля v2:', globalTotalCredit);
+            }
+        }
+    } catch (e) {
+        console.warn('Не удалось синхронизировать с банковским модулем v2:', e);
+    }
+    
     console.log('🔄 Инициализированы глобальные переменные банка:', {
         balance: globalCurrentBalance,
         income: globalMonthlyIncome,
@@ -559,6 +572,30 @@ function syncVariablesToTable() {
     }
 }
 
+// Функция для принудительной синхронизации кредитных данных с сервера
+function syncCreditFromServer() {
+    try {
+        if (window.bankModule && window.bankModule.core && window.bankModule.core.state) {
+            const bankState = window.bankModule.core.state;
+            if (bankState.currentCredit !== undefined) {
+                const oldCredit = globalTotalCredit;
+                globalTotalCredit = bankState.currentCredit;
+                
+                if (oldCredit !== globalTotalCredit) {
+                    console.log(`🔄 Синхронизация кредита: ${oldCredit} → ${globalTotalCredit}`);
+                    updateCreditDisplay();
+                    syncVariablesToTable();
+                }
+                
+                return globalTotalCredit;
+            }
+        }
+    } catch (e) {
+        console.warn('Ошибка синхронизации кредита с сервера:', e);
+    }
+    return globalTotalCredit;
+}
+
 // Делаем все функции глобально доступными
 window.addBalance = addBalance;
 window.subtractBalance = subtractBalance;
@@ -572,4 +609,47 @@ window.requestCreditLocal = requestCreditLocal;
 window.takeCreditForExpense = takeCreditForExpense;
 window.initializeGlobalVariables = initializeGlobalVariables;
 window.syncVariablesToTable = syncVariablesToTable;
+window.syncCreditFromServer = syncCreditFromServer;
+
+// Функция для проверки состояния кредитов
+function checkCreditStatus() {
+    try {
+        if (window.bankModule && window.bankModule.core && window.bankModule.core.state) {
+            const bankState = window.bankModule.core.state;
+            const serverCredit = bankState.currentCredit || 0;
+            const localCredit = globalTotalCredit || 0;
+            
+            console.log('🔍 Проверка состояния кредитов:');
+            console.log(`📊 Кредит на сервере: $${serverCredit.toLocaleString()}`);
+            console.log(`💻 Кредит локально: $${localCredit.toLocaleString()}`);
+            console.log(`📈 Максимальный кредит: $${(globalMonthlyIncome * 10).toLocaleString()}`);
+            console.log(`💰 Доступно для кредита: $${((globalMonthlyIncome * 10) - serverCredit).toLocaleString()}`);
+            
+            if (serverCredit !== localCredit) {
+                console.warn('⚠️ Расхождение между серверными и локальными данными!');
+                globalTotalCredit = serverCredit;
+                updateCreditDisplay();
+                syncVariablesToTable();
+            }
+            
+            return {
+                serverCredit,
+                localCredit,
+                maxCredit: globalMonthlyIncome * 10,
+                availableCredit: (globalMonthlyIncome * 10) - serverCredit
+            };
+        }
+    } catch (e) {
+        console.warn('Ошибка проверки состояния кредитов:', e);
+    }
+    
+    return {
+        serverCredit: 0,
+        localCredit: globalTotalCredit,
+        maxCredit: globalMonthlyIncome * 10,
+        availableCredit: (globalMonthlyIncome * 10) - globalTotalCredit
+    };
+}
+
+window.checkCreditStatus = checkCreditStatus;
 
