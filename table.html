@@ -4187,6 +4187,34 @@ const dealCards = {
             }
             creditBtn.onclick = () => openCreditModalV3();
 
+            // Кнопка передачи карты прямо из модала сделки (если она в активах)
+            let transferBtn = document.getElementById('cardTransferButton');
+            if (!transferBtn) {
+                transferBtn = document.createElement('button');
+                transferBtn.id = 'cardTransferButton';
+                transferBtn.className = 'modern-btn secondary';
+                transferBtn.style.marginLeft = '8px';
+                transferBtn.textContent = 'Передать';
+                const actions = modal.querySelector('.card-actions');
+                if (actions) actions.appendChild(transferBtn);
+            }
+            transferBtn.onclick = () => {
+                // Найти id карты в активах по имени и типу
+                const owned = (playerAssets[currentPlayer]||[]).find(c => c.name === card.name && c.type === card.type);
+                if (!owned) { showNotification('Эта карточка еще не у вас в активах', 'error'); return; }
+                openTransferModal(owned.id);
+            };
+
+            // Обновляем баланс из BankModule, если доступен
+            try {
+                const bm = window.bankModule || window.BankModule || null;
+                const state = bm?.core?.getState ? bm.core.getState() : (bm?.getState ? bm.getState() : null);
+                if (state && typeof state.currentBalance === 'number') {
+                    currentBalance = state.currentBalance;
+                    updateBalanceDisplay();
+                }
+            } catch {}
+
             modal.style.display = 'block';
         }
 
@@ -4210,6 +4238,15 @@ const dealCards = {
                     if (quantity > maxQ) quantity = maxQ;
                 }
             }
+
+            // Актуализируем баланс перед покупкой из BankModule, если доступен
+            try {
+                const bm = window.bankModule || window.BankModule || null;
+                const state = bm?.core?.getState ? bm.core.getState() : (bm?.getState ? bm.getState() : null);
+                if (state && typeof state.currentBalance === 'number') {
+                    currentBalance = state.currentBalance;
+                }
+            } catch {}
 
             const totalCost = currentPlayerCard.cost * quantity;
             const canAfford = (currentBalance || 0) >= totalCost;
@@ -4264,7 +4301,7 @@ const dealCards = {
                 currentPlayerCard = null;
                 closeCardModal();
             } else {
-                alert(`❌ Недостаточно средств для покупки.\nНужно: $${currentPlayerCard.cost.toLocaleString()}\nУ вас: $${(currentBalance || 0).toLocaleString()}`);
+                alert(`❌ Недостаточно средств для покупки.\nНужно: $${totalCost.toLocaleString()}\nУ вас: $${(currentBalance || 0).toLocaleString()}`);
             }
         }
 
