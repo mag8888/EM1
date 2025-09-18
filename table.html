@@ -1808,6 +1808,93 @@
             background: rgba(255, 255, 255, 0.2);
             color: #fff;
         }
+
+        /* Deal Choice Modal Styles */
+        .deal-choice-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .deal-option {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 200px;
+            flex: 1;
+            max-width: 300px;
+        }
+
+        .deal-option:hover {
+            border-color: #3b82f6;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .deal-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .deal-option h3 {
+            color: #fff;
+            margin: 0 0 8px 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .deal-option p {
+            color: #94a3b8;
+            margin: 0 0 16px 0;
+            font-size: 14px;
+        }
+
+        .deal-count {
+            color: #3b82f6;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Card Modal Styles */
+        .card-info {
+            margin-bottom: 30px;
+        }
+
+        .card-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .card-info-row:last-child {
+            border-bottom: none;
+        }
+
+        .card-label {
+            color: #94a3b8;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .card-value {
+            color: #fff;
+            font-weight: 500;
+            font-size: 14px;
+            text-align: right;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
         
         /* Credit Modal Styles */
         .credit-modal {
@@ -2911,6 +2998,50 @@
     </div>
 
     <script>
+        // Система карточек сделок
+        const dealCards = {
+            // Малые сделки
+            smallDeals: [
+                { id: 1, name: "Акции", cost: 1000, income: 100, description: "Покупка акций за $1,000. Доход: $100/мес", type: "stocks" },
+                { id: 2, name: "Облигации", cost: 2000, income: 200, description: "Покупка облигаций за $2,000. Доход: $200/мес", type: "bonds" },
+                { id: 3, name: "Депозит", cost: 5000, income: 500, description: "Банковский депозит за $5,000. Доход: $500/мес", type: "deposit" },
+                { id: 4, name: "Фонд", cost: 3000, income: 300, description: "Инвестиционный фонд за $3,000. Доход: $300/мес", type: "fund" },
+                { id: 5, name: "Криптовалюта", cost: 1500, income: 150, description: "Покупка криптовалюты за $1,500. Доход: $150/мес", type: "crypto" },
+                { id: 6, name: "Золото", cost: 4000, income: 400, description: "Покупка золота за $4,000. Доход: $400/мес", type: "gold" },
+                { id: 7, name: "Недвижимость", cost: 8000, income: 800, description: "Покупка недвижимости за $8,000. Доход: $800/мес", type: "real_estate" },
+                { id: 8, name: "Бизнес", cost: 6000, income: 600, description: "Покупка малого бизнеса за $6,000. Доход: $600/мес", type: "business" }
+            ],
+            // Большие сделки
+            bigDeals: [
+                { id: 1, name: "Офисное здание", cost: 50000, income: 5000, description: "Покупка офисного здания за $50,000. Доход: $5,000/мес", type: "office" },
+                { id: 2, name: "Торговый центр", cost: 100000, income: 10000, description: "Покупка торгового центра за $100,000. Доход: $10,000/мес", type: "mall" },
+                { id: 3, name: "Завод", cost: 200000, income: 20000, description: "Покупка завода за $200,000. Доход: $20,000/мес", type: "factory" },
+                { id: 4, name: "Гостиница", cost: 150000, income: 15000, description: "Покупка гостиницы за $150,000. Доход: $15,000/мес", type: "hotel" },
+                { id: 5, name: "Акции компании", cost: 30000, income: 3000, description: "Покупка акций крупной компании за $30,000. Доход: $3,000/мес", type: "company_stocks" },
+                { id: 6, name: "Франшиза", cost: 75000, income: 7500, description: "Покупка франшизы за $75,000. Доход: $7,500/мес", type: "franchise" },
+                { id: 7, name: "Технологический стартап", cost: 40000, income: 4000, description: "Инвестиция в стартап за $40,000. Доход: $4,000/мес", type: "startup" },
+                { id: 8, name: "Сеть ресторанов", cost: 120000, income: 12000, description: "Покупка сети ресторанов за $120,000. Доход: $12,000/мес", type: "restaurant_chain" }
+            ]
+        };
+
+        // Система управления колодами
+        let dealDecks = {
+            smallDeals: [...dealCards.smallDeals],
+            bigDeals: [...dealCards.bigDeals],
+            smallDealsDiscard: [],
+            bigDealsDiscard: []
+        };
+
+        // Активы игроков
+        let playerAssets = {
+            0: [],
+            1: [],
+            2: []
+        };
+
+        // Текущая карточка в руке игрока
+        let currentPlayerCard = null;
+
         // Данные о клетках малого круга (0-23) - согласно оригинальной игре "Поток денег"
         const innerCellData = {
             // Клетка 1 (0) - Зеленая возможность
@@ -3169,6 +3300,148 @@
             setInterval(loadTurnInfo, 1000); // Обновляем информацию о ходе каждую секунду
         }
 
+        // Функции для работы с карточками сделок
+        function shuffleDeck(deck) {
+            const shuffled = [...deck];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function drawCard(deckType) {
+            const deck = dealDecks[deckType];
+            if (deck.length === 0) {
+                // Перемешиваем отбой и возвращаем в колоду
+                const discardDeck = dealDecks[deckType + 'Discard'];
+                dealDecks[deckType] = shuffleDeck(discardDeck);
+                dealDecks[deckType + 'Discard'] = [];
+                updateDeckCounters();
+            }
+            
+            if (dealDecks[deckType].length === 0) {
+                return null; // Нет карточек
+            }
+            
+            return dealDecks[deckType].pop();
+        }
+
+        function discardCard(card, deckType) {
+            dealDecks[deckType + 'Discard'].push(card);
+            updateDeckCounters();
+        }
+
+        function updateDeckCounters() {
+            document.getElementById('smallDealDeck').textContent = dealDecks.smallDeals.length;
+            document.getElementById('smallDealDiscard').textContent = dealDecks.smallDealsDiscard.length;
+            document.getElementById('bigDealDeck').textContent = dealDecks.bigDeals.length;
+            document.getElementById('bigDealDiscard').textContent = dealDecks.bigDealsDiscard.length;
+        }
+
+        function showDealChoiceModal() {
+            const modal = document.getElementById('dealChoiceModal');
+            if (modal) {
+                modal.style.display = 'block';
+            }
+        }
+
+        function closeDealChoiceModal() {
+            const modal = document.getElementById('dealChoiceModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function chooseSmallDeal() {
+            const card = drawCard('smallDeals');
+            if (card) {
+                currentPlayerCard = { ...card, deckType: 'smallDeals' };
+                showCardModal(card);
+                closeDealChoiceModal();
+            }
+        }
+
+        function chooseBigDeal() {
+            const card = drawCard('bigDeals');
+            if (card) {
+                currentPlayerCard = { ...card, deckType: 'bigDeals' };
+                showCardModal(card);
+                closeDealChoiceModal();
+            }
+        }
+
+        function showCardModal(card) {
+            const modal = document.getElementById('cardModal');
+            if (!modal) return;
+
+            document.getElementById('cardTitle').textContent = card.name;
+            document.getElementById('cardCost').textContent = `$${card.cost.toLocaleString()}`;
+            document.getElementById('cardIncome').textContent = `$${card.income.toLocaleString()}/мес`;
+            document.getElementById('cardDescription').textContent = card.description;
+
+            // Показываем кнопки покупки/отказа
+            const buyButton = document.getElementById('cardBuyButton');
+            const refuseButton = document.getElementById('cardRefuseButton');
+            
+            if (buyButton) buyButton.style.display = 'inline-block';
+            if (refuseButton) refuseButton.style.display = 'inline-block';
+
+            modal.style.display = 'block';
+        }
+
+        function closeCardModal() {
+            const modal = document.getElementById('cardModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function buyCard() {
+            if (!currentPlayerCard) return;
+
+            const canAfford = (currentBalance || 0) >= currentPlayerCard.cost;
+            if (canAfford) {
+                // Списываем деньги
+                subtractBalance(currentPlayerCard.cost, `Покупка: ${currentPlayerCard.name}`);
+                
+                // Добавляем в активы игрока
+                playerAssets[currentPlayer].push(currentPlayerCard);
+                
+                // Обновляем пассивный доход
+                if (playerPassiveIncome && playerPassiveIncome[currentPlayer]) {
+                    playerPassiveIncome[currentPlayer] += currentPlayerCard.income;
+                } else {
+                    playerPassiveIncome = playerPassiveIncome || {};
+                    playerPassiveIncome[currentPlayer] = currentPlayerCard.income;
+                }
+                
+                updateFinancesDisplay();
+                updateBalanceDisplay();
+                
+                showNotification(`✅ Куплено: ${currentPlayerCard.name} за $${currentPlayerCard.cost.toLocaleString()}`, 'success');
+                
+                // Очищаем текущую карточку
+                currentPlayerCard = null;
+                closeCardModal();
+            } else {
+                alert(`❌ Недостаточно средств для покупки.\nНужно: $${currentPlayerCard.cost.toLocaleString()}\nУ вас: $${(currentBalance || 0).toLocaleString()}`);
+            }
+        }
+
+        function refuseCard() {
+            if (!currentPlayerCard) return;
+
+            // Отправляем карточку в отбой
+            discardCard(currentPlayerCard, currentPlayerCard.deckType);
+            
+            showNotification(`❌ Карточка "${currentPlayerCard.name}" отправлена в отбой`, 'info');
+            
+            // Очищаем текущую карточку
+            currentPlayerCard = null;
+            closeCardModal();
+        }
+
         // Инициализация игрового поля
         async function initializeGameBoard() {
             try {
@@ -3211,8 +3484,15 @@
             try {
                 console.log('🃏 Инициализация угловых карточек');
                 
-                // Инициализируем счетчики карт
-                const cardTypes = ['bigDeal', 'smallDeal', 'market', 'expenses'];
+                // Перемешиваем колоды карточек
+                dealDecks.smallDeals = shuffleDeck(dealDecks.smallDeals);
+                dealDecks.bigDeals = shuffleDeck(dealDecks.bigDeals);
+                
+                // Обновляем счетчики карточек сделок
+                updateDeckCounters();
+                
+                // Инициализируем счетчики других карт
+                const cardTypes = ['market', 'expenses'];
                 
                 cardTypes.forEach(type => {
                     const deckElement = document.getElementById(`${type}Deck`);
@@ -4067,7 +4347,8 @@
             
             // Показываем информацию о клетке
                 setTimeout(() => {
-                    showCellInfo(newPosition);
+                    const track = playerTracks[currentPlayer] || 'inner';
+                    showCellPopup(newPosition, track === 'inner');
                 }, 500);
             
             console.log(`✅ Игрок ${currentPlayer} перемещен на клетку ${newPosition}`);
@@ -5325,6 +5606,12 @@
             
             if (!cell) return;
 
+            // Специальная обработка для клеток "Возможность" (сделки)
+            if (cell.type === 'Возможность') {
+                showDealChoiceModal();
+                return;
+            }
+
             // Заполняем поп-ап данными
             const titleEl = document.getElementById('cellPopupTitle');
             if (titleEl) {
@@ -5527,6 +5814,8 @@
                 </div>
                 <div class="cell-popup-actions">
                     <button class="cell-btn-primary" onclick="buyCellFromPopup()" id="cellBuyButton" style="display: none;">Купить</button>
+                    <button class="cell-btn-secondary" onclick="refuseCellFromPopup()" id="cellRefuseButton" style="display: none;">Отказаться</button>
+                    <button class="cell-btn-secondary" onclick="transferCellFromPopup()" id="cellTransferButton" style="display: none;">Передать карточку</button>
                     <button class="cell-btn-secondary" onclick="closeCellPopup()">Закрыть</button>
                 </div>
             </div>
@@ -5610,6 +5899,62 @@
     <script src="bank-module-v2/BankModule.js"></script>
     <script src="bank-module-v3/bank-module-v3.js"></script>
     
+    <!-- Deal Choice Modal -->
+    <div id="dealChoiceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎯 Выберите тип сделки</h2>
+                <button class="close-btn" onclick="closeDealChoiceModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="deal-choice-container">
+                    <div class="deal-option" onclick="chooseSmallDeal()">
+                        <div class="deal-icon">🏠</div>
+                        <h3>Малая сделка</h3>
+                        <p>Инвестиции от $1,000 до $8,000</p>
+                        <div class="deal-count">Карт в колоде: <span id="smallDealCount">8</span></div>
+                    </div>
+                    <div class="deal-option" onclick="chooseBigDeal()">
+                        <div class="deal-icon">🏢</div>
+                        <h3>Большая сделка</h3>
+                        <p>Инвестиции от $30,000 до $200,000</p>
+                        <div class="deal-count">Карт в колоде: <span id="bigDealCount">8</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Modal -->
+    <div id="cardModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="cardTitle">Карточка сделки</h2>
+                <button class="close-btn" onclick="closeCardModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="card-info">
+                    <div class="card-info-row">
+                        <span class="card-label">Стоимость:</span>
+                        <span class="card-value" id="cardCost">$0</span>
+                    </div>
+                    <div class="card-info-row">
+                        <span class="card-label">Доход:</span>
+                        <span class="card-value" id="cardIncome">$0/мес</span>
+                    </div>
+                    <div class="card-info-row">
+                        <span class="card-label">Описание:</span>
+                        <span class="card-value" id="cardDescription">-</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="modern-btn primary" onclick="buyCard()" id="cardBuyButton">Купить</button>
+                    <button class="modern-btn secondary" onclick="refuseCard()" id="cardRefuseButton">Отказаться</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Game Board Modules -->
     <script src="game-board/GameBoardService.js"></script>
     <script src="game-board/GameBoardUI.js"></script>
