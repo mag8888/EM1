@@ -386,13 +386,16 @@ function updateCreditDisplay() {
     const currentCreditElement = document.getElementById('currentCredit');
     if (currentCreditElement) {
         currentCreditElement.textContent = `$${globalTotalCredit.toLocaleString()}`;
+        console.log(`💰 Обновлен кредит: $${globalTotalCredit.toLocaleString()}`);
     }
     
     // Обновляем максимальный кредит
     const maxCreditElement = document.getElementById('maxCredit');
     if (maxCreditElement) {
-        const maxCredit = globalMonthlyIncome * 10;
+        // Максимальный кредит = 10% от месячного дохода
+        const maxCredit = Math.max(0, globalMonthlyIncome * 10);
         maxCreditElement.textContent = `$${maxCredit.toLocaleString()}`;
+        console.log(`📊 Обновлен макс. кредит: $${maxCredit.toLocaleString()} (доход: $${globalMonthlyIncome.toLocaleString()})`);
     }
     
     // Обновляем глобальные переменные для совместимости
@@ -815,4 +818,44 @@ function forceUpdateAllFinancialData() {
 
 // Добавляем в глобальный доступ
 window.forceUpdateAllFinancialData = forceUpdateAllFinancialData;
+
+// Функция для быстрого исправления всех данных (для отладки)
+function quickFixAllData() {
+    console.log('🔧 Быстрое исправление всех данных...');
+    
+    // Устанавливаем правильные значения на основе известных данных
+    globalMonthlyIncome = 3800;  // PAYDAY из логов
+    globalMonthlyExpenses = 6200; // Расходы из логов  
+    globalTotalCredit = 5000;     // Кредит из истории операций
+    globalCurrentBalance = 13777; // Текущий баланс
+    
+    // Обновляем отображение
+    updateCreditDisplay();
+    updateFinancesDisplay();
+    updateBalanceDisplay();
+    
+    // Синхронизируем с table.html
+    syncVariablesToTable();
+    
+    console.log('✅ Данные исправлены:', {
+        balance: globalCurrentBalance,
+        income: globalMonthlyIncome,
+        expenses: globalMonthlyExpenses,
+        credit: globalTotalCredit,
+        maxCredit: globalMonthlyIncome * 10,
+        payday: globalMonthlyIncome - globalMonthlyExpenses
+    });
+    
+    return {
+        balance: globalCurrentBalance,
+        income: globalMonthlyIncome,
+        expenses: globalMonthlyExpenses,
+        credit: globalTotalCredit,
+        maxCredit: globalMonthlyIncome * 10,
+        payday: globalMonthlyIncome - globalMonthlyExpenses
+    };
+}
+
+// Добавляем в глобальный доступ
+window.quickFixAllData = quickFixAllData;
 
