@@ -11,13 +11,8 @@ if (typeof window.totalCredit === 'undefined') window.totalCredit = 0;
 if (typeof window.creditPayment === 'undefined') window.creditPayment = 0;
 if (typeof window.expensesBreakdown === 'undefined') window.expensesBreakdown = { base: 0, credit: 0 };
 
-// Локальные ссылки для удобства
-let currentBalance = window.currentBalance;
-let monthlyIncome = window.monthlyIncome;
-let monthlyExpenses = window.monthlyExpenses;
-let totalCredit = window.totalCredit;
-let creditPayment = window.creditPayment;
-let expensesBreakdown = window.expensesBreakdown;
+// Локальные ссылки для удобства (без объявления новых переменных)
+// Используем прямое обращение к window объекту
 
 /**
  * Синхронизация данных из банковского модуля v4
@@ -28,10 +23,10 @@ function syncDataFromBankV4() {
     const data = bankModuleV4.getData();
     
     // Обновляем глобальные переменные
-    currentBalance = data.balance;
-    monthlyIncome = data.income;
-    monthlyExpenses = data.expenses;
-    totalCredit = data.credit;
+    window.currentBalance = data.balance;
+    window.monthlyIncome = data.income;
+    window.monthlyExpenses = data.expenses;
+    window.totalCredit = data.credit;
     
     // Обновляем отображение в table.html
     updateBalanceDisplay();
@@ -47,7 +42,7 @@ function syncDataFromBankV4() {
 function updateBalanceDisplay() {
     const balanceEl = document.getElementById('currentBalance');
     if (balanceEl) {
-        balanceEl.textContent = `$${currentBalance.toLocaleString()}`;
+        balanceEl.textContent = `$${window.currentBalance.toLocaleString()}`;
     }
     
     // Обновляем в банковском модуле
@@ -62,11 +57,11 @@ function updateBalanceDisplay() {
 function updateFinancesDisplay() {
     const incomeEl = document.getElementById('monthlyIncome');
     if (incomeEl) {
-        const payday = Math.max(0, monthlyIncome - monthlyExpenses);
+        const payday = Math.max(0, window.monthlyIncome - window.monthlyExpenses);
         incomeEl.textContent = `$${payday.toLocaleString()}/мес`;
     }
     
-    console.log(`💰 PAYDAY: доход $${monthlyIncome.toLocaleString()} - расходы $${monthlyExpenses.toLocaleString()} = $${Math.max(0, monthlyIncome - monthlyExpenses).toLocaleString()}`);
+    console.log(`💰 PAYDAY: доход $${window.monthlyIncome.toLocaleString()} - расходы $${window.monthlyExpenses.toLocaleString()} = $${Math.max(0, window.monthlyIncome - window.monthlyExpenses).toLocaleString()}`);
 }
 
 /**
@@ -75,12 +70,12 @@ function updateFinancesDisplay() {
 function updateCreditDisplay() {
     const creditEl = document.getElementById('currentCredit');
     if (creditEl) {
-        creditEl.textContent = `$${totalCredit.toLocaleString()}`;
+        creditEl.textContent = `$${window.totalCredit.toLocaleString()}`;
     }
     
     const maxCreditEl = document.getElementById('maxCredit');
     if (maxCreditEl) {
-        const maxCredit = Math.max(0, monthlyIncome * 10);
+        const maxCredit = Math.max(0, window.monthlyIncome * 10);
         maxCreditEl.textContent = `$${maxCredit.toLocaleString()}`;
     }
 }
@@ -91,8 +86,8 @@ function updateCreditDisplay() {
 async function addBalance(amount, description) {
     console.log(`💰 Добавление баланса: $${amount.toLocaleString()} - ${description}`);
     
-    // Обновляем локальную переменную
-    currentBalance += amount;
+    // Обновляем глобальную переменную
+    window.currentBalance += amount;
     
     // Обновляем отображение
     updateBalanceDisplay();
@@ -109,8 +104,8 @@ async function addBalance(amount, description) {
 async function subtractBalance(amount, description) {
     console.log(`💸 Вычитание баланса: $${amount.toLocaleString()} - ${description}`);
     
-    // Обновляем локальную переменную
-    currentBalance = Math.max(0, currentBalance - amount);
+    // Обновляем глобальную переменную
+    window.currentBalance = Math.max(0, window.currentBalance - amount);
     
     // Обновляем отображение
     updateBalanceDisplay();
@@ -127,7 +122,7 @@ async function subtractBalance(amount, description) {
 function addMonthlyIncome(amount, description) {
     console.log(`📈 Добавление месячного дохода: $${amount.toLocaleString()} - ${description}`);
     
-    monthlyIncome += amount;
+    window.monthlyIncome += amount;
     
     // Обновляем отображение
     updateFinancesDisplay();
@@ -208,14 +203,14 @@ function initializeFinances() {
     console.log('💰 Инициализация финансов');
     
     // Инициализируем переменные
-    currentBalance = currentBalance || 0;
-    monthlyIncome = monthlyIncome || 0;
-    monthlyExpenses = monthlyExpenses || 0;
-    totalCredit = totalCredit || 0;
-    creditPayment = creditPayment || 0;
+    window.currentBalance = window.currentBalance || 0;
+    window.monthlyIncome = window.monthlyIncome || 0;
+    window.monthlyExpenses = window.monthlyExpenses || 0;
+    window.totalCredit = window.totalCredit || 0;
+    window.creditPayment = window.creditPayment || 0;
     
-    if (!expensesBreakdown) {
-        expensesBreakdown = { base: 0, credit: 0 };
+    if (!window.expensesBreakdown) {
+        window.expensesBreakdown = { base: 0, credit: 0 };
     }
     
     // Синхронизируем с банковским модулем
@@ -247,12 +242,7 @@ function safeCallBankFunction(functionName, ...args) {
 }
 
 // Экспорт функций в глобальную область для совместимости
-window.currentBalance = currentBalance;
-window.monthlyIncome = monthlyIncome;
-window.monthlyExpenses = monthlyExpenses;
-window.totalCredit = totalCredit;
-window.creditPayment = creditPayment;
-window.expensesBreakdown = expensesBreakdown;
+// Переменные уже объявлены выше
 
 window.updateBalanceDisplay = updateBalanceDisplay;
 window.updateFinancesDisplay = updateFinancesDisplay;

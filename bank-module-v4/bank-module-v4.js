@@ -136,7 +136,7 @@ class BankModuleV4 {
         try {
             console.log('📡 BankModuleV4: Загрузка данных...');
             
-            const response = await fetch(`/api/rooms/${this.roomId}/data`);
+            const response = await fetch(`/api/rooms/${this.roomId}?user_id=${this.userId}`);
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
