@@ -168,3 +168,408 @@ function showExpenseDetails() {
 window.showIncomeDetails = showIncomeDetails;
 window.showExpenseDetails = showExpenseDetails;
 
+// Функция для обновления баланса в банковском модуле
+async function updateBankBalance(newBalance) {
+  if (bankModuleInstance && bankModuleInstance.core) {
+    try {
+      // Обновляем баланс в ядре банковского модуля
+      bankModuleInstance.core.updateBalance(newBalance, 'externalUpdate');
+      
+      // Обновляем UI
+      bankModuleInstance.updateUI();
+      
+      console.log('✅ Баланс обновлен в банковском модуле:', newBalance);
+    } catch (error) {
+      console.error('❌ Ошибка обновления баланса в банковском модуле:', error);
+    }
+  }
+}
+
+// Делаем функцию глобально доступной
+window.updateBankBalance = updateBankBalance;
+
+// ===== ЦЕНТРАЛИЗОВАННЫЕ БАНКОВСКИЕ ФУНКЦИИ =====
+
+// Глобальные переменные для финансов
+let globalCurrentBalance = 0;
+let globalMonthlyIncome = 0;
+let globalMonthlyExpenses = 0;
+let globalTotalCredit = 0;
+let globalCreditPayment = 0;
+let globalExpensesBreakdown = { base: 0, credit: 0 };
+
+// Функция для добавления средств к балансу
+async function addBalance(amount, description) {
+    console.log(`💰 addBalance: +$${amount} - ${description}`);
+    globalCurrentBalance = (globalCurrentBalance || 0) + amount;
+    
+    try {
+        // Синхронизируем с банковским модулем
+        if (window.updateBankBalance) {
+            await window.updateBankBalance(globalCurrentBalance);
+        }
+        
+        // Также пытаемся синхронизировать через старый банковский модуль
+        if (window.bankModule?.loadBankData) {
+            await window.bankModule.loadBankData(true);
+        }
+    } catch (error) {
+        console.error('Ошибка синхронизации баланса:', error);
+    }
+    
+    updateBalanceDisplay();
+    syncVariablesToTable(); // Синхронизируем переменные обратно в table.html
+}
+
+// Функция для списания средств с баланса
+async function subtractBalance(amount, description) {
+    console.log(`💸 subtractBalance: -$${amount} - ${description}`);
+    globalCurrentBalance = Math.max(0, (globalCurrentBalance || 0) - amount);
+    
+    try {
+        // Синхронизируем с банковским модулем
+        if (window.updateBankBalance) {
+            await window.updateBankBalance(globalCurrentBalance);
+        }
+        
+        // Также пытаемся синхронизировать через старый банковский модуль
+        if (window.bankModule?.loadBankData) {
+            await window.bankModule.loadBankData(true);
+        }
+    } catch (error) {
+        console.error('Ошибка синхронизации баланса:', error);
+    }
+    
+    updateBalanceDisplay();
+    syncVariablesToTable(); // Синхронизируем переменные обратно в table.html
+}
+
+// Функция для взятия кредита
+async function takeCredit(amount) {
+    if (amount <= 0) return;
+    
+    console.log(`💰 takeCredit: взят кредит на $${amount}`);
+    
+    // Добавляем кредит к балансу
+    globalTotalCredit += amount;
+    globalCurrentBalance += amount;
+    
+    // Рассчитываем ежемесячный платеж (10% от суммы кредита)
+    const newCreditPayment = Math.floor(amount * 0.1);
+    globalCreditPayment += newCreditPayment;
+    
+    // Обновляем расходы и PAYDAY
+    globalMonthlyExpenses += newCreditPayment;
+    globalExpensesBreakdown.credit += newCreditPayment;
+    
+    console.log(`💰 Взят кредит: $${amount.toLocaleString()}`);
+    console.log(`💸 Ежемесячный платеж: $${newCreditPayment.toLocaleString()}`);
+    console.log(`📊 Общий платеж по кредитам: $${globalCreditPayment.toLocaleString()}`);
+    console.log(`📊 Новые расходы: $${globalMonthlyExpenses.toLocaleString()}`);
+    
+    // Синхронизируем с банковским модулем
+    try {
+        if (window.updateBankBalance) {
+            await window.updateBankBalance(globalCurrentBalance);
+        }
+        
+        if (window.bankModule?.loadBankData) {
+            await window.bankModule.loadBankData(true);
+        }
+    } catch (error) {
+        console.error('Ошибка синхронизации кредита:', error);
+    }
+    
+    // Обновляем отображение
+    updateCreditDisplay();
+    updateBalanceDisplay();
+    updateFinancesDisplay();
+    
+    // Показываем уведомление
+    alert(`✅ Кредит взят на $${amount.toLocaleString()}\n💸 Ежемесячный платеж: $${newCreditPayment.toLocaleString()}\n📊 Расходы увеличены на $${newCreditPayment.toLocaleString()}`);
+}
+
+// Функция для погашения кредита
+async function payoffCredit() {
+    if (globalTotalCredit <= 0) {
+        alert('❌ У вас нет активных кредитов');
+        return;
+    }
+    
+    const canAfford = globalCurrentBalance >= globalTotalCredit;
+    if (!canAfford) {
+        alert(`❌ Недостаточно средств для погашения кредита.\nНужно: $${globalTotalCredit.toLocaleString()}\nУ вас: $${globalCurrentBalance.toLocaleString()}`);
+        return;
+    }
+    
+    const confirmPayoff = confirm(`Погасить кредит на $${globalTotalCredit.toLocaleString()}?`);
+    if (confirmPayoff) {
+        console.log(`💰 payoffCredit: погашение кредита на $${globalTotalCredit}`);
+        
+        // Списываем кредит с баланса
+        globalCurrentBalance -= globalTotalCredit;
+        
+        // Уменьшаем расходы на сумму платежа
+        globalMonthlyExpenses -= globalCreditPayment;
+        globalExpensesBreakdown.credit = Math.max(0, globalExpensesBreakdown.credit - globalCreditPayment);
+        
+        console.log(`✅ Кредит погашен: $${globalTotalCredit.toLocaleString()}`);
+        console.log(`📊 Расходы уменьшены на: $${globalCreditPayment.toLocaleString()}`);
+        
+        // Сбрасываем кредитные переменные
+        const oldCreditPayment = globalCreditPayment;
+        globalTotalCredit = 0;
+        globalCreditPayment = 0;
+        
+        // Синхронизируем с банковским модулем
+        try {
+            if (window.updateBankBalance) {
+                await window.updateBankBalance(globalCurrentBalance);
+            }
+            
+            if (window.bankModule?.loadBankData) {
+                await window.bankModule.loadBankData(true);
+            }
+        } catch (error) {
+            console.error('Ошибка синхронизации погашения кредита:', error);
+        }
+        
+        // Обновляем отображение
+        updateCreditDisplay();
+        updateBalanceDisplay();
+        updateFinancesDisplay();
+        
+        alert(`✅ Кредит успешно погашен!\n📊 Расходы уменьшены на $${oldCreditPayment.toLocaleString()}`);
+    }
+}
+
+// Функция для добавления ежемесячного дохода
+function addMonthlyIncome(amount, description) {
+    globalMonthlyIncome += amount;
+    console.log(`📈 Добавлен ежемесячный доход: $${amount.toLocaleString()} - ${description}`);
+    console.log(`📊 Общий ежемесячный доход: $${globalMonthlyIncome.toLocaleString()}`);
+    
+    // Обновляем отображение
+    updateFinancesDisplay();
+    updateCreditDisplay();
+}
+
+// Функция для обновления отображения баланса
+function updateBalanceDisplay() {
+    // Обновляем отображение баланса в UI
+    const balanceElements = document.querySelectorAll('#bankBalance, .balance-amount, #dealCurrentBalance, #currentBalance');
+    balanceElements.forEach(el => {
+        if (el) {
+            el.textContent = `$${globalCurrentBalance.toLocaleString()}`;
+        }
+    });
+    
+    // Обновляем глобальную переменную currentBalance для совместимости
+    if (typeof window.currentBalance !== 'undefined') {
+        window.currentBalance = globalCurrentBalance;
+    }
+}
+
+// Функция для обновления отображения кредитов
+function updateCreditDisplay() {
+    // Обновляем отображение кредита
+    const currentCreditElement = document.getElementById('currentCredit');
+    if (currentCreditElement) {
+        currentCreditElement.textContent = `$${globalTotalCredit.toLocaleString()}`;
+    }
+    
+    // Обновляем максимальный кредит
+    const maxCreditElement = document.getElementById('maxCredit');
+    if (maxCreditElement) {
+        const maxCredit = globalMonthlyIncome * 10;
+        maxCreditElement.textContent = `$${maxCredit.toLocaleString()}`;
+    }
+    
+    // Обновляем глобальные переменные для совместимости
+    if (typeof window.totalCredit !== 'undefined') {
+        window.totalCredit = globalTotalCredit;
+    }
+    if (typeof window.creditPayment !== 'undefined') {
+        window.creditPayment = globalCreditPayment;
+    }
+}
+
+// Функция для обновления отображения финансов
+function updateFinancesDisplay() {
+    console.log('🔍 updateFinancesDisplay: monthlyIncome =', globalMonthlyIncome, 'monthlyExpenses =', globalMonthlyExpenses);
+    
+    // Находим элементы расходов и PAYDAY
+    const expensesElement = document.getElementById('totalExpenses');
+    const paydayElement = document.getElementById('monthlyIncome');
+    
+    if (expensesElement) {
+        expensesElement.textContent = `$${(globalMonthlyExpenses || 0).toLocaleString()}`;
+    }
+    
+    // Детализация расходов
+    const baseEl = document.getElementById('expenseBase');
+    const creditEl = document.getElementById('expenseCredit');
+    if (baseEl) baseEl.textContent = `$${((globalExpensesBreakdown?.base) || 0).toLocaleString()}`;
+    if (creditEl) creditEl.textContent = `$${((globalExpensesBreakdown?.credit) || 0).toLocaleString()}`;
+
+    if (paydayElement) {
+        // PAYDAY = доход - расходы
+        const payday = (globalMonthlyIncome || 0) - (globalMonthlyExpenses || 0);
+        paydayElement.textContent = `$${payday.toLocaleString()}/мес`;
+        console.log('🔍 PAYDAY calculated:', payday);
+        
+        // Меняем цвет в зависимости от значения
+        if (payday < 0) {
+            paydayElement.style.color = '#ef4444'; // Красный для отрицательного
+        } else if (payday > 0) {
+            paydayElement.style.color = '#10b981'; // Зеленый для положительного
+        } else {
+            paydayElement.style.color = '#f59e0b'; // Оранжевый для нуля
+        }
+    }
+    
+    // Обновляем глобальные переменные для совместимости
+    if (typeof window.monthlyIncome !== 'undefined') {
+        window.monthlyIncome = globalMonthlyIncome;
+    }
+    if (typeof window.monthlyExpenses !== 'undefined') {
+        window.monthlyExpenses = globalMonthlyExpenses;
+    }
+    if (typeof window.expensesBreakdown !== 'undefined') {
+        window.expensesBreakdown = globalExpensesBreakdown;
+    }
+}
+
+// Функция для запроса кредита (локальная версия)
+function requestCreditLocal() {
+    const creditAmountInput = document.getElementById('creditAmount');
+    if (!creditAmountInput) return;
+    
+    const amount = parseInt(creditAmountInput.value) || 0;
+    
+    if (amount <= 0) {
+        alert('❌ Введите сумму кредита');
+        return;
+    }
+    
+    if (amount < 1000) {
+        alert('❌ Минимальная сумма кредита: $1,000');
+        return;
+    }
+    
+    if (amount % 1000 !== 0) {
+        alert('❌ Сумма кредита должна быть кратна $1,000');
+        return;
+    }
+    
+    // Проверяем максимальный кредит (учитываем уже взятые кредиты)
+    const maxCredit = globalMonthlyIncome * 10;
+    const availableCredit = maxCredit - globalTotalCredit;
+    
+    if (amount > availableCredit) {
+        alert(`❌ Максимальная доступная сумма кредита: $${availableCredit.toLocaleString()}\n💳 Уже взято: $${globalTotalCredit.toLocaleString()}\n📊 Максимум: $${maxCredit.toLocaleString()}`);
+        return;
+    }
+    
+    // Берем кредит
+    takeCredit(amount);
+    
+    // Закрываем модальное окно
+    closeCreditModal();
+    // Обновляем финансы, чтобы PAYDAY и детализация обновились немедленно
+    updateFinancesDisplay();
+}
+
+// Функция для взятия кредита на расходы
+function takeCreditForExpense() {
+    const card = window.currentExpenseCard;
+    if (!card) return;
+    
+    const amount = card.amount;
+    if (amount <= 0) return;
+    
+    // Проверяем максимальный кредит
+    const maxCredit = globalMonthlyIncome * 10;
+    const availableCredit = maxCredit - globalTotalCredit;
+    
+    if (amount > availableCredit) {
+        alert(`❌ Максимальная доступная сумма кредита: $${availableCredit.toLocaleString()}\n💳 Уже взято: $${globalTotalCredit.toLocaleString()}\n📊 Максимум: $${maxCredit.toLocaleString()}`);
+        return;
+    }
+    
+    // Берем кредит
+    takeCredit(amount);
+    
+    // Закрываем модальное окно
+    closeExpenseCardModal();
+    
+    // Показываем уведомление
+    alert(`✅ Кредит взят на $${amount.toLocaleString()}\n💸 Расходы оплачены: ${card.name}`);
+}
+
+// Функция для инициализации глобальных переменных из table.html
+function initializeGlobalVariables() {
+    // Синхронизируем глобальные переменные с переменными из table.html
+    if (typeof window.currentBalance !== 'undefined') {
+        globalCurrentBalance = window.currentBalance;
+    }
+    if (typeof window.monthlyIncome !== 'undefined') {
+        globalMonthlyIncome = window.monthlyIncome;
+    }
+    if (typeof window.monthlyExpenses !== 'undefined') {
+        globalMonthlyExpenses = window.monthlyExpenses;
+    }
+    if (typeof window.totalCredit !== 'undefined') {
+        globalTotalCredit = window.totalCredit;
+    }
+    if (typeof window.creditPayment !== 'undefined') {
+        globalCreditPayment = window.creditPayment;
+    }
+    if (typeof window.expensesBreakdown !== 'undefined') {
+        globalExpensesBreakdown = window.expensesBreakdown;
+    }
+    
+    console.log('🔄 Инициализированы глобальные переменные банка:', {
+        balance: globalCurrentBalance,
+        income: globalMonthlyIncome,
+        expenses: globalMonthlyExpenses,
+        credit: globalTotalCredit
+    });
+}
+
+// Функция для синхронизации переменных обратно в table.html
+function syncVariablesToTable() {
+    if (typeof window.currentBalance !== 'undefined') {
+        window.currentBalance = globalCurrentBalance;
+    }
+    if (typeof window.monthlyIncome !== 'undefined') {
+        window.monthlyIncome = globalMonthlyIncome;
+    }
+    if (typeof window.monthlyExpenses !== 'undefined') {
+        window.monthlyExpenses = globalMonthlyExpenses;
+    }
+    if (typeof window.totalCredit !== 'undefined') {
+        window.totalCredit = globalTotalCredit;
+    }
+    if (typeof window.creditPayment !== 'undefined') {
+        window.creditPayment = globalCreditPayment;
+    }
+    if (typeof window.expensesBreakdown !== 'undefined') {
+        window.expensesBreakdown = globalExpensesBreakdown;
+    }
+}
+
+// Делаем все функции глобально доступными
+window.addBalance = addBalance;
+window.subtractBalance = subtractBalance;
+window.takeCredit = takeCredit;
+window.payoffCredit = payoffCredit;
+window.addMonthlyIncome = addMonthlyIncome;
+window.updateBalanceDisplay = updateBalanceDisplay;
+window.updateCreditDisplay = updateCreditDisplay;
+window.updateFinancesDisplay = updateFinancesDisplay;
+window.requestCreditLocal = requestCreditLocal;
+window.takeCreditForExpense = takeCreditForExpense;
+window.initializeGlobalVariables = initializeGlobalVariables;
+window.syncVariablesToTable = syncVariablesToTable;
+

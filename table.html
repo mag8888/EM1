@@ -4036,19 +4036,7 @@ const dealCards = {
             }
         }
         
-        // Функция для взятия кредита на расходы
-        function takeCreditForExpense() {
-            const card = window.currentExpenseCard;
-            if (!card) return;
-            
-            console.log('💳 Берем кредит на расходы:', card);
-            
-            // Открываем модальное окно кредита
-            openCreditModalV3();
-            
-            // Сохраняем информацию о расходах для последующей оплаты
-            window.pendingExpense = card;
-        }
+        // Функция взятия кредита на расходы перенесена в bank-module-v3.js
 
         function showDealChoiceModal() {
             const modal = document.getElementById('dealChoiceModal');
@@ -6324,34 +6312,17 @@ const dealCards = {
         // Обработка клеток потерь
 
 
-        // Вспомогательные функции для работы с балансом
-        async function addBalance(amount, description) {
-            currentBalance = (currentBalance || 0) + amount;
-            try {
-                // Синхронизируем через банк (перезагрузка данных банка)
-                if (window.bankModule?.loadBankData) {
-                    await window.bankModule.loadBankData(true);
+        // Банковские функции перенесены в bank-module-v3.js
+        
+        // Инициализируем банковские переменные при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            // Инициализируем глобальные переменные банка после загрузки
+            setTimeout(() => {
+                if (window.initializeGlobalVariables) {
+                    window.initializeGlobalVariables();
                 }
-            } catch {}
-            updateBalanceDisplay();
-        }
-        async function subtractBalance(amount, description) {
-            currentBalance = Math.max(0, (currentBalance || 0) - amount);
-            try {
-                if (window.bankModule?.loadBankData) {
-                    await window.bankModule.loadBankData(true);
-                }
-            } catch {}
-            updateBalanceDisplay();
-        }
-
-        function updateBalanceDisplay() {
-            // Обновляем отображение баланса в UI
-            const balanceElements = document.querySelectorAll('#bankBalance, .balance-amount, #dealCurrentBalance');
-            balanceElements.forEach(el => {
-                if (el) el.textContent = `$${(currentBalance || 0).toLocaleString()}`;
-            });
-        }
+            }, 1000);
+        });
 
         async function getFreshBalance() {
             try {
@@ -6980,139 +6951,9 @@ const dealCards = {
             alert('Функция Сложный будет реализована позже');
         }
 
-        // Функции для работы с кредитами
+        // Кредитные функции перенесены в bank-module-v3.js
         
-        // Взять кредит
-        function takeCredit(amount) {
-            if (amount <= 0) return;
-            
-            // Добавляем кредит к балансу
-            totalCredit += amount;
-            currentBalance += amount;
-            
-            // Рассчитываем ежемесячный платеж (10% от суммы кредита)
-            const newCreditPayment = Math.floor(amount * 0.1);
-            creditPayment += newCreditPayment;
-            
-            // Обновляем расходы и PAYDAY
-            monthlyExpenses += newCreditPayment;
-            expensesBreakdown.credit += newCreditPayment;
-            
-            console.log(`💰 Взят кредит: $${amount.toLocaleString()}`);
-            console.log(`💸 Ежемесячный платеж: $${newCreditPayment.toLocaleString()}`);
-            console.log(`📊 Общий платеж по кредитам: $${creditPayment.toLocaleString()}`);
-            console.log(`📊 Новые расходы: $${monthlyExpenses.toLocaleString()}`);
-            
-            // Обновляем отображение
-            updateCreditDisplay();
-            updateBalanceDisplay();
-            updateFinancesDisplay(); // Обновляем PAYDAY и детализацию
-            
-            // Показываем уведомление
-            alert(`✅ Кредит взят на $${amount.toLocaleString()}\n💸 Ежемесячный платеж: $${newCreditPayment.toLocaleString()}\n📊 Расходы увеличены на $${newCreditPayment.toLocaleString()}`);
-        }
-        // Погасить кредит
-        function payoffCredit() {
-            if (totalCredit <= 0) {
-                alert('❌ У вас нет активных кредитов');
-                return;
-            }
-            
-            const canAfford = currentBalance >= totalCredit;
-            if (!canAfford) {
-                alert(`❌ Недостаточно средств для погашения кредита.\nНужно: $${totalCredit.toLocaleString()}\nУ вас: $${currentBalance.toLocaleString()}`);
-                return;
-            }
-            
-            const confirmPayoff = confirm(`Погасить кредит на $${totalCredit.toLocaleString()}?`);
-            if (confirmPayoff) {
-                // Списываем кредит с баланса
-                currentBalance -= totalCredit;
-                
-                // Уменьшаем расходы на сумму платежа
-                monthlyExpenses -= creditPayment;
-                expensesBreakdown.credit = Math.max(0, expensesBreakdown.credit - creditPayment);
-                
-                console.log(`✅ Кредит погашен: $${totalCredit.toLocaleString()}`);
-                console.log(`📊 Расходы уменьшены на: $${creditPayment.toLocaleString()}`);
-                
-                // Сбрасываем кредитные переменные
-                totalCredit = 0;
-                creditPayment = 0;
-                
-                // Обновляем отображение
-                updateCreditDisplay();
-                updateBalanceDisplay();
-                
-                alert(`✅ Кредит успешно погашен!\n📊 Расходы уменьшены на $${creditPayment.toLocaleString()}`);
-            }
-        }
-        
-        // Обновить отображение кредитов
-        function updateCreditDisplay() {
-            // Обновляем отображение кредита
-            const currentCreditElement = document.getElementById('currentCredit');
-            const maxCreditElement = document.getElementById('maxCredit');
-            
-            if (currentCreditElement) {
-                currentCreditElement.textContent = `$${totalCredit.toLocaleString()}`;
-            }
-            
-            if (maxCreditElement) {
-                // Максимальный кредит = 10 * месячный доход
-                const maxCredit = monthlyIncome * 10;
-                maxCreditElement.textContent = `$${maxCredit.toLocaleString()}`;
-            }
-            
-            // Обновляем расходы и PAYDAY
-            updateFinancesDisplay();
-        }
-        // Обновить отображение финансов
-        function updateFinancesDisplay() {
-            console.log('🔍 updateFinancesDisplay: monthlyIncome =', monthlyIncome, 'monthlyExpenses =', monthlyExpenses);
-            
-            // Находим элементы расходов и PAYDAY
-            const expensesElement = document.getElementById('totalExpenses');
-            const paydayElement = document.getElementById('monthlyIncome');
-            
-            if (expensesElement) {
-                expensesElement.textContent = `$${(monthlyExpenses || 0).toLocaleString()}`;
-            }
-            
-            // Детализация расходов
-            const baseEl = document.getElementById('expenseBase');
-            const creditEl = document.getElementById('expenseCredit');
-            if (baseEl) baseEl.textContent = `$${((expensesBreakdown?.base) || 0).toLocaleString()}`;
-            if (creditEl) creditEl.textContent = `$${((expensesBreakdown?.credit) || 0).toLocaleString()}`;
-
-            if (paydayElement) {
-                // PAYDAY = доход - расходы
-                const payday = (monthlyIncome || 0) - (monthlyExpenses || 0);
-                paydayElement.textContent = `$${payday.toLocaleString()}/мес`;
-                console.log('🔍 PAYDAY calculated:', payday);
-                
-                // Меняем цвет в зависимости от значения
-                if (payday < 0) {
-                    paydayElement.style.color = '#ef4444'; // Красный для отрицательного
-                } else if (payday > 0) {
-                    paydayElement.style.color = '#10b981'; // Зеленый для положительного
-                } else {
-                    paydayElement.style.color = '#f59e0b'; // Оранжевый для нуля
-                }
-            }
-
-            // Обновляем видимость кнопки скоростной дороги для текущего игрока
-            try {
-                const btn = document.getElementById('fastTrackBtn');
-                if (btn) {
-                    const passive = (playerPassiveIncome && playerPassiveIncome[currentPlayer]) ? playerPassiveIncome[currentPlayer] : 0;
-                    const canSwitch = (playerTracks[currentPlayer] === 'inner') && totalCredit === 0 && passive > monthlyExpenses;
-                    btn.style.display = canSwitch ? 'block' : 'none';
-                }
-            } catch (e) {
-                console.warn('FastTrack button toggle error:', e);
-            }
-        }
+        // Функции отображения перенесены в bank-module-v3.js
 
         // Ручной переход на скоростную дорогу (внешний круг)
         function switchToFastTrack() {
@@ -7180,45 +7021,7 @@ const dealCards = {
             
             console.log(`Предварительный просмотр кредита: $${amount.toLocaleString()}, платеж: $${monthlyPayment.toLocaleString()}`);
         }
-        // Запросить кредит (локальная версия)
-        function requestCreditLocal() {
-            const creditAmountInput = document.getElementById('creditAmount');
-            if (!creditAmountInput) return;
-            
-            const amount = parseInt(creditAmountInput.value) || 0;
-            
-            if (amount <= 0) {
-                alert('❌ Введите сумму кредита');
-                return;
-            }
-            
-            if (amount < 1000) {
-                alert('❌ Минимальная сумма кредита: $1,000');
-                return;
-            }
-            
-            if (amount % 1000 !== 0) {
-                alert('❌ Сумма кредита должна быть кратна $1,000');
-                return;
-            }
-            
-            // Проверяем максимальный кредит (учитываем уже взятые кредиты)
-            const maxCredit = monthlyIncome * 10;
-            const availableCredit = maxCredit - totalCredit;
-            
-            if (amount > availableCredit) {
-                alert(`❌ Максимальная доступная сумма кредита: $${availableCredit.toLocaleString()}\n💳 Уже взято: $${totalCredit.toLocaleString()}\n📊 Максимум: $${maxCredit.toLocaleString()}`);
-                return;
-            }
-            
-            // Берем кредит
-            takeCredit(amount);
-            
-            // Закрываем модальное окно
-            closeCreditModal();
-            // Обновляем финансы, чтобы PAYDAY и детализация обновились немедленно
-            updateFinancesDisplay();
-        }
+        // Функция запроса кредита перенесена в bank-module-v3.js
         // Функции для работы с поп-апами клеток
         // Показать поп-ап клетки
         function showCellPopup(cellNumber, isInnerCell = false) {
