@@ -147,29 +147,56 @@ class BankModuleV4 {
     }
 
     /**
-     * Загрузка данных с сервера
+     * Прокси-функция для API запросов через локальный сервер
      */
-    async loadData() {
+    async makeApiRequest(endpoint, options = {}) {
         try {
-            console.log('📡 BankModuleV4: Загрузка данных...');
-            console.log('📡 BankModuleV4: Room ID:', this.roomId);
-            console.log('📡 BankModuleV4: User ID:', this.userId);
-            console.log('📡 BankModuleV4: Current URL:', window.location.href);
+            const baseUrl = window.location.origin; // Используем текущий origin (localhost:3000)
+            const url = `${baseUrl}${endpoint}`;
             
-            // Проверяем, что мы работаем с локальным сервером
-            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            console.log('📡 BankModuleV4: Is local:', isLocal);
+            console.log('📡 BankModuleV4: API Request:', {
+                endpoint,
+                url,
+                method: options.method || 'GET',
+                body: options.body
+            });
             
-            const apiUrl = `/api/rooms/${this.roomId}?user_id=${this.userId}`;
-            console.log('📡 BankModuleV4: API URL:', apiUrl);
+            const response = await fetch(url, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            });
             
-            const response = await fetch(apiUrl);
-            console.log('📡 BankModuleV4: Response status:', response.status);
-            console.log('📡 BankModuleV4: Response URL:', response.url);
+            console.log('📡 BankModuleV4: API Response:', {
+                status: response.status,
+                statusText: response.statusText,
+                url: response.url
+            });
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
+            
+            return response;
+        } catch (error) {
+            console.error('❌ BankModuleV4: API Request Error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Загрузка данных с сервера
+     */
+    async loadData() {
+        try {
+            console.log('📡 BankModuleV4: Загрузка данных через локальный сервер...');
+            console.log('📡 BankModuleV4: Room ID:', this.roomId);
+            console.log('📡 BankModuleV4: User ID:', this.userId);
+            
+            const endpoint = `/api/rooms/${this.roomId}?user_id=${this.userId}`;
+            const response = await this.makeApiRequest(endpoint);
             
             const roomData = await response.json();
             console.log('📡 BankModuleV4: Данные получены:', roomData);
@@ -183,11 +210,6 @@ class BankModuleV4 {
             return true;
         } catch (error) {
             console.error('❌ BankModuleV4: Ошибка загрузки данных:', error);
-            console.error('❌ BankModuleV4: Error details:', {
-                name: error.name,
-                message: error.message,
-                stack: error.stack
-            });
             return false;
         }
     }
@@ -357,7 +379,7 @@ class BankModuleV4 {
      */
     async requestCredit(amount = 1000) {
         try {
-            console.log(`💰 BankModuleV4: Запрос кредита на $${amount}`);
+            console.log(`💰 BankModuleV4: Запрос кредита на $${amount} через локальный сервер`);
             
             // Проверяем лимит
             const availableCredit = this.data.maxCredit - this.data.credit;
@@ -365,22 +387,15 @@ class BankModuleV4 {
                 throw new Error(`Превышен лимит кредита. Доступно: $${availableCredit.toLocaleString()}`);
             }
             
-            // Отправляем запрос
-            const response = await fetch(`/api/rooms/${this.roomId}/take-credit`, {
+            // Отправляем запрос через прокси
+            const endpoint = `/api/rooms/${this.roomId}/take-credit`;
+            const response = await this.makeApiRequest(endpoint, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify({
                     amount: amount,
                     player_index: this.findPlayerIndex(window.players || [])
                 })
             });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP ${response.status}`);
-            }
             
             // Обновляем данные
             await this.loadData();
@@ -400,27 +415,20 @@ class BankModuleV4 {
      */
     async payoffCredit() {
         try {
-            console.log('💰 BankModuleV4: Погашение кредита');
+            console.log('💰 BankModuleV4: Погашение кредита через локальный сервер');
             
             if (this.data.credit <= 0) {
                 throw new Error('У вас нет активных кредитов');
             }
             
-            // Отправляем запрос
-            const response = await fetch(`/api/rooms/${this.roomId}/payoff-credit`, {
+            // Отправляем запрос через прокси
+            const endpoint = `/api/rooms/${this.roomId}/payoff-credit`;
+            const response = await this.makeApiRequest(endpoint, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify({
                     player_index: this.findPlayerIndex(window.players || [])
                 })
             });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP ${response.status}`);
-            }
             
             // Обновляем данные
             await this.loadData();
@@ -440,29 +448,22 @@ class BankModuleV4 {
      */
     async transferMoney(recipientIndex, amount) {
         try {
-            console.log(`💸 BankModuleV4: Перевод $${amount} игроку ${recipientIndex}`);
+            console.log(`💸 BankModuleV4: Перевод $${amount} игроку ${recipientIndex} через локальный сервер`);
             
             if (amount > this.data.balance) {
                 throw new Error('Недостаточно средств');
             }
             
-            // Отправляем запрос
-            const response = await fetch(`/api/rooms/${this.roomId}/transfer`, {
+            // Отправляем запрос через прокси
+            const endpoint = `/api/rooms/${this.roomId}/transfer`;
+            const response = await this.makeApiRequest(endpoint, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify({
                     recipient_index: recipientIndex,
                     amount: amount,
                     sender_index: this.findPlayerIndex(window.players || [])
                 })
             });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP ${response.status}`);
-            }
             
             // Обновляем данные
             await this.loadData();
