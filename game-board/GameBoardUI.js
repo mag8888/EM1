@@ -7,6 +7,10 @@ class GameBoardUI {
         console.log('🎨 GameBoardUI: Инициализация UI игрового поля');
         this.playerTokens = new Map();
         this.animations = new Map();
+        // Отслеживаем расположение фишек: playerIndex -> position (номер клетки 1..24/44)
+        this.tokenPositions = new Map();
+        // К каким игрокам привязана каждая клетка: position -> [playerIndex, ...]
+        this.positionToPlayers = new Map();
     }
 
     /**
@@ -71,7 +75,7 @@ class GameBoardUI {
         });
 
         // Позиционируем фишку
-        this.positionToken(token, position);
+        this.positionToken(token, position, playerIndex);
         
         // Добавляем на игровое поле
         const gameBoard = document.querySelector('.game-board');
@@ -88,7 +92,7 @@ class GameBoardUI {
     /**
      * Позиционировать фишку на поле
      */
-    positionToken(token, position) {
+    positionToken(token, position, playerIndex = null) {
         // Предпочитаем малый круг (внутренние клетки) при позиционировании
         const targetCell = document.querySelector(`.inner-square[data-cell="${position}"]`) ||
                            document.querySelector(`[data-cell="${position}"]`);
@@ -100,17 +104,34 @@ class GameBoardUI {
         const cellRect = targetCell.getBoundingClientRect();
         const boardRect = document.querySelector('.game-board').getBoundingClientRect();
         
-        // Проверяем, есть ли другие фишки на этой клетке
-        const existingTokens = targetCell.querySelectorAll('.player-token');
+        // 15% смещение для нескольких фишек на одной клетке
         const offset = cellRect.width * 0.15;
         let offsetX = 0;
         let offsetY = 0;
 
-        // Сдвигаем фишки если их несколько на одной клетке
-        if (existingTokens.length > 0) {
-            const tokenIndex = Array.from(existingTokens).indexOf(token);
-            offsetX = (tokenIndex % 2) * offset;
-            offsetY = Math.floor(tokenIndex / 2) * offset;
+        // Определяем индекс игрока и регистрируем его на позиции
+        const idxFromId = token.id && token.id.startsWith('player')
+            ? parseInt(token.id.replace('player', ''), 10)
+            : null;
+        const pIndex = (playerIndex !== null && playerIndex !== undefined) ? playerIndex : idxFromId;
+
+        if (pIndex !== null && !Number.isNaN(pIndex)) {
+            const prevPos = this.tokenPositions.get(pIndex);
+            if (prevPos !== undefined && this.positionToPlayers.has(prevPos)) {
+                // Удаляем из предыдущей клетки
+                const arr = this.positionToPlayers.get(prevPos).filter(v => v !== pIndex);
+                this.positionToPlayers.set(prevPos, arr);
+            }
+
+            if (!this.positionToPlayers.has(position)) this.positionToPlayers.set(position, []);
+            const playersHere = this.positionToPlayers.get(position);
+            if (!playersHere.includes(pIndex)) playersHere.push(pIndex);
+            this.tokenPositions.set(pIndex, position);
+
+            const localIndex = playersHere.indexOf(pIndex); // 0..N-1
+            const angle = (localIndex % 8) * (Math.PI / 4); // шаг 45°
+            offsetX = Math.cos(angle) * offset;
+            offsetY = Math.sin(angle) * offset;
         }
 
         const x = cellRect.left - boardRect.left + cellRect.width / 2 + offsetX;
@@ -157,16 +178,21 @@ class GameBoardUI {
             const cellRect = targetCell.getBoundingClientRect();
             const boardRect = document.querySelector('.game-board').getBoundingClientRect();
             
-            // Проверяем, есть ли другие фишки на этой клетке
-            const existingTokens = targetCell.querySelectorAll('.player-token');
+            // 15% смещение как и при позиционировании
             const offset = cellRect.width * 0.15;
             let offsetX = 0;
             let offsetY = 0;
-
-            if (existingTokens.length > 0) {
-                const tokenIndex = Array.from(existingTokens).indexOf(token);
-                offsetX = (tokenIndex % 2) * offset;
-                offsetY = Math.floor(tokenIndex / 2) * offset;
+            const pIndex = token.id && token.id.startsWith('player')
+                ? parseInt(token.id.replace('player', ''), 10)
+                : null;
+            if (pIndex !== null && !Number.isNaN(pIndex)) {
+                if (!this.positionToPlayers.has(position)) this.positionToPlayers.set(position, []);
+                const playersHere = this.positionToPlayers.get(position);
+                if (!playersHere.includes(pIndex)) playersHere.push(pIndex);
+                const localIndex = playersHere.indexOf(pIndex);
+                const angle = (localIndex % 8) * (Math.PI / 4);
+                offsetX = Math.cos(angle) * offset;
+                offsetY = Math.sin(angle) * offset;
             }
 
             const x = cellRect.left - boardRect.left + cellRect.width / 2 + offsetX;
