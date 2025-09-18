@@ -2143,6 +2143,40 @@ app.post('/api/rooms/:id/transfer-asset', async (req, res) => {
     }
 });
 
+// Показать вытянутую карточку сделки всем игрокам (остальным только просмотр)
+app.post('/api/rooms/:id/broadcast-deal', async (req, res) => {
+    try {
+        const { card, from_index } = req.body || {};
+        if (!card) return res.status(400).json({ message: 'Нет данных карточки' });
+        const room = await Room.findById(req.params.id);
+        if (!room) return res.status(404).json({ message: 'Комната не найдена' });
+        try { broadcastToRoom(req.params.id, { type: 'deal-card', card, from_index }); } catch (_) {}
+        return res.json({ success: true });
+    } catch (e) {
+        console.error('broadcast-deal error:', e);
+        return res.status(500).json({ message: 'Ошибка сервера' });
+    }
+});
+
+// Передать «ожидающую покупку» карточку сделки другому игроку
+app.post('/api/rooms/:id/transfer-pending-deal', async (req, res) => {
+    try {
+        const { from_index, recipient_index, card } = req.body || {};
+        if (typeof recipient_index !== 'number' || !card) {
+            return res.status(400).json({ message: 'Неверные данные' });
+        }
+        const room = await Room.findById(req.params.id);
+        if (!room) return res.status(404).json({ message: 'Комната не найдена' });
+        try {
+            broadcastToRoom(req.params.id, { type: 'pending-deal', to: recipient_index, from: from_index ?? null, card });
+        } catch (_) {}
+        return res.json({ success: true });
+    } catch (e) {
+        console.error('transfer-pending-deal error:', e);
+        return res.status(500).json({ message: 'Ошибка сервера' });
+    }
+});
+
 // Запускаем очистку каждые 30 минут (отключено для отладки)
 // setInterval(cleanupOldRooms, 30 * 60 * 1000);
 

@@ -4077,6 +4077,14 @@ const dealCards = {
                 currentPlayerCard = { ...card, deckType: 'smallDeals' };
                 showCardModal(card);
                 closeDealChoiceModal();
+                // Broadcast to all players for view-only
+                try {
+                    const roomId = getRoomIdFromURL();
+                    fetch(`/api/rooms/${roomId}/broadcast-deal`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ card, from_index: currentPlayer })
+                    });
+                } catch {}
             }
         }
 
@@ -4086,6 +4094,14 @@ const dealCards = {
                 currentPlayerCard = { ...card, deckType: 'bigDeals' };
                 showCardModal(card);
                 closeDealChoiceModal();
+                // Broadcast to all players for view-only
+                try {
+                    const roomId = getRoomIdFromURL();
+                    fetch(`/api/rooms/${roomId}/broadcast-deal`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ card, from_index: currentPlayer })
+                    });
+                } catch {}
             }
         }
 
@@ -4214,10 +4230,29 @@ const dealCards = {
                 const actions = modal.querySelector('.card-actions');
                 if (actions) actions.appendChild(transferBtn);
             }
-            transferBtn.onclick = () => {
-                // Найти id карты в активах по имени и типу
+            transferBtn.onclick = async () => {
+                // Если карта ещё не куплена — можно передать как «ожидающую покупку»
                 const owned = (playerAssets[currentPlayer]||[]).find(c => c.name === card.name && c.type === card.type);
-                if (!owned) { showNotification('Эта карточка еще не у вас в активах', 'error'); return; }
+                if (!owned) {
+                    // Выбор получателя и отправка серверу
+                    const roomId = getRoomIdFromURL();
+                    const user = JSON.parse(localStorage.getItem('user') || '{}');
+                    let players = [];
+                    try { const resp = await fetch(`/api/rooms/${roomId}?user_id=${user.id}`); if (resp.ok) { const data = await resp.json(); players = data.players || []; } } catch {}
+                    const names = players.map((p,i)=> i===currentPlayer? null : `${i}: ${(p.name||`Игрок ${i+1}`)}`).filter(Boolean).join('\n');
+                    const answer = prompt(`Кому передать карточку?\n${names}\nВведите индекс игрока:`);
+                    const recipient = Number(answer);
+                    if (!Number.isInteger(recipient) || recipient === currentPlayer || recipient < 0 || recipient >= players.length) { return; }
+                    try {
+                        await fetch(`/api/rooms/${roomId}/transfer-pending-deal`, {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ from_index: currentPlayer, recipient_index: recipient, card })
+                        });
+                        showNotification(`🔁 Карточка предложена игроку ${recipient+1}`, 'success');
+                    } catch (e) { console.warn('transfer pending deal failed', e); }
+                    return;
+                }
+                // Если карта уже у нас — обычная передача актива
                 openTransferModal(owned.id);
             };
 
@@ -7452,6 +7487,22 @@ const dealCards = {
                                     playerPositions[i] = (zeroBased % 24) + 1;
                                 }
                                 updatePlayerTokenPositions();
+                            } else if (msg.type === 'deal-card' && msg.card) {
+                                // Показать карточку сделки всем (кроме тянувшего — у него она уже открыта)
+                                if (typeof msg.from_index === 'number' && msg.from_index === currentPlayer) return;
+                                // Открываем модал в режиме просмотра (кнопка Купить выключена)
+                                currentPlayerCard = msg.card;
+                                showCardModal(msg.card);
+                                const buyBtn = document.getElementById('cardBuyButton');
+                                if (buyBtn) { buyBtn.disabled = true; buyBtn.classList.add('disabled'); }
+                            } else if (msg.type === 'pending-deal' && msg.card) {
+                                // Получатель может купить
+                                if (typeof msg.to === 'number' && msg.to === currentPlayer) {
+                                    currentPlayerCard = msg.card;
+                                    showCardModal(msg.card);
+                                    const buyBtn = document.getElementById('cardBuyButton');
+                                    if (buyBtn) { buyBtn.disabled = false; buyBtn.classList.remove('disabled'); }
+                                }
                             }
                         } catch (err) { console.warn('Bad SSE message', err); }
                     };
