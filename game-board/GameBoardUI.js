@@ -89,7 +89,9 @@ class GameBoardUI {
      * Позиционировать фишку на поле
      */
     positionToken(token, position) {
-        const targetCell = document.querySelector(`[data-cell="${position}"]`);
+        // Предпочитаем малый круг (внутренние клетки) при позиционировании
+        const targetCell = document.querySelector(`.inner-square[data-cell="${position}"]`) ||
+                           document.querySelector(`[data-cell="${position}"]`);
         if (!targetCell) {
             console.warn('🎨 GameBoardUI: Клетка не найдена', position);
             return;
@@ -145,7 +147,8 @@ class GameBoardUI {
      */
     async animateStep(token, position, isLastStep = false) {
         return new Promise((resolve) => {
-            const targetCell = document.querySelector(`[data-cell="${position}"]`);
+            const targetCell = document.querySelector(`.inner-square[data-cell="${position}"]`) ||
+                               document.querySelector(`[data-cell="${position}"]`);
             if (!targetCell) {
                 resolve();
                 return;
