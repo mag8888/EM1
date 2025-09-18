@@ -608,18 +608,32 @@ app.get('/api/rooms', async (req, res) => {
         const { user_id } = req.query;
         
         // НЕ удаляем комнаты здесь - это делается в cleanupOldRooms()
-        // Показываем все комнаты, где игра не началась
-        const rooms = await Room.find({ game_started: false })
+        // Показываем комнаты, где игра не началась ИЛИ игра началась менее 7 часов назад
+        const lobbyDisplayThreshold = serverConfig.getRoom().lobbyDisplayThreshold;
+        const thresholdTime = new Date(Date.now() - lobbyDisplayThreshold);
+        
+        const rooms = await Room.find({
+            $or: [
+                // Игра не началась
+                { game_started: false },
+                // Игра началась менее 7 часов назад
+                { 
+                    game_started: true, 
+                    game_start_time: { $gte: thresholdTime } 
+                }
+            ]
+        })
             .populate('creator_id', 'first_name last_name')
             .sort({ created_at: -1 })
             .limit(20);
             
-        console.log('Found rooms in lobby:', rooms.length);
+        console.log(`Found rooms in lobby: ${rooms.length} (showing rooms not started OR started within ${lobbyDisplayThreshold / (60 * 60 * 1000)} hours)`);
         rooms.forEach(room => {
             console.log('Room in lobby:', {
                 id: room._id,
                 name: room.name,
                 game_started: room.game_started,
+                game_start_time: room.game_start_time,
                 players_count: room.players.length,
                 created_at: room.created_at
             });
@@ -1446,6 +1460,23 @@ app.post('/api/rooms/:id/take-credit', async (req, res) => {
             return res.status(400).json({ message: 'Игра не начата' });
         }
 
+        // Дополнительная валидация для исправления проблем с кредитами
+        if (!amount || amount < 1000 || amount % 1000 !== 0) {
+            return res.status(400).json({ message: 'Сумма должна быть кратной 1000$' });
+        }
+
+        // Проверяем максимальный лимит кредита
+        const currentCredit = room.game_data.credit_data?.player_credits?.[player_index] || 0;
+        const maxCredit = 10000;
+        const newTotalCredit = currentCredit + amount;
+        
+        if (newTotalCredit > maxCredit) {
+            const availableAmount = maxCredit - currentCredit;
+            return res.status(400).json({ 
+                message: `Превышен максимальный лимит кредита. Доступно: $${availableAmount.toLocaleString()}` 
+            });
+        }
+
         const result = await creditService.takeCredit(room, player_index, amount);
 
         // Сохраняем изменения
@@ -1457,7 +1488,17 @@ app.post('/api/rooms/:id/take-credit', async (req, res) => {
 
     } catch (error) {
         console.error('❌ Server: Ошибка при взятии кредита:', error);
-        res.status(400).json({ message: error.message });
+        console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            roomId: req.params.id,
+            playerIndex: req.body.player_index,
+            amount: req.body.amount
+        });
+        res.status(400).json({ 
+            message: error.message || 'Ошибка при обработке запроса кредита',
+            error: 'CREDIT_ERROR'
+        });
     }
 });
 
@@ -1620,7 +1661,16 @@ app.get('/api/rooms/:id/credit/:player_index', async (req, res) => {
         }
 
         const creditInfo = creditService.getPlayerCredit(room, playerIndex);
-        res.json(creditInfo);
+        
+        // Добавляем недостающие поля для исправления проблем с кредитами
+        const enhancedCreditInfo = {
+            ...creditInfo,
+            max_credit: 10000, // Максимальный кредит
+            available_credit: 10000 - (creditInfo.current_credit || 0), // Доступный кредит
+            can_take_credit: (10000 - (creditInfo.current_credit || 0)) >= 1000 // Можно взять кредит
+        };
+        
+        res.json(enhancedCreditInfo);
 
     } catch (error) {
         console.error('❌ Server: Ошибка при получении информации о кредите:', error);

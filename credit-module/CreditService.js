@@ -7,6 +7,7 @@ class CreditService {
         console.log('💳 CreditService: Инициализация сервиса кредитов');
         this.creditStep = 1000; // Шаг кредита
         this.minAmount = 1000; // Минимальная сумма
+        this.maxCredit = 10000; // Максимальный кредит
         this.paymentRate = 100; // Платеж за каждые 1000$
     }
 
@@ -29,25 +30,34 @@ class CreditService {
             };
         }
 
-        // Проверяем, что у игрока нет текущего кредита
-        if (room.game_data.credit_data.player_credits[playerIndex] > 0) {
-            throw new Error('У вас уже есть активный кредит');
+        // Проверяем текущий кредит и максимальный лимит
+        const currentCredit = room.game_data.credit_data.player_credits[playerIndex] || 0;
+        const newTotalCredit = currentCredit + amount;
+        
+        if (newTotalCredit > this.maxCredit) {
+            const availableAmount = this.maxCredit - currentCredit;
+            throw new Error(`Превышен максимальный лимит кредита. Доступно: $${availableAmount.toLocaleString()}`);
         }
 
-        // Рассчитываем ежемесячный платеж
-        const monthlyPayment = Math.floor(amount / this.creditStep) * this.paymentRate;
+        // Рассчитываем ежемесячный платеж для нового кредита
+        const newMonthlyPayment = Math.floor(amount / this.creditStep) * this.paymentRate;
+        
+        // Рассчитываем общий ежемесячный платеж
+        const totalMonthlyPayment = Math.floor(newTotalCredit / this.creditStep) * this.paymentRate;
 
-        // Обновляем данные
-        room.game_data.credit_data.player_credits[playerIndex] = amount;
+        // Обновляем данные (добавляем к существующему кредиту)
+        room.game_data.credit_data.player_credits[playerIndex] = newTotalCredit;
         
         // Добавляем в историю
         room.game_data.credit_data.credit_history.push({
             player_index: playerIndex,
             type: 'take',
             amount: amount,
-            monthly_payment: monthlyPayment,
+            monthly_payment: newMonthlyPayment,
+            total_credit: newTotalCredit,
+            total_monthly_payment: totalMonthlyPayment,
             timestamp: new Date(),
-            description: `Взят кредит на $${amount.toLocaleString()}`
+            description: `Взят кредит на $${amount.toLocaleString()} (общий: $${newTotalCredit.toLocaleString()})`
         });
 
         // Добавляем деньги на баланс
@@ -73,15 +83,19 @@ class CreditService {
 
         console.log('💳 CreditService: Кредит выдан успешно', { 
             new_balance: room.game_data.player_balances[playerIndex],
-            credit_amount: amount,
-            monthly_payment: monthlyPayment
+            new_credit_amount: amount,
+            total_credit: newTotalCredit,
+            new_monthly_payment: newMonthlyPayment,
+            total_monthly_payment: totalMonthlyPayment
         });
 
         return {
             success: true,
             new_balance: room.game_data.player_balances[playerIndex],
-            credit_amount: amount,
-            monthly_payment: monthlyPayment
+            new_credit_amount: amount,
+            total_credit: newTotalCredit,
+            new_monthly_payment: newMonthlyPayment,
+            total_monthly_payment: totalMonthlyPayment
         };
     }
 
@@ -157,17 +171,22 @@ class CreditService {
             return {
                 current_credit: 0,
                 monthly_payment: 0,
+                max_credit: this.maxCredit,
+                available_credit: this.maxCredit,
                 can_take_credit: true
             };
         }
 
         const currentCredit = room.game_data.credit_data.player_credits[playerIndex] || 0;
         const monthlyPayment = Math.floor(currentCredit / this.creditStep) * this.paymentRate;
+        const availableCredit = this.maxCredit - currentCredit;
 
         return {
             current_credit: currentCredit,
             monthly_payment: monthlyPayment,
-            can_take_credit: currentCredit === 0
+            max_credit: this.maxCredit,
+            available_credit: availableCredit,
+            can_take_credit: availableCredit >= this.minAmount
         };
     }
 }

@@ -2492,7 +2492,6 @@
         .square-red { background: #ef4444; color: white; }
         .square-blue { background: #3b82f6; color: white; }
         .square-orange { background: #f97316; color: white; }
-        .square-charity { background: linear-gradient(135deg, #ff6b6b, #ff8e8e); color: white; box-shadow: 0 0 10px rgba(255, 107, 107, 0.3); }
         .square-light-blue { background: #06b6d4; color: white; }
         .square-black { background: #1f2937; color: white; }
         .square-purple { background: #8b5cf6; color: white; }
@@ -2541,6 +2540,10 @@
         }
         .fast-track-btn:hover { filter: brightness(1.05); }
 
+
+            justify-content: flex-end;
+        }
+
         .btn-primary, .btn-secondary {
             padding: 12px 24px;
             border: none;
@@ -2568,157 +2571,6 @@
 
         .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Стили для модала кубика */
-        .dice-container {
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .dice-result {
-            font-size: 48px;
-            font-weight: bold;
-            color: #10b981;
-            margin: 20px 0;
-            padding: 20px;
-            border: 3px solid #10b981;
-            border-radius: 50%;
-            width: 80px;
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 20px auto;
-        }
-
-        .dice-info {
-            background: rgba(16, 185, 129, 0.1);
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-        }
-
-        .dice-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        /* Стили для модала бесплатных карточек */
-        .free-cards-container {
-            display: flex;
-            gap: 20px;
-            margin: 20px 0;
-        }
-
-        .free-card-section {
-            flex: 1;
-            background: rgba(16, 185, 129, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        .free-card-section h3 {
-            margin-bottom: 15px;
-            color: #10b981;
-        }
-
-        .free-cards-actions {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        /* Стили для модала активов */
-        .assets-info {
-            background: rgba(16, 185, 129, 0.1);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .assets-info p {
-            margin: 5px 0;
-            font-weight: 500;
-        }
-
-        .assets-list {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .asset-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 10px;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .asset-item.sellable {
-            background: rgba(16, 185, 129, 0.1);
-            border-color: rgba(16, 185, 129, 0.3);
-        }
-
-        .asset-item.not-sellable {
-            background: rgba(107, 114, 128, 0.1);
-            border-color: rgba(107, 114, 128, 0.3);
-            opacity: 0.7;
-        }
-
-        .asset-info h4 {
-            margin: 0 0 5px 0;
-            color: #10b981;
-        }
-
-        .asset-info p {
-            margin: 2px 0;
-            font-size: 14px;
-            color: #e2e8f0;
-        }
-
-        .asset-type {
-            font-style: italic;
-            color: #94a3b8 !important;
-        }
-
-        .dividend-badge {
-            background: #3b82f6;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .sell-restriction {
-            background: #ef4444;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .asset-actions {
-            margin-left: 15px;
-        }
-
-        .modern-btn.disabled {
-            background: #6b7280;
-            color: #9ca3af;
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-
-        .modern-btn.disabled:hover {
-            background: #6b7280;
-            transform: none;
         }
     </style>
 </head>
@@ -3147,127 +2999,30 @@
 
     <script>
         // Система карточек сделок
-        // Обновленная система карточек сделок (полный список из Energy money проекта)
-const dealCards = {
-    // Малые сделки (58 карточек)
-    smallDeals: [
-        // Tesla акции (5 карточек)
-        { id: 15, name: "Tesla акции ($10)", cost: 10, income: 0, description: "Tesla акции (диапазон цены $10-$40) - стоимость: $10, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "TSLA" },
-        { id: 16, name: "Tesla акции ($20)", cost: 20, income: 0, description: "Tesla акции (диапазон цены $10-$40) - стоимость: $20, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "TSLA" },
-        { id: 17, name: "Tesla акции ($30)", cost: 30, income: 0, description: "Tesla акции (диапазон цены $10-$40) - стоимость: $30, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "TSLA" },
-        { id: 18, name: "Tesla акции ($40)", cost: 40, income: 0, description: "Tesla акции (диапазон цены $10-$40) - стоимость: $40, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "TSLA" },
-        { id: 19, name: "Tesla акции ($50)", cost: 50, income: 0, description: "Tesla акции (диапазон цены $10-$40) - стоимость: $50, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "TSLA" },
-        
-        // Microsoft акции (6 карточек)
-        { id: 20, name: "Microsoft акции ($10)", cost: 10, income: 0, description: "Microsoft акции (диапазон цены $10-$40) - стоимость: $10, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "MSFT" },
-        { id: 21, name: "Microsoft акции ($20)", cost: 20, income: 0, description: "Microsoft акции (диапазон цены $10-$40) - стоимость: $20, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "MSFT" },
-        { id: 22, name: "Microsoft акции ($20)", cost: 20, income: 0, description: "Microsoft акции (диапазон цены $10-$40) - стоимость: $20, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "MSFT" },
-        { id: 23, name: "Microsoft акции ($30)", cost: 30, income: 0, description: "Microsoft акции (диапазон цены $10-$40) - стоимость: $30, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "MSFT" },
-        { id: 24, name: "Microsoft акции ($30)", cost: 30, income: 0, description: "Microsoft акции (диапазон цены $10-$40) - стоимость: $30, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "MSFT" },
-        { id: 25, name: "Microsoft акции ($40)", cost: 40, income: 0, description: "Microsoft акции (диапазон цены $10-$40) - стоимость: $40, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "MSFT" },
-        { id: 26, name: "Microsoft акции ($50)", cost: 50, income: 0, description: "Microsoft акции (диапазон цены $10-$40) - стоимость: $50, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "MSFT" },
-        
-        // Nvidia акции (7 карточек)
-        { id: 27, name: "Nvidia акции ($10)", cost: 10, income: 0, description: "Nvidia акции (диапазон цены $10-$40) - стоимость: $10, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "NVDA" },
-        { id: 28, name: "Nvidia акции ($20)", cost: 20, income: 0, description: "Nvidia акции (диапазон цены $10-$40) - стоимость: $20, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "NVDA" },
-        { id: 29, name: "Nvidia акции ($20)", cost: 20, income: 0, description: "Nvidia акции (диапазон цены $10-$40) - стоимость: $20, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "NVDA" },
-        { id: 30, name: "Nvidia акции ($30)", cost: 30, income: 0, description: "Nvidia акции (диапазон цены $10-$40) - стоимость: $30, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "NVDA" },
-        { id: 31, name: "Nvidia акции ($30)", cost: 30, income: 0, description: "Nvidia акции (диапазон цены $10-$40) - стоимость: $30, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "NVDA" },
-        { id: 32, name: "Nvidia акции ($40)", cost: 40, income: 0, description: "Nvidia акции (диапазон цены $10-$40) - стоимость: $40, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "NVDA" },
-        { id: 33, name: "Nvidia акции ($50)", cost: 50, income: 0, description: "Nvidia акции (диапазон цены $10-$40) - стоимость: $50, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "NVDA" },
-        
-        // Apple акции (7 карточек)
-        { id: 34, name: "Apple акции ($10)", cost: 10, income: 0, description: "Apple акции (диапазон цены $10-$40) - стоимость: $10, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "AAPL" },
-        { id: 35, name: "Apple акции ($20)", cost: 20, income: 0, description: "Apple акции (диапазон цены $10-$40) - стоимость: $20, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "AAPL" },
-        { id: 36, name: "Apple акции ($20)", cost: 20, income: 0, description: "Apple акции (диапазон цены $10-$40) - стоимость: $20, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "AAPL" },
-        { id: 37, name: "Apple акции ($30)", cost: 30, income: 0, description: "Apple акции (диапазон цены $10-$40) - стоимость: $30, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "AAPL" },
-        { id: 38, name: "Apple акции ($30)", cost: 30, income: 0, description: "Apple акции (диапазон цены $10-$40) - стоимость: $30, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "AAPL" },
-        { id: 39, name: "Apple акции ($40)", cost: 40, income: 0, description: "Apple акции (диапазон цены $10-$40) - стоимость: $40, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "AAPL" },
-        { id: 40, name: "Apple акции ($50)", cost: 50, income: 0, description: "Apple акции (диапазон цены $10-$40) - стоимость: $50, доход: нет. Максимум: 100000. Продажа только в свой ход.", type: "stocks", maxQuantity: 100000, isDividendStock: false, stockSymbol: "AAPL" },
-        
-        // BTC (биткоин - 8 карточек)
-        { id: 41, name: "BTC ($1000)", cost: 1000, income: 100, description: "Биткоин высокорисковый актив с колебанием цен 1000-100 000$. Максимум: 1000. Продажа только в свой ход.", type: "crypto", maxQuantity: 1000, isDividendStock: false, cryptoSymbol: "BTC" },
-        { id: 42, name: "BTC ($5000)", cost: 5000, income: 500, description: "Биткоин высокорисковый актив с колебанием цен 1000-100 000$. Максимум: 1000. Продажа только в свой ход.", type: "crypto", maxQuantity: 1000, isDividendStock: false, cryptoSymbol: "BTC" },
-        { id: 43, name: "BTC ($10000)", cost: 10000, income: 1000, description: "Биткоин высокорисковый актив с колебанием цен 1000-100 000$. Максимум: 1000. Продажа только в свой ход.", type: "crypto", maxQuantity: 1000, isDividendStock: false, cryptoSymbol: "BTC" },
-        { id: 44, name: "BTC ($20000)", cost: 20000, income: 2000, description: "Биткоин высокорисковый актив с колебанием цен 1000-100 000$. Максимум: 1000. Продажа только в свой ход.", type: "crypto", maxQuantity: 1000, isDividendStock: false, cryptoSymbol: "BTC" },
-        { id: 45, name: "BTC ($1000)", cost: 1000, income: 100, description: "Биткоин высокорисковый актив с колебанием цен 1000-100 000$. Максимум: 1000. Продажа только в ход, когда карточка выходит.", type: "crypto", maxQuantity: 1000, isDividendStock: false, cryptoSymbol: "BTC" },
-        { id: 46, name: "BTC ($5000)", cost: 5000, income: 500, description: "Биткоин высокорисковый актив с колебанием цен 1000-100 000$. Максимум: 1000. Продажа только в ход, когда карточка выходит.", type: "crypto", maxQuantity: 1000, isDividendStock: false, cryptoSymbol: "BTC" },
-        { id: 47, name: "BTC ($10000)", cost: 10000, income: 1000, description: "Биткоин высокорисковый актив с колебанием цен 1000-100 000$. Максимум: 1000. Продажа только в ход, когда карточка выходит.", type: "crypto", maxQuantity: 1000, isDividendStock: false, cryptoSymbol: "BTC" },
-        { id: 48, name: "BTC ($20000)", cost: 20000, income: 2000, description: "Биткоин высокорисковый актив с колебанием цен 1000-100 000$. Максимум: 1000. Продажа только в ход, когда карточка выходит.", type: "crypto", maxQuantity: 1000, isDividendStock: false, cryptoSymbol: "BTC" },
-        { id: 49, name: "BTC ($50000)", cost: 50000, income: 5000, description: "Биткоин высокорисковый актив с колебанием цен 1000-100 000$. Максимум: 1000. Продажа только в ход, когда карточка выходит.", type: "crypto", maxQuantity: 1000, isDividendStock: false, cryptoSymbol: "BTC" },
-        { id: 50, name: "BTC ($100000)", cost: 100000, income: 10000, description: "Биткоин высокорисковый актив с колебанием цен 1000-100 000$. Максимум: 1000. Продажа только в ход, когда карточка выходит.", type: "crypto", maxQuantity: 1000, isDividendStock: false, cryptoSymbol: "BTC" },
-        
-        // Дивидендные акции (4 карточки)
-        { id: 51, name: "AT&T привилегированные акции (T)", cost: 5000, income: 30, description: "Привилегированные акции дают доход AT&T. Дивиденды: $30/мес. Продажа в любое время.", type: "dividend_stocks", maxQuantity: 1000, isDividendStock: true, dividendYield: 30, stockSymbol: "T" },
-        { id: 52, name: "AT&T привилегированные акции (T)", cost: 5000, income: 30, description: "Привилегированные акции дают доход AT&T. Дивиденды: $30/мес. Продажа в любое время.", type: "dividend_stocks", maxQuantity: 1000, isDividendStock: true, dividendYield: 30, stockSymbol: "T" },
-        { id: 53, name: "Procter & Gamble привилегированные акции (PG)", cost: 2000, income: 10, description: "Привилегированные акции дают доход Procter & Gamble. Дивиденды: $10/мес. Продажа в любое время.", type: "dividend_stocks", maxQuantity: 1000, isDividendStock: true, dividendYield: 10, stockSymbol: "PG" },
-        { id: 54, name: "Procter & Gamble привилегированные акции (PG)", cost: 2000, income: 10, description: "Привилегированные акции дают доход Procter & Gamble. Дивиденды: $10/мес. Продажа в любое время.", type: "dividend_stocks", maxQuantity: 1000, isDividendStock: true, dividendYield: 10, stockSymbol: "PG" },
-        
-        // Недвижимость и бизнес (22 карточки)
-        { id: 55, name: "Комната в пригороде", cost: 3000, income: 250, description: "Комната в пригороде для сдачи в аренду", type: "real_estate" },
-        { id: 56, name: "Комната в пригороде", cost: 3000, income: 250, description: "Комната в пригороде для сдачи в аренду", type: "real_estate" },
-        { id: 57, name: "Комната в пригороде", cost: 3000, income: 250, description: "Комната в пригороде для сдачи в аренду", type: "real_estate" },
-        { id: 58, name: "Комната в пригороде", cost: 3000, income: 250, description: "Комната в пригороде для сдачи в аренду", type: "real_estate" },
-        { id: 59, name: "Комната в пригороде", cost: 3000, income: 250, description: "Комната в пригороде для сдачи в аренду", type: "real_estate" },
-        { id: 60, name: "Студия маникюра на 1 место", cost: 4900, income: 200, description: "Студия маникюра на 1 рабочее место", type: "beauty_salon" },
-        { id: 61, name: "Студия маникюра на 1 место", cost: 4900, income: 200, description: "Студия маникюра на 1 рабочее место", type: "beauty_salon" },
-        { id: 62, name: "Кофейня", cost: 4900, income: 100, description: "Небольшая кофейня", type: "coffee_shop" },
-        { id: 63, name: "Кофейня", cost: 4900, income: 100, description: "Небольшая кофейня", type: "coffee_shop" },
-        { id: 64, name: "Партнёрство в автомастерской", cost: 4500, income: 350, description: "Партнёрство в автомастерской", type: "partnership" },
-        { id: 65, name: "Партнёрство в автомастерской", cost: 4500, income: 350, description: "Партнёрство в автомастерской", type: "partnership" },
-        { id: 66, name: "Друг просит в займ", cost: 5000, income: 0, description: "Другу нужны деньги, он вам будет благодарен", type: "charity", isFriendMoneyCard: true, friendCardNumber: 1 },
-        { id: 67, name: "Приют для кошек", cost: 5000, income: 0, description: "Пожертвование в приют для кошек", type: "charity" },
-        { id: 68, name: "Накормить бездомных", cost: 5000, income: 0, description: "Благотворительность - накормить бездомных", type: "charity" },
-        { id: 69, name: "Участок земли 20га", cost: 5000, income: 0, description: "Участок земли 20 га - инвестиция в недвижимость", type: "land" },
-        { id: 70, name: "Крыша протекла", cost: 5000, income: 0, description: "Крыша протекла — возможность обновить крышу (если у игрока есть недвижимость)", type: "expense", isExpense: true },
-        { id: 71, name: "Покупка дрона для съёмок", cost: 3000, income: 50, description: "Покупка дрона для съёмок - дополнительный доход", type: "equipment" },
-        { id: 72, name: "Флипинг студии", cost: 5000, income: 50, description: "Флипинг студии - перепродажа недвижимости", type: "flipping" },
-        { id: 73, name: "Прорыв канализации", cost: 2000, income: 0, description: "Прорыв канализации (у вас есть возможность починить канализацию)", type: "expense", isExpense: true },
-        { id: 74, name: "Другу нужны деньги", cost: 5000, income: 0, description: "Другу нужны деньги, он вам будет благодарен", type: "charity", isFriendMoneyCard: true, friendCardNumber: 2 },
-        { id: 75, name: "Другу нужны деньги", cost: 5000, income: 0, description: "Другу нужны деньги, он вам будет благодарен", type: "charity", isFriendMoneyCard: true, friendCardNumber: 3 },
-        
-        // Новые карточки "Другу нужны деньги" с разными эффектами
-        { id: 76, name: "Другу нужны деньги", cost: 5000, income: 0, description: "Другу нужны деньги, он вам будет благодарен", type: "charity", isFriendMoneyCard: true, friendCardNumber: 4, effect: "nothing" },
-        { id: 77, name: "Другу нужны деньги", cost: 5000, income: 0, description: "Другу нужны деньги, он вам будет благодарен. Друг вам настолько благодарен что передает свой ход", type: "charity", isFriendMoneyCard: true, friendCardNumber: 5, effect: "extra_turn" },
-        { id: 78, name: "Другу нужны деньги", cost: 5000, income: 0, description: "Другу нужны деньги, он вам будет благодарен. Друг вам настолько благодарен что дарит одну карточку большой возможности и одну малой", type: "charity", isFriendMoneyCard: true, friendCardNumber: 6, effect: "free_cards" },
-        
-        // Франшиза Plazma Life water
-        { id: 79, name: "Франшиза Plazma Life water", cost: 200, income: 0, description: "Молодая компания Plazma Life water с сильным продуктом быстро развивается, вы можете стать партнером и получать доход от партнеров (каждый партнер приносит 100$). Бросьте кубик и выберите количество партнеров", type: "franchise", isDiceCard: true, diceMultiplier: 100, franchiseName: "Plazma Life water" }
-    ],
-    // Большие сделки (24 карточки)
-    bigDeals: [
-        // Крупный бизнес (6 карточек)
-        { id: 9, name: "Отель", cost: 100000, income: 8000, description: "Небольшой отель в центре города", type: "hotel" },
-        { id: 10, name: "Торговый центр", cost: 200000, income: 20000, description: "Торговый центр", type: "mall" },
-        { id: 11, name: "Завод", cost: 300000, income: 35000, description: "Производственное предприятие", type: "factory" },
-        { id: 12, name: "Университет", cost: 500000, income: 60000, description: "Частный университет", type: "university" },
-        { id: 13, name: "Больница", cost: 400000, income: 45000, description: "Частная клиника", type: "hospital" },
-        { id: 14, name: "Аэропорт", cost: 1000000, income: 150000, description: "Региональный аэропорт", type: "airport" },
-        
-        // Дома в пригороде (10 карточек)
-        { id: 70, name: "Дом в пригороде", cost: 7000, income: 100, description: "Небольшой дом в пригороде для сдачи в аренду", type: "house" },
-        { id: 71, name: "Дом в пригороде", cost: 7500, income: 120, description: "Небольшой дом в пригороде для сдачи в аренду", type: "house" },
-        { id: 72, name: "Дом в пригороде", cost: 8000, income: 140, description: "Небольшой дом в пригороде для сдачи в аренду", type: "house" },
-        { id: 73, name: "Дом в пригороде", cost: 8500, income: 160, description: "Небольшой дом в пригороде для сдачи в аренду", type: "house" },
-        { id: 74, name: "Дом в пригороде", cost: 9000, income: 180, description: "Небольшой дом в пригороде для сдачи в аренду", type: "house" },
-        { id: 75, name: "Дом в пригороде", cost: 9500, income: 200, description: "Небольшой дом в пригороде для сдачи в аренду", type: "house" },
-        { id: 76, name: "Дом в пригороде", cost: 10000, income: 220, description: "Небольшой дом в пригороде для сдачи в аренду", type: "house" },
-        { id: 77, name: "Дом в пригороде", cost: 8000, income: 150, description: "Небольшой дом в пригороде для сдачи в аренду", type: "house" },
-        { id: 78, name: "Дом в пригороде", cost: 8500, income: 170, description: "Небольшой дом в пригороде для сдачи в аренду", type: "house" },
-        { id: 79, name: "Дом в пригороде", cost: 9000, income: 190, description: "Небольшой дом в пригороде для сдачи в аренду", type: "house" },
-        
-        // Средний бизнес (8 карточек)
-        { id: 80, name: "Мини-отель", cost: 80000, income: 3000, description: "Бутик-отель на 10 номеров, стабильно приносит доход", type: "mini_hotel" },
-        { id: 81, name: "Сеть кафе быстрого питания", cost: 200000, income: 7000, description: "Прибыльный бизнес, несколько точек в центре города", type: "fast_food" },
-        { id: 82, name: "Ферма органических овощей", cost: 120000, income: 4500, description: "Экологичное хозяйство с контрактами на поставку", type: "farm" },
-        { id: 83, name: "Сеть автомоек", cost: 150000, income: 5000, description: "Хорошее расположение, стабильный трафик клиентов", type: "car_wash_chain" },
-        { id: 84, name: "Коворкинг-центр", cost: 250000, income: 8000, description: "Большое пространство для аренды под стартапы и фрилансеров", type: "coworking" },
-        { id: 85, name: "Мини-отель", cost: 80000, income: 3000, description: "Бутик-отель на 10 номеров, стабильно приносит доход", type: "mini_hotel" },
-        { id: 86, name: "Сеть кафе быстрого питания", cost: 200000, income: 7000, description: "Прибыльный бизнес, несколько точек в центре города", type: "fast_food" },
-        { id: 87, name: "Франшиза \"Энергия денег\"", cost: 100000, income: 10000, description: "Франшиза на страну игры \"Энергия денег\" - прибыльный образовательный бизнес", type: "franchise" }
-    ]
-};
-
+        const dealCards = {
+            // Малые сделки
+            smallDeals: [
+                { id: 1, name: "Акции", cost: 1000, income: 100, description: "Покупка акций за $1,000. Доход: $100/мес", type: "stocks" },
+                { id: 2, name: "Облигации", cost: 2000, income: 200, description: "Покупка облигаций за $2,000. Доход: $200/мес", type: "bonds" },
+                { id: 3, name: "Депозит", cost: 5000, income: 500, description: "Банковский депозит за $5,000. Доход: $500/мес", type: "deposit" },
+                { id: 4, name: "Фонд", cost: 3000, income: 300, description: "Инвестиционный фонд за $3,000. Доход: $300/мес", type: "fund" },
+                { id: 5, name: "Криптовалюта", cost: 1500, income: 150, description: "Покупка криптовалюты за $1,500. Доход: $150/мес", type: "crypto" },
+                { id: 6, name: "Золото", cost: 4000, income: 400, description: "Покупка золота за $4,000. Доход: $400/мес", type: "gold" },
+                { id: 7, name: "Недвижимость", cost: 8000, income: 800, description: "Покупка недвижимости за $8,000. Доход: $800/мес", type: "real_estate" },
+                { id: 8, name: "Бизнес", cost: 6000, income: 600, description: "Покупка малого бизнеса за $6,000. Доход: $600/мес", type: "business" }
+            ],
+            // Большие сделки
+            bigDeals: [
+                { id: 1, name: "Офисное здание", cost: 50000, income: 5000, description: "Покупка офисного здания за $50,000. Доход: $5,000/мес", type: "office" },
+                { id: 2, name: "Торговый центр", cost: 100000, income: 10000, description: "Покупка торгового центра за $100,000. Доход: $10,000/мес", type: "mall" },
+                { id: 3, name: "Завод", cost: 200000, income: 20000, description: "Покупка завода за $200,000. Доход: $20,000/мес", type: "factory" },
+                { id: 4, name: "Гостиница", cost: 150000, income: 15000, description: "Покупка гостиницы за $150,000. Доход: $15,000/мес", type: "hotel" },
+                { id: 5, name: "Акции компании", cost: 30000, income: 3000, description: "Покупка акций крупной компании за $30,000. Доход: $3,000/мес", type: "company_stocks" },
+                { id: 6, name: "Франшиза", cost: 75000, income: 7500, description: "Покупка франшизы за $75,000. Доход: $7,500/мес", type: "franchise" },
+                { id: 7, name: "Технологический стартап", cost: 40000, income: 4000, description: "Инвестиция в стартап за $40,000. Доход: $4,000/мес", type: "startup" },
+                { id: 8, name: "Сеть ресторанов", cost: 120000, income: 12000, description: "Покупка сети ресторанов за $120,000. Доход: $12,000/мес", type: "restaurant_chain" }
+            ]
+        };
 
         // Карты рынка (24 карты)
         const marketCards = [
@@ -3499,10 +3254,6 @@ const dealCards = {
         let timerInterval;
         let isRolling = false;
         let cellOwners = {}; // Владельцы клеток
-        
-        // Переменные для отслеживания продажи акций
-        let currentTurnCards = {}; // Карточки, которые можно продавать в текущем ходу
-        let currentTurn = 1; // Номер текущего хода
         let playerPositions = [1, 1, 1]; // Позиции игроков на поле
         let playerTracks = ['inner', 'inner', 'inner']; // 'inner' | 'outer' по игрокам
         let diceRolled = false; // Флаг броска кубика
@@ -3718,31 +3469,8 @@ const dealCards = {
                 // Списываем деньги
                 subtractBalance(currentPlayerCard.cost, `Покупка: ${currentPlayerCard.name}`);
                 
-                // Обрабатываем специальные карточки
-                if (currentPlayerCard.isDiceCard) {
-                    handleDiceCard(currentPlayerCard);
-                    return;
-                }
-                
-                if (currentPlayerCard.isFriendMoneyCard) {
-                    handleFriendMoneyCard(currentPlayerCard);
-                    return;
-                }
-                
                 // Добавляем в активы игрока
                 playerAssets[currentPlayer].push(currentPlayerCard);
-                
-                // Отмечаем карточку как доступную для продажи в текущем ходу (только для обычных акций и BTC)
-                if ((currentPlayerCard.type === 'stocks' || currentPlayerCard.type === 'crypto') && !currentPlayerCard.isDividendStock) {
-                    if (!currentTurnCards[currentPlayer]) {
-                        currentTurnCards[currentPlayer] = [];
-                    }
-                    currentTurnCards[currentPlayer].push({
-                        cardId: currentPlayerCard.id,
-                        turn: currentTurn,
-                        canSell: true
-                    });
-                }
                 
                 // Обновляем пассивный доход
                 if (playerPassiveIncome && playerPassiveIncome[currentPlayer]) {
@@ -3762,354 +3490,6 @@ const dealCards = {
                 closeCardModal();
             } else {
                 alert(`❌ Недостаточно средств для покупки.\nНужно: $${currentPlayerCard.cost.toLocaleString()}\nУ вас: $${(currentBalance || 0).toLocaleString()}`);
-            }
-        }
-
-        // Обработка карточки с бросом кубика (Plazma Life water)
-        function handleDiceCard(card) {
-            showDiceModal(card);
-        }
-
-        // Обработка карточки "Другу нужны деньги"
-        function handleFriendMoneyCard(card) {
-            // Списываем деньги
-            subtractBalance(card.cost, `Помощь другу: ${card.name}`);
-            
-            // Обрабатываем эффект
-            switch (card.effect) {
-                case 'nothing':
-                    showNotification(`💝 Помогли другу! Друг благодарен, но ничего не получили.`, 'info');
-                    break;
-                    
-                case 'extra_turn':
-                    showNotification(`💝 Помогли другу! Друг настолько благодарен, что передает вам свой ход!`, 'success');
-                    // Логика дополнительного хода будет добавлена позже
-                    break;
-                    
-                case 'free_cards':
-                    showNotification(`💝 Помогли другу! Друг дарит вам карточки!`, 'success');
-                    showFreeCardsModal();
-                    break;
-                    
-                default:
-                    showNotification(`💝 Помогли другу! Друг благодарен.`, 'info');
-            }
-            
-            // Очищаем текущую карточку
-            currentPlayerCard = null;
-            closeCardModal();
-            updateBalanceDisplay();
-        }
-
-        // Показать модал для броска кубика
-        function showDiceModal(card) {
-            const modal = document.getElementById('diceModal');
-            if (!modal) {
-                createDiceModal();
-            }
-            
-            document.getElementById('diceCardName').textContent = card.name;
-            document.getElementById('diceCardDescription').textContent = card.description;
-            document.getElementById('diceMultiplier').textContent = card.diceMultiplier;
-            
-            modal.style.display = 'block';
-        }
-
-        // Создать модал для броска кубика
-        function createDiceModal() {
-            const modal = document.createElement('div');
-            modal.id = 'diceModal';
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>🎲 Бросок кубика</h2>
-                        <button class="close-btn" onclick="closeDiceModal()">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <h3 id="diceCardName">Карточка</h3>
-                        <p id="diceCardDescription">Описание</p>
-                        <div class="dice-container">
-                            <div class="dice-result" id="diceResult">?</div>
-                            <button class="modern-btn primary" onclick="rollDiceForCard()">🎲 Бросить кубик</button>
-                        </div>
-                        <div class="dice-info">
-                            <p>Каждый партнер приносит <span id="diceMultiplier">100</span>$ в месяц</p>
-                            <p id="diceIncomeInfo" style="display: none;">Ваш пассивный доход: <span id="diceIncomeAmount">0</span>$ в месяц</p>
-                        </div>
-                        <div class="dice-actions" style="display: none;">
-                            <button class="modern-btn primary" onclick="confirmDiceCard()">✅ Подтвердить</button>
-                            <button class="modern-btn secondary" onclick="closeDiceModal()">❌ Отказаться</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        }
-
-        // Бросок кубика для карточки
-        function rollDiceForCard() {
-            const diceResult = Math.floor(Math.random() * 6) + 1;
-            const multiplier = currentPlayerCard.diceMultiplier || 100;
-            const income = diceResult * multiplier;
-            
-            document.getElementById('diceResult').textContent = diceResult;
-            document.getElementById('diceIncomeAmount').textContent = income.toLocaleString();
-            document.getElementById('diceIncomeInfo').style.display = 'block';
-            document.querySelector('.dice-actions').style.display = 'block';
-            
-            // Сохраняем результат
-            currentPlayerCard.diceResult = diceResult;
-            currentPlayerCard.income = income;
-        }
-
-        // Подтвердить карточку с кубиком
-        function confirmDiceCard() {
-            if (!currentPlayerCard) return;
-            
-            // Добавляем в активы игрока
-            playerAssets[currentPlayer].push(currentPlayerCard);
-            
-            // Обновляем пассивный доход
-            if (playerPassiveIncome && playerPassiveIncome[currentPlayer]) {
-                playerPassiveIncome[currentPlayer] += currentPlayerCard.income;
-            } else {
-                playerPassiveIncome = playerPassiveIncome || {};
-                playerPassiveIncome[currentPlayer] = currentPlayerCard.income;
-            }
-            
-            updateFinancesDisplay();
-            updateBalanceDisplay();
-            
-            showNotification(`✅ Куплено: ${currentPlayerCard.name} за $${currentPlayerCard.cost.toLocaleString()}. Доход: $${currentPlayerCard.income.toLocaleString()}/мес`, 'success');
-            
-            // Очищаем текущую карточку
-            currentPlayerCard = null;
-            closeDiceModal();
-        }
-
-        // Закрыть модал кубика
-        function closeDiceModal() {
-            const modal = document.getElementById('diceModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-        }
-
-        // Показать модал бесплатных карточек
-        function showFreeCardsModal() {
-            const modal = document.getElementById('freeCardsModal');
-            if (!modal) {
-                createFreeCardsModal();
-            }
-            
-            modal.style.display = 'block';
-        }
-
-        // Создать модал бесплатных карточек
-        function createFreeCardsModal() {
-            const modal = document.createElement('div');
-            modal.id = 'freeCardsModal';
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>🎁 Бесплатные карточки</h2>
-                        <button class="close-btn" onclick="closeFreeCardsModal()">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Друг дарит вам карточки! Выберите одну малую и одну большую сделку:</p>
-                        <div class="free-cards-container">
-                            <div class="free-card-section">
-                                <h3>Малая сделка</h3>
-                                <button class="modern-btn primary" onclick="drawFreeCard('small')">🎯 Вытянуть малую сделку</button>
-                            </div>
-                            <div class="free-card-section">
-                                <h3>Большая сделка</h3>
-                                <button class="modern-btn primary" onclick="drawFreeCard('big')">🏢 Вытянуть большую сделку</button>
-                            </div>
-                        </div>
-                        <div class="free-cards-actions">
-                            <button class="modern-btn secondary" onclick="closeFreeCardsModal()">Закрыть</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        }
-
-        // Вытянуть бесплатную карточку
-        function drawFreeCard(type) {
-            const card = drawCard(type);
-            if (card) {
-                // Добавляем в активы игрока без оплаты
-                playerAssets[currentPlayer].push(card);
-                
-                // Обновляем пассивный доход
-                if (playerPassiveIncome && playerPassiveIncome[currentPlayer]) {
-                    playerPassiveIncome[currentPlayer] += card.income;
-                } else {
-                    playerPassiveIncome = playerPassiveIncome || {};
-                    playerPassiveIncome[currentPlayer] = card.income;
-                }
-                
-                updateFinancesDisplay();
-                updateBalanceDisplay();
-                
-                showNotification(`🎁 Получена бесплатная карточка: ${card.name}`, 'success');
-            }
-        }
-
-        // Закрыть модал бесплатных карточек
-        function closeFreeCardsModal() {
-            const modal = document.getElementById('freeCardsModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-        }
-
-        // Проверить, можно ли продать карточку в текущем ходу
-        function canSellCardInCurrentTurn(card) {
-            // Дивидендные акции можно продавать в любое время
-            if (card.isDividendStock) {
-                return true;
-            }
-            
-            // Обычные акции и BTC можно продавать только в ход, когда они были куплены
-            if (card.type === 'stocks' || card.type === 'crypto') {
-                const playerCards = currentTurnCards[currentPlayer] || [];
-                return playerCards.some(turnCard => 
-                    turnCard.cardId === card.id && 
-                    turnCard.turn === currentTurn && 
-                    turnCard.canSell
-                );
-            }
-            
-            // Остальные карточки можно продавать в любое время
-            return true;
-        }
-
-        // Получить доступные для продажи карточки текущего игрока
-        function getSellableCards() {
-            const playerCards = playerAssets[currentPlayer] || [];
-            return playerCards.filter(card => canSellCardInCurrentTurn(card));
-        }
-
-        // Показать активы игрока
-        function showPlayerAssets() {
-            const playerCards = playerAssets[currentPlayer] || [];
-            const sellableCards = getSellableCards();
-            
-            // Создаем модал для отображения активов
-            const modal = document.createElement('div');
-            modal.id = 'assetsModal';
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>💰 Мои активы</h2>
-                        <button class="close-btn" onclick="closeAssetsModal()">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="assets-info">
-                            <p>Всего активов: ${playerCards.length}</p>
-                            <p>Доступно для продажи в текущем ходу: ${sellableCards.length}</p>
-                        </div>
-                        <div class="assets-list">
-                            ${playerCards.map(card => `
-                                <div class="asset-item ${canSellCardInCurrentTurn(card) ? 'sellable' : 'not-sellable'}">
-                                    <div class="asset-info">
-                                        <h4>${card.name}</h4>
-                                        <p>Стоимость: $${card.cost.toLocaleString()}</p>
-                                        <p>Доход: $${card.income.toLocaleString()}/мес</p>
-                                        <p class="asset-type">Тип: ${getCardTypeName(card.type)}</p>
-                                        ${card.isDividendStock ? '<span class="dividend-badge">Дивидендная</span>' : ''}
-                                        ${!canSellCardInCurrentTurn(card) && (card.type === 'stocks' || card.type === 'crypto') ? '<span class="sell-restriction">Только в ход покупки</span>' : ''}
-                                    </div>
-                                    <div class="asset-actions">
-                                        ${canSellCardInCurrentTurn(card) ? 
-                                            `<button class="modern-btn secondary" onclick="sellAsset(${card.id})">Продать</button>` : 
-                                            `<button class="modern-btn disabled" disabled>Недоступно</button>`
-                                        }
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            modal.style.display = 'block';
-        }
-
-        // Получить название типа карточки
-        function getCardTypeName(type) {
-            const typeNames = {
-                'stocks': 'Акции',
-                'crypto': 'Криптовалюта',
-                'dividend_stocks': 'Дивидендные акции',
-                'real_estate': 'Недвижимость',
-                'beauty_salon': 'Салон красоты',
-                'coffee_shop': 'Кофейня',
-                'partnership': 'Партнерство',
-                'charity': 'Благотворительность',
-                'land': 'Земля',
-                'expense': 'Расходы',
-                'equipment': 'Оборудование',
-                'flipping': 'Флипинг',
-                'franchise': 'Франшиза'
-            };
-            return typeNames[type] || type;
-        }
-
-        // Продать актив
-        function sellAsset(cardId) {
-            const playerCards = playerAssets[currentPlayer] || [];
-            const card = playerCards.find(c => c.id === cardId);
-            
-            if (!card) {
-                showNotification('❌ Карточка не найдена', 'error');
-                return;
-            }
-            
-            if (!canSellCardInCurrentTurn(card)) {
-                showNotification('❌ Эту карточку нельзя продать в текущем ходу', 'error');
-                return;
-            }
-            
-            // Удаляем карточку из активов
-            const cardIndex = playerCards.findIndex(c => c.id === cardId);
-            if (cardIndex !== -1) {
-                playerCards.splice(cardIndex, 1);
-            }
-            
-            // Уменьшаем пассивный доход
-            if (playerPassiveIncome && playerPassiveIncome[currentPlayer]) {
-                playerPassiveIncome[currentPlayer] -= card.income;
-                if (playerPassiveIncome[currentPlayer] < 0) {
-                    playerPassiveIncome[currentPlayer] = 0;
-                }
-            }
-            
-            // Добавляем деньги за продажу (обычно половина от стоимости)
-            const sellPrice = Math.floor(card.cost * 0.5);
-            addBalance(sellPrice, `Продажа: ${card.name}`);
-            
-            updateFinancesDisplay();
-            updateBalanceDisplay();
-            showNotification(`✅ Продано: ${card.name} за $${sellPrice.toLocaleString()}`, 'success');
-            
-            // Обновляем модал активов
-            closeAssetsModal();
-            showPlayerAssets();
-        }
-
-        // Закрыть модал активов
-        function closeAssetsModal() {
-            const modal = document.getElementById('assetsModal');
-            if (modal) {
-                modal.remove();
             }
         }
 
@@ -4684,20 +4064,14 @@ const dealCards = {
                         if (posResp.ok) {
                             const posData = await posResp.json();
                             serverPositions = Array.isArray(posData.player_positions) ? posData.player_positions : [];
-                            console.log('📍 Загружены позиции с сервера:', serverPositions);
                         }
                     } catch (e) { console.warn('Не удалось загрузить позиции игроков:', e); }
                     // Преобразуем 0..23 → 1..24 для UI
-                    playerPositions = new Array(players.length).fill(1); // По умолчанию старт
+                    playerPositions = new Array(players.length).fill(1);
                     for (let i = 0; i < players.length; i++) {
                         const zeroBased = typeof serverPositions[i] === 'number' ? serverPositions[i] : 0;
-                        // Если позиция больше 0, значит игрок уже двигался
-                        if (zeroBased > 0) {
-                            playerPositions[i] = (zeroBased % 24) + 1;
-                        }
-                        // Если позиция 0, оставляем 1 (старт)
+                        playerPositions[i] = (zeroBased % 24) + 1;
                     }
-                    console.log('📍 Финальные позиции игроков:', playerPositions);
 
                     // Используем новый UI для создания фишек
                     if (gameBoardUI) {
@@ -4993,7 +4367,7 @@ const dealCards = {
                 'Старт': 'square-green',
                 'Возможность': 'square-green',
                 'Трата': 'square-pink',
-                'Благотворительность': 'square-charity',
+                'Благотворительность': 'square-orange',
                 'PayDay': 'square-yellow',
                 'Рынок': 'square-blue',
                 'Ребенок': 'square-purple',
@@ -5416,9 +4790,6 @@ const dealCards = {
                             gameTimer = data.turn_duration;
                             maxTimer = data.turn_duration;
                             
-                            // Увеличиваем номер хода
-                            currentTurn++;
-                            
                             // Обновляем UI
                             updateCurrentPlayer();
                             updateTimerDisplay();
@@ -5617,14 +4988,6 @@ const dealCards = {
 
         // Обработчики событий
         document.getElementById('rollDiceBtn').addEventListener('click', rollDice);
-        
-        // Обработчик клика на кнопку активов
-        document.addEventListener('DOMContentLoaded', () => {
-            const assetsButton = document.querySelector('.assets-button');
-            if (assetsButton) {
-                assetsButton.addEventListener('click', showPlayerAssets);
-            }
-        });
 
         // Функции для работы с модальным окном клетки
 
@@ -6598,14 +5961,10 @@ const dealCards = {
                     }, 0);
                 } else {
                     // Малый круг
-                    const tenPercent = Math.floor((monthlyIncome || 0) * 0.10);
                     container.innerHTML = `
                         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                            <button class="modern-btn secondary" id="charityPayInner">Оплатить $${tenPercent.toLocaleString()}</button>
-                            <button class="modern-btn credit" id="charityCreditBtn">Взять кредит</button>
-                        </div>
-                        <div style="margin-top:8px; font-size:12px; opacity:0.8;">
-                            💡 10% от дохода $${(monthlyIncome || 0).toLocaleString()} = $${tenPercent.toLocaleString()}
+                            <button class="modern-btn secondary" id="charityPayInner">Оплатить 10% от дохода</button>
+                            <button class="modern-btn credit" id="charityCreditBtn">Кредит</button>
                         </div>
                         <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
                             <span>Кубики на ход:</span>
@@ -6616,22 +5975,12 @@ const dealCards = {
                     setTimeout(() => {
                         const payBtn = document.getElementById('charityPayInner');
                         if (payBtn) payBtn.onclick = () => {
-                            // Рассчитываем 10% от общего дохода (до вычета расходов)
                             const tenPercent = Math.floor((monthlyIncome || 0) * 0.10);
-                            const paydayElement = document.getElementById('monthlyIncome');
-                            const currentPayday = monthlyIncome - monthlyExpenses;
-                            
                             if ((currentBalance || 0) >= tenPercent) {
-                                subtractBalance(tenPercent, `Благотворительность (10% от дохода $${monthlyIncome.toLocaleString()})`);
-                                showNotification(`✅ Оплата $${tenPercent.toLocaleString()} принята. Доступно 1-2 кубика.`, 'success');
-                                
-                                // Обновляем отображение
-                                if (paydayElement) {
-                                    const newPayday = monthlyIncome - monthlyExpenses;
-                                    paydayElement.textContent = `$${newPayday.toLocaleString()}/мес`;
-                                }
+                                subtractBalance(tenPercent, 'Благотворительность (малый круг)');
+                                showNotification('✅ Оплата 10% дохода принята. Доступно 1-2 кубика.', 'success');
                             } else {
-                                alert(`Недостаточно средств: нужно $${tenPercent.toLocaleString()}\nВаш баланс: $${(currentBalance || 0).toLocaleString()}`);
+                                alert(`Недостаточно средств: нужно $${tenPercent.toLocaleString()}`);
                             }
                         };
                         const creditBtn = document.getElementById('charityCreditBtn');
@@ -6713,10 +6062,7 @@ const dealCards = {
                             if (msg.type === 'player-move' && Array.isArray(msg.player_positions)) {
                                 // Обновляем локальные позиции (0..23 → 1..24)
                                 for (let i = 0; i < msg.player_positions.length; i++) {
-                                    const zeroBased = msg.player_positions[i];
-                                    if (zeroBased >= 0) {
-                                        playerPositions[i] = (zeroBased % 24) + 1;
-                                    }
+                                    playerPositions[i] = (msg.player_positions[i] % 24) + 1;
                                 }
                                 updatePlayerTokenPositions();
                             }
