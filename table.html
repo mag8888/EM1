@@ -4493,11 +4493,12 @@ const dealCards = {
                                         ${card.isDividendStock ? '<span class="dividend-badge">Дивидендная</span>' : ''}
                                         ${!canSellCardInCurrentTurn(card) && (card.type === 'stocks' || card.type === 'crypto') ? '<span class="sell-restriction">Только в ход покупки</span>' : ''}
                                     </div>
-                                    <div class="asset-actions">
+                                <div class="asset-actions">
                                         ${canSellCardInCurrentTurn(card) ? 
-                                            `<button class="modern-btn secondary" onclick="sellAsset(${card.id})">Продать</button>` : 
-                                            `<button class="modern-btn disabled" disabled>Недоступно</button>`
+                                            `<button class=\"modern-btn secondary\" onclick=\"sellAsset(${card.id})\">Продать</button>` : 
+                                            `<button class=\"modern-btn disabled\" disabled>Недоступно</button>`
                                         }
+                                        <button class="modern-btn" onclick="openTransferModal(${card.id})">Передать</button>
                                     </div>
                                 </div>
                             `).join('')}
@@ -4508,6 +4509,117 @@ const dealCards = {
             
             document.body.appendChild(modal);
             modal.style.display = 'block';
+        }
+
+        // Открыть модал передачи актива
+        async function openTransferModal(cardId) {
+            const playerCards = playerAssets[currentPlayer] || [];
+            const card = playerCards.find(c => c.id === cardId);
+            if (!card) { showNotification('❌ Карточка не найдена', 'error'); return; }
+
+            // Получаем игроков комнаты
+            const roomId = getRoomIdFromURL();
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            let players = [];
+            try {
+                const resp = await fetch(`/api/rooms/${roomId}?user_id=${user.id}`);
+                if (resp.ok) { const data = await resp.json(); players = data.players || []; }
+            } catch {}
+
+            // Формируем список получателей (кроме себя)
+            const recipients = players
+                .map((p, idx) => ({ index: idx, name: p.name || `Игрок ${idx+1}` }))
+                .filter(p => p.index !== currentPlayer);
+
+            const modal = document.createElement('div');
+            modal.id = 'transferModal';
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>🔁 Передать актив</h2>
+                        <button class="close-btn" onclick="closeTransferModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="margin-bottom:8px; font-weight:600;">${card.name}</p>
+                        <div class="card-info-row">
+                            <span class="card-label">Получатель:</span>
+                            <span class="card-value">
+                                <select id="transferRecipient" style="min-width:220px;">
+                                    ${recipients.map(r => `<option value="${r.index}">${r.name}</option>`).join('')}
+                                </select>
+                            </span>
+                        </div>
+                        ${ (card.type === 'stocks' || card.type === 'crypto') ? `
+                        <div class="card-info-row">
+                            <span class="card-label">Количество:</span>
+                            <span class="card-value">
+                                <input id="transferQty" type="number" min="1" max="${card.quantity || 1}" value="1" style="width:100px;">
+                                <span style="opacity:.7; margin-left:6px;">из ${card.quantity || 1}</span>
+                            </span>
+                        </div>` : ''}
+                        <div style="margin-top:14px; display:flex; gap:8px;">
+                            <button class="modern-btn primary" onclick="confirmTransfer(${card.id})">Передать</button>
+                            <button class="modern-btn secondary" onclick="closeTransferModal()">Отмена</button>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+        }
+
+        function closeTransferModal() {
+            const modal = document.getElementById('transferModal');
+            if (modal) modal.remove();
+        }
+
+        // Подтвердить передачу
+        function confirmTransfer(cardId) {
+            const playerCards = playerAssets[currentPlayer] || [];
+            const card = playerCards.find(c => c.id === cardId);
+            if (!card) { showNotification('❌ Карточка не найдена', 'error'); return; }
+            const recipientSelect = document.getElementById('transferRecipient');
+            const recipientIndex = parseInt(recipientSelect ? recipientSelect.value : '-1', 10);
+            if (Number.isNaN(recipientIndex) || recipientIndex < 0) { showNotification('❌ Выберите получателя', 'error'); return; }
+
+            // Количество
+            let qtyToSend = 1;
+            if (card.type === 'stocks' || card.type === 'crypto') {
+                const qtyInput = document.getElementById('transferQty');
+                qtyToSend = Math.max(1, Math.min(parseInt(qtyInput ? qtyInput.value : '1', 10) || 1, card.quantity || 1));
+            }
+
+            // Снимаем у отправителя
+            const senderPassive = playerPassiveIncome[currentPlayer] || 0;
+            const perUnitIncome = (card.type === 'stocks' || card.type === 'crypto') ? (card.income || 0) : card.income;
+            playerPassiveIncome[currentPlayer] = Math.max(0, senderPassive - perUnitIncome * qtyToSend);
+
+            if (card.type === 'stocks' || card.type === 'crypto') {
+                card.quantity = (card.quantity || 1) - qtyToSend;
+                if (card.quantity <= 0) {
+                    const idx = playerCards.findIndex(c => c.id === cardId);
+                    if (idx !== -1) playerCards.splice(idx, 1);
+                }
+            } else {
+                const idx = playerCards.findIndex(c => c.id === cardId);
+                if (idx !== -1) playerCards.splice(idx, 1);
+            }
+
+            // Добавляем получателю
+            if (!playerAssets[recipientIndex]) playerAssets[recipientIndex] = [];
+            const receiveCard = { ...card };
+            if (card.type === 'stocks' || card.type === 'crypto') {
+                receiveCard.quantity = qtyToSend;
+            }
+            playerAssets[recipientIndex].push(receiveCard);
+            const recPassive = playerPassiveIncome[recipientIndex] || 0;
+            playerPassiveIncome[recipientIndex] = recPassive + perUnitIncome * qtyToSend;
+
+            updateFinancesDisplay();
+            showNotification(`🔁 Передано: ${card.name}${(card.type === 'stocks' || card.type === 'crypto') ? ` x${qtyToSend}` : ''}`, 'success');
+            closeTransferModal();
+            closeAssetsModal();
+            showPlayerAssets();
         }
 
         // Получить название типа карточки
