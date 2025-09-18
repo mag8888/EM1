@@ -2847,7 +2847,7 @@
         <!-- Боковая панель -->
         <div class="sidebar">
             <!-- Bank v3 - External preview card -->
-            <div class="bank-preview" onclick="openBankV3()">
+            <div class="bank-preview" onclick="openBankV4()">
                 <div class="bank-header">
                     <div class="bank-title">
                         <div class="bank-icon">🏦</div>
@@ -3591,12 +3591,12 @@ const dealCards = {
             safeCallBankFunction('updateCreditDisplay');
         }
 
-        // Bank v3 functions
-        function openBankV3() {
-            if (typeof window.openBankV3 === 'function') {
-                window.openBankV3();
+        // Bank v4 functions
+        function openBankV4() {
+            if (typeof window.openBankV4 === 'function') {
+                window.openBankV4();
             } else {
-                console.error('Bank v3 module not loaded');
+                console.error('Bank v4 module not loaded');
             }
         }
         
@@ -7586,7 +7586,24 @@ const dealCards = {
     <script src="bank-module-v2/BankApiService.js"></script>
     <script src="bank-module-v2/BankUIService.js"></script>
     <script src="bank-module-v2/BankModule.js"></script>
-    <script src="bank-module-v3/bank-module-v3.js"></script>
+    <!-- Bank Module v4 - New Implementation -->
+    <link rel="stylesheet" href="bank-module-v4/bank-styles-v4.css">
+    <script src="bank-module-v4/bank-module-v4.js"></script>
+    <script src="bank-module-v4/integration.js"></script>
+    
+    <!-- Include Bank Modal v4 -->
+    <script>
+        // Включаем HTML модального окна банка v4
+        fetch('bank-module-v4/bank-modal-v4.html')
+            .then(response => response.text())
+            .then(html => {
+                document.body.insertAdjacentHTML('beforeend', html);
+                console.log('✅ Bank Modal v4 загружен');
+            })
+            .catch(error => {
+                console.error('❌ Ошибка загрузки Bank Modal v4:', error);
+            });
+    </script>
     
     <!-- Deal Choice Modal -->
     <div id="dealChoiceModal" class="modal">
