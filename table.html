@@ -7177,18 +7177,39 @@ const dealCards = {
             
             // PayDay: это доход. Показываем сумму в поле «Доход», «Стоимость» — Бесплатно
             if (cell.type === 'PayDay') {
-                const paydayAmount = Math.max(0, (monthlyIncome || 0) - (monthlyExpenses || 0));
+                // Получаем актуальные данные из банковского модуля
+                let actualMonthlyIncome = monthlyIncome || 0;
+                let actualMonthlyExpenses = monthlyExpenses || 0;
+                
+                // Пытаемся получить данные из банковского модуля
+                try {
+                    if (window.globalMonthlyIncome !== undefined) {
+                        actualMonthlyIncome = window.globalMonthlyIncome;
+                    }
+                    if (window.globalMonthlyExpenses !== undefined) {
+                        actualMonthlyExpenses = window.globalMonthlyExpenses;
+                    }
+                } catch (e) {
+                    console.warn('Не удалось получить данные из банковского модуля:', e);
+                }
+                
+                const paydayAmount = Math.max(0, actualMonthlyIncome - actualMonthlyExpenses);
+                console.log(`💰 PAYDAY расчет: доход $${actualMonthlyIncome.toLocaleString()} - расходы $${actualMonthlyExpenses.toLocaleString()} = $${paydayAmount.toLocaleString()}`);
+                
                 document.getElementById('cellPopupDescription').textContent = `Получить зарплату: $${paydayAmount.toLocaleString()}`;
                 document.getElementById('cellPopupCost').textContent = 'Бесплатно';
                 document.getElementById('cellPopupIncome').textContent = `$${paydayAmount.toLocaleString()}`;
+                
                 // Начисляем PAYDAY сразу после попадания на клетку
                 try {
                     if (paydayAmount > 0) {
-                        addBalance(paydayAmount, 'PayDay');
+                        safeCallBankFunction('addBalance', paydayAmount, 'PayDay');
                         showNotification(`💵 PAYDAY: +$${paydayAmount.toLocaleString()}`, 'success');
                     } else if (paydayAmount < 0) {
-                        subtractBalance(Math.abs(paydayAmount), 'Отрицательный PayDay');
+                        safeCallBankFunction('subtractBalance', Math.abs(paydayAmount), 'Отрицательный PayDay');
                         showNotification(`⚠️ PAYDAY отрицательный: -$${Math.abs(paydayAmount).toLocaleString()}`, 'warning');
+                    } else {
+                        showNotification(`💵 PAYDAY: $0 (доходы равны расходам)`, 'info');
                     }
                 } catch (e) { console.warn('PayDay apply failed:', e); }
             } else {
@@ -7234,14 +7255,24 @@ const dealCards = {
                     }, 0);
                 } else {
                     // Малый круг
-                    const tenPercent = Math.floor((monthlyIncome || 0) * 0.10);
+                    // Получаем актуальные данные из банковского модуля
+                    let actualMonthlyIncome = monthlyIncome || 0;
+                    try {
+                        if (window.globalMonthlyIncome !== undefined) {
+                            actualMonthlyIncome = window.globalMonthlyIncome;
+                        }
+                    } catch (e) {
+                        console.warn('Не удалось получить доход из банковского модуля:', e);
+                    }
+                    
+                    const tenPercent = Math.floor(actualMonthlyIncome * 0.10);
                     container.innerHTML = `
                         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                             <button class="modern-btn secondary" id="charityPayInner">Оплатить $${tenPercent.toLocaleString()}</button>
                             <button class="modern-btn credit" id="charityCreditBtn">Взять кредит</button>
                         </div>
                         <div style="margin-top:8px; font-size:12px; opacity:0.8;">
-                            💡 10% от дохода $${(monthlyIncome || 0).toLocaleString()} = $${tenPercent.toLocaleString()}
+                            💡 10% от дохода $${actualMonthlyIncome.toLocaleString()} = $${tenPercent.toLocaleString()}
                         </div>
                         <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
                             <span>Кубики на ход:</span>
@@ -7252,10 +7283,20 @@ const dealCards = {
                     setTimeout(() => {
                         const payBtn = document.getElementById('charityPayInner');
                         if (payBtn) payBtn.onclick = () => {
+                            // Получаем актуальные данные из банковского модуля
+                            let actualMonthlyIncome = monthlyIncome || 0;
+                            try {
+                                if (window.globalMonthlyIncome !== undefined) {
+                                    actualMonthlyIncome = window.globalMonthlyIncome;
+                                }
+                            } catch (e) {
+                                console.warn('Не удалось получить доход из банковского модуля:', e);
+                            }
+                            
                             // Рассчитываем 10% от общего дохода (до вычета расходов)
-                            const tenPercent = Math.floor((monthlyIncome || 0) * 0.10);
+                            const tenPercent = Math.floor(actualMonthlyIncome * 0.10);
                             const paydayElement = document.getElementById('monthlyIncome');
-                            const currentPayday = monthlyIncome - monthlyExpenses;
+                            const currentPayday = actualMonthlyIncome - (monthlyExpenses || 0);
                             
                             if ((currentBalance || 0) >= tenPercent) {
                                 subtractBalance(tenPercent, `Благотворительность (10% от дохода $${monthlyIncome.toLocaleString()})`);
