@@ -462,10 +462,82 @@
 
 .transfers-history {
     flex: 1;
+    max-height: 300px;
     overflow-y: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    padding-right: 8px;
+    margin-right: -8px;
+}
+
+/* Стилизация скроллбара */
+.transfers-history::-webkit-scrollbar {
+    width: 6px;
+}
+
+.transfers-history::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.transfers-history::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+.transfers-history::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Для Firefox */
+.transfers-history {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+}
+
+/* Индикатор скролла */
+.scroll-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 12px;
+    color: #94a3b8;
+    animation: pulse 2s infinite;
+}
+
+.scroll-arrow {
+    font-size: 14px;
+    animation: bounce 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-4px);
+    }
+    60% {
+        transform: translateY(-2px);
+    }
 }
 
 /* Animations */

@@ -29,7 +29,14 @@ async function openBankV3() {
     await initBankModuleV3();
   }
   if (bankModuleInstance) {
-    return bankModuleInstance.openBank();
+    const result = await bankModuleInstance.openBank();
+    
+    // Принудительно обновляем кредитные данные при открытии банка
+    setTimeout(() => {
+      forceUpdateCreditData();
+    }, 500);
+    
+    return result;
   }
   console.error('Failed to initialize bank module');
 }
@@ -542,6 +549,12 @@ function initializeGlobalVariables() {
         console.warn('Не удалось синхронизировать с банковским модулем v2:', e);
     }
     
+    // Принудительная синхронизация кредитных данных с сервера
+    setTimeout(() => {
+        syncCreditFromServer();
+        updateCreditDisplay();
+    }, 1000);
+    
     console.log('🔄 Инициализированы глобальные переменные банка:', {
         balance: globalCurrentBalance,
         income: globalMonthlyIncome,
@@ -652,4 +665,54 @@ function checkCreditStatus() {
 }
 
 window.checkCreditStatus = checkCreditStatus;
+
+// Функция для управления индикатором скролла
+function updateScrollIndicator() {
+    const historyContainer = document.getElementById('transfersHistory');
+    const scrollIndicator = document.getElementById('scrollIndicator');
+    
+    if (!historyContainer || !scrollIndicator) return;
+    
+    // Проверяем, есть ли скролл
+    const hasScroll = historyContainer.scrollHeight > historyContainer.clientHeight;
+    
+    if (hasScroll) {
+        scrollIndicator.style.display = 'flex';
+        
+        // Скрываем индикатор при прокрутке до конца
+        historyContainer.addEventListener('scroll', function() {
+            const isAtBottom = historyContainer.scrollTop + historyContainer.clientHeight >= historyContainer.scrollHeight - 5;
+            scrollIndicator.style.display = isAtBottom ? 'none' : 'flex';
+        });
+    } else {
+        scrollIndicator.style.display = 'none';
+    }
+}
+
+// Добавляем функцию в глобальный доступ
+window.updateScrollIndicator = updateScrollIndicator;
+
+// Функция для принудительного обновления всех кредитных данных
+function forceUpdateCreditData() {
+    console.log('🔄 Принудительное обновление кредитных данных...');
+    
+    // Синхронизируем с банковским модулем v2
+    syncCreditFromServer();
+    
+    // Обновляем отображение
+    updateCreditDisplay();
+    updateFinancesDisplay();
+    
+    // Синхронизируем с table.html
+    syncVariablesToTable();
+    
+    // Проверяем состояние
+    const status = checkCreditStatus();
+    console.log('📊 Обновленное состояние кредитов:', status);
+    
+    return status;
+}
+
+// Добавляем в глобальный доступ
+window.forceUpdateCreditData = forceUpdateCreditData;
 
