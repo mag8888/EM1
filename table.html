@@ -5106,6 +5106,8 @@ const dealCards = {
                                 console.log(`✅ Создана фишка для игрока ${i}: ${playerName} на клетке ${position}`);
                             }
                         }
+                        tokensInitialized = true;
+                        updatePlayerTokenPositions();
                     } catch (e) {
                         console.warn('Не удалось создать фишки игроков:', e);
                     }
