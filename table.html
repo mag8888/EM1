@@ -3334,7 +3334,7 @@ const dealCards = {
         };
 
         // Колоды карт рынка и расходов
-        let cardDecks = {
+        let gameDecks = {
             market: [...marketCards],
             marketDiscard: [],
             expense: [...expenseCards],
@@ -4809,6 +4809,9 @@ const dealCards = {
                 });
                 
                 console.log('✅ Угловые карточки инициализированы');
+                
+                // Обновляем все счетчики колод
+                updateDeckCounters();
                 
             } catch (error) {
                 console.error('❌ Ошибка инициализации угловых карточек:', error);
