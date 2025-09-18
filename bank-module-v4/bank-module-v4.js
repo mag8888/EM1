@@ -152,8 +152,21 @@ class BankModuleV4 {
     async loadData() {
         try {
             console.log('📡 BankModuleV4: Загрузка данных...');
+            console.log('📡 BankModuleV4: Room ID:', this.roomId);
+            console.log('📡 BankModuleV4: User ID:', this.userId);
+            console.log('📡 BankModuleV4: Current URL:', window.location.href);
             
-            const response = await fetch(`/api/rooms/${this.roomId}?user_id=${this.userId}`);
+            // Проверяем, что мы работаем с локальным сервером
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            console.log('📡 BankModuleV4: Is local:', isLocal);
+            
+            const apiUrl = `/api/rooms/${this.roomId}?user_id=${this.userId}`;
+            console.log('📡 BankModuleV4: API URL:', apiUrl);
+            
+            const response = await fetch(apiUrl);
+            console.log('📡 BankModuleV4: Response status:', response.status);
+            console.log('📡 BankModuleV4: Response URL:', response.url);
+            
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
@@ -170,6 +183,11 @@ class BankModuleV4 {
             return true;
         } catch (error) {
             console.error('❌ BankModuleV4: Ошибка загрузки данных:', error);
+            console.error('❌ BankModuleV4: Error details:', {
+                name: error.name,
+                message: error.message,
+                stack: error.stack
+            });
             return false;
         }
     }
