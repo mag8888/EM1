@@ -2943,7 +2943,7 @@
 
             <!-- Текущий игрок -->
             <div class="section current-player">
-                <div class="current-player-title">Текущий игрок</div>
+                <div class="current-player-title">Имя</div>
                 <div class="current-player-info" id="currentPlayerInfo">
                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
                         <div class="player-avatar player-1" style="width: 20px; height: 20px; font-size: 10px;">1</div>
@@ -6212,10 +6212,10 @@ const dealCards = {
                 playersList.appendChild(playerItem);
             });
             
-            // Обновляем информацию о текущем игроке
-            if (players[currentPlayerIndex]) {
-                updateCurrentPlayerInfo(players[currentPlayerIndex]);
-            }
+                    // Обновляем информацию о текущем игроке
+                    if (data.players[currentPlayer]) {
+                        updateCurrentPlayerInfo(data.players[currentPlayer]);
+                    }
         }
 
         // Обновление информации о текущем игроке
@@ -6223,12 +6223,15 @@ const dealCards = {
             const currentPlayerInfo = document.getElementById('currentPlayerInfo');
             if (!currentPlayerInfo || !player) return;
             
+            // Находим номер игрока (индекс + 1)
+            const playerNumber = currentPlayer + 1;
+            
             // Баланс берется из game_data, не из player.balance
             // Bank logic removed
             
             currentPlayerInfo.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                    <div class="player-avatar player-1" style="width: 20px; height: 20px; font-size: 10px;">1</div>
+                    <div class="player-avatar player-${playerNumber}" style="width: 20px; height: 20px; font-size: 10px;">${playerNumber}</div>
                     <div>
                         <div style="font-weight: bold;">${player.name}</div>
                         <div style="font-size: 12px; color: #94a3b8;">${player.profession || 'Предприниматель'}</div>
