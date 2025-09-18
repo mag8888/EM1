@@ -761,12 +761,53 @@ app.post('/api/rooms/join', async (req, res) => {
         // Check if user already in players
         const existingPlayer = room.players.find(p => p.user_id.toString() === user_id);
         
-        // If game started, allow rejoin for existing players
+        // If game started
         if (room.game_started) {
             if (existingPlayer) {
+                // Rejoin
                 return res.json({ room_id: room._id, rejoined: true });
             }
-            return res.status(400).json({ message: 'Игра уже началась' });
+            // Allow late join if there is space
+            if (room.players.length >= room.max_players) {
+                return res.status(400).json({ message: 'Комната заполнена' });
+            }
+            // Optional: password check even after start
+            if (room.password && password !== room.password) {
+                return res.status(403).json({ message: 'Неверный пароль комнаты' });
+            }
+            
+            // Add player
+            room.players.push({ user_id, name: `Игрок ${room.players.length + 1}` });
+            
+            // Ensure game_data
+            if (!room.game_data) room.game_data = {};
+            
+            // Initialize/expand arrays for the new player without resetting existing data
+            const playersCount = room.players.length;
+            
+            if (!Array.isArray(room.game_data.player_positions)) {
+                room.game_data.player_positions = new Array(playersCount).fill(0);
+            } else {
+                while (room.game_data.player_positions.length < playersCount) {
+                    room.game_data.player_positions.push(0);
+                }
+            }
+            
+            if (!Array.isArray(room.game_data.player_balances)) {
+                room.game_data.player_balances = new Array(playersCount).fill(0);
+            } else {
+                while (room.game_data.player_balances.length < playersCount) {
+                    room.game_data.player_balances.push(0);
+                }
+            }
+            
+            await room.save();
+            
+            try {
+                broadcastToRoom(room._id, { type: 'player-joined', players: room.players });
+            } catch (_) {}
+            
+            return res.json({ room_id: room._id, joined_after_start: true });
         }
         
         if (room.players.length >= room.max_players) {
@@ -1965,10 +2006,14 @@ app.post('/api/rooms/:id/move', async (req, res) => {
             return res.status(403).json({ message: 'Сейчас не ваш ход' });
         }
         
-        // Ensure game_data and player_positions are initialized
+        // Ensure game_data and player_positions are initialized and sized without resetting existing data
         if (!room.game_data) room.game_data = {};
-        if (!Array.isArray(room.game_data.player_positions) || room.game_data.player_positions.length !== room.players.length) {
+        if (!Array.isArray(room.game_data.player_positions)) {
             room.game_data.player_positions = new Array(room.players.length).fill(0);
+        } else if (room.game_data.player_positions.length < room.players.length) {
+            while (room.game_data.player_positions.length < room.players.length) {
+                room.game_data.player_positions.push(0);
+            }
         }
         
         const currentPosition = room.game_data.player_positions[playerIndex] || 0;
