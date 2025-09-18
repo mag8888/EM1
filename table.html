@@ -1699,6 +1699,16 @@
             color: #e5e7eb;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
+        /* Color badge for cell popup */
+        .color-badge {
+            display: inline-block;
+            width: 34px;
+            height: 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: inset 0 0 6px rgba(0,0,0,0.2);
+            vertical-align: middle;
+        }
         
         /* Cell Popup Modal Styles */
         .cell-popup-modal {
@@ -6898,20 +6908,26 @@ const dealCards = {
                 titleEl.textContent = (cell.type === 'Благотворительность') ? 'Благотворительность' : cell.name;
             }
             
-            // Заполняем цвет клетки
-            const colorMap = {
-                'green': 'Зеленый',
-                'blue': 'Синий', 
-                'yellow': 'Желтый',
-                'pink': 'Розовый',
-                'red': 'Красный',
-                'orange': 'Оранжевый',
-                'purple': 'Фиолетовый',
-                'black': 'Черный',
-                'gray': 'Серый',
-                'charity': 'Благотворительность'
+            // Заполняем цвет клетки – показываем цветной бейдж вместо текста
+            const colorValue = (cell.color || '').toLowerCase();
+            const colorToHex = {
+                green: '#10b981',
+                blue: '#3b82f6',
+                yellow: '#f59e0b',
+                pink: '#ec4899',
+                red: '#ef4444',
+                orange: '#f97316',
+                purple: '#8b5cf6',
+                black: '#111827',
+                gray: '#6b7280',
+                charity: '#ff6b6b'
             };
-            document.getElementById('cellPopupColor').textContent = colorMap[cell.color] || cell.color || 'Неизвестно';
+            const colorBadge = document.createElement('span');
+            colorBadge.className = 'color-badge';
+            colorBadge.style.background = colorToHex[colorValue] || '#6b7280';
+            const colorCell = document.getElementById('cellPopupColor');
+            colorCell.textContent = '';
+            colorCell.appendChild(colorBadge);
             document.getElementById('cellPopupType').textContent = cell.type;
             document.getElementById('cellPopupCost').textContent = cell.cost > 0 ? `$${cell.cost.toLocaleString()}` : 'Бесплатно';
             
@@ -6928,7 +6944,14 @@ const dealCards = {
                 document.getElementById('cellPopupIncome').textContent = 'Нет дохода';
             }
             
-            document.getElementById('cellPopupDescription').textContent = cell.description;
+            // PayDay: выводим сумму, которую получает игрок
+            if (cell.type === 'PayDay') {
+                const paydayAmount = Math.max(0, (monthlyIncome || 0) - (monthlyExpenses || 0));
+                document.getElementById('cellPopupDescription').textContent = `Получить зарплату: $${paydayAmount.toLocaleString()}`;
+                document.getElementById('cellPopupCost').textContent = `$${paydayAmount.toLocaleString()}`;
+            } else {
+                document.getElementById('cellPopupDescription').textContent = cell.description;
+            }
 
             // Спец-логика для Благотворительности
             const extraArea = document.getElementById('cellPopupExtra');
