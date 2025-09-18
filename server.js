@@ -1499,17 +1499,25 @@ app.post('/api/rooms/:id/roll-dice', async (req, res) => {
             return res.status(404).json({ message: 'Комната не найдена' });
         }
 
-        const { player_index } = req.body;
+        const { player_index, dice_count } = req.body;
         if (player_index < 0 || player_index >= room.players.length) {
             return res.status(400).json({ message: 'Неверный индекс игрока' });
         }
 
-        // Бросаем кубик
-        const diceValue = gameBoardService.rollDice();
+        // Бросаем 1..N кубиков
+        const count = Math.max(1, Math.min(3, parseInt(dice_count || 1, 10)));
+        let diceValue = 0;
+        const rolls = [];
+        for (let i = 0; i < count; i++) {
+            const v = gameBoardService.rollDice();
+            rolls.push(v);
+            diceValue += v;
+        }
         
         res.json({
             success: true,
             dice_value: diceValue,
+            rolls,
             current_player: gameBoardService.getCurrentPlayer()
         });
 

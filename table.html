@@ -683,9 +683,9 @@
         }
 
         .section-title {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 700;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             color: #e2e8f0;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -904,15 +904,15 @@
             cursor: pointer;
         }
         .bank-preview:hover { background: rgba(30,41,59,0.75); }
-        .bank-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .bank-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
         .bank-title { display: flex; align-items: center; gap: 8px; color: #e2e8f0; font-weight: 700; }
         .bank-icon { width: 24px; height: 24px; background: linear-gradient(135deg,#10b981,#059669); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         .bank-status { background: rgba(16,185,129,.2); color:#10b981; padding:4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-        .bank-balance { text-align:center; margin: 8px 0 12px; }
-        .bank-balance .balance-amount { font-size: 40px; font-weight: 800; color:#10b981; line-height: 1; }
+        .bank-balance { text-align:center; margin: 6px 0 8px; }
+        .bank-balance .balance-amount { font-size: 32px; font-weight: 800; color:#10b981; line-height: 1; }
         .bank-balance .balance-label { color:#94a3b8; font-size:12px; }
         .bank-card { background: rgba(0,0,0,.2); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:12px; }
-        .bank-stats { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+        .bank-stats { display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
         .bank-stat { display:flex; align-items:center; justify-content:space-between; font-size:14px; }
         .bank-stat .label { color:#94a3b8; display:flex; align-items:center; gap:8px; }
         .bank-stat .value { font-weight:700; }
@@ -1089,14 +1089,14 @@
 
         .bank-left-column {
             flex: 1;
-            padding: 32px;
+            padding: 20px;
             overflow-y: auto;
             background: rgba(255, 255, 255, 0.02);
         }
 
         .bank-right-column {
             flex: 1.2;
-            padding: 32px;
+            padding: 20px;
             overflow-y: auto;
             border-left: 1px solid rgba(255, 255, 255, 0.1);
         }
@@ -1364,7 +1364,7 @@
         }
 
         .transfers-history {
-            max-height: 400px;
+            max-height: 300px;
             overflow-y: auto;
         }
 
@@ -2606,12 +2606,16 @@
                             <div class="value income" id="totalIncome">$0</div>
                     </div>
                     <div class="bank-stat">
-                            <div class="label" style="cursor: pointer; display: flex; align-items: center; gap: 6px;" onclick="toggleExpensesDetails()">📉 Расходы <span id="expensesCaret">▾</span>:</div>
+                            <div class="label">📉 Расходы:</div>
                             <div class="value expenses" id="totalExpenses">$0</div>
-                    </div>
+                        </div>
                     <div id="expensesDetails" style="display:none; margin: 6px 0 10px 0; padding: 10px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;">
                         <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>Базовые расходы</span><span id="expenseBase">$0</span></div>
                         <div style="display:flex; justify-content:space-between;"><span>Платежи по кредиту</span><span id="expenseCredit">$0</span></div>
+                    </div>
+                    <div class="bank-stat" style="cursor: pointer; display: flex; align-items: center; gap: 6px; margin-top: 8px;" onclick="toggleExpensesDetails()">
+                        <div class="label" style="margin: 0;">Детали расходов</div>
+                        <span id="expensesCaret">▾</span>
                     </div>
                     <div class="bank-stat">
                             <div class="label">💰 PAYDAY:</div>
@@ -3060,6 +3064,10 @@
         let diceRolled = false; // Флаг броска кубика
         let turnTransitionTimeout; // Таймаут для перехода хода
         let warningSoundPlayed = false; // Флаг для предотвращения повторных сигналов
+        // Настройки благотворительности: сколько кубиков может выбрать игрок в текущем треке
+        // На внутреннем круге: 1 или 2 (после оплаты 10% дохода)
+        // На внешнем круге: 1..3 (после оплаты $100,000)
+        let fastTrackDiceChoice = {}; // playerIndex -> 1|2|3
         
         // Переменные для кредитов
         let currentBalance = 0; // Текущий баланс
@@ -3068,6 +3076,7 @@
         let monthlyIncome = 0; // Ежемесячный доход
         let monthlyExpenses = 0; // Ежемесячные расходы
         let expensesBreakdown = { base: 0, credit: 0 };
+        const CHILD_MONTHLY_COST = 2000; // платеж по ребенку (мес)
         
         // Игровое поле
         let gameBoardUI = null;
@@ -3949,12 +3958,14 @@
             const rollDiceBtn = document.getElementById('rollDiceBtn');
             rollDiceBtn.disabled = true;
 
+            // Определяем количество кубиков (с учётом благотворительности)
+            const diceCount = (fastTrackDiceChoice[currentPlayer] || (playerTracks[currentPlayer] === 'outer' ? 1 : 1));
             // Запрашиваем значение кубика у сервера
             try {
                 const rollResp = await fetch(`/api/rooms/${roomId}/roll-dice`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ player_index: currentPlayer })
+                    body: JSON.stringify({ player_index: currentPlayer, dice_count: diceCount })
                 });
                 const rollData = await rollResp.json();
                 if (!rollResp.ok || !rollData.success) {
@@ -3967,7 +3978,7 @@
                 // Короткая анимация и показ результата
                 dice.classList.add('rolling');
                 await new Promise(r => setTimeout(r, 500));
-                dice.classList.remove('rolling');
+                    dice.classList.remove('rolling');
                 dice.textContent = finalValue;
 
                 // Двигаем локально
@@ -3985,14 +3996,14 @@
                 }
 
                 isRolling = false;
-                turnTransitionTimeout = setTimeout(() => {
-                    updateRollButton();
-                }, 10000);
+                    turnTransitionTimeout = setTimeout(() => {
+                        updateRollButton();
+                    }, 10000);
             } catch (e) {
                 console.error('Roll error:', e);
                 isRolling = false;
                 rollDiceBtn.disabled = false;
-            }
+                }
         }
 
         function updateRollButton() {
@@ -4060,6 +4071,80 @@
                 }, 500);
             
             console.log(`✅ Игрок ${currentPlayer} перемещен на клетку ${newPosition}`);
+
+            // Спец-событие: Ребенок (малый круг)
+            try {
+                if (track === 'inner') {
+                    const innerCell = innerCellData[newPosition - 1];
+                    if (innerCell && innerCell.type === 'Ребенок') {
+                        await handleChildEvent();
+                    }
+                }
+            } catch (e) { console.warn('Child event error:', e); }
+        }
+
+        // Обработка события "Ребенок" на малом круге
+        async function handleChildEvent() {
+            const roomId = getRoomIdFromURL();
+            if (!roomId) return;
+            try {
+                // Бросаем один кубик на сервере: 1-4 ребенок родился; 5-6 нет
+                const resp = await fetch(`/api/rooms/${roomId}/roll-dice`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ player_index: currentPlayer, dice_count: 1 })
+                });
+                const data = await resp.json();
+                if (!resp.ok || !data.success) return;
+                const value = data.dice_value;
+                if (value >= 1 && value <= 4) {
+                    // Ребенок родился
+                    monthlyExpenses += CHILD_MONTHLY_COST;
+                    expensesBreakdown.base += CHILD_MONTHLY_COST;
+                    currentBalance += 5000; // разовая выплата
+                    updateFinancesDisplay();
+                    updateBalanceDisplay();
+                    showCelebration(`🎉 Поздравляем! У вас родился ребенок. +$5,000 разово и +$${CHILD_MONTHLY_COST.toLocaleString()}/мес к расходам.`);
+                } else {
+                    showNotification('👶 Ребенок не родился (выпало 5 или 6).', 'info');
+                }
+            } catch (e) {
+                console.warn('Child roll error:', e);
+            }
+        }
+
+        // Простая анимация конфетти + модальное поздравление
+        function showCelebration(message) {
+            try {
+                const overlay = document.createElement('div');
+                overlay.style.position = 'fixed';
+                overlay.style.inset = '0';
+                overlay.style.zIndex = '2000';
+                overlay.style.pointerEvents = 'none';
+                document.body.appendChild(overlay);
+
+                // Конфетти
+                for (let i = 0; i < 80; i++) {
+                    const span = document.createElement('span');
+                    span.textContent = '🎉';
+                    span.style.position = 'absolute';
+                    span.style.left = Math.random() * 100 + 'vw';
+                    span.style.top = '-5vh';
+                    span.style.fontSize = (12 + Math.random() * 16) + 'px';
+                    span.style.transition = 'transform 2.5s linear, opacity 2.5s linear';
+                    overlay.appendChild(span);
+                    requestAnimationFrame(() => {
+                        span.style.transform = `translateY(${110 + Math.random() * 20}vh) rotate(${(Math.random()*720-360)}deg)`;
+                        span.style.opacity = '0.8';
+                    });
+                }
+
+                // Сообщение
+                showNotification(message, 'success');
+                setTimeout(() => overlay.remove(), 2600);
+            } catch (_) {
+                alert(message);
+            }
         }
 
         // Анимация перемещения фишки к клетке
@@ -4997,6 +5082,7 @@
             // Обновляем отображение
             updateCreditDisplay();
             updateBalanceDisplay();
+            updateFinancesDisplay(); // Обновляем PAYDAY и детализацию
             
             // Показываем уведомление
             alert(`✅ Кредит взят на $${amount.toLocaleString()}\n💸 Ежемесячный платеж: $${newCreditPayment.toLocaleString()}\n📊 Расходы увеличены на $${newCreditPayment.toLocaleString()}`);
@@ -5062,12 +5148,13 @@
         // Обновить отображение финансов
         function updateFinancesDisplay() {
             // Находим элементы расходов и PAYDAY
-            const expensesElement = document.querySelector('.value.expenses');
-            const paydayElement = document.querySelector('.value.payday');
+            const expensesElement = document.getElementById('totalExpenses');
+            const paydayElement = document.getElementById('monthlyIncome');
             
             if (expensesElement) {
                 expensesElement.textContent = `$${monthlyExpenses.toLocaleString()}`;
             }
+            
             // Детализация расходов
             const baseEl = document.getElementById('expenseBase');
             const creditEl = document.getElementById('expenseCredit');
@@ -5239,7 +5326,10 @@
             if (!cell) return;
 
             // Заполняем поп-ап данными
-            document.getElementById('cellPopupTitle').textContent = cell.name;
+            const titleEl = document.getElementById('cellPopupTitle');
+            if (titleEl) {
+                titleEl.textContent = (cell.type === 'Благотворительность') ? 'Благотворительность' : cell.name;
+            }
             document.getElementById('cellPopupType').textContent = cell.type;
             document.getElementById('cellPopupCost').textContent = cell.cost > 0 ? `$${cell.cost.toLocaleString()}` : 'Бесплатно';
             
@@ -5257,6 +5347,80 @@
             }
             
             document.getElementById('cellPopupDescription').textContent = cell.description;
+
+            // Спец-логика для Благотворительности
+            const extraArea = document.getElementById('cellPopupExtra');
+            if (extraArea) extraArea.innerHTML = '';
+            if (cell.type === 'Благотворительность') {
+                const container = document.createElement('div');
+                container.style.marginTop = '10px';
+                const isOuter = !isInnerCell && (cellNumber >= 1 && cellNumber <= 44);
+                if (isOuter) {
+                    container.innerHTML = `
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <button class="modern-btn secondary" id="charityPayOuter">Оплатить $100,000</button>
+                            <span style="opacity:.8">После оплаты сможете выбирать 1, 2 или 3 кубика перед броском</span>
+                        </div>
+                        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+                            <span>Кубики на ход:</span>
+                            <button class="modern-btn" data-dice="1">1</button>
+                            <button class="modern-btn" data-dice="2">2</button>
+                            <button class="modern-btn" data-dice="3">3</button>
+                        </div>
+                    `;
+                    setTimeout(() => {
+                        const payBtn = document.getElementById('charityPayOuter');
+                        if (payBtn) payBtn.onclick = () => {
+                            if ((currentBalance || 0) >= 100000) {
+                                subtractBalance(100000, 'Благотворительность (большой круг)');
+                                showNotification('✅ Оплата $100,000 принята. Доступно 1-3 кубика.', 'success');
+                            } else {
+                                alert('Недостаточно средств: нужно $100,000');
+                            }
+                        };
+                        container.querySelectorAll('button[data-dice]')
+                            .forEach(btn => btn.onclick = () => {
+                                const n = parseInt(btn.getAttribute('data-dice'));
+                                fastTrackDiceChoice[currentPlayer] = n;
+                                showNotification(`🎲 Выбрано кубиков: ${n}`, 'info');
+                            });
+                    }, 0);
+                } else {
+                    // Малый круг
+                    container.innerHTML = `
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <button class="modern-btn secondary" id="charityPayInner">Оплатить 10% от дохода</button>
+                            <button class="modern-btn credit" id="charityCreditBtn">Кредит</button>
+                        </div>
+                        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+                            <span>Кубики на ход:</span>
+                            <button class="modern-btn" data-dice="1">1</button>
+                            <button class="modern-btn" data-dice="2">2</button>
+                        </div>
+                    `;
+                    setTimeout(() => {
+                        const payBtn = document.getElementById('charityPayInner');
+                        if (payBtn) payBtn.onclick = () => {
+                            const tenPercent = Math.floor((monthlyIncome || 0) * 0.10);
+                            if ((currentBalance || 0) >= tenPercent) {
+                                subtractBalance(tenPercent, 'Благотворительность (малый круг)');
+                                showNotification('✅ Оплата 10% дохода принята. Доступно 1-2 кубика.', 'success');
+                            } else {
+                                alert(`Недостаточно средств: нужно $${tenPercent.toLocaleString()}`);
+                            }
+                        };
+                        const creditBtn = document.getElementById('charityCreditBtn');
+                        if (creditBtn) creditBtn.onclick = () => openCreditModalV3();
+                        container.querySelectorAll('button[data-dice]')
+                            .forEach(btn => btn.onclick = () => {
+                                const n = parseInt(btn.getAttribute('data-dice'));
+                                fastTrackDiceChoice[currentPlayer] = n;
+                                showNotification(`🎲 Выбрано кубиков: ${n}`, 'info');
+                            });
+                    }, 0);
+                }
+                if (extraArea) extraArea.appendChild(container);
+            }
 
             // Показываем кнопку покупки только если клетка имеет стоимость
             const buyButton = document.getElementById('cellBuyButton');
