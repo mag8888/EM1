@@ -1676,6 +1676,30 @@
             animation: modalShow 0.3s ease-out;
         }
         
+        /* Generic Modal (overlay) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1002;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            animation: modalShow 0.25s ease-out;
+        }
+        .modal .modal-content {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 560px;
+            color: #e5e7eb;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        
         /* Cell Popup Modal Styles */
         .cell-popup-modal {
             display: none;
@@ -1762,7 +1786,6 @@
             font-size: 14px;
             text-align: right;
         }
-
         .cell-popup-actions {
             display: flex;
             gap: 15px;
@@ -2546,7 +2569,6 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
         }
-
         .btn-secondary {
             background: rgba(255, 255, 255, 0.1);
             color: white;
@@ -5081,7 +5103,6 @@ const dealCards = {
                 console.error('Error initializing player tokens:', error);
             }
         }
-
         // Создание внешнего периметра (44 квадрата) - симметричное расположение, номера 1-48 (без 13, 25, 37, 48)
         function createOuterPerimeter() {
             const outerSquares = document.getElementById('outerSquares');
@@ -5256,8 +5277,6 @@ const dealCards = {
             
             return cellData[cellNumber] || null;
         }
-
-
         // Создание внутреннего трека (24 квадрата) - ровный круг
         function createInnerTrack() {
             const innerSquares = document.getElementById('innerSquares');
@@ -5437,7 +5456,6 @@ const dealCards = {
                 icon: "⚪"
             };
         }
-
         // Бросок кубика
         async function rollDice() {
             if (isRolling) return;
@@ -5610,7 +5628,6 @@ const dealCards = {
                 }
             } catch (e) { console.warn('Child event error:', e); }
         }
-
         // Обработка события "Ребенок" на малом круге
         async function handleChildEvent() {
             const roomId = getRoomIdFromURL();
@@ -5782,7 +5799,6 @@ const dealCards = {
             diceRolled = false;
             isRolling = false; // Сбрасываем флаг броска
         }
-
         // Обновление информации о текущем игроке
         async function updateCurrentPlayer() {
             try {
@@ -5979,7 +5995,6 @@ const dealCards = {
             // Обновляем отображение баланса
             updateBalanceDisplay();
         }
-
         function subtractBalance(amount, description) {
             currentBalance = Math.max(0, (currentBalance || 0) - amount);
             console.log(`💸 Списано с баланса: $${amount.toLocaleString()} - ${description}`);
@@ -6177,7 +6192,6 @@ const dealCards = {
         }
 
         // Банковские функции теперь в банковском модуле
-
         // resetTransferForm() - перенесено в bank-module/bank.js
 
 
@@ -6358,7 +6372,6 @@ const dealCards = {
                 closePlayerProfileModal();
             }
         }
-        
         // Функция погашения кредита
         async function payOffLoan(loanType) {
             if (isLoading) return;
@@ -6685,7 +6698,6 @@ const dealCards = {
             // Обновляем расходы и PAYDAY
             updateFinancesDisplay();
         }
-        
         // Обновить отображение финансов
         function updateFinancesDisplay() {
             // Находим элементы расходов и PAYDAY
@@ -6835,7 +6847,6 @@ const dealCards = {
             // Обновляем финансы, чтобы PAYDAY и детализация обновились немедленно
             updateFinancesDisplay();
         }
-
         // Функции для работы с поп-апами клеток
         
         // Показать поп-ап клетки
@@ -7024,7 +7035,6 @@ const dealCards = {
         function closeCellPopup() {
             document.getElementById('cellPopupModal').style.display = 'none';
         }
-
         // Покупка клетки из поп-апа
         function buyCellFromPopup(cellNumber) {
             const cell = getOuterCellDataNew(cellNumber);
@@ -7188,7 +7198,6 @@ const dealCards = {
             </div>
         </div>
     </div>
-    
     <!-- Bank v3 modal will be loaded dynamically -->
     
     <!-- Общие утилиты и константы -->
