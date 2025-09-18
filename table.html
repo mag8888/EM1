@@ -5082,13 +5082,14 @@ const dealCards = {
                     playerPositions = new Array(players.length).fill(1); // По умолчанию старт
                     for (let i = 0; i < players.length; i++) {
                         const zeroBased = typeof serverPositions[i] === 'number' ? serverPositions[i] : 0;
-                        // Если позиция больше 0, значит игрок уже двигался
-                        if (zeroBased > 0) {
-                            playerPositions[i] = (zeroBased % 24) + 1;
-                        }
-                        // Если позиция 0, оставляем 1 (старт)
+                        // Позиция 0 = клетка 1 (старт), позиция 1+ = соответствующие клетки
+                        playerPositions[i] = (zeroBased % 24) + 1;
                     }
                     console.log('📍 Финальные позиции игроков:', playerPositions);
+                    console.log('📍 Детализация позиций:');
+                    for (let i = 0; i < players.length; i++) {
+                        console.log(`  Игрок ${i}: сервер=${serverPositions[i]}, UI=${playerPositions[i]}`);
+                    }
 
                     // Используем новый UI для создания фишек
                     if (gameBoardUI) {
@@ -7146,9 +7147,8 @@ const dealCards = {
                                 // Обновляем локальные позиции (0..23 → 1..24)
                                 for (let i = 0; i < msg.player_positions.length; i++) {
                                     const zeroBased = msg.player_positions[i];
-                                    if (zeroBased >= 0) {
-                                        playerPositions[i] = (zeroBased % 24) + 1;
-                                    }
+                                    // Позиция 0 = клетка 1 (старт), позиция 1+ = соответствующие клетки
+                                    playerPositions[i] = (zeroBased % 24) + 1;
                                 }
                                 updatePlayerTokenPositions();
                             }
