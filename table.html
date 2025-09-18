@@ -4044,6 +4044,13 @@ const dealCards = {
         function showDealChoiceModal() {
             const modal = document.getElementById('dealChoiceModal');
             if (modal) {
+                // Обновляем счетчики колод перед показом
+                const smallCount = dealDecks.smallDeals.length + dealDecks.smallDealsDiscard.length;
+                const bigCount = dealDecks.bigDeals.length + dealDecks.bigDealsDiscard.length;
+                const smallCountEl = document.getElementById('smallDealCount');
+                const bigCountEl = document.getElementById('bigDealCount');
+                if (smallCountEl) smallCountEl.textContent = String(smallCount);
+                if (bigCountEl) bigCountEl.textContent = String(bigCount);
                 modal.style.display = 'block';
             }
         }
@@ -4082,12 +4089,69 @@ const dealCards = {
             document.getElementById('cardIncome').textContent = `$${card.income.toLocaleString()}/мес`;
             document.getElementById('cardDescription').textContent = card.description;
 
+            // Добавляем UI выбора количества для акций/BTC
+            const qtyHostId = 'cardQuantityHost';
+            let qtyHost = document.getElementById(qtyHostId);
+            if (!qtyHost) {
+                const host = document.createElement('div');
+                host.id = qtyHostId;
+                host.style.marginTop = '12px';
+                const info = modal.querySelector('.card-info');
+                if (info) info.appendChild(host);
+            }
+            qtyHost = document.getElementById(qtyHostId);
+            if (qtyHost) {
+                if (card.type === 'stocks' || card.type === 'crypto') {
+                    const maxQ = Math.max(1, card.maxQuantity || 100000);
+                    qtyHost.innerHTML = `
+                        <div class="card-info-row">
+                            <span class="card-label">Количество:</span>
+                            <span class="card-value">
+                                <input id="dealQtyInput" type="number" min="1" max="${maxQ}" value="1" style="width:90px;"> 
+                                <input id="dealQtyRange" type="range" min="1" max="${maxQ}" value="1" style="width:220px; vertical-align:middle;">
+                            </span>
+                        </div>
+                        <div class="card-info-row">
+                            <span class="card-label">Итого к оплате:</span>
+                            <span class="card-value" id="dealTotalCost">$${card.cost.toLocaleString()}</span>
+                        </div>
+                    `;
+                    const qtyInput = document.getElementById('dealQtyInput');
+                    const qtyRange = document.getElementById('dealQtyRange');
+                    const totalEl = document.getElementById('dealTotalCost');
+                    const updateTotal = () => {
+                        const q = Math.min(maxQ, Math.max(1, parseInt(qtyInput.value || '1', 10)));
+                        qtyInput.value = String(q);
+                        qtyRange.value = String(q);
+                        totalEl.textContent = `$${(card.cost * q).toLocaleString()}`;
+                    };
+                    qtyInput.oninput = updateTotal;
+                    qtyRange.oninput = () => { qtyInput.value = qtyRange.value; updateTotal(); };
+                    updateTotal();
+                } else {
+                    qtyHost.innerHTML = '';
+                }
+            }
+
             // Показываем кнопки покупки/отказа
             const buyButton = document.getElementById('cardBuyButton');
             const refuseButton = document.getElementById('cardRefuseButton');
             
             if (buyButton) buyButton.style.display = 'inline-block';
             if (refuseButton) refuseButton.style.display = 'inline-block';
+
+            // Кнопка кредита в модале сделки
+            let creditBtn = document.getElementById('cardCreditButton');
+            if (!creditBtn) {
+                creditBtn = document.createElement('button');
+                creditBtn.id = 'cardCreditButton';
+                creditBtn.className = 'modern-btn secondary';
+                creditBtn.style.marginLeft = '8px';
+                creditBtn.textContent = 'Кредит';
+                const actions = modal.querySelector('.card-actions');
+                if (actions) actions.appendChild(creditBtn);
+            }
+            creditBtn.onclick = () => openCreditModalV3();
 
             modal.style.display = 'block';
         }
@@ -4102,10 +4166,22 @@ const dealCards = {
         function buyCard() {
             if (!currentPlayerCard) return;
 
-            const canAfford = (currentBalance || 0) >= currentPlayerCard.cost;
+            // Количество для акций/крипты
+            let quantity = 1;
+            if (currentPlayerCard.type === 'stocks' || currentPlayerCard.type === 'crypto') {
+                const input = document.getElementById('dealQtyInput');
+                if (input) {
+                    quantity = Math.max(1, parseInt(input.value || '1', 10));
+                    const maxQ = Math.max(1, currentPlayerCard.maxQuantity || 100000);
+                    if (quantity > maxQ) quantity = maxQ;
+                }
+            }
+
+            const totalCost = currentPlayerCard.cost * quantity;
+            const canAfford = (currentBalance || 0) >= totalCost;
             if (canAfford) {
                 // Списываем деньги
-                subtractBalance(currentPlayerCard.cost, `Покупка: ${currentPlayerCard.name}`);
+                subtractBalance(totalCost, `Покупка: ${currentPlayerCard.name}${quantity>1?` x${quantity}`:''}`);
                 
                 // Обрабатываем специальные карточки
                 if (currentPlayerCard.isDiceCard) {
@@ -4119,7 +4195,11 @@ const dealCards = {
                 }
                 
                 // Добавляем в активы игрока
-                playerAssets[currentPlayer].push(currentPlayerCard);
+                const cardToAdd = { ...currentPlayerCard };
+                if (currentPlayerCard.type === 'stocks' || currentPlayerCard.type === 'crypto') {
+                    cardToAdd.quantity = (cardToAdd.quantity || 0) + quantity;
+                }
+                playerAssets[currentPlayer].push(cardToAdd);
                 
                 // Отмечаем карточку как доступную для продажи в текущем ходу (только для обычных акций и BTC)
                 if ((currentPlayerCard.type === 'stocks' || currentPlayerCard.type === 'crypto') && !currentPlayerCard.isDividendStock) {
@@ -4135,10 +4215,10 @@ const dealCards = {
                 
                 // Обновляем пассивный доход
                 if (playerPassiveIncome && playerPassiveIncome[currentPlayer]) {
-                    playerPassiveIncome[currentPlayer] += currentPlayerCard.income;
+                    playerPassiveIncome[currentPlayer] += currentPlayerCard.income * (cardToAdd.quantity || 1);
                 } else {
                     playerPassiveIncome = playerPassiveIncome || {};
-                    playerPassiveIncome[currentPlayer] = currentPlayerCard.income;
+                    playerPassiveIncome[currentPlayer] = currentPlayerCard.income * (cardToAdd.quantity || 1);
                 }
                 
                 updateFinancesDisplay();
@@ -5112,8 +5192,8 @@ const dealCards = {
                         console.warn('Не удалось создать фишки игроков:', e);
                     }
                     // Обновляем информацию о текущем игроке
-                    if (players[currentPlayerIndex]) {
-                        updateCurrentPlayerInfo(players[currentPlayerIndex]);
+                    if (players[currentPlayer]) {
+                        updateCurrentPlayerInfo(players[currentPlayer]);
                     }
                 }
             } catch (error) {
