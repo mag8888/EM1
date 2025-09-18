@@ -3135,7 +3135,7 @@
                                 <p>За каждые 1000$ кредита денежный поток снижается на 100$</p>
                                 <p>Максимальная сумма: <span id="maxCreditAmount">$0</span></p>
                             </div>
-                            <button class="take-credit-btn" onclick="requestCredit()">
+                            <button class="take-credit-btn" onclick="requestCreditLocal()">
                                 <span class="btn-icon">📈</span>
                                 Взять кредит
                             </button>
@@ -7069,24 +7069,27 @@ const dealCards = {
         }
         // Обновить отображение финансов
         function updateFinancesDisplay() {
+            console.log('🔍 updateFinancesDisplay: monthlyIncome =', monthlyIncome, 'monthlyExpenses =', monthlyExpenses);
+            
             // Находим элементы расходов и PAYDAY
             const expensesElement = document.getElementById('totalExpenses');
             const paydayElement = document.getElementById('monthlyIncome');
             
             if (expensesElement) {
-                expensesElement.textContent = `$${monthlyExpenses.toLocaleString()}`;
+                expensesElement.textContent = `$${(monthlyExpenses || 0).toLocaleString()}`;
             }
             
             // Детализация расходов
             const baseEl = document.getElementById('expenseBase');
             const creditEl = document.getElementById('expenseCredit');
-            if (baseEl) baseEl.textContent = `$${(expensesBreakdown.base).toLocaleString()}`;
-            if (creditEl) creditEl.textContent = `$${(expensesBreakdown.credit).toLocaleString()}`;
+            if (baseEl) baseEl.textContent = `$${((expensesBreakdown?.base) || 0).toLocaleString()}`;
+            if (creditEl) creditEl.textContent = `$${((expensesBreakdown?.credit) || 0).toLocaleString()}`;
 
             if (paydayElement) {
                 // PAYDAY = доход - расходы
-                const payday = monthlyIncome - monthlyExpenses;
+                const payday = (monthlyIncome || 0) - (monthlyExpenses || 0);
                 paydayElement.textContent = `$${payday.toLocaleString()}/мес`;
+                console.log('🔍 PAYDAY calculated:', payday);
                 
                 // Меняем цвет в зависимости от значения
                 if (payday < 0) {
@@ -7177,8 +7180,8 @@ const dealCards = {
             
             console.log(`Предварительный просмотр кредита: $${amount.toLocaleString()}, платеж: $${monthlyPayment.toLocaleString()}`);
         }
-        // Запросить кредит
-        function requestCredit() {
+        // Запросить кредит (локальная версия)
+        function requestCreditLocal() {
             const creditAmountInput = document.getElementById('creditAmount');
             if (!creditAmountInput) return;
             
@@ -7287,6 +7290,17 @@ const dealCards = {
                 gray: '#6b7280',
                 charity: '#ff6b6b'
             };
+            
+            // Обновляем цвет хедера popup в соответствии с цветом карточки
+            const headerElement = document.querySelector('.cell-popup-header');
+            if (headerElement && colorValue && colorToHex[colorValue]) {
+                const cardColor = colorToHex[colorValue];
+                headerElement.style.background = `linear-gradient(135deg, ${cardColor} 0%, ${adjustColor(cardColor, -20)} 100%)`;
+            } else if (headerElement) {
+                // Возвращаем дефолтный цвет если цвет карточки не определен
+                headerElement.style.background = 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)';
+            }
+            
             const colorBadge = document.createElement('span');
             colorBadge.className = 'color-badge';
             colorBadge.style.background = colorToHex[colorValue] || '#6b7280';
@@ -7430,6 +7444,49 @@ const dealCards = {
             document.getElementById('cellPopupModal').style.display = 'block';
         }
 
+        // Функция для изменения яркости цвета
+        function adjustColor(color, amount) {
+            const num = parseInt(color.replace("#", ""), 16);
+            const amt = Math.round(2.55 * amount);
+            const R = (num >> 16) + amt;
+            const G = (num >> 8 & 0x00FF) + amt;
+            const B = (num & 0x0000FF) + amt;
+            return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+                (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+        }
+
+        // Функция для сохранения мечты на сервер
+        async function saveDreamToServer(cellNumber, playerIndex) {
+            try {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                if (!currentUser || !currentUser.id) {
+                    console.error('Пользователь не найден');
+                    return;
+                }
+
+                const response = await fetch(`/api/rooms/${currentRoomId}/dream`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        dream_id: cellNumber
+                    })
+                });
+
+                if (!response.ok) {
+                    console.error('Ошибка при сохранении мечты:', response.statusText);
+                } else {
+                    console.log('Мечта успешно сохранена на сервер');
+                }
+            } catch (error) {
+                console.error('Ошибка при сохранении мечты:', error);
+            }
+        }
+
         // Закрыть поп-ап клетки
         function closeCellPopup() {
             document.getElementById('cellPopupModal').style.display = 'none';
@@ -7449,6 +7506,18 @@ const dealCards = {
                         addMonthlyIncome(cell.income, `Бизнес: ${cell.name}`);
                         alert(`🏢 Поздравляем! Вы купили бизнес: ${cell.name}\nДоход: $${cell.income}/мес`);
                     } else if (cell.type === 'Мечта') {
+                        // Добавляем мечту в список мечт игрока
+                        if (!playerDreams[currentPlayer]) {
+                            playerDreams[currentPlayer] = [];
+                        }
+                        playerDreams[currentPlayer].push(cellNumber);
+                        
+                        // Обновляем отображение клетки с сердечком
+                        updateCellOwnership(cellNumber, currentPlayer);
+                        
+                        // Сохраняем мечту на сервер
+                        saveDreamToServer(cellNumber, currentPlayer);
+                        
                         alert(`🎯 Поздравляем! Вы реализовали мечту: ${cell.name}`);
                     }
                     
@@ -7601,7 +7670,7 @@ const dealCards = {
                 </div>
                 
                 <div class="credit-actions">
-                    <button class="modern-btn primary" onclick="requestCredit()">
+                    <button class="modern-btn primary" onclick="requestCreditLocal()">
                         <span class="btn-icon">💳</span>
                         Взять кредит
                     </button>

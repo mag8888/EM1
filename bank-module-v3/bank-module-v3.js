@@ -114,3 +114,57 @@ async function openCreditModalV3() {
 
 window.openCreditModalV3 = openCreditModalV3;
 
+// Функции для показа деталей доходов и расходов
+function showIncomeDetails() {
+  // Получаем данные о доходах из глобальных переменных
+  const totalIncome = window.monthlyIncome || 0;
+  const playerBusinesses = window.playerBusinesses || {};
+  const currentPlayer = window.currentPlayer || 0;
+  
+  const businesses = playerBusinesses[currentPlayer] || [];
+  
+  let details = `💰 ДЕТАЛИ ДОХОДОВ\n\n`;
+  details += `📊 Общий доход: $${totalIncome.toLocaleString()}\n\n`;
+  
+  if (businesses.length > 0) {
+    details += `🏢 Бизнесы:\n`;
+    businesses.forEach((business, index) => {
+      const cell = window.getOuterCellDataNew?.(business);
+      if (cell) {
+        details += `• ${cell.name}: $${(cell.income || 0).toLocaleString()}/мес\n`;
+      }
+    });
+  } else {
+    details += `❌ Нет активных источников дохода`;
+  }
+  
+  alert(details);
+}
+
+function showExpenseDetails() {
+  const monthlyExpenses = window.monthlyExpenses || 0;
+  const expensesBreakdown = window.expensesBreakdown || { base: 0, credit: 0 };
+  const totalCredit = window.totalCredit || 0;
+  const creditPayment = window.creditPayment || 0;
+  
+  let details = `💸 ДЕТАЛИ РАСХОДОВ\n\n`;
+  details += `📊 Общие расходы: $${monthlyExpenses.toLocaleString()}\n\n`;
+  details += `📋 Детализация:\n`;
+  details += `• Базовые расходы: $${expensesBreakdown.base.toLocaleString()}\n`;
+  details += `• Платежи по кредитам: $${expensesBreakdown.credit.toLocaleString()}\n\n`;
+  
+  if (totalCredit > 0) {
+    details += `💳 Кредитная информация:\n`;
+    details += `• Общий долг: $${totalCredit.toLocaleString()}\n`;
+    details += `• Ежемесячный платеж: $${creditPayment.toLocaleString()}\n`;
+  } else {
+    details += `✅ Кредитов нет`;
+  }
+  
+  alert(details);
+}
+
+// Делаем функции глобально доступными
+window.showIncomeDetails = showIncomeDetails;
+window.showExpenseDetails = showExpenseDetails;
+

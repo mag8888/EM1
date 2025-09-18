@@ -29,15 +29,17 @@
                 
                 <!-- Financial Summary -->
                 <div class="financial-summary" id="financialSummary">
-                    <div class="summary-item income">
+                    <div class="summary-item income clickable" onclick="showIncomeDetails()">
                         <div class="summary-icon">📈</div>
                         <span class="summary-label">Доход:</span>
                         <span class="summary-value" id="totalIncome">$10,000</span>
+                        <div class="details-icon">📋</div>
                     </div>
-                    <div class="summary-item expenses">
+                    <div class="summary-item expenses clickable" onclick="showExpenseDetails()">
                         <div class="summary-icon">📉</div>
                         <span class="summary-label">Расходы:</span>
                         <span class="summary-value" id="totalExpenses">$6,200</span>
+                        <div class="details-icon">📋</div>
                     </div>
                     <div class="summary-item payday">
                         <div class="summary-icon">💰</div>

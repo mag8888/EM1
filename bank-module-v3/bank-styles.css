@@ -190,6 +190,30 @@
     color: #f59e0b;
 }
 
+/* Кликабельные элементы */
+.summary-item.clickable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    margin: 2px 0;
+    padding: 12px 8px;
+}
+
+.summary-item.clickable:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateX(4px);
+}
+
+.details-icon {
+    font-size: 14px;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.summary-item.clickable:hover .details-icon {
+    opacity: 1;
+}
+
 .credit-section {
     background: rgba(30, 41, 59, 0.6);
     border-radius: 12px;
