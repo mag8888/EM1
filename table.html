@@ -1699,6 +1699,23 @@
             color: #e5e7eb;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
+        /* Deal quantity modern controls */
+        .qty-row { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 14px; }
+        .qty-label { font-size: 13px; color: #a0aec0; }
+        .qty-control { display: grid; grid-template-columns: 140px 1fr; gap: 12px; align-items: center; }
+        .qty-number { display: grid; grid-template-columns: 36px 1fr 36px; align-items: center; background: #1f2937; border: 1px solid #374151; border-radius: 10px; height: 40px; }
+        .qty-number button { background: transparent; border: none; color: #e5e7eb; font-size: 18px; height: 100%; cursor: pointer; transition: background .15s ease; }
+        .qty-number button:hover { background: #111827; }
+        .qty-number input[type="number"] { width: 100%; height: 100%; background: transparent; border: none; color: #e5e7eb; text-align: center; font-size: 15px; appearance: textfield; -webkit-appearance: textfield; outline: none; }
+        .qty-number input[type=number]::-webkit-outer-spin-button,
+        .qty-number input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .qty-slider { position: relative; height: 40px; display: flex; align-items: center; }
+        .qty-slider input[type=range] { -webkit-appearance: none; width: 100%; height: 4px; background: linear-gradient(90deg,#22c55e 0%, #16a34a 100%); border-radius: 999px; outline: none; }
+        .qty-slider input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: #10b981; border: 2px solid #0ea5a4; border-radius: 50%; cursor: pointer; box-shadow: 0 0 0 4px rgba(16,185,129,0.25); transition: transform .12s ease; }
+        .qty-slider input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.05); }
+        .qty-bubble { position: absolute; top: -26px; transform: translateX(-50%); background: #111827; color: #e5e7eb; border: 1px solid #374151; padding: 2px 8px; border-radius: 8px; font-size: 12px; white-space: nowrap; }
+        .qty-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 13px; color: #94a3b8; }
+        .total-cost { font-weight: 700; color: #fbbf24; }
         /* Color badge for cell popup */
         .color-badge {
             display: inline-block;
@@ -4098,27 +4115,52 @@ const dealCards = {
                     qtyHost.innerHTML = `
                         <div class="card-info-row">
                             <span class="card-label">Количество:</span>
-                            <span class="card-value">
-                                <input id="dealQtyInput" type="number" min="1" max="${maxQ}" value="1" style="width:90px;"> 
-                                <input id="dealQtyRange" type="range" min="1" max="${maxQ}" value="1" style="width:220px; vertical-align:middle;">
+                            <span class="card-value" style="width:100%">
+                                <div class="qty-row">
+                                    <div class="qty-control">
+                                        <div class="qty-number">
+                                            <button id="dealQtyMinus" type="button">−</button>
+                                            <input id="dealQtyInput" type="number" min="1" max="${maxQ}" value="1">
+                                            <button id="dealQtyPlus" type="button">+</button>
+                                        </div>
+                                        <div class="qty-slider">
+                                            <input id="dealQtyRange" type="range" min="1" max="${maxQ}" value="1">
+                                            <span id="dealQtyBubble" class="qty-bubble">1</span>
+                                        </div>
+                                    </div>
+                                    <div class="qty-footer">
+                                        <span>Макс: ${maxQ.toLocaleString()}</span>
+                                        <span class="total-cost" id="dealTotalCost">$${card.cost.toLocaleString()}</span>
+                                    </div>
+                                </div>
                             </span>
-                        </div>
-                        <div class="card-info-row">
-                            <span class="card-label">Итого к оплате:</span>
-                            <span class="card-value" id="dealTotalCost">$${card.cost.toLocaleString()}</span>
-                        </div>
-                    `;
+                        </div>`;
                     const qtyInput = document.getElementById('dealQtyInput');
                     const qtyRange = document.getElementById('dealQtyRange');
-                    const totalEl = document.getElementById('dealTotalCost');
+                    const qtyMinus = document.getElementById('dealQtyMinus');
+                    const qtyPlus  = document.getElementById('dealQtyPlus');
+                    const totalEl  = document.getElementById('dealTotalCost');
+                    const bubble   = document.getElementById('dealQtyBubble');
+
+                    const clamp = (v) => Math.min(maxQ, Math.max(1, v|0));
+                    const setBubble = () => {
+                        const range = qtyRange;
+                        const val = (parseInt(range.value,10) - 1) / (maxQ - 1 || 1);
+                        const percent = val * 100;
+                        bubble.style.left = `calc(${percent}% )`;
+                        bubble.textContent = range.value;
+                    };
                     const updateTotal = () => {
-                        const q = Math.min(maxQ, Math.max(1, parseInt(qtyInput.value || '1', 10)));
+                        const q = clamp(parseInt(qtyInput.value || '1', 10));
                         qtyInput.value = String(q);
                         qtyRange.value = String(q);
+                        setBubble();
                         totalEl.textContent = `$${(card.cost * q).toLocaleString()}`;
                     };
                     qtyInput.oninput = updateTotal;
                     qtyRange.oninput = () => { qtyInput.value = qtyRange.value; updateTotal(); };
+                    qtyMinus.onclick = () => { qtyInput.value = String(clamp((parseInt(qtyInput.value||'1',10) - 1))); updateTotal(); };
+                    qtyPlus.onclick  = () => { qtyInput.value = String(clamp((parseInt(qtyInput.value||'1',10) + 1))); updateTotal(); };
                     updateTotal();
                 } else {
                     qtyHost.innerHTML = '';
