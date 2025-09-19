@@ -763,9 +763,19 @@
         }
 
         function updateDisplay() {
-            document.getElementById('balance').textContent = gameState.balance;
-            document.getElementById('income').textContent = gameState.income;
-            document.getElementById('expenses').textContent = gameState.expenses;
+            const balanceElement = document.getElementById('balance');
+            const incomeElement = document.getElementById('income');
+            const expensesElement = document.getElementById('expenses');
+            
+            if (balanceElement) {
+                balanceElement.textContent = '$' + gameState.balance.toLocaleString();
+            }
+            if (incomeElement) {
+                incomeElement.textContent = '$' + gameState.income.toLocaleString();
+            }
+            if (expensesElement) {
+                expensesElement.textContent = '$' + gameState.expenses.toLocaleString();
+            }
         }
 
         // Инициализация
@@ -777,33 +787,50 @@
             
             // Инициализация с задержкой для имитации загрузки
             setTimeout(() => {
-                createInnerTrack();
-                createOuterPerimeter();
-                
-                const rollDiceBtn = document.getElementById('rollDiceBtn');
-                if (rollDiceBtn) {
-                    rollDiceBtn.addEventListener('click', rollDice);
+                try {
+                    // Попробовать создать игровое поле (если функции существуют)
+                    if (typeof createInnerTrack === 'function') {
+                        createInnerTrack();
+                    }
+                    if (typeof createOuterPerimeter === 'function') {
+                        createOuterPerimeter();
+                    }
+                    
+                    const rollDiceBtn = document.getElementById('rollDiceBtn');
+                    if (rollDiceBtn) {
+                        rollDiceBtn.addEventListener('click', rollDice);
+                    }
+                    
+                    // Инициализация игрового состояния
+                    gameState = {
+                        balance: 10000,
+                        income: 10000,
+                        expenses: 6200,
+                        position: 0,
+                        isPlaying: false,
+                        currentPlayer: 1
+                    };
+                    
+                    updateDisplay();
+                    hideLoadingScreen();
+                    
+                    // Обновить статус
+                    const gameStatusElement = document.getElementById('gameStatus');
+                    if (gameStatusElement) {
+                        gameStatusElement.textContent = 'Игра готова! Нажмите "Бросить кубики" для начала';
+                    }
+                    
+                    setInterval(updateTime, 1000);
+                    
+                    console.log('✅ Игра успешно инициализирована');
+                } catch (error) {
+                    console.error('❌ Ошибка инициализации:', error);
+                    hideLoadingScreen();
+                    const gameStatusElement = document.getElementById('gameStatus');
+                    if (gameStatusElement) {
+                        gameStatusElement.textContent = 'Ошибка загрузки игры';
+                    }
                 }
-                
-                // Инициализация игрового состояния
-                gameState = {
-                    balance: 10000,
-                    income: 10000,
-                    expenses: 6200,
-                    position: 0,
-                    isPlaying: false,
-                    currentPlayer: 1
-                };
-                
-                updateDisplay();
-                hideLoadingScreen();
-                
-                // Обновить статус
-                document.getElementById('gameStatus').textContent = 'Игра готова! Нажмите "Бросить кубики" для начала';
-                
-                setInterval(updateTime, 1000);
-                
-                console.log('✅ Игра успешно инициализирована');
             }, 1500);
         });
     </script>
