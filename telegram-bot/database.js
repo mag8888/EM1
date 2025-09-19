@@ -140,7 +140,7 @@ class Database {
     async getReferralList(telegramId) {
         return new Promise((resolve, reject) => {
             this.db.all(
-                `SELECT u.username, u.first_name, u.last_name, r.bonus_amount, r.status, r.created_at
+                `SELECT u.telegram_id, u.username, u.first_name, u.last_name, r.bonus_amount, r.status, r.created_at
                 FROM referrals r
                 JOIN users u ON r.referred_id = u.telegram_id
                 WHERE r.referrer_id = ?

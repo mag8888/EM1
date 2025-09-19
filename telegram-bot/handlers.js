@@ -419,7 +419,9 @@ class Handlers {
             message += '😔 У вас пока нет партнеров.\nПригласите друзей и начните зарабатывать!';
         } else {
             partners.forEach((partner, index) => {
-                const name = partner.username || `${partner.first_name} ${partner.last_name}`.trim();
+                const username = partner.username ? `@${partner.username}` : '';
+                const fullName = `${partner.first_name || ''} ${partner.last_name || ''}`.trim();
+                const name = username || fullName || partner.telegram_id;
                 const date = new Date(partner.created_at).toLocaleDateString('ru-RU');
                 message += `${index + 1}. ${name}\n`;
                 message += `   💰 Бонус: ${partner.bonus_amount}$\n`;
