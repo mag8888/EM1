@@ -302,12 +302,12 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 400px;
-            height: 400px;
+            width: 500px;
+            height: 500px;
             display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            grid-template-rows: repeat(8, 1fr);
-            gap: 4px;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 2px;
         }
 
         .special-cell {
@@ -329,29 +329,25 @@
 
         .special-cell.big-deal {
             top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 20px;
             background: linear-gradient(135deg, #00bfff 0%, #0099cc 100%);
         }
 
         .special-cell.small-deal {
-            top: 50%;
+            top: 20px;
             right: 20px;
-            transform: translateY(-50%);
             background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
         }
 
         .special-cell.expenses {
             bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 20px;
             background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
         }
 
         .special-cell.market {
-            top: 50%;
-            left: 20px;
-            transform: translateY(-50%);
+            bottom: 20px;
+            right: 20px;
             background: linear-gradient(135deg, #a8e6cf 0%, #7fcdcd 100%);
         }
 
@@ -376,28 +372,28 @@
             aspect-ratio: 1;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 8px;
+            border-radius: 4px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 10px;
+            font-size: 8px;
             color: #ffffff;
-            min-height: 40px;
+            min-height: 30px;
             position: relative;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
         }
 
         .cell-number {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 800;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
         }
 
         .cell-icon {
-            font-size: 14px;
+            font-size: 10px;
             margin-bottom: 1px;
         }
 
@@ -409,12 +405,16 @@
         .cell.start {
             background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
             color: #1a1d24;
-            border: 3px solid #ffd700;
-            box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
-            font-size: 18px;
+            border: 2px solid #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+            font-size: 14px;
             font-weight: 900;
             position: relative;
             z-index: 4;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            margin: auto;
         }
 
         .cell.start::before {
@@ -867,33 +867,35 @@
                 const boardGrid = document.getElementById('board-grid');
                 boardGrid.innerHTML = '';
 
-                // Создаем спиральный путь: 1-24 внутренний квадрат, 25-76 внешний периметр
+                // Создаем спиральный путь
                 const spiralPath = createSpiralPath();
                 
                 spiralPath.forEach((cellData, index) => {
                     const cell = document.createElement('div');
                     cell.className = 'cell';
                     
-                    if (index === 0) {
-                        cell.classList.add('start');
-                        cell.innerHTML = `
-                            <div class="start-symbols">
-                                <div class="start-symbols-row">
-                                    <span class="start-symbol">$</span>
-                                    <span class="start-symbol">$</span>
+                    if (cellData) {
+                        if (cellData.type === 'start') {
+                            cell.classList.add('start');
+                            cell.innerHTML = `
+                                <div class="start-symbols">
+                                    <div class="start-symbols-row">
+                                        <span class="start-symbol">$</span>
+                                        <span class="start-symbol">$</span>
+                                    </div>
+                                    <div class="start-symbols-row">
+                                        <span class="start-symbol">$</span>
+                                        <span class="start-symbol">$</span>
+                                    </div>
                                 </div>
-                                <div class="start-symbols-row">
-                                    <span class="start-symbol">$</span>
-                                    <span class="start-symbol">$</span>
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        cell.innerHTML = `
-                            <div class="cell-number">${cellData.number}</div>
-                            <div class="cell-icon">${cellData.icon}</div>
-                        `;
-                        cell.classList.add(cellData.type);
+                            `;
+                        } else {
+                            cell.innerHTML = `
+                                <div class="cell-number">${cellData.number}</div>
+                                <div class="cell-icon">${cellData.icon}</div>
+                            `;
+                            cell.classList.add(cellData.type);
+                        }
                     }
                     
                     boardGrid.appendChild(cell);
@@ -905,28 +907,65 @@
 
             function createSpiralPath() {
                 const path = [];
+                const gridSize = 10;
+                const totalCells = gridSize * gridSize;
                 
-                // Внутренний квадрат 1-24 (6x4)
-                const innerTypes = ['money', 'growth', 'expense', 'card', 'market', 'timer'];
-                const innerIcons = ['💰', '📈', '💸', '🃏', '🏪', '⏰'];
-                
-                for (let i = 1; i <= 24; i++) {
-                    const typeIndex = (i - 1) % innerTypes.length;
-                    path.push({
-                        number: i,
-                        type: innerTypes[typeIndex],
-                        icon: innerIcons[typeIndex]
-                    });
+                // Создаем пустую сетку
+                for (let i = 0; i < totalCells; i++) {
+                    path.push(null);
                 }
                 
-                // Внешний периметр 25-76 (добавляем больше ячеек)
-                for (let i = 25; i <= 76; i++) {
-                    const typeIndex = (i - 25) % innerTypes.length;
-                    path.push({
-                        number: i,
-                        type: innerTypes[typeIndex],
-                        icon: innerIcons[typeIndex]
-                    });
+                // Спиральный путь от центра
+                const center = Math.floor(gridSize / 2);
+                const types = ['money', 'growth', 'expense', 'card', 'market', 'timer'];
+                const icons = ['💰', '📈', '💸', '🃏', '🏪', '⏰'];
+                
+                let x = center;
+                let y = center;
+                let direction = 0; // 0: right, 1: down, 2: left, 3: up
+                let steps = 1;
+                let stepCount = 0;
+                let cellNumber = 1;
+                
+                // Центральная ячейка
+                path[y * gridSize + x] = {
+                    number: 1,
+                    type: 'start',
+                    icon: '1'
+                };
+                cellNumber++;
+                
+                // Спираль наружу
+                while (cellNumber <= 76) {
+                    for (let i = 0; i < steps; i++) {
+                        // Двигаемся в текущем направлении
+                        switch (direction) {
+                            case 0: x++; break;
+                            case 1: y++; break;
+                            case 2: x--; break;
+                            case 3: y--; break;
+                        }
+                        
+                        // Проверяем границы
+                        if (x >= 0 && x < gridSize && y >= 0 && y < gridSize && cellNumber <= 76) {
+                            const typeIndex = (cellNumber - 2) % types.length;
+                            path[y * gridSize + x] = {
+                                number: cellNumber,
+                                type: types[typeIndex],
+                                icon: icons[typeIndex]
+                            };
+                            cellNumber++;
+                        }
+                    }
+                    
+                    // Поворачиваем
+                    direction = (direction + 1) % 4;
+                    stepCount++;
+                    
+                    // Увеличиваем шаги каждые 2 поворота
+                    if (stepCount % 2 === 0) {
+                        steps++;
+                    }
                 }
                 
                 return path;
