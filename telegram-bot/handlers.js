@@ -359,12 +359,27 @@ class Handlers {
             `• Вы получаете ${config.REFERRAL_BONUS}$ на счет\n` +
             `• Дополнительно 10% от всех трат друга в игре`;
 
-        await this.bot.editMessageText(text, {
-            chat_id: chatId,
-            message_id: messageId,
-            parse_mode: 'Markdown',
-            ...Keyboards.getReferralLinkKeyboard(user.referral_code)
-        });
+        if (messageId) {
+            try {
+                await this.bot.editMessageText(text, {
+                    chat_id: chatId,
+                    message_id: messageId,
+                    parse_mode: 'Markdown',
+                    ...Keyboards.getReferralLinkKeyboard(user.referral_code)
+                });
+            } catch (error) {
+                // Если не можем редактировать, отправляем новое сообщение
+                await this.bot.sendMessage(chatId, text, {
+                    parse_mode: 'Markdown',
+                    ...Keyboards.getReferralLinkKeyboard(user.referral_code)
+                });
+            }
+        } else {
+            await this.bot.sendMessage(chatId, text, {
+                parse_mode: 'Markdown',
+                ...Keyboards.getReferralLinkKeyboard(user.referral_code)
+            });
+        }
     }
 
     async showMyPartners(chatId, messageId) {
