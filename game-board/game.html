@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игра - Game Board v2.0</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .game-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .game-header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .game-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .room-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .game-status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .game-status.waiting {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .game-status.playing {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #6c757d;
+            border: 2px solid #e9ecef;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .game-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+
+        .game-board-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            min-height: 600px;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .players-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .player-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .player-item.current {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+        }
+
+        .player-item.winner {
+            background: #e8f5e8;
+            border: 2px solid #4caf50;
+        }
+
+        .player-item.bankrupt {
+            background: #ffebee;
+            border: 2px solid #f44336;
+            opacity: 0.6;
+        }
+
+        .player-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .player-money {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .player-position {
+            color: #6c757d;
+            font-size: 12px;
+        }
+
+        .game-actions {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .dice-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .dice-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .dice {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border: 3px solid #333;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .dice.rolling {
+            animation: roll 0.5s ease-in-out;
+        }
+
+        @keyframes roll {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(90deg); }
+            50% { transform: rotate(180deg); }
+            75% { transform: rotate(270deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        .game-log {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 14px;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-entry.info {
+            color: #007bff;
+        }
+
+        .log-entry.success {
+            color: #28a745;
+        }
+
+        .log-entry.warning {
+            color: #ffc107;
+        }
+
+        .log-entry.error {
+            color: #dc3545;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left: 4px solid #28a745;
+        }
+
+        .notification.error {
+            border-left: 4px solid #dc3545;
+        }
+
+        .notification.info {
+            border-left: 4px solid #007bff;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .game-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .game-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Заголовок игры -->
+        <div class="game-header">
+            <div class="game-info">
+                <h1 class="room-name" id="room-name">Загрузка...</h1>
+                <div class="game-status waiting" id="game-status">Ожидание игроков</div>
+            </div>
+            <div class="game-controls">
+                <button class="btn btn-secondary" id="settings-btn">⚙️ Настройки</button>
+                <button class="btn btn-secondary" id="chat-btn">💬 Чат</button>
+                <button class="btn btn-danger" id="leave-btn">🚪 Покинуть игру</button>
+            </div>
+        </div>
+
+        <!-- Основной контент -->
+        <div class="game-content">
+            <!-- Игровое поле -->
+            <div class="game-board-section">
+                <div id="game-board-container">
+                    <!-- Game Board v2.0 будет загружен здесь -->
+                </div>
+            </div>
+
+            <!-- Боковая панель -->
+            <div class="sidebar">
+                <!-- Игроки -->
+                <div class="players-panel">
+                    <h3 class="panel-title">Игроки</h3>
+                    <div id="players-list">
+                        <!-- Список игроков будет загружен динамически -->
+                    </div>
+                </div>
+
+                <!-- Действия игры -->
+                <div class="game-actions">
+                    <h3 class="panel-title">Действия</h3>
+                    
+                    <div class="dice-section">
+                        <h4>Кубик</h4>
+                        <div class="dice-container">
+                            <div class="dice" id="dice1">?</div>
+                            <div class="dice" id="dice2">?</div>
+                        </div>
+                        <p id="dice-result">Бросьте кубик для хода</p>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-primary btn-full" id="roll-dice-btn" disabled>🎲 Бросить кубик</button>
+                        <button class="btn btn-secondary btn-full" id="end-turn-btn" disabled>✅ Завершить ход</button>
+                        <button class="btn btn-secondary btn-full" id="buy-property-btn" disabled>🏠 Купить недвижимость</button>
+                        <button class="btn btn-secondary btn-full" id="trade-btn" disabled>🤝 Торговля</button>
+                    </div>
+                </div>
+
+                <!-- Лог игры -->
+                <div class="game-log">
+                    <h3 class="panel-title">Лог игры</h3>
+                    <div id="game-log-content">
+                        <!-- Лог будет загружен динамически -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Уведомления -->
+    <div class="notification" id="notification"></div>
+
+    <!-- Подключаем Game Board v2.0 -->
+    <script src="GameBoardService.js"></script>
+    <script src="GameBoardUI.js"></script>
+    <script src="GameBoardManager.js"></script>
+
+    <script>
+        // Система игры
+        class GameSystem {
+            constructor() {
+                this.currentUser = null;
+                this.gameManager = null;
+                this.roomId = null;
+                this.gameState = 'waiting';
+                this.players = [];
+                this.currentPlayerIndex = 0;
+                this.diceValue = 0;
+                this.initializeEventListeners();
+                this.loadUser();
+                this.initializeGame();
+            }
+
+            initializeEventListeners() {
+                // Кнопки управления
+                document.getElementById('leave-btn').addEventListener('click', () => {
+                    this.leaveGame();
+                });
+
+                document.getElementById('roll-dice-btn').addEventListener('click', () => {
+                    this.rollDice();
+                });
+
+                document.getElementById('end-turn-btn').addEventListener('click', () => {
+                    this.endTurn();
+                });
+
+                document.getElementById('buy-property-btn').addEventListener('click', () => {
+                    this.buyProperty();
+                });
+
+                document.getElementById('trade-btn').addEventListener('click', () => {
+                    this.startTrade();
+                });
+
+                // Получаем ID комнаты из URL
+                const urlParams = new URLSearchParams(window.location.search);
+                this.roomId = urlParams.get('room') || 'default';
+            }
+
+            loadUser() {
+                const savedUser = localStorage.getItem('monopoly_user');
+                if (savedUser) {
+                    this.currentUser = JSON.parse(savedUser);
+                } else {
+                    // Если пользователь не авторизован, перенаправляем в лобби
+                    window.location.href = 'lobby.html';
+                }
+            }
+
+            async initializeGame() {
+                try {
+                    this.showNotification('Инициализация игры...', 'info');
+                    
+                    // Создаем менеджер игры
+                    this.gameManager = new GameBoardManager('game-board-container');
+                    
+                    // Ждем инициализации
+                    await this.waitForGameManager();
+                    
+                    // Загружаем игроков комнаты
+                    await this.loadRoomPlayers();
+                    
+                    // Настраиваем интеграцию
+                    this.setupGameIntegration();
+                    
+                    // Начинаем игру
+                    this.startGame();
+                    
+                } catch (error) {
+                    console.error('Ошибка инициализации игры:', error);
+                    this.showNotification('Ошибка инициализации игры', 'error');
+                }
+            }
+
+            async waitForGameManager() {
+                return new Promise((resolve) => {
+                    const checkManager = () => {
+                        if (this.gameManager && this.gameManager.isInitialized) {
+                            resolve();
+                        } else {
+                            setTimeout(checkManager, 100);
+                        }
+                    };
+                    checkManager();
+                });
+            }
+
+            async loadRoomPlayers() {
+                // Симуляция загрузки игроков комнаты
+                await this.simulateApiCall();
+                
+                this.players = [
+                    {
+                        id: this.currentUser.id,
+                        name: this.currentUser.name,
+                        color: '#FF6B6B',
+                        token: '🔴',
+                        money: 3000,
+                        position: 0,
+                        isCurrentPlayer: true
+                    },
+                    {
+                        id: 'player2',
+                        name: 'Алиса',
+                        color: '#4ECDC4',
+                        token: '🔵',
+                        money: 3000,
+                        position: 0,
+                        isCurrentPlayer: false
+                    },
+                    {
+                        id: 'player3',
+                        name: 'Боб',
+                        color: '#45B7D1',
+                        token: '🟢',
+                        money: 3000,
+                        position: 0,
+                        isCurrentPlayer: false
+                    },
+                    {
+                        id: 'player4',
+                        name: 'Чарли',
+                        color: '#96CEB4',
+                        token: '🟡',
+                        money: 3000,
+                        position: 0,
+                        isCurrentPlayer: false
+                    }
+                ];
+
+                this.updatePlayersList();
+            }
+
+            setupGameIntegration() {
+                // События от Game Board Manager
+                this.gameManager.on('managerReady', () => {
+                    this.addLogEntry('Игровая система готова', 'success');
+                });
+
+                this.gameManager.on('gameStarted', (data) => {
+                    this.addLogEntry(`Игра начата с ${data.players.length} игроками`, 'success');
+                    this.updateGameStatus('playing');
+                });
+
+                this.gameManager.on('playerMoved', (data) => {
+                    this.addLogEntry(`${data.player} переместился на позицию ${data.newPosition + 1}`, 'info');
+                    this.updatePlayersList();
+                });
+
+                this.gameManager.on('diceRolled', (data) => {
+                    this.animateDice(data.dice1, data.dice2);
+                    this.addLogEntry(`Выпало: ${data.total}`, 'info');
+                });
+
+                this.gameManager.on('turnChanged', (data) => {
+                    this.addLogEntry(`Ход игрока: ${data.currentPlayer.name}`, 'info');
+                    this.updateCurrentPlayer(data.currentPlayer);
+                });
+            }
+
+            startGame() {
+                if (this.gameManager) {
+                    this.gameManager.startGame(this.players);
+                    this.updateGameStatus('playing');
+                    this.enableGameControls();
+                }
+            }
+
+            updateGameStatus(status) {
+                this.gameState = status;
+                const statusElement = document.getElementById('game-status');
+                statusElement.textContent = this.getStatusText(status);
+                statusElement.className = `game-status ${status}`;
+            }
+
+            getStatusText(status) {
+                const statusTexts = {
+                    'waiting': 'Ожидание игроков',
+                    'playing': 'Игра идет',
+                    'paused': 'Пауза',
+                    'finished': 'Игра завершена'
+                };
+                return statusTexts[status] || status;
+            }
+
+            updatePlayersList() {
+                const playersList = document.getElementById('players-list');
+                playersList.innerHTML = '';
+
+                this.players.forEach((player, index) => {
+                    const playerItem = document.createElement('div');
+                    playerItem.className = 'player-item';
+                    if (player.isCurrentPlayer) {
+                        playerItem.classList.add('current');
+                    }
+                    
+                    playerItem.innerHTML = `
+                        <div class="player-avatar" style="background: ${player.color}">
+                            ${player.token}
+                        </div>
+                        <div class="player-info">
+                            <div class="player-name">${player.name}</div>
+                            <div class="player-money">$${player.money}</div>
+                            <div class="player-position">Позиция: ${player.position + 1}</div>
+                        </div>
+                    `;
+                    
+                    playersList.appendChild(playerItem);
+                });
+            }
+
+            updateCurrentPlayer(currentPlayer) {
+                // Обновляем текущего игрока
+                this.players.forEach(player => {
+                    player.isCurrentPlayer = (player.id === currentPlayer.id);
+                });
+                this.updatePlayersList();
+
+                // Включаем/выключаем кнопки
+                const isMyTurn = currentPlayer.id === this.currentUser.id;
+                document.getElementById('roll-dice-btn').disabled = !isMyTurn;
+                document.getElementById('end-turn-btn').disabled = !isMyTurn;
+            }
+
+            async rollDice() {
+                if (!this.gameManager) return;
+
+                try {
+                    const result = this.gameManager.rollDiceAndMove();
+                    if (result) {
+                        this.diceValue = result.diceResult.total;
+                        this.addLogEntry(`Выпало: ${result.diceResult.total}`, 'info');
+                    }
+                } catch (error) {
+                    this.showNotification('Ошибка броска кубика', 'error');
+                }
+            }
+
+            animateDice(dice1, dice2) {
+                const dice1Element = document.getElementById('dice1');
+                const dice2Element = document.getElementById('dice2');
+                const resultElement = document.getElementById('dice-result');
+
+                // Анимация броска
+                dice1Element.classList.add('rolling');
+                dice2Element.classList.add('rolling');
+
+                setTimeout(() => {
+                    dice1Element.textContent = dice1;
+                    dice2Element.textContent = dice2;
+                    dice1Element.classList.remove('rolling');
+                    dice2Element.classList.remove('rolling');
+                    resultElement.textContent = `Итого: ${dice1 + dice2}`;
+                }, 500);
+            }
+
+            endTurn() {
+                if (this.gameManager) {
+                    this.gameManager.service.nextTurn();
+                    this.addLogEntry('Ход завершен', 'info');
+                }
+            }
+
+            buyProperty() {
+                this.showNotification('Функция покупки недвижимости в разработке', 'info');
+            }
+
+            startTrade() {
+                this.showNotification('Функция торговли в разработке', 'info');
+            }
+
+            enableGameControls() {
+                document.getElementById('roll-dice-btn').disabled = false;
+            }
+
+            addLogEntry(message, type = 'info') {
+                const logContent = document.getElementById('game-log-content');
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${type}`;
+                logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                logContent.appendChild(logEntry);
+                logContent.scrollTop = logContent.scrollHeight;
+            }
+
+            leaveGame() {
+                if (confirm('Вы уверены, что хотите покинуть игру?')) {
+                    window.location.href = 'lobby.html';
+                }
+            }
+
+            showNotification(message, type = 'info') {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.className = `notification ${type} show`;
+
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+
+            simulateApiCall() {
+                return new Promise((resolve) => {
+                    setTimeout(resolve, 500);
+                });
+            }
+        }
+
+        // Инициализация системы игры
+        const gameSystem = new GameSystem();
+
+        // Глобальный доступ к системе игры
+        window.GameSystem = gameSystem;
+    </script>
+</body>
+</html>

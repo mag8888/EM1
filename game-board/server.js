@@ -18,6 +18,19 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Маршруты для страниц
+app.get('/auth', (req, res) => {
+    res.sendFile(path.join(__dirname, 'auth.html'));
+});
+
+app.get('/lobby', (req, res) => {
+    res.sendFile(path.join(__dirname, 'lobby.html'));
+});
+
+app.get('/game', (req, res) => {
+    res.sendFile(path.join(__dirname, 'game.html'));
+});
+
 // API маршруты для Game Board
 app.get('/api/health', (req, res) => {
     res.json({
@@ -45,6 +58,9 @@ app.use((req, res) => {
         message: 'Страница не найдена',
         availableRoutes: [
             '/',
+            '/auth',
+            '/lobby', 
+            '/game',
             '/test',
             '/docs',
             '/api/health'

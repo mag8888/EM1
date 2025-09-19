@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Board v2.0 - Тест</title>
+    <title>Game Board v2.0 - Монополия</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -155,12 +155,14 @@
 <body>
     <div class="test-container">
         <div class="test-header">
-            <h1>🎮 Game Board v2.0 - Тест</h1>
-            <p>Тестирование обновленной системы игрового поля</p>
+            <h1>🎮 Game Board v2.0 - Монополия</h1>
+            <p>Современная система игрового поля с регистрацией и лобби</p>
         </div>
         
         <div class="test-controls">
-            <button id="init-btn" class="btn btn-success">🚀 Инициализировать</button>
+            <a href="auth.html" class="btn btn-primary" style="text-decoration: none; margin-right: 10px;">🔐 Войти в игру</a>
+            <a href="lobby.html" class="btn btn-secondary" style="text-decoration: none; margin-right: 10px;">🏠 Лобби</a>
+            <button id="init-btn" class="btn btn-success">🚀 Тест системы</button>
             <button id="start-game-btn" class="btn" disabled>🎯 Начать игру</button>
             <button id="roll-dice-btn" class="btn" disabled>🎲 Бросить кубик</button>
             <button id="next-turn-btn" class="btn" disabled>➡️ Следующий ход</button>

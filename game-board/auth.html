@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация - Game Board v2.0</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+            margin: 20px;
+        }
+
+        .auth-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .auth-header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .auth-header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .auth-form {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group input.error {
+            border-color: #dc3545;
+        }
+
+        .form-group .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .form-group input.error + .error-message {
+            display: block;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #6c757d;
+            border: 2px solid #e9ecef;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .auth-switch a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 auto 20px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        @media (max-width: 480px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="user-avatar" id="user-avatar">👤</div>
+            <h1 id="auth-title">Вход в игру</h1>
+            <p id="auth-subtitle">Добро пожаловать в Монополию!</p>
+        </div>
+
+        <div class="auth-form">
+            <!-- Сообщения -->
+            <div class="success-message" id="success-message"></div>
+            <div class="error-message" id="error-message"></div>
+
+            <!-- Форма входа -->
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" name="email" required>
+                    <div class="error-message">Введите корректный email</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="login-password">Пароль</label>
+                    <input type="password" id="login-password" name="password" required>
+                    <div class="error-message">Введите пароль</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="login-btn">
+                    Войти в игру
+                </button>
+            </form>
+
+            <!-- Форма регистрации -->
+            <form id="register-form" style="display: none;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="register-firstname">Имя</label>
+                        <input type="text" id="register-firstname" name="firstname" required>
+                        <div class="error-message">Введите имя</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-lastname">Фамилия</label>
+                        <input type="text" id="register-lastname" name="lastname" required>
+                        <div class="error-message">Введите фамилию</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" name="email" required>
+                    <div class="error-message">Введите корректный email</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="register-username">Имя пользователя</label>
+                    <input type="text" id="register-username" name="username" required>
+                    <div class="error-message">Введите имя пользователя</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="register-password">Пароль</label>
+                    <input type="password" id="register-password" name="password" required minlength="6">
+                    <div class="error-message">Пароль должен содержать минимум 6 символов</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="register-confirm-password">Подтвердите пароль</label>
+                    <input type="password" id="register-confirm-password" name="confirmPassword" required>
+                    <div class="error-message">Пароли не совпадают</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="register-btn">
+                    Создать аккаунт
+                </button>
+            </form>
+
+            <!-- Переключение между формами -->
+            <div class="auth-switch">
+                <span id="switch-text">Нет аккаунта?</span>
+                <a href="#" id="switch-link">Зарегистрироваться</a>
+            </div>
+
+            <!-- Загрузка -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Обработка запроса...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Система аутентификации
+        class AuthSystem {
+            constructor() {
+                this.currentUser = null;
+                this.isLoginMode = true;
+                this.initializeEventListeners();
+                this.loadUserFromStorage();
+            }
+
+            initializeEventListeners() {
+                // Переключение между формами
+                document.getElementById('switch-link').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.toggleAuthMode();
+                });
+
+                // Обработка форм
+                document.getElementById('login-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleLogin();
+                });
+
+                document.getElementById('register-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleRegister();
+                });
+
+                // Валидация в реальном времени
+                this.setupValidation();
+            }
+
+            toggleAuthMode() {
+                this.isLoginMode = !this.isLoginMode;
+                
+                const loginForm = document.getElementById('login-form');
+                const registerForm = document.getElementById('register-form');
+                const title = document.getElementById('auth-title');
+                const subtitle = document.getElementById('auth-subtitle');
+                const switchText = document.getElementById('switch-text');
+                const switchLink = document.getElementById('switch-link');
+
+                if (this.isLoginMode) {
+                    loginForm.style.display = 'block';
+                    registerForm.style.display = 'none';
+                    title.textContent = 'Вход в игру';
+                    subtitle.textContent = 'Добро пожаловать в Монополию!';
+                    switchText.textContent = 'Нет аккаунта?';
+                    switchLink.textContent = 'Зарегистрироваться';
+                } else {
+                    loginForm.style.display = 'none';
+                    registerForm.style.display = 'block';
+                    title.textContent = 'Регистрация';
+                    subtitle.textContent = 'Создайте аккаунт для игры';
+                    switchText.textContent = 'Уже есть аккаунт?';
+                    switchLink.textContent = 'Войти';
+                }
+
+                this.clearMessages();
+                this.clearFormErrors();
+            }
+
+            setupValidation() {
+                // Валидация email
+                const emailInputs = document.querySelectorAll('input[type="email"]');
+                emailInputs.forEach(input => {
+                    input.addEventListener('blur', () => {
+                        this.validateEmail(input);
+                    });
+                });
+
+                // Валидация пароля
+                const passwordInputs = document.querySelectorAll('input[type="password"]');
+                passwordInputs.forEach(input => {
+                    input.addEventListener('blur', () => {
+                        this.validatePassword(input);
+                    });
+                });
+
+                // Валидация подтверждения пароля
+                const confirmPasswordInput = document.getElementById('register-confirm-password');
+                if (confirmPasswordInput) {
+                    confirmPasswordInput.addEventListener('blur', () => {
+                        this.validateConfirmPassword();
+                    });
+                }
+            }
+
+            validateEmail(input) {
+                const email = input.value;
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                const isValid = emailRegex.test(email);
+
+                if (email && !isValid) {
+                    this.showFieldError(input, 'Введите корректный email');
+                    return false;
+                } else {
+                    this.clearFieldError(input);
+                    return true;
+                }
+            }
+
+            validatePassword(input) {
+                const password = input.value;
+                const isValid = password.length >= 6;
+
+                if (password && !isValid) {
+                    this.showFieldError(input, 'Пароль должен содержать минимум 6 символов');
+                    return false;
+                } else {
+                    this.clearFieldError(input);
+                    return true;
+                }
+            }
+
+            validateConfirmPassword() {
+                const password = document.getElementById('register-password').value;
+                const confirmPassword = document.getElementById('register-confirm-password').value;
+                const confirmInput = document.getElementById('register-confirm-password');
+
+                if (confirmPassword && password !== confirmPassword) {
+                    this.showFieldError(confirmInput, 'Пароли не совпадают');
+                    return false;
+                } else {
+                    this.clearFieldError(confirmInput);
+                    return true;
+                }
+            }
+
+            showFieldError(input, message) {
+                input.classList.add('error');
+                const errorElement = input.parentNode.querySelector('.error-message');
+                if (errorElement) {
+                    errorElement.textContent = message;
+                }
+            }
+
+            clearFieldError(input) {
+                input.classList.remove('error');
+                const errorElement = input.parentNode.querySelector('.error-message');
+                if (errorElement) {
+                    errorElement.textContent = '';
+                }
+            }
+
+            clearFormErrors() {
+                const errorInputs = document.querySelectorAll('.form-group input.error');
+                errorInputs.forEach(input => {
+                    this.clearFieldError(input);
+                });
+            }
+
+            showLoading(show = true) {
+                const loading = document.getElementById('loading');
+                const loginBtn = document.getElementById('login-btn');
+                const registerBtn = document.getElementById('register-btn');
+
+                if (show) {
+                    loading.classList.add('show');
+                    loginBtn.disabled = true;
+                    registerBtn.disabled = true;
+                } else {
+                    loading.classList.remove('show');
+                    loginBtn.disabled = false;
+                    registerBtn.disabled = false;
+                }
+            }
+
+            showMessage(message, type = 'success') {
+                const successMessage = document.getElementById('success-message');
+                const errorMessage = document.getElementById('error-message');
+
+                this.clearMessages();
+
+                if (type === 'success') {
+                    successMessage.textContent = message;
+                    successMessage.classList.add('show');
+                } else {
+                    errorMessage.textContent = message;
+                    errorMessage.classList.add('show');
+                }
+            }
+
+            clearMessages() {
+                const successMessage = document.getElementById('success-message');
+                const errorMessage = document.getElementById('error-message');
+                successMessage.classList.remove('show');
+                errorMessage.classList.remove('show');
+            }
+
+            async handleLogin() {
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+
+                if (!this.validateEmail(document.getElementById('login-email'))) {
+                    return;
+                }
+
+                if (!password) {
+                    this.showMessage('Введите пароль', 'error');
+                    return;
+                }
+
+                this.showLoading(true);
+
+                try {
+                    // Симуляция API запроса
+                    await this.simulateApiCall();
+                    
+                    const user = {
+                        id: Date.now().toString(),
+                        email: email,
+                        name: email.split('@')[0],
+                        username: email.split('@')[0],
+                        avatar: this.generateAvatar(email),
+                        loginTime: new Date().toISOString()
+                    };
+
+                    this.currentUser = user;
+                    this.saveUserToStorage(user);
+                    this.showMessage('Успешный вход! Переход в лобби...', 'success');
+
+                    setTimeout(() => {
+                        window.location.href = 'lobby.html';
+                    }, 1500);
+
+                } catch (error) {
+                    this.showMessage('Ошибка входа. Проверьте данные.', 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async handleRegister() {
+                const formData = {
+                    firstname: document.getElementById('register-firstname').value,
+                    lastname: document.getElementById('register-lastname').value,
+                    email: document.getElementById('register-email').value,
+                    username: document.getElementById('register-username').value,
+                    password: document.getElementById('register-password').value,
+                    confirmPassword: document.getElementById('register-confirm-password').value
+                };
+
+                // Валидация
+                if (!this.validateEmail(document.getElementById('register-email'))) return;
+                if (!this.validatePassword(document.getElementById('register-password'))) return;
+                if (!this.validateConfirmPassword()) return;
+
+                if (!formData.firstname || !formData.lastname || !formData.username) {
+                    this.showMessage('Заполните все поля', 'error');
+                    return;
+                }
+
+                this.showLoading(true);
+
+                try {
+                    // Симуляция API запроса
+                    await this.simulateApiCall();
+                    
+                    const user = {
+                        id: Date.now().toString(),
+                        email: formData.email,
+                        name: `${formData.firstname} ${formData.lastname}`,
+                        username: formData.username,
+                        avatar: this.generateAvatar(formData.email),
+                        registerTime: new Date().toISOString()
+                    };
+
+                    this.currentUser = user;
+                    this.saveUserToStorage(user);
+                    this.showMessage('Регистрация успешна! Переход в лобби...', 'success');
+
+                    setTimeout(() => {
+                        window.location.href = 'lobby.html';
+                    }, 1500);
+
+                } catch (error) {
+                    this.showMessage('Ошибка регистрации. Попробуйте еще раз.', 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            simulateApiCall() {
+                return new Promise((resolve) => {
+                    setTimeout(resolve, 1000);
+                });
+            }
+
+            generateAvatar(email) {
+                const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FFB347', '#98D8C8'];
+                const colorIndex = email.length % colors.length;
+                return colors[colorIndex];
+            }
+
+            saveUserToStorage(user) {
+                localStorage.setItem('monopoly_user', JSON.stringify(user));
+            }
+
+            loadUserFromStorage() {
+                const savedUser = localStorage.getItem('monopoly_user');
+                if (savedUser) {
+                    this.currentUser = JSON.parse(savedUser);
+                    // Если пользователь уже авторизован, перенаправляем в лобби
+                    if (window.location.pathname.includes('auth.html')) {
+                        setTimeout(() => {
+                            window.location.href = 'lobby.html';
+                        }, 1000);
+                    }
+                }
+            }
+
+            logout() {
+                this.currentUser = null;
+                localStorage.removeItem('monopoly_user');
+                window.location.href = 'auth.html';
+            }
+        }
+
+        // Инициализация системы аутентификации
+        const authSystem = new AuthSystem();
+
+        // Глобальный доступ к системе аутентификации
+        window.AuthSystem = authSystem;
+    </script>
+</body>
+</html>
