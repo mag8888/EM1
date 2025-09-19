@@ -328,7 +328,7 @@ class Handlers {
         const user = await this.db.getUser(chatId);
         if (!user) return;
 
-        const referralLink = `https://t.me/your_bot_username?start=${user.referral_code}`;
+        const referralLink = `https://t.me/energy_m_bot?start=${user.referral_code}`;
         
         await this.bot.editMessageText(
             `👥 Пригласи друга и получи ${config.REFERRAL_BONUS}$!\n\n` +
@@ -404,7 +404,7 @@ class Handlers {
     }
 
     async copyReferralLink(chatId, referralCode) {
-        const referralLink = `https://t.me/your_bot_username?start=${referralCode}`;
+        const referralLink = `https://t.me/energy_m_bot?start=${referralCode}`;
         
         await this.bot.sendMessage(
             chatId,
