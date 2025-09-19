@@ -381,6 +381,241 @@
             color: #a0aec0;
             font-size: 14px;
         }
+
+        /* Боковая панель */
+        .sidebar {
+            width: 320px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            box-shadow: 
+                -10px 0 30px rgba(0, 0, 0, 0.3),
+                inset 1px 0 0 rgba(255, 255, 255, 0.1);
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+
+        .section {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .section:hover {
+            background: rgba(30, 41, 59, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #e2e8f0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .assets-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 4px 15px rgba(16, 185, 129, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .assets-button:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%);
+            transform: translateY(-3px);
+            box-shadow: 
+                0 8px 25px rgba(16, 185, 129, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .roll-dice-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 18px;
+            box-shadow: 
+                0 6px 20px rgba(16, 185, 129, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .roll-dice-button:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%);
+            transform: translateY(-4px);
+            box-shadow: 
+                0 12px 30px rgba(16, 185, 129, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .roll-dice-button:disabled {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 50%, #374151 100%);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 
+                0 2px 8px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* Энергетические линии */
+        .energy-lines {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            pointer-events: none;
+        }
+
+        .energy-lines::before,
+        .energy-lines::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 50%;
+            animation: energyPulse 3s ease-in-out infinite;
+        }
+
+        .energy-lines::before {
+            width: 100px;
+            height: 100px;
+            animation-delay: 0s;
+        }
+
+        .energy-lines::after {
+            width: 80px;
+            height: 80px;
+            animation-delay: 1.5s;
+        }
+
+        @keyframes energyPulse {
+            0%, 100% { 
+                opacity: 0.3; 
+                transform: translate(-50%, -50%) scale(1);
+            }
+            50% { 
+                opacity: 0.8; 
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+        }
+
+        /* Светящиеся точки */
+        .glow-dots {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 140px;
+            height: 140px;
+            pointer-events: none;
+        }
+
+        .glow-dot {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #FFD700;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+            animation: dotGlow 2s ease-in-out infinite;
+        }
+
+        .glow-dot:nth-child(1) { top: 20px; left: 50%; animation-delay: 0s; }
+        .glow-dot:nth-child(2) { top: 50%; right: 20px; animation-delay: 0.3s; }
+        .glow-dot:nth-child(3) { bottom: 20px; left: 50%; animation-delay: 0.6s; }
+        .glow-dot:nth-child(4) { top: 50%; left: 20px; animation-delay: 0.9s; }
+        .glow-dot:nth-child(5) { top: 25%; right: 25%; animation-delay: 1.2s; }
+        .glow-dot:nth-child(6) { bottom: 25%; left: 25%; animation-delay: 1.5s; }
+
+        @keyframes dotGlow {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+
+        /* Внешние монеты */
+        .outer-coins {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            pointer-events: none;
+        }
+
+        .coin {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+            animation: coinFloat 4s ease-in-out infinite;
+        }
+
+        .coin-symbol {
+            font-size: 12px;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .coin:nth-child(1) { top: 10px; left: 50%; animation-delay: 0s; }
+        .coin:nth-child(2) { top: 50%; right: 10px; animation-delay: 1s; }
+        .coin:nth-child(3) { bottom: 10px; left: 50%; animation-delay: 2s; }
+        .coin:nth-child(4) { top: 50%; left: 10px; animation-delay: 3s; }
+
+        @keyframes coinFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(180deg); }
+        }
     </style>
 </head>
 <body>
@@ -413,7 +648,100 @@
                         <div class="logo-inner">
                             <!-- Центральный результат броска кубика -->
                             <div class="dice" id="dice">$</div>
+                            
+                            <!-- Энергетические линии -->
+                            <div class="energy-lines"></div>
+                            
+                            <!-- Дополнительные светящиеся точки -->
+                            <div class="glow-dots">
+                                <div class="glow-dot"></div>
+                                <div class="glow-dot"></div>
+                                <div class="glow-dot"></div>
+                                <div class="glow-dot"></div>
+                                <div class="glow-dot"></div>
+                                <div class="glow-dot"></div>
+                            </div>
                         </div>
+                        
+                        <!-- Внешние монеты -->
+                        <div class="outer-coins">
+                            <div class="coin"><span class="coin-symbol">$</span></div>
+                            <div class="coin"><span class="coin-symbol">$</span></div>
+                            <div class="coin"><span class="coin-symbol">$</span></div>
+                            <div class="coin"><span class="coin-symbol">$</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Боковая панель -->
+        <div class="sidebar">
+            <!-- Банк -->
+            <div class="section">
+                <div class="section-title">🏦 Банк</div>
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size: 24px; font-weight: bold; color: #10b981;" id="bankBalance">$0</div>
+                    <div style="font-size: 12px; color: #94a3b8;">Доступно для операций</div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="assets-button" style="flex: 1; padding: 10px; font-size: 12px;">💳 Кредит</button>
+                    <button class="assets-button" style="flex: 1; padding: 10px; font-size: 12px;">💰 PAYDAY</button>
+                </div>
+            </div>
+
+            <!-- Активы -->
+            <div class="section">
+                <button class="assets-button">
+                    <span>💰</span>
+                    <span>Мои активы</span>
+                </button>
+            </div>
+
+            <!-- Бросок кубика -->
+            <div class="section">
+                <button class="roll-dice-button" id="rollDiceBtn">
+                    <span>🎲</span>
+                    <span>Бросить кубики</span>
+                </button>
+            </div>
+
+            <!-- Очередность игроков -->
+            <div class="section">
+                <div class="section-title">Игроки</div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 8px; background: rgba(16, 185, 129, 0.2); border-radius: 8px;">
+                        <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">1</div>
+                        <div>
+                            <div style="font-weight: bold;">Игрок 1</div>
+                            <div style="font-size: 12px; color: #94a3b8;">Текущий ход</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
+                        <div style="width: 20px; height: 20px; background: #6b7280; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">2</div>
+                        <div>
+                            <div style="font-weight: bold;">Игрок 2</div>
+                            <div style="font-size: 12px; color: #94a3b8;">Ожидает</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Статистика -->
+            <div class="section">
+                <div class="section-title">📊 Статистика</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Доход:</span>
+                        <span style="color: #10b981;" id="totalIncome">$0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Расходы:</span>
+                        <span style="color: #ef4444;" id="totalExpenses">$0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>PAYDAY:</span>
+                        <span style="color: #f59e0b;" id="monthlyIncome">$0/мес</span>
                     </div>
                 </div>
             </div>
@@ -534,6 +862,9 @@
             // Создаем игровое поле
             createInnerTrack();
             createOuterPerimeter();
+            
+            // Обновляем боковое меню
+            updateSidebar();
         }
         
         // Создание внутреннего трека (24 клетки)
@@ -589,6 +920,54 @@
             }
         }
         
+        // Данные о клетках внешнего круга (1-44)
+        const outerCellData = {
+            1: { name: "Вам выплачивается доход от ваших инвестиций", type: "Деньги", cost: 0, income: "Все пассивные доходы", description: "Получение дохода от ранее приобретенных активов", color: "yellow", icon: "💰" },
+            2: { name: "Построить дом мечты для семьи", type: "Мечта", cost: 100000, income: 0, description: "Реализация мечты о собственном доме для семьи", color: "blue", icon: "🏠" },
+            3: { name: "Кофейня в центре города", type: "Бизнес", cost: 100000, income: 3000, description: "Открытие кофейни в центре города", color: "green", icon: "☕" },
+            4: { name: "Аудит", type: "Потеря", cost: 0, income: -0.5, description: "Аудит - потеря 50% активов", color: "red", icon: "📊" },
+            5: { name: "Центр здоровья и спа", type: "Бизнес", cost: 270000, income: 5000, description: "Открытие центра здоровья и спа", color: "green", icon: "🧘" },
+            6: { name: "Посетить Антарктиду", type: "Мечта", cost: 150000, income: 0, description: "Экстремальное путешествие на самый южный континент", color: "blue", icon: "❄️" },
+            7: { name: "Мобильное приложение (подписка)", type: "Бизнес", cost: 420000, income: 10000, description: "Разработка мобильного приложения с подпиской", color: "green", icon: "📱" },
+            8: { name: "Благотворительность", type: "Благотворительность", cost: 0, income: 0, description: "Помощь нуждающимся", color: "pink", icon: "❤️" },
+            9: { name: "Агентство цифрового маркетинга", type: "Бизнес", cost: 160000, income: 4000, description: "Открытие агентства цифрового маркетинга", color: "green", icon: "📈" },
+            10: { name: "Кража 100% наличных", type: "Потеря", cost: 0, income: -1, description: "Кража всех наличных денег", color: "red", icon: "💸" },
+            11: { name: "Мини-отель/бутик-гостиница", type: "Бизнес", cost: 200000, income: 5000, description: "Открытие мини-отеля", color: "green", icon: "🏨" },
+            12: { name: "Вам выплачивается доход от ваших инвестиций", type: "Деньги", cost: 0, income: "Все пассивные доходы", description: "Получение дохода от ранее приобретенных активов", color: "yellow", icon: "💰" },
+            13: { name: "Франшиза популярного ресторана", type: "Бизнес", cost: 320000, income: 8000, description: "Покупка франшизы популярного ресторана", color: "green", icon: "🍽️" },
+            14: { name: "Подняться на все высочайшие вершины мира", type: "Мечта", cost: 500000, income: 0, description: "Покорение всех высочайших вершин мира", color: "blue", icon: "🏔️" },
+            15: { name: "Мини-отель/бутик-гостиница", type: "Бизнес", cost: 200000, income: 4000, description: "Открытие мини-отеля", color: "green", icon: "🏨" },
+            16: { name: "Стать автором книги-бестселлера", type: "Мечта", cost: 300000, income: 0, description: "Написание и издание книги-бестселлера", color: "blue", icon: "📚" },
+            17: { name: "Йога- и медитационный центр", type: "Бизнес", cost: 170000, income: 4500, description: "Открытие центра йоги и медитации", color: "green", icon: "🧘" },
+            18: { name: "Развод", type: "Потеря", cost: 0, income: -0.5, description: "Развод - потеря 50% активов", color: "red", icon: "💔" },
+            19: { name: "Сеть автомоек самообслуживания", type: "Бизнес", cost: 120000, income: 3000, description: "Открытие сети автомоек самообслуживания", color: "green", icon: "🚗" },
+            20: { name: "Жить год на яхте в Средиземном море", type: "Мечта", cost: 300000, income: 0, description: "Год жизни на яхте в Средиземном море", color: "blue", icon: "⛵" },
+            21: { name: "Салон красоты/барбершоп", type: "Бизнес", cost: 500000, income: 15000, description: "Открытие салона красоты/барбершопа", color: "green", icon: "💇" },
+            22: { name: "Вам выплачивается доход от ваших инвестиций", type: "Деньги", cost: 0, income: "Все пассивные доходы", description: "Получение дохода от ранее приобретенных активов", color: "yellow", icon: "💰" },
+            23: { name: "Онлайн-магазин одежды", type: "Бизнес", cost: 110000, income: 3000, description: "Открытие онлайн-магазина одежды", color: "green", icon: "👕" },
+            24: { name: "Организовать мировой фестиваль", type: "Мечта", cost: 200000, income: 0, description: "Организация мирового фестиваля", color: "blue", icon: "🎪" },
+            25: { name: "Пожар (вы теряете бизнес с мин доходом)", type: "Потеря", cost: 0, income: -1, description: "Пожар - потеря бизнеса с минимальным доходом", color: "red", icon: "🔥" },
+            26: { name: "Построить ретрит-центр", type: "Мечта", cost: 500000, income: 0, description: "Строительство ретрит-центра", color: "blue", icon: "🏕️" },
+            27: { name: "Создать фонд поддержки талантов", type: "Мечта", cost: 300000, income: 0, description: "Создание фонда поддержки талантов", color: "blue", icon: "🎭" },
+            28: { name: "Кругосветное плавание на паруснике", type: "Мечта", cost: 200000, income: 0, description: "Кругосветное плавание на паруснике", color: "blue", icon: "⛵" },
+            29: { name: "Туристический комплекс (эко-ранчо)", type: "Бизнес", cost: 1000000, income: 20000, description: "Открытие туристического комплекса", color: "green", icon: "🏞️" },
+            30: { name: "Кругосветное плавание на паруснике", type: "Мечта", cost: 300000, income: 0, description: "Кругосветное плавание на паруснике", color: "blue", icon: "⛵" },
+            31: { name: "Биржа (Разово выплачивается 500 000$ если выпало 5 или6 на кубике)", type: "Бизнес", cost: 50000, income: 500000, description: "Инвестиции в биржу с возможностью большого выигрыша", color: "green", icon: "📊" },
+            32: { name: "Купить частный самолёт", type: "Мечта", cost: 1000000, income: 0, description: "Покупка частного самолета", color: "blue", icon: "✈️" },
+            33: { name: "NFT-платформа", type: "Бизнес", cost: 400000, income: 12000, description: "Создание NFT-платформы", color: "green", icon: "🎨" },
+            34: { name: "Кругосветное плавание на паруснике", type: "Деньги", cost: 200000, income: 0, description: "Кругосветное плавание на паруснике", color: "yellow", icon: "⛵" },
+            35: { name: "Школа иностранных языков", type: "Бизнес", cost: 20000, income: 3000, description: "Открытие школы иностранных языков", color: "green", icon: "🌍" },
+            36: { name: "Купить коллекцию суперкаров", type: "Мечта", cost: 1000000, income: 0, description: "Покупка коллекции суперкаров", color: "blue", icon: "🏎️" },
+            37: { name: "Создать школу будущего для детей", type: "Бизнес", cost: 300000, income: 10000, description: "Создание школы будущего для детей", color: "green", icon: "🎓" },
+            38: { name: "Снять полнометражный фильм", type: "Мечта", cost: 500000, income: 0, description: "Съемка полнометражного фильма", color: "blue", icon: "🎬" },
+            39: { name: "Рейдерский захват (Вы теряете бизнес с крупным доходом)", type: "Потеря", cost: 0, income: -1, description: "Рейдерский захват - потеря бизнеса с крупным доходом", color: "red", icon: "⚔️" },
+            40: { name: "Стать мировым лидером мнений", type: "Мечта", cost: 1000000, income: 0, description: "Стать мировым лидером мнений", color: "blue", icon: "👑" },
+            41: { name: "Сеть автомоек самообслуживания", type: "Бизнес", cost: 120000, income: 3500, description: "Открытие сети автомоек самообслуживания", color: "green", icon: "🚗" },
+            42: { name: "Белоснежная Яхта", type: "Мечта", cost: 300000, income: 0, description: "Покупка белоснежной яхты", color: "blue", icon: "⛵" },
+            43: { name: "Франшиза \"поток денег\"", type: "Бизнес", cost: 100000, income: 10000, description: "Покупка франшизы \"поток денег\"", color: "green", icon: "💼" },
+            44: { name: "Санкции заблокировали все счета", type: "Потеря", cost: 0, income: -1, description: "Санкции заблокировали все счета", color: "red", icon: "🚫" }
+        };
+
         // Создание внешнего периметра (44 клетки)
         function createOuterPerimeter() {
             const outerSquares = document.getElementById('outerSquares');
@@ -602,8 +981,10 @@
             
             // Создаем клетки по периметру
             for (let i = 1; i <= totalCells; i++) {
+                const cellData = outerCellData[i];
+                
                 const square = document.createElement('div');
-                square.className = 'outer-square square-gray';
+                square.className = `outer-square ${getCellColorClass(cellData.type)}`;
                 square.dataset.cell = i;
                 square.onclick = () => showCellPopup(i, false);
                 
@@ -643,7 +1024,7 @@
                 // Добавляем иконку
                 const icon = document.createElement('div');
                 icon.className = 'square-icon';
-                icon.textContent = '💰';
+                icon.textContent = cellData.icon;
                 square.appendChild(icon);
                 
                 outerSquares.appendChild(square);
@@ -706,6 +1087,8 @@
             let cell;
             if (isInner && cellNumber >= 1 && cellNumber <= 24) {
                 cell = innerCellData[cellNumber - 1];
+            } else if (!isInner && cellNumber >= 1 && cellNumber <= 44) {
+                cell = outerCellData[cellNumber];
             } else {
                 cell = {
                     name: `Клетка ${cellNumber}`,
@@ -719,8 +1102,25 @@
             }
             
             if (cell) {
-                alert(`${cell.name}\nТип: ${cell.type}\nСтоимость: ${cell.cost > 0 ? '$' + cell.cost.toLocaleString() : 'Бесплатно'}\nОписание: ${cell.description}`);
+                let incomeText = 'Нет дохода';
+                if (cell.income > 0) {
+                    incomeText = `$${cell.income.toLocaleString()}/мес`;
+                } else if (typeof cell.income === 'string') {
+                    incomeText = cell.income;
+                } else if (cell.income < 0) {
+                    incomeText = `Потеря ${Math.abs(cell.income * 100)}% активов`;
+                }
+                
+                alert(`${cell.name}\nТип: ${cell.type}\nСтоимость: ${cell.cost > 0 ? '$' + cell.cost.toLocaleString() : 'Бесплатно'}\nДоход: ${incomeText}\nОписание: ${cell.description}`);
             }
+        }
+        
+        function updateSidebar() {
+            // Обновляем баланс банка
+            document.getElementById('bankBalance').textContent = '$10,000';
+            document.getElementById('totalIncome').textContent = '$3,850';
+            document.getElementById('totalExpenses').textContent = '$2,500';
+            document.getElementById('monthlyIncome').textContent = '$3,850/мес';
         }
         
         function updateTime() {
@@ -736,6 +1136,9 @@
             // Обновление времени каждую секунду
             setInterval(updateTime, 1000);
             updateTime();
+            
+            // Обработчик кнопки броска кубика в боковом меню
+            document.getElementById('rollDiceBtn').addEventListener('click', rollDice);
         });
     </script>
 </body>
