@@ -188,74 +188,123 @@ class Handlers {
     }
 
     async handleMessage(msg) {
-        // Обработка текстовых сообщений (если нужно)
+        if (!msg || !msg.text) return;
+        const chatId = msg.chat.id;
+        const text = (msg.text || '').trim();
+
+        try {
+            if (text.includes('О проекте')) {
+                await this.showAboutProject(chatId);
+                return;
+            }
+
+            if (text.includes('Доход')) {
+                await this.showEarnMoney(chatId);
+                return;
+            }
+
+            if (text.includes('Получить клиентов')) {
+                await this.showGetClients(chatId);
+                return;
+            }
+
+            if (text.includes('Играть')) {
+                await this.showPlayGame(chatId);
+                return;
+            }
+
+            if (text.includes('Сообщество')) {
+                await this.showCommunity(chatId);
+                return;
+            }
+
+            if (text.includes('Главное меню')) {
+                await this.showMainMenu(chatId);
+                return;
+            }
+        } catch (error) {
+            console.error('Error handling message:', error);
+        }
     }
 
     // Методы для показа различных разделов
     async showMainMenu(chatId, messageId) {
-        await this.bot.editMessageText(
-            '🏠 Главное меню\n\nВыберите интересующий раздел:',
-            {
-                chat_id: chatId,
-                message_id: messageId,
-                ...Keyboards.getMainMenu()
-            }
-        );
+        const payload = {
+            chat_id: chatId,
+            ...(messageId ? { message_id: messageId } : {}),
+            ...Keyboards.getMainMenu()
+        };
+
+        if (messageId) {
+            await this.bot.editMessageText('🏠 Главное меню\n\nВыберите интересующий раздел:', payload);
+        } else {
+            await this.bot.sendMessage(chatId, '🏠 Главное меню\n\nВыберите интересующий раздел:', payload);
+        }
     }
 
     async showAboutProject(chatId, messageId) {
-        await this.bot.editMessageText(
-            config.MESSAGES.ABOUT_PROJECT,
-            {
-                chat_id: chatId,
-                message_id: messageId,
-                ...Keyboards.getAboutProjectKeyboard()
-            }
-        );
+        const payload = {
+            chat_id: chatId,
+            ...(messageId ? { message_id: messageId } : {}),
+            ...Keyboards.getAboutProjectKeyboard()
+        };
+        if (messageId) {
+            await this.bot.editMessageText(config.MESSAGES.ABOUT_PROJECT, payload);
+        } else {
+            await this.bot.sendMessage(chatId, config.MESSAGES.ABOUT_PROJECT, payload);
+        }
     }
 
     async showGetClients(chatId, messageId) {
-        await this.bot.editMessageText(
-            config.MESSAGES.GET_CLIENTS,
-            {
-                chat_id: chatId,
-                message_id: messageId,
-                ...Keyboards.getGetClientsKeyboard()
-            }
-        );
+        const payload = {
+            chat_id: chatId,
+            ...(messageId ? { message_id: messageId } : {}),
+            ...Keyboards.getGetClientsKeyboard()
+        };
+        if (messageId) {
+            await this.bot.editMessageText(config.MESSAGES.GET_CLIENTS, payload);
+        } else {
+            await this.bot.sendMessage(chatId, config.MESSAGES.GET_CLIENTS, payload);
+        }
     }
 
     async showEarnMoney(chatId, messageId) {
-        await this.bot.editMessageText(
-            config.MESSAGES.EARN_MONEY,
-            {
-                chat_id: chatId,
-                message_id: messageId,
-                ...Keyboards.getEarnMoneyKeyboard()
-            }
-        );
+        const payload = {
+            chat_id: chatId,
+            ...(messageId ? { message_id: messageId } : {}),
+            ...Keyboards.getEarnMoneyKeyboard()
+        };
+        if (messageId) {
+            await this.bot.editMessageText(config.MESSAGES.EARN_MONEY, payload);
+        } else {
+            await this.bot.sendMessage(chatId, config.MESSAGES.EARN_MONEY, payload);
+        }
     }
 
     async showPlayGame(chatId, messageId) {
-        await this.bot.editMessageText(
-            config.MESSAGES.PLAY_GAME,
-            {
-                chat_id: chatId,
-                message_id: messageId,
-                ...Keyboards.getPlayGameKeyboard()
-            }
-        );
+        const payload = {
+            chat_id: chatId,
+            ...(messageId ? { message_id: messageId } : {}),
+            ...Keyboards.getPlayGameKeyboard()
+        };
+        if (messageId) {
+            await this.bot.editMessageText(config.MESSAGES.PLAY_GAME, payload);
+        } else {
+            await this.bot.sendMessage(chatId, config.MESSAGES.PLAY_GAME, payload);
+        }
     }
 
     async showCommunity(chatId, messageId) {
-        await this.bot.editMessageText(
-            config.MESSAGES.COMMUNITY,
-            {
-                chat_id: chatId,
-                message_id: messageId,
-                ...Keyboards.getCommunityKeyboard()
-            }
-        );
+        const payload = {
+            chat_id: chatId,
+            ...(messageId ? { message_id: messageId } : {}),
+            ...Keyboards.getCommunityKeyboard()
+        };
+        if (messageId) {
+            await this.bot.editMessageText(config.MESSAGES.COMMUNITY, payload);
+        } else {
+            await this.bot.sendMessage(chatId, config.MESSAGES.COMMUNITY, payload);
+        }
     }
 
     async handleBecomeMaster(chatId, messageId) {
