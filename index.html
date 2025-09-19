@@ -225,8 +225,31 @@
                 
             } catch (error) {
                 console.error('❌ Ошибка инициализации игры:', error);
-                showErrorScreen(error.message);
+                
+                // Попытка загрузить базовую версию игры
+                try {
+                    console.log('🔄 Попытка загрузки базовой версии...');
+                    await initBasicGame();
+                    hideLoadingScreen();
+                    window.isGameLoaded = true;
+                } catch (basicError) {
+                    console.error('❌ Ошибка загрузки базовой версии:', basicError);
+                    showErrorScreen(error.message);
+                }
             }
+        }
+
+        // Базовая версия игры без модулей
+        async function initBasicGame() {
+            console.log('🎮 Запуск базовой версии игры...');
+            
+            // Простая инициализация кубиков
+            window.diceValues = [0, 0];
+            
+            // Обновление статуса
+            document.getElementById('gameStatus').textContent = 'Готов к игре (базовая версия)';
+            
+            console.log('✅ Базовая версия игры загружена');
         }
 
         // Показать загрузочный экран
@@ -279,8 +302,28 @@
                 if (diceModule) {
                     await diceModule.roll();
                 }
+            } else if (window.isGameLoaded) {
+                // Базовая версия игры
+                rollBasicDice();
             }
         });
+
+        // Базовая функция броска кубика
+        function rollBasicDice() {
+            const dice1 = Math.floor(Math.random() * 6) + 1;
+            const dice2 = Math.floor(Math.random() * 6) + 1;
+            const total = dice1 + dice2;
+            
+            // Обновление отображения
+            const diceElements = document.querySelectorAll('.dice');
+            if (diceElements.length >= 2) {
+                diceElements[0].textContent = dice1;
+                diceElements[1].textContent = dice2;
+            }
+            document.querySelector('.dice-total').textContent = total;
+            
+            console.log(`🎲 Брошены кубики: ${dice1} + ${dice2} = ${total}`);
+        }
 
         document.getElementById('endTurnBtn').addEventListener('click', () => {
             if (window.gameCore && window.isGameLoaded) {
