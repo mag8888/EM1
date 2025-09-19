@@ -251,7 +251,10 @@ class Handlers {
         if (messageId) {
             await this.bot.editMessageText(config.MESSAGES.ABOUT_PROJECT, payload);
         } else {
-            await this.bot.sendMessage(chatId, config.MESSAGES.ABOUT_PROJECT, payload);
+            await this.bot.sendPhoto(chatId, config.MEDIA.ABOUT_PROJECT, {
+                caption: config.MESSAGES.ABOUT_PROJECT,
+                ...Keyboards.getAboutProjectKeyboard()
+            });
         }
     }
 
@@ -264,7 +267,10 @@ class Handlers {
         if (messageId) {
             await this.bot.editMessageText(config.MESSAGES.GET_CLIENTS, payload);
         } else {
-            await this.bot.sendMessage(chatId, config.MESSAGES.GET_CLIENTS, payload);
+            await this.bot.sendPhoto(chatId, config.MEDIA.GET_CLIENTS, {
+                caption: config.MESSAGES.GET_CLIENTS,
+                ...Keyboards.getGetClientsKeyboard()
+            });
         }
     }
 
@@ -277,7 +283,10 @@ class Handlers {
         if (messageId) {
             await this.bot.editMessageText(config.MESSAGES.EARN_MONEY, payload);
         } else {
-            await this.bot.sendMessage(chatId, config.MESSAGES.EARN_MONEY, payload);
+            await this.bot.sendPhoto(chatId, config.MEDIA.EARN_MONEY, {
+                caption: config.MESSAGES.EARN_MONEY,
+                ...Keyboards.getEarnMoneyKeyboard()
+            });
         }
     }
 
@@ -290,7 +299,10 @@ class Handlers {
         if (messageId) {
             await this.bot.editMessageText(config.MESSAGES.PLAY_GAME, payload);
         } else {
-            await this.bot.sendMessage(chatId, config.MESSAGES.PLAY_GAME, payload);
+            await this.bot.sendPhoto(chatId, config.MEDIA.PLAY_GAME, {
+                caption: config.MESSAGES.PLAY_GAME,
+                ...Keyboards.getPlayGameKeyboard()
+            });
         }
     }
 
@@ -303,7 +315,10 @@ class Handlers {
         if (messageId) {
             await this.bot.editMessageText(config.MESSAGES.COMMUNITY, payload);
         } else {
-            await this.bot.sendMessage(chatId, config.MESSAGES.COMMUNITY, payload);
+            await this.bot.sendPhoto(chatId, config.MEDIA.COMMUNITY, {
+                caption: config.MESSAGES.COMMUNITY,
+                ...Keyboards.getCommunityKeyboard()
+            });
         }
     }
 
