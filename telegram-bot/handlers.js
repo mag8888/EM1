@@ -40,16 +40,25 @@ class Handlers {
         // Регистрируем пользователя
         let user = await this.db.getUser(telegramId);
         if (!user) {
-            const userReferralCode = this.db.generateReferralCode(telegramId);
-            await this.db.createUser({
-                telegramId,
-                username,
-                firstName,
-                lastName,
-                referralCode: userReferralCode,
-                referredBy
-            });
-            user = await this.db.getUser(telegramId);
+            try {
+                const userReferralCode = this.db.generateReferralCode(telegramId);
+                await this.db.createUser({
+                    telegramId,
+                    username,
+                    firstName,
+                    lastName,
+                    referralCode: userReferralCode,
+                    referredBy
+                });
+                user = await this.db.getUser(telegramId);
+            } catch (error) {
+                if (error.code === 'SQLITE_CONSTRAINT') {
+                    // Пользователь уже существует, получаем его данные
+                    user = await this.db.getUser(telegramId);
+                } else {
+                    throw error;
+                }
+            }
         }
 
         // Обработка реферала

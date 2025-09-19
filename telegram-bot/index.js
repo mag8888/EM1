@@ -26,10 +26,13 @@ class TelegramBotApp {
 
         process.on('unhandledRejection', (reason, promise) => {
             console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+            // Не завершаем процесс для unhandledRejection, только логируем
         });
 
         process.on('uncaughtException', (error) => {
             console.error('Uncaught Exception:', error);
+            // Завершаем процесс только для критических ошибок
+            setTimeout(() => process.exit(1), 1000);
         });
     }
 

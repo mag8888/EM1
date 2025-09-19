@@ -14,14 +14,14 @@ module.exports = {
     REFERRAL_BONUS: parseInt(process.env.REFERRAL_BONUS) || 10,
     REFERRAL_PERCENTAGE: parseInt(process.env.REFERRAL_PERCENTAGE) || 10,
     
-    // Media URLs
+    // Media URLs - используем прямые ссылки на изображения
     MEDIA: {
-        WELCOME_PHOTO: 'https://drive.google.com/file/d/1DVFh1fEm5CG0crg_OYWKBrLIjnmgwjm8/view?usp=drive_link',
-        ABOUT_PROJECT: 'https://drive.google.com/file/d/1DVFh1fEm5CG0crg_OYWKBrLIjnmgwjm8/view?usp=drive_link',
-        COMMUNITY: 'https://drive.google.com/file/d/1oZKXefyAPKIgxQ0tYrewUhhb5cewtUWS/view?usp=drive_link',
-        PLAY_GAME: 'https://drive.google.com/file/d/1TKi83s951WoB4FRONr8DnAITmZ8jCyfA/view?usp=drive_link',
-        GET_CLIENTS: 'https://drive.google.com/file/d/1P_RJ8gYipADlTL8zHVXmyEdgzTbwJn_8/view?usp=drive_link',
-        EARN_MONEY: 'https://drive.google.com/file/d/1P_RJ8gYipADlTL8zHVXmyEdgzTbwJn_8/view?usp=drive_link'
+        WELCOME_PHOTO: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=400&h=300&fit=crop',
+        ABOUT_PROJECT: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=400&h=300&fit=crop',
+        COMMUNITY: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=300&fit=crop',
+        PLAY_GAME: 'https://images.unsplash.com/photo-1606092195730-5d7b9af1efc5?w=400&h=300&fit=crop',
+        GET_CLIENTS: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=400&h=300&fit=crop',
+        EARN_MONEY: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop'
     },
     
     // Messages
