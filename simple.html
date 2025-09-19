@@ -323,9 +323,64 @@
             font-weight: bold;
             color: #10b981;
         }
+
+        /* Загрузочный экран */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #333;
+            border-top: 4px solid #10b981;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-content h2 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+            color: #10b981;
+        }
+
+        .loading-content p {
+            margin: 0;
+            font-size: 16px;
+            color: #ccc;
+        }
     </style>
 </head>
 <body>
+    <!-- Загрузочный экран -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h2>Загрузка игры...</h2>
+            <p>Инициализация игрового поля</p>
+        </div>
+    </div>
+
     <div class="game-container">
         <div class="game-board">
             <!-- Красновато-коричневая область с мягким свечением -->
@@ -674,19 +729,63 @@
             document.getElementById('currentTime').textContent = now.toLocaleTimeString();
         }
 
+        function showLoadingScreen() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) {
+                loadingScreen.style.display = 'flex';
+            }
+        }
+
+        function hideLoadingScreen() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) {
+                loadingScreen.style.display = 'none';
+            }
+        }
+
+        function updateDisplay() {
+            document.getElementById('balance').textContent = gameState.balance;
+            document.getElementById('income').textContent = gameState.income;
+            document.getElementById('expenses').textContent = gameState.expenses;
+        }
+
         // Инициализация
         document.addEventListener('DOMContentLoaded', () => {
             console.log('🎮 Точная копия игры загружена');
             
-            createInnerTrack();
-            createOuterPerimeter();
+            // Показать загрузочный экран
+            showLoadingScreen();
             
-            const rollDiceBtn = document.getElementById('rollDiceBtn');
-            if (rollDiceBtn) {
-                rollDiceBtn.addEventListener('click', rollDice);
-            }
-            
-            setInterval(updateTime, 1000);
+            // Инициализация с задержкой для имитации загрузки
+            setTimeout(() => {
+                createInnerTrack();
+                createOuterPerimeter();
+                
+                const rollDiceBtn = document.getElementById('rollDiceBtn');
+                if (rollDiceBtn) {
+                    rollDiceBtn.addEventListener('click', rollDice);
+                }
+                
+                // Инициализация игрового состояния
+                gameState = {
+                    balance: 10000,
+                    income: 10000,
+                    expenses: 6200,
+                    position: 0,
+                    isPlaying: false,
+                    currentPlayer: 1
+                };
+                
+                updateDisplay();
+                hideLoadingScreen();
+                
+                // Обновить статус
+                document.getElementById('gameStatus').textContent = 'Игра готова! Нажмите "Бросить кубики" для начала';
+                
+                setInterval(updateTime, 1000);
+                
+                console.log('✅ Игра успешно инициализирована');
+            }, 1500);
         });
     </script>
 </body>
