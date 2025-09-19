@@ -625,6 +625,189 @@
             color: #1a1d24;
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #00ff96, #00bfff, #ff6b6b, #ffd93d);
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease infinite;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #a0a0a0;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-body {
+            margin-bottom: 24px;
+        }
+
+        .modal-form-group {
+            margin-bottom: 20px;
+        }
+
+        .modal-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-form-group input,
+        .modal-form-group select,
+        .modal-form-group textarea {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #ffffff;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+        }
+
+        .modal-form-group input::placeholder,
+        .modal-form-group textarea::placeholder {
+            color: #a0a0a0;
+        }
+
+        .modal-form-group input:focus,
+        .modal-form-group select:focus,
+        .modal-form-group textarea:focus {
+            outline: none;
+            border-color: #00ff96;
+            box-shadow: 0 0 0 3px rgba(0, 255, 150, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .modal-btn:hover::before {
+            left: 100%;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-btn-primary {
+            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
+            color: #1a1d24;
+            box-shadow: 0 4px 16px rgba(0, 255, 150, 0.3);
+        }
+
+        .modal-btn-secondary {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .container {
@@ -785,6 +968,48 @@
         </div>
     </div>
 
+    <!-- Create Room Modal -->
+    <div class="modal" id="create-room-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">🎮 Создание комнаты</h2>
+                <button class="modal-close" id="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="create-room-form">
+                    <div class="modal-form-group">
+                        <label for="room-name-input">Название комнаты</label>
+                        <input type="text" id="room-name-input" placeholder="Введите название комнаты" required>
+                    </div>
+                    <div class="modal-form-group">
+                        <label for="room-description">Описание (необязательно)</label>
+                        <textarea id="room-description" placeholder="Опишите комнату..." rows="3"></textarea>
+                    </div>
+                    <div class="modal-form-group">
+                        <label for="max-players-input">Максимум игроков</label>
+                        <select id="max-players-input" required>
+                            <option value="2">2 игрока</option>
+                            <option value="4" selected>4 игрока</option>
+                            <option value="6">6 игроков</option>
+                            <option value="8">8 игроков</option>
+                        </select>
+                    </div>
+                    <div class="modal-form-group">
+                        <label for="room-privacy">Приватность</label>
+                        <select id="room-privacy" required>
+                            <option value="public" selected>Публичная</option>
+                            <option value="private">Приватная</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="modal-btn modal-btn-secondary" id="cancel-create">Отмена</button>
+                <button type="button" class="modal-btn modal-btn-primary" id="confirm-create">Создать комнату</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Mobile Navigation -->
     <div class="mobile-nav">
         <div class="mobile-nav-buttons">
@@ -809,19 +1034,118 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Modal elements
+            const modal = document.getElementById('create-room-modal');
+            const createRoomBtn = document.getElementById('create-room-btn');
+            const closeModalBtn = document.getElementById('close-modal');
+            const cancelBtn = document.getElementById('cancel-create');
+            const confirmBtn = document.getElementById('confirm-create');
+            const createRoomForm = document.getElementById('create-room-form');
+
             // Add click handlers
             document.getElementById('refresh-btn').addEventListener('click', function() {
                 location.reload();
             });
 
-            document.getElementById('create-room-btn').addEventListener('click', function() {
-                alert('Создание комнаты');
+            // Create room modal handlers
+            createRoomBtn.addEventListener('click', function() {
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
             });
+
+            closeModalBtn.addEventListener('click', closeModal);
+            cancelBtn.addEventListener('click', closeModal);
+
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && modal.classList.contains('show')) {
+                    closeModal();
+                }
+            });
+
+            function closeModal() {
+                modal.classList.remove('show');
+                document.body.style.overflow = 'auto';
+                createRoomForm.reset();
+            }
+
+            // Create room functionality
+            confirmBtn.addEventListener('click', function() {
+                const roomName = document.getElementById('room-name-input').value;
+                const roomDescription = document.getElementById('room-description').value;
+                const maxPlayers = document.getElementById('max-players-input').value;
+                const privacy = document.getElementById('room-privacy').value;
+
+                if (!roomName.trim()) {
+                    alert('Пожалуйста, введите название комнаты');
+                    return;
+                }
+
+                // Create new room
+                createNewRoom(roomName, roomDescription, maxPlayers, privacy);
+                closeModal();
+            });
+
+            function createNewRoom(name, description, maxPlayers, privacy) {
+                const roomsGrid = document.getElementById('rooms-grid');
+                const newRoom = document.createElement('div');
+                newRoom.className = 'room-card';
+                newRoom.innerHTML = `
+                    <div class="room-header">
+                        <div class="room-title">${name}</div>
+                        <div class="room-status status-waiting">Ожидание</div>
+                    </div>
+                    <div class="room-info">
+                        <span>Игроков: 1/${maxPlayers}</span>
+                        <span>Хост: ${localStorage.getItem('username') || 'Вы'}</span>
+                    </div>
+                    <div class="room-players">
+                        <div class="player-avatar">${(localStorage.getItem('username') || 'Вы').charAt(0).toUpperCase()}</div>
+                    </div>
+                    <div class="room-actions">
+                        <button class="join-btn">Войти</button>
+                    </div>
+                `;
+
+                // Add hover effects to new room
+                newRoom.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px)';
+                });
+                
+                newRoom.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+
+                // Add join functionality
+                newRoom.querySelector('.join-btn').addEventListener('click', function() {
+                    alert(`Вход в комнату "${name}"`);
+                    // Here you would normally redirect to the game
+                    window.location.href = 'game.html';
+                });
+
+                roomsGrid.insertBefore(newRoom, roomsGrid.firstChild);
+                
+                // Show success message
+                alert(`Комната "${name}" успешно создана!`);
+            }
 
             document.getElementById('quick-start-btn').addEventListener('click', function() {
                 const roomName = document.getElementById('room-name').value;
                 const maxPlayers = document.getElementById('max-players').value;
-                alert(`Быстрый старт: ${roomName || 'Без названия'}, ${maxPlayers} игроков`);
+                
+                if (!roomName.trim()) {
+                    alert('Пожалуйста, введите название комнаты для быстрого старта');
+                    return;
+                }
+                
+                createNewRoom(roomName, '', maxPlayers, 'public');
             });
 
             // Add hover effects to room cards
@@ -832,6 +1156,16 @@
                 
                 card.addEventListener('mouseleave', function() {
                     this.style.transform = 'translateY(0)';
+                });
+            });
+
+            // Add join functionality to existing rooms
+            document.querySelectorAll('.join-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const roomCard = this.closest('.room-card');
+                    const roomName = roomCard.querySelector('.room-title').textContent;
+                    alert(`Вход в комнату "${roomName}"`);
+                    window.location.href = 'game.html';
                 });
             });
         });
