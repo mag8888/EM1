@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Энергия денег - Игровая доска</title>
+    
+    <!-- Основные стили -->
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/components/board.css">
+    <link rel="stylesheet" href="assets/css/components/player-cards.css">
+    <link rel="stylesheet" href="assets/css/components/modals.css">
+    <link rel="stylesheet" href="assets/css/components/notifications.css">
+    
+    <!-- Иконки -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+</head>
+<body>
+    <!-- Игровая доска -->
+    <div id="gameBoard" class="game-board">
+        <!-- Внутренний круг -->
+        <div class="board-inner-track">
+            <!-- Клетки внутреннего круга будут добавлены динамически -->
+        </div>
+        
+        <!-- Внешний круг -->
+        <div class="board-outer-track">
+            <!-- Клетки внешнего круга будут добавлены динамически -->
+        </div>
+        
+        <!-- Центральная область -->
+        <div class="board-center">
+            <div class="game-title">Энергия денег</div>
+            <div class="game-status">
+                <span id="gameStatus">Загрузка...</span>
+            </div>
+            
+            <!-- Кубики -->
+            <div class="dice-container">
+                <div class="dice" data-value="0">0</div>
+                <div class="dice" data-value="0">0</div>
+                <div class="dice-total">0</div>
+            </div>
+            
+            <!-- Кнопки действий -->
+            <div class="action-buttons">
+                <button id="rollDiceBtn" class="btn btn-primary" disabled>
+                    <i class="fas fa-dice"></i> Бросить кубики
+                </button>
+                <button id="endTurnBtn" class="btn btn-secondary" disabled>
+                    <i class="fas fa-arrow-right"></i> Завершить ход
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Карточки игроков -->
+    <div id="playerCards" class="player-cards">
+        <!-- Карточки игроков будут добавлены динамически -->
+    </div>
+
+    <!-- Банковский интерфейс -->
+    <div id="bankInterface" class="bank-interface">
+        <div class="bank-balance">
+            <span class="balance-label">Баланс:</span>
+            <span id="currentBalance" class="balance-amount">$0</span>
+        </div>
+        <div class="bank-income">
+            <span class="income-label">Доход:</span>
+            <span id="monthlyIncome" class="income-amount">$0</span>
+        </div>
+        <div class="bank-expenses">
+            <span class="expenses-label">Расходы:</span>
+            <span id="monthlyExpenses" class="expenses-amount">$0</span>
+        </div>
+        <button id="openBankBtn" class="btn btn-bank">
+            <i class="fas fa-university"></i> Банк
+        </button>
+    </div>
+
+    <!-- Модальные окна -->
+    <div id="modals" class="modals">
+        <!-- Модальные окна будут добавлены динамически -->
+    </div>
+
+    <!-- Уведомления -->
+    <div id="notifications" class="notifications">
+        <!-- Уведомления будут добавляться динамически -->
+    </div>
+
+    <!-- Загрузочный экран -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Загрузка игры...</div>
+            <div class="loading-progress">
+                <div id="loadingProgress" class="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ошибка загрузки -->
+    <div id="errorScreen" class="error-screen" style="display: none;">
+        <div class="error-content">
+            <div class="error-icon">⚠️</div>
+            <div class="error-title">Ошибка загрузки</div>
+            <div id="errorMessage" class="error-message">Не удалось загрузить игру</div>
+            <button id="retryBtn" class="btn btn-primary">
+                <i class="fas fa-redo"></i> Попробовать снова
+            </button>
+        </div>
+    </div>
+
+    <!-- Подключение модулей -->
+    <script type="module">
+        import { GameCore } from './assets/js/core/GameCore.js';
+        import { GAME_CONFIG } from './config/game-config.js';
+
+        // Глобальные переменные
+        window.gameCore = null;
+        window.isGameLoaded = false;
+
+        // Функция инициализации игры
+        async function initGame() {
+            try {
+                console.log('🚀 Запуск игры "Энергия денег"...');
+                
+                // Показать загрузочный экран
+                showLoadingScreen();
+                
+                // Создание игрового ядра
+                window.gameCore = new GameCore();
+                
+                // Инициализация с конфигурацией
+                await window.gameCore.init(GAME_CONFIG);
+                
+                // Запуск игры
+                await window.gameCore.start();
+                
+                // Скрыть загрузочный экран
+                hideLoadingScreen();
+                
+                // Установка флага загрузки
+                window.isGameLoaded = true;
+                
+                console.log('✅ Игра успешно загружена');
+                
+            } catch (error) {
+                console.error('❌ Ошибка инициализации игры:', error);
+                showErrorScreen(error.message);
+            }
+        }
+
+        // Показать загрузочный экран
+        function showLoadingScreen() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            const errorScreen = document.getElementById('errorScreen');
+            
+            loadingScreen.style.display = 'flex';
+            errorScreen.style.display = 'none';
+            
+            // Анимация прогресса
+            let progress = 0;
+            const progressBar = document.getElementById('loadingProgress');
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                }
+                progressBar.style.width = progress + '%';
+            }, 200);
+        }
+
+        // Скрыть загрузочный экран
+        function hideLoadingScreen() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            loadingScreen.style.display = 'none';
+        }
+
+        // Показать экран ошибки
+        function showErrorScreen(message) {
+            const loadingScreen = document.getElementById('loadingScreen');
+            const errorScreen = document.getElementById('errorScreen');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            loadingScreen.style.display = 'none';
+            errorMessage.textContent = message;
+            errorScreen.style.display = 'flex';
+        }
+
+        // Обработчик кнопки повтора
+        document.getElementById('retryBtn').addEventListener('click', () => {
+            window.location.reload();
+        });
+
+        // Обработчики кнопок
+        document.getElementById('rollDiceBtn').addEventListener('click', async () => {
+            if (window.gameCore && window.isGameLoaded) {
+                const diceModule = window.gameCore.getModule('diceModule');
+                if (diceModule) {
+                    await diceModule.roll();
+                }
+            }
+        });
+
+        document.getElementById('endTurnBtn').addEventListener('click', () => {
+            if (window.gameCore && window.isGameLoaded) {
+                const playerManager = window.gameCore.getModule('playerManager');
+                if (playerManager) {
+                    const currentPlayer = playerManager.getCurrentPlayer();
+                    if (currentPlayer) {
+                        window.gameCore.eventBus.emit('playerTurnEnded', currentPlayer);
+                    }
+                }
+            }
+        });
+
+        document.getElementById('openBankBtn').addEventListener('click', () => {
+            if (window.gameCore && window.isGameLoaded) {
+                const bankModule = window.gameCore.getModule('bankModule');
+                if (bankModule) {
+                    bankModule.openBank();
+                }
+            }
+        });
+
+        // Обработка закрытия страницы
+        window.addEventListener('beforeunload', () => {
+            if (window.gameCore) {
+                window.gameCore.destroy();
+            }
+        });
+
+        // Запуск инициализации при загрузке DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initGame);
+        } else {
+            initGame();
+        }
+    </script>
+</body>
+</html>
