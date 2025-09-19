@@ -577,8 +577,60 @@
             animation: fadeInUp 0.6s ease forwards;
         }
 
+        /* Mobile Navigation */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, rgba(26, 29, 36, 0.95) 0%, rgba(36, 40, 48, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 16px;
+            z-index: 1000;
+        }
+
+        .mobile-nav-buttons {
+            display: flex;
+            justify-content: space-around;
+            gap: 8px;
+        }
+
+        .mobile-nav-btn {
+            flex: 1;
+            padding: 12px 8px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #ffffff;
+            text-decoration: none;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .mobile-nav-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 150, 0.2) 0%, rgba(0, 212, 170, 0.1) 100%);
+            border-color: rgba(0, 255, 150, 0.5);
+        }
+
+        .mobile-nav-btn.active {
+            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
+            color: #1a1d24;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
+            .container {
+                padding-bottom: 80px;
+            }
+
             .main-content {
                 grid-template-columns: 1fr;
             }
@@ -591,6 +643,10 @@
             
             .rooms-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .mobile-nav {
+                display: block;
             }
         }
     </style>
@@ -726,6 +782,28 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <div class="mobile-nav">
+        <div class="mobile-nav-buttons">
+            <a href="index.html" class="mobile-nav-btn">
+                <span>🏠</span>
+                <span>Главная</span>
+            </a>
+            <a href="lobby.html" class="mobile-nav-btn active">
+                <span>🎮</span>
+                <span>Лобби</span>
+            </a>
+            <a href="game.html" class="mobile-nav-btn">
+                <span>🎯</span>
+                <span>Игра</span>
+            </a>
+            <a href="auth.html" class="mobile-nav-btn">
+                <span>👤</span>
+                <span>Профиль</span>
+            </a>
         </div>
     </div>
 

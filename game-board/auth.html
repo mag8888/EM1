@@ -3,11 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Регистрация - Game Board v2.0</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Авторизация - Game Board v2.0 - Богатый дизайн</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        /* БОГАТЫЙ СОВРЕМЕННЫЙ ДИЗАЙН v4.0 - БАНКОВСКИЙ СТИЛЬ */
         * {
             margin: 0;
             padding: 0;
@@ -15,350 +19,143 @@
         }
 
         body {
-            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: 
-                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%),
-                linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
-            background-size: 400% 400%, 300% 300%, 200% 200%, 100% 100%;
-            animation: 
-                gradientShift 20s ease infinite,
-                particleFloat 30s linear infinite,
-                cyberGlow 15s ease-in-out infinite alternate;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1d24 0%, #242830 50%, #1a1d24 100%);
+            color: #ffffff;
+            line-height: 1.6;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            overflow: hidden;
-            perspective: 1000px;
-        }
-
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%, 0% 0%, 0% 0%, 0% 50%; }
-            25% { background-position: 100% 50%, 50% 50%, 25% 25%, 25% 75%; }
-            50% { background-position: 50% 100%, 100% 100%, 50% 50%, 50% 0%; }
-            75% { background-position: 0% 0%, 0% 50%, 75% 75%, 75% 25%; }
-            100% { background-position: 0% 50%, 0% 0%, 0% 0%, 0% 50%; }
-        }
-
-        @keyframes particleFloat {
-            0% { transform: translateY(0px) rotate(0deg); }
-            100% { transform: translateY(-100px) rotate(360deg); }
-        }
-
-        @keyframes cyberGlow {
-            0% { filter: hue-rotate(0deg) brightness(1); }
-            100% { filter: hue-rotate(30deg) brightness(1.1); }
+            overflow-x: hidden;
         }
 
         body::before {
             content: '';
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
             background: 
-                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="cyberGrid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23cyberGrid)"/></svg>'),
-                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="particles" width="50" height="50" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="rgba(0,255,255,0.3)"/><circle cx="30" cy="20" r="0.5" fill="rgba(255,0,255,0.2)"/><circle cx="40" cy="40" r="1.5" fill="rgba(0,255,0,0.1)"/><circle cx="20" cy="35" r="0.8" fill="rgba(255,255,0,0.2)"/></pattern></defs><rect width="100" height="100" fill="url(%23particles)"/></svg>');
-            opacity: 0.6;
+                radial-gradient(circle at 20% 20%, rgba(0, 255, 150, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 100, 200, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 60%, rgba(100, 200, 255, 0.1) 0%, transparent 50%);
             pointer-events: none;
-            animation: particleFloat 25s linear infinite;
-        }
-
-        body::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 30% 20%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 70% 80%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(0, 255, 0, 0.05) 0%, transparent 70%);
-            animation: cyberGlow 20s ease-in-out infinite alternate;
-            pointer-events: none;
+            z-index: 1;
         }
 
         .auth-container {
-            background: 
-                linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(20, 20, 40, 0.9) 50%, rgba(0, 0, 0, 0.8) 100%),
-                radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 70%);
-            backdrop-filter: blur(30px) saturate(1.5);
-            border: 2px solid transparent;
-            background-clip: padding-box;
-            border-radius: 32px;
-            box-shadow: 
-                0 0 0 1px rgba(0, 255, 255, 0.3),
-                0 0 50px rgba(0, 255, 255, 0.2),
-                0 0 100px rgba(255, 0, 255, 0.1),
-                0 32px 64px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1),
-                inset 0 -1px 0 rgba(0, 255, 255, 0.2);
-            overflow: hidden;
+            max-width: 500px;
             width: 100%;
-            max-width: 480px;
-            margin: 20px;
+            margin: 0 auto;
+            padding: 40px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
             position: relative;
-            z-index: 10;
-            animation: 
-                slideUp 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-                cyberPulse 4s ease-in-out infinite,
-                glitchEffect 8s ease-in-out infinite;
-            transform-style: preserve-3d;
+            z-index: 2;
+            overflow: hidden;
         }
 
         .auth-container::before {
             content: '';
             position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, 
-                #00ffff, #ff00ff, #00ff00, #ffff00, 
-                #ff0000, #0000ff, #00ffff);
-            background-size: 400% 400%;
-            border-radius: 32px;
-            z-index: -1;
-            animation: gradientShift 3s ease infinite, cyberGlow 2s ease-in-out infinite alternate;
-            opacity: 0.7;
-        }
-
-        .auth-container::after {
-            content: '';
-            position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            bottom: 0;
-            background: 
-                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="cyberLines" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 0 5 L 10 5" stroke="rgba(0,255,255,0.1)" stroke-width="0.5"/><path d="M 5 0 L 5 10" stroke="rgba(0,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23cyberLines)"/></svg>');
-            opacity: 0.3;
-            animation: particleFloat 20s linear infinite;
-            pointer-events: none;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px) scale(0.8) rotateX(20deg);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1) rotateX(0deg);
-            }
-        }
-
-        @keyframes cyberPulse {
-            0%, 100% { 
-                box-shadow: 
-                    0 0 0 1px rgba(0, 255, 255, 0.3),
-                    0 0 50px rgba(0, 255, 255, 0.2),
-                    0 0 100px rgba(255, 0, 255, 0.1),
-                    0 32px 64px rgba(0, 0, 0, 0.4);
-            }
-            50% { 
-                box-shadow: 
-                    0 0 0 2px rgba(0, 255, 255, 0.5),
-                    0 0 80px rgba(0, 255, 255, 0.4),
-                    0 0 150px rgba(255, 0, 255, 0.2),
-                    0 32px 64px rgba(0, 0, 0, 0.4);
-            }
-        }
-
-        @keyframes glitchEffect {
-            0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-2px); }
-            40% { transform: translateX(2px); }
-            60% { transform: translateX(-1px); }
-            80% { transform: translateX(1px); }
+            height: 4px;
+            background: linear-gradient(90deg, #00ff96, #00bfff, #ff6b6b, #ffd93d);
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease infinite;
         }
 
         .auth-header {
-            background: 
-                linear-gradient(135deg, 
-                    rgba(0, 255, 255, 0.2) 0%, 
-                    rgba(255, 0, 255, 0.3) 25%, 
-                    rgba(0, 255, 0, 0.2) 50%, 
-                    rgba(255, 255, 0, 0.3) 75%, 
-                    rgba(0, 255, 255, 0.2) 100%),
-                linear-gradient(45deg, 
-                    rgba(0, 0, 0, 0.9) 0%, 
-                    rgba(20, 20, 40, 0.8) 50%, 
-                    rgba(0, 0, 0, 0.9) 100%);
-            background-size: 400% 400%, 100% 100%;
-            animation: 
-                gradientShift 6s ease infinite,
-                cyberScan 3s linear infinite;
-            color: #00ffff;
-            padding: 50px 40px;
             text-align: center;
-            position: relative;
-            overflow: hidden;
-            border-bottom: 2px solid rgba(0, 255, 255, 0.3);
-        }
-
-        .auth-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(0, 255, 255, 0.3), 
-                transparent);
-            animation: cyberScan 2s linear infinite;
-        }
-
-        .auth-header::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="cyberPattern" width="20" height="20" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="20" height="20" fill="none" stroke="rgba(0,255,255,0.1)" stroke-width="0.5"/><circle cx="10" cy="10" r="1" fill="rgba(0,255,255,0.2)"/></pattern></defs><rect width="100" height="100" fill="url(%23cyberPattern)"/></svg>');
-            opacity: 0.4;
-            animation: particleFloat 15s linear infinite;
-        }
-
-        @keyframes cyberScan {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            margin-bottom: 40px;
         }
 
         .auth-header h1 {
-            font-size: 36px;
-            margin-bottom: 15px;
+            font-size: 32px;
             font-weight: 900;
-            text-shadow: 
-                0 0 10px rgba(0, 255, 255, 0.8),
-                0 0 20px rgba(0, 255, 255, 0.6),
-                0 0 30px rgba(0, 255, 255, 0.4);
-            animation: cyberGlow 2s ease-in-out infinite alternate;
-            position: relative;
-            z-index: 2;
+            color: #ffffff;
+            margin-bottom: 12px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .auth-header p {
-            opacity: 0.9;
-            font-size: 18px;
-            font-weight: 600;
-            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-            position: relative;
-            z-index: 2;
-        }
-
-        .auth-form {
-            padding: 30px;
+            font-size: 16px;
+            color: #a0a0a0;
+            font-weight: 500;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         .form-group label {
             display: block;
             margin-bottom: 8px;
+            font-size: 14px;
             font-weight: 600;
-            color: #333;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
 
         .form-group input {
             width: 100%;
-            padding: 20px 24px;
-            border: 2px solid rgba(0, 255, 255, 0.3);
-            border-radius: 20px;
-            font-size: 18px;
-            font-weight: 600;
-            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            background: 
-                linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(20, 20, 40, 0.9) 100%),
-                radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 70%);
-            backdrop-filter: blur(20px) saturate(1.5);
-            color: #00ffff;
-            position: relative;
-            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #ffffff;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
         }
 
         .form-group input::placeholder {
-            color: rgba(0, 255, 255, 0.6);
-            text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+            color: #a0a0a0;
         }
 
         .form-group input:focus {
             outline: none;
-            border-color: #00ffff;
-            box-shadow: 
-                0 0 0 4px rgba(0, 255, 255, 0.2),
-                0 0 30px rgba(0, 255, 255, 0.3),
-                0 0 60px rgba(255, 0, 255, 0.1),
-                0 12px 40px rgba(0, 0, 0, 0.4);
-            transform: translateY(-3px) scale(1.02);
-            background: 
-                linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(20, 20, 40, 0.95) 100%),
-                radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.2) 0%, transparent 70%);
-            text-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
-        }
-
-        .form-group input:hover {
-            border-color: rgba(0, 255, 255, 0.6);
-            transform: translateY(-2px) scale(1.01);
-            box-shadow: 
-                0 0 20px rgba(0, 255, 255, 0.2),
-                0 8px 32px rgba(0, 0, 0, 0.3);
+            border-color: #00ff96;
+            box-shadow: 0 0 0 3px rgba(0, 255, 150, 0.2);
+            background: rgba(255, 255, 255, 0.15);
         }
 
         .form-group input.error {
-            border-color: #ff0000;
-            box-shadow: 
-                0 0 20px rgba(255, 0, 0, 0.3),
-                0 0 40px rgba(255, 0, 0, 0.1);
-            animation: glitchEffect 0.5s ease-in-out;
-        }
-
-        .form-group input.error {
-            border-color: #dc3545;
-        }
-
-        .form-group .error-message {
-            color: #dc3545;
-            font-size: 14px;
-            margin-top: 5px;
-            display: none;
-        }
-
-        .form-group input.error + .error-message {
-            display: block;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
         }
 
         .btn {
             width: 100%;
-            padding: 20px 32px;
+            padding: 18px 24px;
             border: none;
-            border-radius: 20px;
-            font-size: 18px;
-            font-weight: 900;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            margin-bottom: 25px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
             position: relative;
             overflow: hidden;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transform-style: preserve-3d;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .btn::before {
@@ -368,252 +165,164 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(0, 255, 255, 0.4), 
-                rgba(255, 0, 255, 0.4),
-                rgba(0, 255, 0, 0.4),
-                transparent);
-            transition: left 0.8s;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
         }
 
         .btn:hover::before {
             left: 100%;
         }
 
-        .btn::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: all 0.6s ease;
-        }
-
-        .btn:hover::after {
-            width: 300px;
-            height: 300px;
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
         }
 
         .btn-primary {
-            background: 
-                linear-gradient(135deg, 
-                    #00ffff 0%, 
-                    #ff00ff 25%, 
-                    #00ff00 50%, 
-                    #ffff00 75%, 
-                    #00ffff 100%);
-            background-size: 400% 400%;
-            animation: 
-                gradientShift 3s ease infinite,
-                cyberPulse 2s ease-in-out infinite;
-            color: #000;
-            box-shadow: 
-                0 0 30px rgba(0, 255, 255, 0.5),
-                0 0 60px rgba(255, 0, 255, 0.3),
-                0 0 90px rgba(0, 255, 0, 0.2),
-                0 12px 40px rgba(0, 0, 0, 0.4),
-                inset 0 2px 0 rgba(255, 255, 255, 0.6);
-            border: 2px solid rgba(0, 255, 255, 0.8);
+            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
+            color: #1a1d24;
+            box-shadow: 0 8px 32px rgba(0, 255, 150, 0.3);
         }
 
         .btn-primary:hover {
-            transform: translateY(-5px) scale(1.05) rotateX(5deg);
-            box-shadow: 
-                0 0 50px rgba(0, 255, 255, 0.8),
-                0 0 100px rgba(255, 0, 255, 0.5),
-                0 0 150px rgba(0, 255, 0, 0.3),
-                0 20px 60px rgba(0, 0, 0, 0.5),
-                inset 0 2px 0 rgba(255, 255, 255, 0.8);
-            animation-play-state: paused;
-        }
-
-        .btn-primary:active {
-            transform: translateY(-2px) scale(1.02) rotateX(2deg);
+            box-shadow: 0 12px 40px rgba(0, 255, 150, 0.4);
         }
 
         .btn-secondary {
-            background: #f8f9fa;
-            color: #6c757d;
-            border: 2px solid #e9ecef;
+            background: linear-gradient(135deg, #00bfff 0%, #0099cc 100%);
+            color: #ffffff;
+            box-shadow: 0 8px 32px rgba(0, 191, 255, 0.3);
         }
 
         .btn-secondary:hover {
-            background: #e9ecef;
+            box-shadow: 0 12px 40px rgba(0, 191, 255, 0.4);
         }
 
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .auth-switch {
+        .auth-links {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 32px;
         }
 
-        .auth-switch a {
-            color: #667eea;
+        .auth-links a {
+            color: #00ff96;
             text-decoration: none;
             font-weight: 600;
+            transition: all 0.3s ease;
         }
 
-        .auth-switch a:hover {
-            text-decoration: underline;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .success-message {
-            background: #d4edda;
-            color: #155724;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .success-message.show {
-            display: block;
+        .auth-links a:hover {
+            color: #00d4aa;
+            text-shadow: 0 0 8px rgba(0, 255, 150, 0.5);
         }
 
         .error-message {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 71, 87, 0.05) 100%);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            color: #ff6b6b;
+            font-weight: 500;
+            text-align: center;
             display: none;
         }
 
-        .error-message.show {
-            display: block;
+        .success-message {
+            background: linear-gradient(135deg, rgba(0, 255, 150, 0.1) 0%, rgba(0, 212, 170, 0.05) 100%);
+            border: 1px solid rgba(0, 255, 150, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            color: #00ff96;
+            font-weight: 500;
+            text-align: center;
+            display: none;
         }
 
-        .user-avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: 
-                linear-gradient(135deg, 
-                    #00ffff 0%, 
-                    #ff00ff 25%, 
-                    #00ff00 50%, 
-                    #ffff00 75%, 
-                    #00ffff 100%);
-            background-size: 300% 300%;
-            animation: 
-                gradientShift 4s ease infinite,
-                cyberRotate 8s linear infinite,
-                cyberPulse 2s ease-in-out infinite;
+        /* Animations */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-container {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        /* Mobile Navigation */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, rgba(26, 29, 36, 0.95) 0%, rgba(36, 40, 48, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 16px;
+            z-index: 1000;
+        }
+
+        .mobile-nav-buttons {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #000;
-            font-size: 40px;
-            font-weight: 900;
-            margin: 0 auto 30px;
-            position: relative;
-            z-index: 2;
-            box-shadow: 
-                0 0 30px rgba(0, 255, 255, 0.5),
-                0 0 60px rgba(255, 0, 255, 0.3),
-                0 0 90px rgba(0, 255, 0, 0.2),
-                0 20px 40px rgba(0, 0, 0, 0.4),
-                inset 0 2px 0 rgba(255, 255, 255, 0.6);
-            border: 3px solid rgba(0, 255, 255, 0.8);
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            transform-style: preserve-3d;
+            justify-content: space-around;
+            gap: 8px;
         }
 
-        .user-avatar::before {
-            content: '';
-            position: absolute;
-            top: -5px;
-            left: -5px;
-            right: -5px;
-            bottom: -5px;
-            background: 
-                linear-gradient(45deg, 
-                    #00ffff, #ff00ff, #00ff00, #ffff00, 
-                    #ff0000, #0000ff, #00ffff);
-            background-size: 400% 400%;
-            border-radius: 50%;
-            z-index: -1;
-            animation: gradientShift 2s ease infinite, cyberRotate 6s linear infinite;
-            opacity: 0.8;
-        }
-
-        .user-avatar::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 120px;
-            height: 120px;
-            background: radial-gradient(circle, rgba(0, 255, 255, 0.3) 0%, transparent 70%);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            animation: cyberPulse 3s ease-in-out infinite;
-            z-index: -2;
-        }
-
-        .user-avatar:hover {
-            transform: scale(1.2) rotateY(15deg) rotateX(10deg);
-            box-shadow: 
-                0 0 50px rgba(0, 255, 255, 0.8),
-                0 0 100px rgba(255, 0, 255, 0.5),
-                0 0 150px rgba(0, 255, 0, 0.3),
-                0 30px 60px rgba(0, 0, 0, 0.5),
-                inset 0 2px 0 rgba(255, 255, 255, 0.8);
-        }
-
-        @keyframes cyberRotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .form-row {
-            display: flex;
-            gap: 15px;
-        }
-
-        .form-row .form-group {
+        .mobile-nav-btn {
             flex: 1;
+            padding: 12px 8px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #ffffff;
+            text-decoration: none;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
         }
 
-        @media (max-width: 480px) {
-            .form-row {
-                flex-direction: column;
-                gap: 0;
+        .mobile-nav-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 150, 0.2) 0%, rgba(0, 212, 170, 0.1) 100%);
+            border-color: rgba(0, 255, 150, 0.5);
+        }
+
+        .mobile-nav-btn.active {
+            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
+            color: #1a1d24;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .auth-container {
+                margin: 20px;
+                padding: 32px 24px;
+                padding-bottom: 80px;
+            }
+
+            .auth-header h1 {
+                font-size: 28px;
+            }
+
+            .mobile-nav {
+                display: block;
             }
         }
     </style>
@@ -621,417 +330,112 @@
 <body>
     <div class="auth-container">
         <div class="auth-header">
-            <div class="user-avatar" id="user-avatar">👤</div>
-            <h1 id="auth-title">Вход в игру</h1>
-            <p id="auth-subtitle">Добро пожаловать в Монополию!</p>
+            <h1>🔐 Авторизация</h1>
+            <p>Войдите в систему Game Board v2.0</p>
         </div>
 
-        <div class="auth-form">
-            <!-- Сообщения -->
-            <div class="success-message" id="success-message"></div>
-            <div class="error-message" id="error-message"></div>
+        <div class="error-message" id="error-message"></div>
+        <div class="success-message" id="success-message"></div>
 
-            <!-- Форма входа -->
-            <form id="login-form">
-                <div class="form-group">
-                    <label for="login-email">Email</label>
-                    <input type="email" id="login-email" name="email" required>
-                    <div class="error-message">Введите корректный email</div>
-                </div>
-
-                <div class="form-group">
-                    <label for="login-password">Пароль</label>
-                    <input type="password" id="login-password" name="password" required>
-                    <div class="error-message">Введите пароль</div>
-                </div>
-
-                <button type="submit" class="btn btn-primary" id="login-btn">
-                    Войти в игру
-                </button>
-            </form>
-
-            <!-- Форма регистрации -->
-            <form id="register-form" style="display: none;">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="register-firstname">Имя</label>
-                        <input type="text" id="register-firstname" name="firstname" required>
-                        <div class="error-message">Введите имя</div>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-lastname">Фамилия</label>
-                        <input type="text" id="register-lastname" name="lastname" required>
-                        <div class="error-message">Введите фамилию</div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="register-email">Email</label>
-                    <input type="email" id="register-email" name="email" required>
-                    <div class="error-message">Введите корректный email</div>
-                </div>
-
-                <div class="form-group">
-                    <label for="register-username">Имя пользователя</label>
-                    <input type="text" id="register-username" name="username" required>
-                    <div class="error-message">Введите имя пользователя</div>
-                </div>
-
-                <div class="form-group">
-                    <label for="register-password">Пароль</label>
-                    <input type="password" id="register-password" name="password" required minlength="6">
-                    <div class="error-message">Пароль должен содержать минимум 6 символов</div>
-                </div>
-
-                <div class="form-group">
-                    <label for="register-confirm-password">Подтвердите пароль</label>
-                    <input type="password" id="register-confirm-password" name="confirmPassword" required>
-                    <div class="error-message">Пароли не совпадают</div>
-                </div>
-
-                <button type="submit" class="btn btn-primary" id="register-btn">
-                    Создать аккаунт
-                </button>
-            </form>
-
-            <!-- Переключение между формами -->
-            <div class="auth-switch">
-                <span id="switch-text">Нет аккаунта?</span>
-                <a href="#" id="switch-link">Зарегистрироваться</a>
+        <form id="auth-form">
+            <div class="form-group">
+                <label for="username">Имя пользователя</label>
+                <input type="text" id="username" name="username" placeholder="Введите имя пользователя" required>
             </div>
 
-            <!-- Загрузка -->
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p>Обработка запроса...</p>
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" name="password" placeholder="Введите пароль" required>
             </div>
+
+            <button type="submit" class="btn btn-primary">🚀 Войти в игру</button>
+        </form>
+
+        <div class="auth-links">
+            <a href="lobby.html">Продолжить без авторизации</a>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <div class="mobile-nav">
+        <div class="mobile-nav-buttons">
+            <a href="index.html" class="mobile-nav-btn">
+                <span>🏠</span>
+                <span>Главная</span>
+            </a>
+            <a href="lobby.html" class="mobile-nav-btn">
+                <span>🎮</span>
+                <span>Лобби</span>
+            </a>
+            <a href="game.html" class="mobile-nav-btn">
+                <span>🎯</span>
+                <span>Игра</span>
+            </a>
+            <a href="auth.html" class="mobile-nav-btn active">
+                <span>👤</span>
+                <span>Профиль</span>
+            </a>
         </div>
     </div>
 
     <script>
-        // Система аутентификации
-        class AuthSystem {
-            constructor() {
-                this.currentUser = null;
-                this.isLoginMode = true;
-                this.initializeEventListeners();
-                this.loadUserFromStorage();
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('auth-form');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
 
-            initializeEventListeners() {
-                // Переключение между формами
-                document.getElementById('switch-link').addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.toggleAuthMode();
-                });
-
-                // Обработка форм
-                document.getElementById('login-form').addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    this.handleLogin();
-                });
-
-                document.getElementById('register-form').addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    this.handleRegister();
-                });
-
-                // Валидация в реальном времени
-                this.setupValidation();
-            }
-
-            toggleAuthMode() {
-                this.isLoginMode = !this.isLoginMode;
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
                 
-                const loginForm = document.getElementById('login-form');
-                const registerForm = document.getElementById('register-form');
-                const title = document.getElementById('auth-title');
-                const subtitle = document.getElementById('auth-subtitle');
-                const switchText = document.getElementById('switch-text');
-                const switchLink = document.getElementById('switch-link');
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
 
-                if (this.isLoginMode) {
-                    loginForm.style.display = 'block';
-                    registerForm.style.display = 'none';
-                    title.textContent = 'Вход в игру';
-                    subtitle.textContent = 'Добро пожаловать в Монополию!';
-                    switchText.textContent = 'Нет аккаунта?';
-                    switchLink.textContent = 'Зарегистрироваться';
-                } else {
-                    loginForm.style.display = 'none';
-                    registerForm.style.display = 'block';
-                    title.textContent = 'Регистрация';
-                    subtitle.textContent = 'Создайте аккаунт для игры';
-                    switchText.textContent = 'Уже есть аккаунт?';
-                    switchLink.textContent = 'Войти';
-                }
+                // Скрыть предыдущие сообщения
+                errorMessage.style.display = 'none';
+                successMessage.style.display = 'none';
 
-                this.clearMessages();
-                this.clearFormErrors();
-            }
-
-            setupValidation() {
-                // Валидация email
-                const emailInputs = document.querySelectorAll('input[type="email"]');
-                emailInputs.forEach(input => {
-                    input.addEventListener('blur', () => {
-                        this.validateEmail(input);
-                    });
-                });
-
-                // Валидация пароля
-                const passwordInputs = document.querySelectorAll('input[type="password"]');
-                passwordInputs.forEach(input => {
-                    input.addEventListener('blur', () => {
-                        this.validatePassword(input);
-                    });
-                });
-
-                // Валидация подтверждения пароля
-                const confirmPasswordInput = document.getElementById('register-confirm-password');
-                if (confirmPasswordInput) {
-                    confirmPasswordInput.addEventListener('blur', () => {
-                        this.validateConfirmPassword();
-                    });
-                }
-            }
-
-            validateEmail(input) {
-                const email = input.value;
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                const isValid = emailRegex.test(email);
-
-                if (email && !isValid) {
-                    this.showFieldError(input, 'Введите корректный email');
-                    return false;
-                } else {
-                    this.clearFieldError(input);
-                    return true;
-                }
-            }
-
-            validatePassword(input) {
-                const password = input.value;
-                const isValid = password.length >= 6;
-
-                if (password && !isValid) {
-                    this.showFieldError(input, 'Пароль должен содержать минимум 6 символов');
-                    return false;
-                } else {
-                    this.clearFieldError(input);
-                    return true;
-                }
-            }
-
-            validateConfirmPassword() {
-                const password = document.getElementById('register-password').value;
-                const confirmPassword = document.getElementById('register-confirm-password').value;
-                const confirmInput = document.getElementById('register-confirm-password');
-
-                if (confirmPassword && password !== confirmPassword) {
-                    this.showFieldError(confirmInput, 'Пароли не совпадают');
-                    return false;
-                } else {
-                    this.clearFieldError(confirmInput);
-                    return true;
-                }
-            }
-
-            showFieldError(input, message) {
-                input.classList.add('error');
-                const errorElement = input.parentNode.querySelector('.error-message');
-                if (errorElement) {
-                    errorElement.textContent = message;
-                }
-            }
-
-            clearFieldError(input) {
-                input.classList.remove('error');
-                const errorElement = input.parentNode.querySelector('.error-message');
-                if (errorElement) {
-                    errorElement.textContent = '';
-                }
-            }
-
-            clearFormErrors() {
-                const errorInputs = document.querySelectorAll('.form-group input.error');
-                errorInputs.forEach(input => {
-                    this.clearFieldError(input);
-                });
-            }
-
-            showLoading(show = true) {
-                const loading = document.getElementById('loading');
-                const loginBtn = document.getElementById('login-btn');
-                const registerBtn = document.getElementById('register-btn');
-
-                if (show) {
-                    loading.classList.add('show');
-                    loginBtn.disabled = true;
-                    registerBtn.disabled = true;
-                } else {
-                    loading.classList.remove('show');
-                    loginBtn.disabled = false;
-                    registerBtn.disabled = false;
-                }
-            }
-
-            showMessage(message, type = 'success') {
-                const successMessage = document.getElementById('success-message');
-                const errorMessage = document.getElementById('error-message');
-
-                this.clearMessages();
-
-                if (type === 'success') {
-                    successMessage.textContent = message;
-                    successMessage.classList.add('show');
-                } else {
-                    errorMessage.textContent = message;
-                    errorMessage.classList.add('show');
-                }
-            }
-
-            clearMessages() {
-                const successMessage = document.getElementById('success-message');
-                const errorMessage = document.getElementById('error-message');
-                successMessage.classList.remove('show');
-                errorMessage.classList.remove('show');
-            }
-
-            async handleLogin() {
-                const email = document.getElementById('login-email').value;
-                const password = document.getElementById('login-password').value;
-
-                if (!this.validateEmail(document.getElementById('login-email'))) {
+                // Простая валидация
+                if (username.length < 3) {
+                    showError('Имя пользователя должно содержать минимум 3 символа');
                     return;
                 }
 
-                if (!password) {
-                    this.showMessage('Введите пароль', 'error');
+                if (password.length < 6) {
+                    showError('Пароль должен содержать минимум 6 символов');
                     return;
                 }
 
-                this.showLoading(true);
+                // Симуляция успешной авторизации
+                showSuccess('Авторизация успешна! Переход в лобби...');
+                
+                // Сохранить данные пользователя
+                localStorage.setItem('username', username);
+                localStorage.setItem('isAuthenticated', 'true');
 
-                try {
-                    // Симуляция API запроса
-                    await this.simulateApiCall();
-                    
-                    const user = {
-                        id: Date.now().toString(),
-                        email: email,
-                        name: email.split('@')[0],
-                        username: email.split('@')[0],
-                        avatar: this.generateAvatar(email),
-                        loginTime: new Date().toISOString()
-                    };
+                // Переход в лобби через 2 секунды
+                setTimeout(() => {
+                    window.location.href = 'lobby.html';
+                }, 2000);
+            });
 
-                    this.currentUser = user;
-                    this.saveUserToStorage(user);
-                    this.showMessage('Успешный вход! Переход в лобби...', 'success');
-
-                    setTimeout(() => {
-                        window.location.href = 'lobby.html';
-                    }, 1500);
-
-                } catch (error) {
-                    this.showMessage('Ошибка входа. Проверьте данные.', 'error');
-                } finally {
-                    this.showLoading(false);
-                }
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
             }
 
-            async handleRegister() {
-                const formData = {
-                    firstname: document.getElementById('register-firstname').value,
-                    lastname: document.getElementById('register-lastname').value,
-                    email: document.getElementById('register-email').value,
-                    username: document.getElementById('register-username').value,
-                    password: document.getElementById('register-password').value,
-                    confirmPassword: document.getElementById('register-confirm-password').value
-                };
-
-                // Валидация
-                if (!this.validateEmail(document.getElementById('register-email'))) return;
-                if (!this.validatePassword(document.getElementById('register-password'))) return;
-                if (!this.validateConfirmPassword()) return;
-
-                if (!formData.firstname || !formData.lastname || !formData.username) {
-                    this.showMessage('Заполните все поля', 'error');
-                    return;
-                }
-
-                this.showLoading(true);
-
-                try {
-                    // Симуляция API запроса
-                    await this.simulateApiCall();
-                    
-                    const user = {
-                        id: Date.now().toString(),
-                        email: formData.email,
-                        name: `${formData.firstname} ${formData.lastname}`,
-                        username: formData.username,
-                        avatar: this.generateAvatar(formData.email),
-                        registerTime: new Date().toISOString()
-                    };
-
-                    this.currentUser = user;
-                    this.saveUserToStorage(user);
-                    this.showMessage('Регистрация успешна! Переход в лобби...', 'success');
-
-                    setTimeout(() => {
-                        window.location.href = 'lobby.html';
-                    }, 1500);
-
-                } catch (error) {
-                    this.showMessage('Ошибка регистрации. Попробуйте еще раз.', 'error');
-                } finally {
-                    this.showLoading(false);
-                }
+            function showSuccess(message) {
+                successMessage.textContent = message;
+                successMessage.style.display = 'block';
             }
 
-            simulateApiCall() {
-                return new Promise((resolve) => {
-                    setTimeout(resolve, 1000);
-                });
+            // Проверить, если пользователь уже авторизован
+            if (localStorage.getItem('isAuthenticated') === 'true') {
+                showSuccess('Вы уже авторизованы! Переход в лобби...');
+                setTimeout(() => {
+                    window.location.href = 'lobby.html';
+                }, 1500);
             }
-
-            generateAvatar(email) {
-                const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FFB347', '#98D8C8'];
-                const colorIndex = email.length % colors.length;
-                return colors[colorIndex];
-            }
-
-            saveUserToStorage(user) {
-                localStorage.setItem('monopoly_user', JSON.stringify(user));
-            }
-
-            loadUserFromStorage() {
-                const savedUser = localStorage.getItem('monopoly_user');
-                if (savedUser) {
-                    this.currentUser = JSON.parse(savedUser);
-                    // Если пользователь уже авторизован, перенаправляем в лобби
-                    if (window.location.pathname.includes('auth.html')) {
-                        setTimeout(() => {
-                            window.location.href = 'lobby.html';
-                        }, 1000);
-                    }
-                }
-            }
-
-            logout() {
-                this.currentUser = null;
-                localStorage.removeItem('monopoly_user');
-                window.location.href = 'auth.html';
-            }
-        }
-
-        // Инициализация системы аутентификации
-        const authSystem = new AuthSystem();
-
-        // Глобальный доступ к системе аутентификации
-        window.AuthSystem = authSystem;
+        });
     </script>
 </body>
 </html>
