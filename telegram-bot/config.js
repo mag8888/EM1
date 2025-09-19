@@ -16,7 +16,7 @@ module.exports = {
     
     // Media URLs - используем прямые ссылки на изображения
     MEDIA: {
-        WELCOME_PHOTO: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=400&h=300&fit=crop',
+        WELCOME_PHOTO: 'https://drive.google.com/uc?export=view&id=1DVFh1fEm5CG0crg_OYWKBrLIjnmgwjm8',
         ABOUT_PROJECT: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=400&h=300&fit=crop',
         COMMUNITY: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=300&fit=crop',
         PLAY_GAME: 'https://images.unsplash.com/photo-1606092195730-5d7b9af1efc5?w=400&h=300&fit=crop',
