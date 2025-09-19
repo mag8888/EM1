@@ -68,22 +68,7 @@
             filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.1));
         }
 
-        /* Внешний периметр - 650x650 */
-        .outer-perimeter {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 650px;
-            height: 650px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 0;
-            background: rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-            box-shadow: 
-                inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-                0 0 20px rgba(255, 255, 255, 0.05);
-        }
+        /* Внешний периметр - убран */
 
         .game-container {
             display: flex;
@@ -657,10 +642,8 @@
         <div class="game-container">
             <div class="game-board">
                 <div class="board-wrapper">
-                    <!-- Внешний периметр -->
-                    <div class="outer-perimeter">
-                        <div class="outer-squares" id="outerSquares"></div>
-                    </div>
+                    <!-- Внешние клетки -->
+                    <div class="outer-squares" id="outerSquares"></div>
 
                     <!-- Внутренний трек -->
                     <div class="inner-track">
