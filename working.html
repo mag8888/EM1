@@ -158,20 +158,15 @@
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
 
-        /* Внутренний спиральный трек */
-        .inner-track {
+        /* Внутренний спиральный трек - убран */
+
+        .inner-squares {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             width: 66%;
             height: 66%;
-        }
-
-        .inner-squares {
-            position: relative;
-            width: 100%;
-            height: 100%;
         }
 
         .inner-square {
@@ -645,10 +640,8 @@
                     <!-- Внешние клетки -->
                     <div class="outer-squares" id="outerSquares"></div>
 
-                    <!-- Внутренний трек -->
-                    <div class="inner-track">
-                        <div class="inner-squares" id="innerSquares"></div>
-                    </div>
+                    <!-- Внутренние клетки -->
+                    <div class="inner-squares" id="innerSquares"></div>
 
                     <!-- Центральный логотип -->
                     <div class="center-logo" onclick="rollDice()">
