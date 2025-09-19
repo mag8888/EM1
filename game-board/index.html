@@ -11,19 +11,47 @@
         body {
             font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            background-size: 400% 400%;
-            animation: gradientShift 20s ease infinite;
+            padding: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 20, 147, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(0, 191, 255, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 60% 60%, rgba(138, 43, 226, 0.2) 0%, transparent 50%),
+                linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
+            background-size: 400% 400%, 300% 300%, 200% 200%, 250% 250%, 100% 100%;
+            animation: 
+                premiumGradientShift 30s ease infinite,
+                luxuryGlow 15s ease-in-out infinite alternate,
+                particleFloat 40s linear infinite;
             min-height: 100vh;
             position: relative;
             overflow-x: hidden;
+            perspective: 2000px;
         }
 
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        @keyframes premiumGradientShift {
+            0% { background-position: 0% 50%, 0% 0%, 0% 0%, 0% 0%, 0% 50%; }
+            25% { background-position: 100% 50%, 50% 50%, 25% 25%, 25% 25%, 25% 75%; }
+            50% { background-position: 50% 100%, 100% 100%, 50% 50%, 50% 50%, 50% 0%; }
+            75% { background-position: 0% 0%, 0% 50%, 75% 75%, 75% 75%, 75% 25%; }
+            100% { background-position: 0% 50%, 0% 0%, 0% 0%, 0% 0%, 0% 50%; }
+        }
+
+        @keyframes luxuryGlow {
+            0% { 
+                filter: hue-rotate(0deg) brightness(1) saturate(1.2);
+                box-shadow: 0 0 100px rgba(255, 215, 0, 0.1);
+            }
+            100% { 
+                filter: hue-rotate(30deg) brightness(1.2) saturate(1.5);
+                box-shadow: 0 0 200px rgba(255, 20, 147, 0.2);
+            }
+        }
+
+        @keyframes particleFloat {
+            0% { transform: translateY(0px) rotate(0deg) scale(1); }
+            50% { transform: translateY(-50px) rotate(180deg) scale(1.1); }
+            100% { transform: translateY(-100px) rotate(360deg) scale(1); }
         }
 
         body::before {
@@ -33,45 +61,190 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-            opacity: 0.2;
+            background: 
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="luxuryGrid" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255,215,0,0.1)" stroke-width="0.5"/><circle cx="15" cy="15" r="0.5" fill="rgba(255,215,0,0.2)"/></pattern></defs><rect width="100" height="100" fill="url(%23luxuryGrid)"/></svg>'),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="premiumParticles" width="60" height="60" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1.5" fill="rgba(255,215,0,0.4)"/><circle cx="30" cy="20" r="1" fill="rgba(255,20,147,0.3)"/><circle cx="40" cy="40" r="2" fill="rgba(0,191,255,0.2)"/><circle cx="20" cy="35" r="1.2" fill="rgba(138,43,226,0.3)"/><circle cx="50" cy="10" r="0.8" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23premiumParticles)"/></svg>');
+            opacity: 0.6;
             pointer-events: none;
             z-index: 1;
+            animation: particleFloat 35s linear infinite;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 30% 20%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(255, 20, 147, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(0, 191, 255, 0.1) 0%, transparent 70%);
+            animation: luxuryGlow 25s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 2;
         }
         
         .test-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 24px;
+            max-width: 1600px;
+            margin: 40px auto;
+            background: 
+                linear-gradient(135deg, 
+                    rgba(0, 0, 0, 0.9) 0%, 
+                    rgba(20, 20, 40, 0.95) 25%, 
+                    rgba(40, 20, 60, 0.9) 50%, 
+                    rgba(20, 20, 40, 0.95) 75%, 
+                    rgba(0, 0, 0, 0.9) 100%),
+                radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
+            backdrop-filter: blur(40px) saturate(1.8);
+            border: 3px solid transparent;
+            background-clip: padding-box;
+            border-radius: 40px;
             box-shadow: 
-                0 32px 64px rgba(0, 0, 0, 0.15),
-                0 0 0 1px rgba(255, 255, 255, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+                0 0 0 2px rgba(255, 215, 0, 0.4),
+                0 0 100px rgba(255, 215, 0, 0.3),
+                0 0 200px rgba(255, 20, 147, 0.2),
+                0 0 300px rgba(0, 191, 255, 0.1),
+                0 60px 120px rgba(0, 0, 0, 0.6),
+                inset 0 2px 0 rgba(255, 255, 255, 0.2),
+                inset 0 -2px 0 rgba(255, 215, 0, 0.3);
             overflow: hidden;
             position: relative;
-            z-index: 2;
-            animation: slideUp 0.8s ease-out;
+            z-index: 10;
+            animation: 
+                premiumSlideUp 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                luxuryPulse 6s ease-in-out infinite,
+                premiumGlow 8s ease-in-out infinite alternate;
+            transform-style: preserve-3d;
         }
 
-        @keyframes slideUp {
+        .test-container::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            background: linear-gradient(45deg, 
+                #ffd700, #ff1493, #00bfff, #8a2be2, 
+                #ffd700, #ff1493, #00bfff, #8a2be2);
+            background-size: 800% 800%;
+            border-radius: 40px;
+            z-index: -1;
+            animation: premiumGradientShift 4s ease infinite, luxuryGlow 3s ease-in-out infinite alternate;
+            opacity: 0.8;
+        }
+
+        .test-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="luxuryPattern" width="20" height="20" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="20" height="20" fill="none" stroke="rgba(255,215,0,0.1)" stroke-width="0.5"/><circle cx="10" cy="10" r="1" fill="rgba(255,215,0,0.2)"/><path d="M 5 5 L 15 15 M 15 5 L 5 15" stroke="rgba(255,20,147,0.1)" stroke-width="0.3"/></pattern></defs><rect width="100" height="100" fill="url(%23luxuryPattern)"/></svg>');
+            opacity: 0.4;
+            animation: particleFloat 25s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes premiumSlideUp {
             from {
                 opacity: 0;
-                transform: translateY(30px) scale(0.95);
+                transform: translateY(80px) scale(0.8) rotateX(30deg);
             }
             to {
                 opacity: 1;
-                transform: translateY(0) scale(1);
+                transform: translateY(0) scale(1) rotateX(0deg);
+            }
+        }
+
+        @keyframes luxuryPulse {
+            0%, 100% { 
+                box-shadow: 
+                    0 0 0 2px rgba(255, 215, 0, 0.4),
+                    0 0 100px rgba(255, 215, 0, 0.3),
+                    0 0 200px rgba(255, 20, 147, 0.2),
+                    0 0 300px rgba(0, 191, 255, 0.1),
+                    0 60px 120px rgba(0, 0, 0, 0.6);
+            }
+            50% { 
+                box-shadow: 
+                    0 0 0 3px rgba(255, 215, 0, 0.6),
+                    0 0 150px rgba(255, 215, 0, 0.5),
+                    0 0 300px rgba(255, 20, 147, 0.3),
+                    0 0 450px rgba(0, 191, 255, 0.2),
+                    0 60px 120px rgba(0, 0, 0, 0.6);
+            }
+        }
+
+        @keyframes premiumGlow {
+            0% { 
+                filter: hue-rotate(0deg) brightness(1) saturate(1.2);
+            }
+            100% { 
+                filter: hue-rotate(20deg) brightness(1.1) saturate(1.4);
             }
         }
         
         .test-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
+            background: 
+                linear-gradient(135deg, 
+                    rgba(255, 215, 0, 0.3) 0%, 
+                    rgba(255, 20, 147, 0.4) 25%, 
+                    rgba(0, 191, 255, 0.3) 50%, 
+                    rgba(138, 43, 226, 0.4) 75%, 
+                    rgba(255, 215, 0, 0.3) 100%),
+                linear-gradient(45deg, 
+                    rgba(0, 0, 0, 0.9) 0%, 
+                    rgba(20, 20, 40, 0.8) 50%, 
+                    rgba(0, 0, 0, 0.9) 100%);
+            background-size: 400% 400%, 100% 100%;
+            animation: 
+                premiumGradientShift 8s ease infinite,
+                luxuryScan 4s linear infinite;
+            color: #ffd700;
+            padding: 50px 40px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 3px solid rgba(255, 215, 0, 0.5);
+        }
+
+        .test-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 215, 0, 0.4), 
+                rgba(255, 20, 147, 0.4),
+                rgba(0, 191, 255, 0.4),
+                transparent);
+            animation: luxuryScan 3s linear infinite;
+        }
+
+        .test-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="luxuryHeader" width="25" height="25" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="25" height="25" fill="none" stroke="rgba(255,215,0,0.1)" stroke-width="0.5"/><circle cx="12.5" cy="12.5" r="1.5" fill="rgba(255,215,0,0.3)"/><path d="M 6 6 L 19 19 M 19 6 L 6 19" stroke="rgba(255,20,147,0.2)" stroke-width="0.3"/></pattern></defs><rect width="100" height="100" fill="url(%23luxuryHeader)"/></svg>');
+            opacity: 0.5;
+            animation: particleFloat 20s linear infinite;
+        }
+
+        @keyframes luxuryScan {
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
         
         .test-controls {
@@ -85,50 +258,171 @@
         }
         
         .btn {
-            background: #007bff;
-            color: white;
+            padding: 20px 40px;
             border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: 900;
             cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s ease;
+            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
         }
-        
-        .btn:hover {
-            background: #0056b3;
-            transform: translateY(-2px);
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.4), 
+                rgba(255, 215, 0, 0.4),
+                rgba(255, 20, 147, 0.4),
+                transparent);
+            transition: left 1s;
         }
-        
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.8s ease;
+        }
+
+        .btn:hover::after {
+            width: 400px;
+            height: 400px;
+        }
+
+        .btn-primary {
+            background: 
+                linear-gradient(135deg, 
+                    #ffd700 0%, 
+                    #ff1493 25%, 
+                    #00bfff 50%, 
+                    #8a2be2 75%, 
+                    #ffd700 100%);
+            background-size: 400% 400%;
+            animation: 
+                premiumGradientShift 4s ease infinite,
+                luxuryPulse 3s ease-in-out infinite;
+            color: #000;
+            box-shadow: 
+                0 0 40px rgba(255, 215, 0, 0.6),
+                0 0 80px rgba(255, 20, 147, 0.4),
+                0 0 120px rgba(0, 191, 255, 0.3),
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                inset 0 2px 0 rgba(255, 255, 255, 0.8);
+            border: 3px solid rgba(255, 215, 0, 0.8);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-8px) scale(1.08) rotateX(10deg);
+            box-shadow: 
+                0 0 60px rgba(255, 215, 0, 0.8),
+                0 0 120px rgba(255, 20, 147, 0.6),
+                0 0 180px rgba(0, 191, 255, 0.4),
+                0 30px 80px rgba(0, 0, 0, 0.6),
+                inset 0 2px 0 rgba(255, 255, 255, 1);
+            animation-play-state: paused;
+        }
+
+        .btn-secondary {
+            background: 
+                linear-gradient(135deg, 
+                    rgba(0, 0, 0, 0.8) 0%, 
+                    rgba(20, 20, 40, 0.9) 100%);
+            color: #ffd700;
+            border: 3px solid rgba(255, 215, 0, 0.6);
+            box-shadow: 
+                0 0 30px rgba(255, 215, 0, 0.4),
+                inset 0 2px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: 
+                linear-gradient(135deg, 
+                    rgba(0, 0, 0, 0.9) 0%, 
+                    rgba(20, 20, 40, 0.95) 100%);
+            border-color: rgba(255, 215, 0, 0.8);
+            box-shadow: 
+                0 0 50px rgba(255, 215, 0, 0.6),
+                inset 0 2px 0 rgba(255, 255, 255, 0.4);
+            transform: translateY(-5px) scale(1.05);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00ff00, #00aa00);
+            color: #000;
+            box-shadow: 
+                0 0 40px rgba(0, 255, 0, 0.6),
+                inset 0 2px 0 rgba(255, 255, 255, 0.8);
+            border: 3px solid rgba(0, 255, 0, 0.8);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 
+                0 0 60px rgba(0, 255, 0, 0.8),
+                inset 0 2px 0 rgba(255, 255, 255, 1);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffff00, #ffaa00);
+            color: #000;
+            box-shadow: 
+                0 0 40px rgba(255, 255, 0, 0.6),
+                inset 0 2px 0 rgba(255, 255, 255, 0.8);
+            border: 3px solid rgba(255, 255, 0, 0.8);
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 
+                0 0 60px rgba(255, 255, 0, 0.8),
+                inset 0 2px 0 rgba(255, 255, 255, 1);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff0000, #aa0000);
+            color: #fff;
+            box-shadow: 
+                0 0 40px rgba(255, 0, 0, 0.6),
+                inset 0 2px 0 rgba(255, 255, 255, 0.8);
+            border: 3px solid rgba(255, 0, 0, 0.8);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 
+                0 0 60px rgba(255, 0, 0, 0.8),
+                inset 0 2px 0 rgba(255, 255, 255, 1);
+        }
+
         .btn:disabled {
             background: #6c757d;
             cursor: not-allowed;
             transform: none;
-        }
-        
-        .btn-success {
-            background: #28a745;
-        }
-        
-        .btn-success:hover {
-            background: #1e7e34;
-        }
-        
-        .btn-warning {
-            background: #ffc107;
-            color: #212529;
-        }
-        
-        .btn-warning:hover {
-            background: #e0a800;
-        }
-        
-        .btn-danger {
-            background: #dc3545;
-        }
-        
-        .btn-danger:hover {
-            background: #c82333;
+            opacity: 0.6;
         }
         
         .status-panel {
@@ -200,8 +494,8 @@
 <body>
     <div class="test-container">
         <div class="test-header">
-            <h1>🎮 Game Board v2.0 - Монополия</h1>
-            <p>Современная система игрового поля с регистрацией и лобби</p>
+            <h1 style="font-size: 48px; font-weight: 900; margin-bottom: 20px; text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 20, 147, 0.6), 0 0 60px rgba(0, 191, 255, 0.4); animation: luxuryGlow 3s ease-in-out infinite alternate; position: relative; z-index: 2;">🎮 Game Board v2.0 - Монополия</h1>
+            <p style="font-size: 24px; font-weight: 600; text-shadow: 0 0 10px rgba(255, 215, 0, 0.6); position: relative; z-index: 2;">Современная система игрового поля с регистрацией и лобби</p>
         </div>
         
         <div class="test-controls">
