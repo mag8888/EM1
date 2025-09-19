@@ -329,25 +329,29 @@
 
         .special-cell.big-deal {
             top: 20px;
-            left: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             background: linear-gradient(135deg, #00bfff 0%, #0099cc 100%);
         }
 
         .special-cell.small-deal {
-            top: 20px;
+            top: 50%;
             right: 20px;
+            transform: translateY(-50%);
             background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
         }
 
         .special-cell.expenses {
             bottom: 20px;
-            left: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
         }
 
         .special-cell.market {
-            bottom: 20px;
-            right: 20px;
+            top: 50%;
+            left: 20px;
+            transform: translateY(-50%);
             background: linear-gradient(135deg, #a8e6cf 0%, #7fcdcd 100%);
         }
 
@@ -405,32 +409,36 @@
         .cell.start {
             background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
             color: #1a1d24;
-            border: 2px solid #ffd700;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
-            font-size: 14px;
+            border: 3px solid #ffd700;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
+            font-size: 16px;
             font-weight: 900;
             position: relative;
             z-index: 4;
             border-radius: 50%;
-            width: 60px;
-            height: 60px;
+            width: 70px;
+            height: 70px;
             margin: auto;
         }
 
         .cell.start::before {
-            content: '💰';
+            content: '$';
             position: absolute;
-            top: -8px;
-            left: -8px;
-            font-size: 12px;
+            top: -12px;
+            left: -12px;
+            font-size: 14px;
+            font-weight: 900;
+            color: #ffd700;
         }
 
         .cell.start::after {
-            content: '💰';
+            content: '$';
             position: absolute;
-            top: -8px;
-            right: -8px;
-            font-size: 12px;
+            top: -12px;
+            right: -12px;
+            font-size: 14px;
+            font-weight: 900;
+            color: #ffd700;
         }
 
         .start-symbols {
@@ -450,9 +458,9 @@
         }
 
         .start-symbol {
-            font-size: 10px;
+            font-size: 12px;
             color: #1a1d24;
-            font-weight: 800;
+            font-weight: 900;
         }
 
         .cell.money {
@@ -935,7 +943,7 @@
                 };
                 cellNumber++;
                 
-                // Спираль наружу
+                // Спираль наружу - более четкий путь
                 while (cellNumber <= 76) {
                     for (let i = 0; i < steps; i++) {
                         // Двигаемся в текущем направлении
