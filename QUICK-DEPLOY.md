@@ -35,3 +35,5 @@ WEBHOOK_URL=https://your-bot-app.railway.app/webhook
 
 **Важно:** Бот развернут в отдельной ветке и изолирован от основной партнерки.
 
+
+

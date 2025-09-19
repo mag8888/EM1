@@ -3,10 +3,7 @@
  * Управляет всеми модулями и координирует игровой процесс
  */
 
-import { GAME_CONFIG } from '../../config/game-config.js';
-import { EventBus } from '../services/EventBus.js';
-import { StateManager } from './StateManager.js';
-import { ModuleManager } from './ModuleManager.js';
+// Импорты убраны - теперь загружается как обычный скрипт
 
 export class GameCore {
     constructor() {

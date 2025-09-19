@@ -189,11 +189,27 @@
         </div>
     </div>
 
-    <!-- Подключение модулей -->
-    <script type="module">
-        import { GameCore } from './assets/js/core/GameCore.js';
-        import { GAME_CONFIG } from './config/game-config.js';
-
+    <!-- Подключение скриптов -->
+    <script src="config/game-config.js"></script>
+    <script src="assets/js/utils/constants.js"></script>
+    <script src="assets/js/utils/helpers.js"></script>
+    <script src="assets/js/utils/validators.js"></script>
+    <script src="assets/js/services/EventBus.js"></script>
+    <script src="assets/js/services/StorageService.js"></script>
+    <script src="assets/js/services/ApiService.js"></script>
+    <script src="assets/js/core/StateManager.js"></script>
+    <script src="assets/js/core/ModuleManager.js"></script>
+    <script src="assets/js/core/PlayerManager.js"></script>
+    <script src="assets/js/modules/DiceModule.js"></script>
+    <script src="assets/js/modules/MovementModule.js"></script>
+    <script src="assets/js/modules/CardModule.js"></script>
+    <script src="assets/js/modules/EventModule.js"></script>
+    <script src="assets/js/modules/BankModule.js"></script>
+    <script src="assets/js/ui/Notifications.js"></script>
+    <script src="assets/js/ui/Board.js"></script>
+    <script src="assets/js/core/GameCore.js"></script>
+    
+    <script>
         // Глобальные переменные
         window.gameCore = null;
         window.isGameLoaded = false;
