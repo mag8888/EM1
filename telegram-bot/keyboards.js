@@ -174,14 +174,20 @@ class Keyboards {
 
     // Кнопка для копирования реферальной ссылки
     static getReferralLinkKeyboard(referralCode) {
+        const referralLink = `https://t.me/energy_m_bot?start=${referralCode}`;
         return {
             reply_markup: {
                 inline_keyboard: [
                     [
-                        { text: '📋 Копировать ссылку', callback_data: `copy_link_${referralCode}` }
+                        // Нативное копирование в поддерживаемых клиентах Telegram
+                        { text: '📋 Копировать ссылку', copy_text: { text: referralLink } }
                     ],
                     [
-                        { text: '🔢 Скопировать код', callback_data: `copy_code_${referralCode}` }
+                        { text: '🔢 Скопировать код', copy_text: { text: `${referralCode}` } }
+                    ],
+                    [
+                        // Фолбэк на случай старых клиентов: отправим ссылку по колбэку
+                        { text: '↩️ Отправить ссылку', callback_data: `copy_link_${referralCode}` }
                     ],
                     [
                         { text: '⬅️ Назад', callback_data: 'earn_money' }
