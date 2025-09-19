@@ -1000,11 +1000,11 @@
                         y = 0;
                         break;
                     case 1: // Правая сторона
-                        x = sideLength - cellSize;
+                        x = sideLength - cellSize + 2 * (cellSize + spacing); // Сдвиг вправо на 2 клетки
                         y = position * (cellSize + spacing);
                         break;
                     case 2: // Нижняя сторона
-                        x = sideLength - cellSize - position * (cellSize + spacing);
+                        x = sideLength - cellSize - position * (cellSize + spacing) + 2 * (cellSize + spacing); // Сдвиг вправо на 2 клетки
                         y = sideLength - cellSize;
                         break;
                     case 3: // Левая сторона
