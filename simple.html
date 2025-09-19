@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Энергия денег - Простая версия</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/components/board.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1a202c;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        
+        .simple-game {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+        
+        .game-title {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .game-board {
+            width: 400px;
+            height: 400px;
+            border: 3px solid #4a5568;
+            border-radius: 50%;
+            position: relative;
+            background: linear-gradient(135deg, #2d3748, #4a5568);
+            margin-bottom: 2rem;
+        }
+        
+        .center-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 150px;
+            height: 150px;
+            background: #1a202c;
+            border: 2px solid #e2e8f0;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .dice-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .dice {
+            width: 30px;
+            height: 30px;
+            background: white;
+            border: 2px solid #4a5568;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .dice-total {
+            font-size: 18px;
+            font-weight: bold;
+            color: #f59e0b;
+        }
+        
+        .roll-btn {
+            background: #3182ce;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .roll-btn:hover {
+            background: #2c5aa0;
+        }
+        
+        .status {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .board-cell {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: #2d3748;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 10px;
+            text-align: center;
+        }
+        
+        .board-cell:hover {
+            transform: scale(1.1);
+            background: #4a5568;
+        }
+        
+        .start-cell { background: #38a169; }
+        .payday-cell { background: #d69e2e; }
+        .opportunity-cell { background: #3182ce; }
+        .expense-cell { background: #e53e3e; }
+        .charity-cell { background: #d53f8c; }
+    </style>
+</head>
+<body>
+    <div class="simple-game">
+        <h1 class="game-title">🎮 Энергия денег</h1>
+        
+        <div class="game-board">
+            <!-- Клетки игрового поля -->
+            <div class="board-cell start-cell" style="top: 10px; left: 50%; transform: translateX(-50%);">
+                <div>🏁</div>
+                <div>Старт</div>
+            </div>
+            
+            <div class="board-cell opportunity-cell" style="top: 50px; right: 10px;">
+                <div>📈</div>
+                <div>Работа</div>
+            </div>
+            
+            <div class="board-cell opportunity-cell" style="top: 120px; right: 30px;">
+                <div>🏢</div>
+                <div>Бизнес</div>
+            </div>
+            
+            <div class="board-cell expense-cell" style="bottom: 120px; right: 30px;">
+                <div>📉</div>
+                <div>Расходы</div>
+            </div>
+            
+            <div class="board-cell opportunity-cell" style="bottom: 50px; right: 10px;">
+                <div>🏠</div>
+                <div>Недвижимость</div>
+            </div>
+            
+            <div class="board-cell payday-cell" style="bottom: 10px; left: 50%; transform: translateX(-50%);">
+                <div>💰</div>
+                <div>PAYDAY</div>
+            </div>
+            
+            <div class="board-cell opportunity-cell" style="bottom: 50px; left: 10px;">
+                <div>📊</div>
+                <div>Акции</div>
+            </div>
+            
+            <div class="board-cell expense-cell" style="bottom: 120px; left: 30px;">
+                <div>🏥</div>
+                <div>Медицина</div>
+            </div>
+            
+            <div class="board-cell opportunity-cell" style="top: 120px; left: 30px;">
+                <div>🥇</div>
+                <div>Золото</div>
+            </div>
+            
+            <div class="board-cell charity-cell" style="top: 50px; left: 10px;">
+                <div>❤️</div>
+                <div>Благотворительность</div>
+            </div>
+            
+            <!-- Центральная область -->
+            <div class="center-area">
+                <div class="dice-container">
+                    <div class="dice" id="dice1">0</div>
+                    <div class="dice" id="dice2">0</div>
+                </div>
+                <div class="dice-total" id="diceTotal">0</div>
+                <button class="roll-btn" onclick="rollDice()">🎲 Бросить</button>
+            </div>
+        </div>
+        
+        <div class="status">
+            <p>Простая версия игры работает!</p>
+            <p>Время: <span id="currentTime"></span></p>
+        </div>
+        
+        <div style="margin-top: 2rem;">
+            <button onclick="window.location.href='/'">🏠 Полная версия</button>
+            <button onclick="window.location.href='/status'">📊 Статус</button>
+        </div>
+    </div>
+    
+    <script>
+        function rollDice() {
+            const dice1 = Math.floor(Math.random() * 6) + 1;
+            const dice2 = Math.floor(Math.random() * 6) + 1;
+            const total = dice1 + dice2;
+            
+            document.getElementById('dice1').textContent = dice1;
+            document.getElementById('dice2').textContent = dice2;
+            document.getElementById('diceTotal').textContent = total;
+            
+            console.log(`🎲 Брошены кубики: ${dice1} + ${dice2} = ${total}`);
+        }
+        
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString();
+        }
+        
+        // Обновление времени каждую секунду
+        setInterval(updateTime, 1000);
+        updateTime();
+        
+        console.log('✅ Простая версия игры загружена');
+    </script>
+</body>
+</html>

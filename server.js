@@ -1415,6 +1415,14 @@ app.get('/test', (req, res) => {
     res.sendFile(path.join(__dirname, 'test-server.html'));
 });
 
+app.get('/status', (req, res) => {
+    res.sendFile(path.join(__dirname, 'status.html'));
+});
+
+app.get('/simple', (req, res) => {
+    res.sendFile(path.join(__dirname, 'simple.html'));
+});
+
 app.get('/auth', (req, res) => {
     res.sendFile(path.join(__dirname, 'auth.html'));
 });
