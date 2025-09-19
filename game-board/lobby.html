@@ -6,12 +6,12 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Лобби - Game Board v2.0 - Минимализм</title>
+    <title>Лобби - Game Board v2.0 - Богатый дизайн</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        /* ЛАКОНИЧНЫЙ ДИЗАЙН v3.0 - МИНИМАЛИЗМ */
+        /* БОГАТЫЙ СОВРЕМЕННЫЙ ДИЗАЙН v4.0 - БАНКОВСКИЙ СТИЛЬ */
         * {
             margin: 0;
             padding: 0;
@@ -20,16 +20,35 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #fafafa;
-            color: #1a1a1a;
+            background: linear-gradient(135deg, #1a1d24 0%, #242830 50%, #1a1d24 100%);
+            color: #ffffff;
             line-height: 1.6;
             min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(0, 255, 150, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 100, 200, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 60%, rgba(100, 200, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 1;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 24px;
+            position: relative;
+            z-index: 2;
         }
 
         /* Header */
@@ -38,233 +57,324 @@
             justify-content: space-between;
             align-items: center;
             padding: 20px 0;
-            border-bottom: 1px solid #e5e5e5;
             margin-bottom: 32px;
         }
 
         .user-info {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 16px 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .avatar {
-            width: 40px;
-            height: 40px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-weight: 600;
-            font-size: 16px;
+            font-weight: 700;
+            font-size: 18px;
+            box-shadow: 0 4px 16px rgba(0, 255, 150, 0.4);
+            position: relative;
+        }
+
+        .avatar::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, #00ff96, #00d4aa, #00bfff);
+            border-radius: 50%;
+            z-index: -1;
+            animation: rotate 3s linear infinite;
         }
 
         .user-details h3 {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin-bottom: 2px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 4px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .user-details p {
             font-size: 14px;
-            color: #666;
+            color: #a0a0a0;
+            font-weight: 500;
         }
 
         .header-actions {
             display: flex;
-            gap: 8px;
+            gap: 12px;
         }
 
         .btn {
-            padding: 8px 16px;
-            border: 1px solid #e5e5e5;
-            border-radius: 8px;
-            background: white;
-            color: #1a1a1a;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn:hover {
-            background: #f5f5f5;
-            border-color: #d0d0d0;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         }
 
         .btn-primary {
-            background: #1a1a1a;
-            color: white;
-            border-color: #1a1a1a;
+            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
+            color: #1a1d24;
+            box-shadow: 0 4px 16px rgba(0, 255, 150, 0.3);
         }
 
-        .btn-primary:hover {
-            background: #333;
-            border-color: #333;
+        .btn-secondary {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
         }
 
         .btn-danger {
-            background: #ff4757;
-            color: white;
-            border-color: #ff4757;
-        }
-
-        .btn-danger:hover {
-            background: #ff3742;
-            border-color: #ff3742;
+            background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 16px rgba(255, 71, 87, 0.3);
         }
 
         /* Main Layout */
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 300px;
+            grid-template-columns: 1fr 350px;
             gap: 32px;
         }
 
         /* Rooms Section */
         .rooms-section h2 {
-            font-size: 24px;
-            font-weight: 700;
-            color: #1a1a1a;
+            font-size: 28px;
+            font-weight: 800;
+            color: #ffffff;
             margin-bottom: 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .create-room-btn {
-            background: #667eea;
+            background: linear-gradient(135deg, #00bfff 0%, #0099cc 100%);
             color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
+            padding: 14px 24px;
+            border-radius: 12px;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 191, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .create-room-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .create-room-btn:hover::before {
+            left: 100%;
         }
 
         .create-room-btn:hover {
-            background: #5a6fd8;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 191, 255, 0.4);
         }
 
         .rooms-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
         }
 
         .room-card {
-            background: white;
-            border: 1px solid #e5e5e5;
-            border-radius: 12px;
-            padding: 20px;
-            transition: all 0.2s ease;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 24px;
+            transition: all 0.3s ease;
             cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .room-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #00ff96, #00bfff, #ff6b6b, #ffd93d);
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease infinite;
         }
 
         .room-card:hover {
-            border-color: #d0d0d0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            transform: translateY(-2px);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(0, 255, 150, 0.5);
         }
 
         .room-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
         }
 
         .room-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1a1a1a;
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .room-status {
-            padding: 4px 8px;
-            border-radius: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
             font-size: 12px;
-            font-weight: 500;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         .status-waiting {
-            background: #fff3cd;
-            color: #856404;
+            background: linear-gradient(135deg, #ffd93d 0%, #ffb347 100%);
+            color: #1a1d24;
         }
 
         .status-playing {
-            background: #d1ecf1;
-            color: #0c5460;
+            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
+            color: #1a1d24;
         }
 
         .status-full {
-            background: #f8d7da;
-            color: #721c24;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
+            color: #ffffff;
         }
 
         .room-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
             font-size: 14px;
-            color: #666;
+            color: #a0a0a0;
+            font-weight: 500;
         }
 
         .room-players {
             display: flex;
             gap: 8px;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
         .player-avatar {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            background: #f0f0f0;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
-            font-weight: 600;
-            color: #666;
+            font-size: 14px;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+            position: relative;
+        }
+
+        .player-avatar::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e8e, #ffb3ba);
+            border-radius: 50%;
+            z-index: -1;
+            animation: pulse 2s ease-in-out infinite;
         }
 
         .room-actions {
             display: flex;
-            gap: 8px;
+            gap: 12px;
         }
 
         .join-btn {
-            background: #28a745;
-            color: white;
+            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
+            color: #1a1d24;
             border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 12px 20px;
+            border-radius: 12px;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 255, 150, 0.3);
+            flex: 1;
         }
 
         .join-btn:hover {
-            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 150, 0.4);
         }
 
         .join-btn:disabled {
-            background: #6c757d;
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: #ffffff;
             cursor: not-allowed;
+            box-shadow: none;
         }
 
         /* Sidebar */
@@ -275,62 +385,112 @@
         }
 
         .sidebar-card {
-            background: white;
-            border: 1px solid #e5e5e5;
-            border-radius: 12px;
-            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #00ff96, #00bfff, #ff6b6b);
+            background-size: 200% 100%;
+            animation: gradientShift 4s ease infinite;
         }
 
         .sidebar-card h3 {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin-bottom: 16px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             font-size: 14px;
-            font-weight: 500;
-            color: #1a1a1a;
+            font-weight: 600;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
 
         .form-group input,
         .form-group select {
             width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #e5e5e5;
-            border-radius: 6px;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
             font-size: 14px;
-            transition: border-color 0.2s ease;
+            font-weight: 500;
+            color: #ffffff;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+        }
+
+        .form-group input::placeholder {
+            color: #a0a0a0;
         }
 
         .form-group input:focus,
         .form-group select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #00ff96;
+            box-shadow: 0 0 0 3px rgba(0, 255, 150, 0.2);
+            background: rgba(255, 255, 255, 0.15);
         }
 
         .quick-start-btn {
             width: 100%;
-            background: #667eea;
+            background: linear-gradient(135deg, #00bfff 0%, #0099cc 100%);
             color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 191, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quick-start-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .quick-start-btn:hover::before {
+            left: 100%;
         }
 
         .quick-start-btn:hover {
-            background: #5a6fd8;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 191, 255, 0.4);
         }
 
         .player-list {
@@ -342,32 +502,79 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 8px 0;
-            border-bottom: 1px solid #f0f0f0;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
         }
 
         .player-item:last-child {
             border-bottom: none;
         }
 
+        .player-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+
         .player-status {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            background: #28a745;
+            box-shadow: 0 0 8px rgba(0, 255, 150, 0.5);
         }
 
         .player-status.away {
-            background: #ffc107;
+            background: #ffd93d;
+            box-shadow: 0 0 8px rgba(255, 217, 61, 0.5);
         }
 
         .player-status.busy {
-            background: #dc3545;
+            background: #ff6b6b;
+            box-shadow: 0 0 8px rgba(255, 107, 107, 0.5);
         }
 
         .player-name {
             font-size: 14px;
-            color: #1a1a1a;
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        /* Animations */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .room-card {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .sidebar-card {
+            animation: fadeInUp 0.6s ease forwards;
         }
 
         /* Responsive */
@@ -378,33 +585,13 @@
             
             .header {
                 flex-direction: column;
-                gap: 16px;
+                gap: 20px;
                 align-items: flex-start;
             }
             
             .rooms-grid {
                 grid-template-columns: 1fr;
             }
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .room-card {
-            animation: fadeIn 0.3s ease;
-        }
-
-        .sidebar-card {
-            animation: fadeIn 0.3s ease;
         }
     </style>
 </head>
@@ -420,8 +607,8 @@
                 </div>
             </div>
             <div class="header-actions">
-                <button class="btn" id="refresh-btn">🔄 Обновить</button>
-                <button class="btn" id="settings-btn">⚙️ Настройки</button>
+                <button class="btn btn-secondary" id="refresh-btn">🔄 Обновить</button>
+                <button class="btn btn-secondary" id="settings-btn">⚙️ Настройки</button>
                 <button class="btn btn-danger" id="logout-btn">🚪 Выйти</button>
             </div>
         </div>
@@ -431,7 +618,7 @@
             <!-- Rooms Section -->
             <div class="rooms-section">
                 <h2>
-                    Игровые комнаты
+                    🎮 Игровые комнаты
                     <button class="create-room-btn" id="create-room-btn">+ Создать комнату</button>
                 </h2>
                 <div class="rooms-grid" id="rooms-grid">
@@ -499,7 +686,7 @@
             <div class="sidebar">
                 <!-- Quick Game -->
                 <div class="sidebar-card">
-                    <h3>Быстрая игра</h3>
+                    <h3>🚀 Быстрая игра</h3>
                     <div class="form-group">
                         <label for="room-name">Название комнаты</label>
                         <input type="text" id="room-name" placeholder="Введите название">
@@ -518,7 +705,7 @@
 
                 <!-- Online Players -->
                 <div class="sidebar-card">
-                    <h3>Онлайн игроки</h3>
+                    <h3>👥 Онлайн игроки</h3>
                     <div class="player-list" id="player-list">
                         <div class="player-item">
                             <div class="player-status"></div>
@@ -543,7 +730,6 @@
     </div>
 
     <script>
-        // Simple JavaScript for interactivity
         document.addEventListener('DOMContentLoaded', function() {
             // Add click handlers
             document.getElementById('refresh-btn').addEventListener('click', function() {
@@ -563,7 +749,7 @@
             // Add hover effects to room cards
             document.querySelectorAll('.room-card').forEach(card => {
                 card.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-4px)';
+                    this.style.transform = 'translateY(-8px)';
                 });
                 
                 card.addEventListener('mouseleave', function() {
