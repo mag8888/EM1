@@ -175,7 +175,7 @@
             justify-content: center;
             position: relative;
         }
-        
+
         .dice {
             font-size: 48px;
             font-weight: bold;
@@ -265,7 +265,7 @@
             gap: 12px;
             box-shadow: 0 6px 25px rgba(245, 158, 11, 0.4);
         }
-        
+
         .status {
             position: absolute;
             bottom: 20px;
@@ -346,8 +346,8 @@
                     </div>
                 </div>
             </div>
-            </div>
-            
+        </div>
+
         <!-- Боковая панель -->
         <div class="sidebar">
             <!-- Банк -->
@@ -362,7 +362,7 @@
                     <button class="assets-button" style="flex: 1; padding: 10px; font-size: 12px;">💰 PAYDAY</button>
                 </div>
             </div>
-            
+
             <!-- Активы -->
             <div class="section">
                 <button class="assets-button">
@@ -370,7 +370,7 @@
                     <span>Мои активы</span>
                 </button>
             </div>
-            
+
             <!-- Бросок кубика -->
             <div class="section">
                 <button class="roll-dice-button" id="rollDiceBtn">
@@ -378,7 +378,7 @@
                     <span>Бросить кубики</span>
                 </button>
             </div>
-            
+
             <!-- Очередность игроков -->
             <div class="section">
                 <div class="section-title">Игроки</div>
@@ -399,7 +399,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Статистика -->
             <div class="section">
                 <div class="section-title">📊 Статистика</div>
@@ -407,15 +407,15 @@
                     <div style="display: flex; justify-content: space-between;">
                         <span>Доход:</span>
                         <span style="color: #10b981;" id="totalIncome">$0</span>
-            </div>
+                    </div>
                     <div style="display: flex; justify-content: space-between;">
                         <span>Расходы:</span>
                         <span style="color: #ef4444;" id="totalExpenses">$0</span>
-            </div>
+                    </div>
                     <div style="display: flex; justify-content: space-between;">
                         <span>PAYDAY:</span>
                         <span style="color: #f59e0b;" id="monthlyIncome">$0/мес</span>
-            </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -424,8 +424,8 @@
             <p id="gameStatus">Готов к игре!</p>
             <p>Время: <span id="currentTime"></span></p>
         </div>
-        </div>
-        
+    </div>
+
     <!-- Карточки сделок -->
     <div class="deal-cards" id="dealCards">
         <div class="deal-title">💼 Доступные сделки</div>
@@ -441,22 +441,8 @@
         </div>
         <button onclick="closeDealCards()" style="background: #ef4444; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">Закрыть</button>
     </div>
-    
-    <script>
-        // Функция для получения CSS класса цвета клетки
-        function getCellColorClass(type, color) {
-            const colorMap = {
-                'Возможность': 'square-green',
-                'Трата': 'square-pink',
-                'Благотворительность': color === 'red' ? 'square-red' : 'square-orange',
-                'PayDay': 'square-yellow',
-                'Мечта': 'square-blue',
-                'Ребенок': 'square-purple',
-                'Потеря': 'square-black'
-            };
-            return colorMap[type] || 'square-gray';
-        }
 
+    <script>
         // Данные о клетках внутреннего круга (1-24) - точное соответствие изображению
         const innerCellData = {
             0: { name: "Зеленая возможность", type: "Возможность", cost: 0, income: 0, description: "Малая / большая сделка (на выбор)", color: "green", icon: "📈" },
@@ -671,106 +657,6 @@
             closeDealCards();
         }
 
-        // Создание внутреннего трека (24 клетки) - идеально круглый
-        function createInnerTrack() {
-            const innerSquares = document.getElementById('innerSquares');
-            innerSquares.innerHTML = '';
-            
-            for (let i = 1; i <= 24; i++) {
-                const cellIndex = i - 1; // 0-23
-                const cellData = innerCellData[cellIndex];
-                
-                const square = document.createElement('div');
-                square.className = `inner-square ${getCellColorClass(cellData.type, cellData.color)}`;
-                square.dataset.cell = i;
-                square.onclick = () => showCellPopup(i, true);
-                
-                // Идеально круговое позиционирование
-                const angle = (i - 1) * (360 / 24) * (Math.PI / 180);
-                const radius = 170; // Фиксированный радиус для идеального круга
-                
-                const x = 50 + (radius / 200) * 50 * Math.cos(angle);
-                const y = 50 + (radius / 200) * 50 * Math.sin(angle);
-                
-                square.style.left = `${x}%`;
-                square.style.top = `${y}%`;
-                square.style.transform = 'translate(-50%, -50%)';
-                
-                square.innerHTML = `
-                    <div style="position: absolute; top: 4px; right: 4px; font-size: 10px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);">${i}</div>
-                    <div style="font-size: 20px;">${cellData.icon}</div>
-                `;
-                
-                innerSquares.appendChild(square);
-            }
-        }
-
-        // Создание внешнего периметра (44 клетки) - точное позиционирование как на изображении
-        function createOuterPerimeter() {
-            const outerSquares = document.getElementById('outerSquares');
-            outerSquares.innerHTML = '';
-            
-            const cellSize = 58;
-            const spacing = 2;
-            
-            // Основные размеры
-            const boardWidth = 650;  // Ширина красновато-коричневой области
-            const boardHeight = 650; // Высота красновато-коричневой области
-            const containerWidth = 950;  // Ширина контейнера элементов
-            const containerHeight = 880; // Высота контейнера элементов
-            
-            // Смещения для центрирования
-            const offsetX = (containerWidth - boardWidth) / 2;  // 150px
-            const offsetY = (containerHeight - boardHeight) / 2; // 115px
-            
-            for (let i = 1; i <= 44; i++) {
-                const cellData = outerCellData[i];
-                
-                const square = document.createElement('div');
-                square.className = `outer-square ${getCellColorClass(cellData.type, cellData.color)}`;
-                square.dataset.cell = i;
-                square.onclick = () => showCellPopup(i, false);
-                
-                let x, y;
-                
-                if (i <= 12) { // Верхняя сторона (1-12)
-                    x = offsetX + (i - 1) * (cellSize + spacing);
-                    y = offsetY;
-                } else if (i <= 22) { // Правая сторона (13-22)
-                    x = offsetX + boardWidth - cellSize + 2 * (cellSize + spacing); // Сдвиг вправо на 2 клетки
-                    y = offsetY + (i - 13) * (cellSize + spacing);
-                } else if (i <= 36) { // Нижняя сторона (23-36)
-                    x = offsetX + boardWidth - cellSize - (i - 23) * (cellSize + spacing) + 2 * (cellSize + spacing); // Сдвиг вправо на 2 клетки
-                    y = offsetY + boardHeight - cellSize + 2 * (cellSize + spacing); // Сдвиг вниз на 2 клетки
-                } else { // Левая сторона (37-44)
-                    x = offsetX;
-                    y = offsetY + boardHeight - cellSize - (i - 37) * (cellSize + spacing);
-                }
-                
-                square.style.left = `${x}px`;
-                square.style.top = `${y}px`;
-                
-                square.innerHTML = `
-                    <div style="position: absolute; top: 3px; right: 3px; font-size: 9px; font-weight: bold; color: white; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); z-index: 2;">${i}</div>
-                    <div style="font-size: 20px; z-index: 2; position: relative;">${cellData.icon}</div>
-                `;
-                
-                outerSquares.appendChild(square);
-            }
-        }
-
-        // Функция для показа попапа с информацией о клетке
-        function showCellPopup(cellNumber, isInner) {
-            const cellData = isInner ? innerCellData[cellNumber - 1] : outerCellData[cellNumber];
-            const message = `${cellData.name}\n\n${cellData.description}`;
-            
-            if (cellData.type === 'Возможность') {
-                showDealCards();
-            } else {
-                alert(message);
-            }
-        }
-
         // Функция для броска кубика
         function rollDice() {
             const dice = document.getElementById('dice');
@@ -787,7 +673,7 @@
             const now = new Date();
             document.getElementById('currentTime').textContent = now.toLocaleTimeString();
         }
-        
+
         // Инициализация
         document.addEventListener('DOMContentLoaded', () => {
             console.log('🎮 Точная копия игры загружена');
@@ -800,7 +686,7 @@
                 rollDiceBtn.addEventListener('click', rollDice);
             }
             
-        setInterval(updateTime, 1000);
+            setInterval(updateTime, 1000);
         });
     </script>
 </body>
