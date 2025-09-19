@@ -41,6 +41,10 @@ app.get('/test', (req, res) => {
     res.sendFile(path.join(__dirname, 'test-server.html'));
 });
 
+app.get('/working', (req, res) => {
+    res.sendFile(path.join(__dirname, 'working.html'));
+});
+
 // API маршруты
 app.get('/api/rooms', (req, res) => {
     res.json([]);
