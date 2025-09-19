@@ -61,10 +61,10 @@
 
         .board-wrapper {
             position: relative;
-            width: 88vh;
-            height: 88vh;
-            max-width: 880px;
-            max-height: 880px;
+            width: 95vh;
+            height: 95vh;
+            max-width: 950px;
+            max-height: 950px;
             filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.1));
         }
 
@@ -74,8 +74,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 650px;
-            height: 650px;
+            width: 750px;
+            height: 750px;
             border: 2px solid rgba(255, 255, 255, 0.2);
             border-radius: 0;
             background: rgba(0, 0, 0, 0.1);
@@ -112,6 +112,7 @@
                 0 2px 8px rgba(0, 0, 0, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
             overflow: hidden;
+            z-index: 5;
         }
 
         .outer-square::before {
@@ -185,6 +186,7 @@
                 0 2px 6px rgba(0, 0, 0, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
             overflow: hidden;
+            z-index: 8;
         }
 
         .inner-square::before {
@@ -275,7 +277,7 @@
             box-shadow: 
                 0 8px 32px rgba(255, 215, 0, 0.4),
                 0 0 0 4px rgba(255, 215, 0, 0.2);
-            z-index: 20;
+            z-index: 30;
             position: relative;
             overflow: hidden;
             cursor: pointer;
@@ -886,11 +888,11 @@
                 const angle = (shiftedPosition - 1) * (360 / 24) * (Math.PI / 180);
                 let radius = 38.5; // фиксированный радиус для ровного круга
                 
-                // Поднимаем клетку 4 (бывшая клетка 1) выше остальных
-                if (shiftedPosition === 4) {
-                    radius = 35;
-                    square.style.zIndex = '20';
-                }
+            // Поднимаем клетку 4 (бывшая клетка 1) выше остальных
+            if (shiftedPosition === 4) {
+                radius = 35;
+                square.style.zIndex = '10';
+            }
                 
                 const x = 50 + radius * Math.cos(angle);
                 const y = 50 + radius * Math.sin(angle);
@@ -976,7 +978,7 @@
             
             const cellSize = 58;
             const spacing = 1;
-            const sideLength = 650;
+            const sideLength = 750;
             const totalCells = 44;
             const cellsPerSide = Math.floor(totalCells / 4); // 11 клеток на сторону
             
@@ -1004,7 +1006,7 @@
                         y = position * (cellSize + spacing);
                         break;
                     case 2: // Нижняя сторона
-                        x = sideLength - cellSize - position * (cellSize + spacing) + 2 * (cellSize + spacing); // Сдвиг вправо на 2 клетки
+                        x = sideLength - cellSize - position * (cellSize + spacing) + (cellSize + spacing); // Сдвиг вправо на 1 клетку (было 2)
                         y = sideLength - cellSize;
                         break;
                     case 3: // Левая сторона
