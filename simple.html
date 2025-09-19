@@ -4,236 +4,170 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Энергия денег - Простая версия</title>
-    <link rel="stylesheet" href="assets/css/main.css">
-    <link rel="stylesheet" href="assets/css/components/board.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
-            margin: 0;
-            padding: 0;
-            background: #1a202c;
-            color: white;
             font-family: Arial, sans-serif;
-        }
-        
-        .simple-game {
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
             min-height: 100vh;
-            flex-direction: column;
-        }
-        
-        .game-title {
-            font-size: 2rem;
-            margin-bottom: 2rem;
-            text-align: center;
-        }
-        
-        .game-board {
-            width: 400px;
-            height: 400px;
-            border: 3px solid #4a5568;
-            border-radius: 50%;
-            position: relative;
-            background: linear-gradient(135deg, #2d3748, #4a5568);
-            margin-bottom: 2rem;
-        }
-        
-        .center-area {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 150px;
-            height: 150px;
-            background: #1a202c;
-            border: 2px solid #e2e8f0;
-            border-radius: 50%;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 10;
         }
-        
-        .dice-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .dice {
-            width: 30px;
-            height: 30px;
+        .game-container {
             background: white;
-            border: 2px solid #4a5568;
-            border-radius: 5px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 16px;
-            font-weight: bold;
-            color: #2d3748;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
         }
-        
-        .dice-total {
-            font-size: 18px;
-            font-weight: bold;
-            color: #f59e0b;
+        .loading {
+            display: none;
         }
-        
-        .roll-btn {
-            background: #3182ce;
+        .game-board {
+            display: none;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .cell {
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .cell:hover {
+            background: #e0e0e0;
+            transform: scale(1.05);
+        }
+        .start-btn {
+            background: #4CAF50;
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 5px;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
             cursor: pointer;
-            font-size: 14px;
+            margin: 20px;
         }
-        
-        .roll-btn:hover {
-            background: #2c5aa0;
+        .start-btn:hover {
+            background: #45a049;
         }
-        
-        .status {
-            margin-top: 1rem;
-            text-align: center;
-            font-size: 14px;
-            opacity: 0.8;
+        .balance {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2e7d32;
+            margin: 20px 0;
         }
-        
-        .board-cell {
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            background: #2d3748;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 10px;
-            text-align: center;
-        }
-        
-        .board-cell:hover {
-            transform: scale(1.1);
-            background: #4a5568;
-        }
-        
-        .start-cell { background: #38a169; }
-        .payday-cell { background: #d69e2e; }
-        .opportunity-cell { background: #3182ce; }
-        .expense-cell { background: #e53e3e; }
-        .charity-cell { background: #d53f8c; }
     </style>
 </head>
 <body>
-    <div class="simple-game">
-        <h1 class="game-title">🎮 Энергия денег</h1>
+    <div class="game-container">
+        <h1>🎮 Энергия денег</h1>
         
-        <div class="game-board">
-            <!-- Клетки игрового поля -->
-            <div class="board-cell start-cell" style="top: 10px; left: 50%; transform: translateX(-50%);">
-                <div>🏁</div>
-                <div>Старт</div>
-            </div>
-            
-            <div class="board-cell opportunity-cell" style="top: 50px; right: 10px;">
-                <div>📈</div>
-                <div>Работа</div>
-            </div>
-            
-            <div class="board-cell opportunity-cell" style="top: 120px; right: 30px;">
-                <div>🏢</div>
-                <div>Бизнес</div>
-            </div>
-            
-            <div class="board-cell expense-cell" style="bottom: 120px; right: 30px;">
-                <div>📉</div>
-                <div>Расходы</div>
-            </div>
-            
-            <div class="board-cell opportunity-cell" style="bottom: 50px; right: 10px;">
-                <div>🏠</div>
-                <div>Недвижимость</div>
-            </div>
-            
-            <div class="board-cell payday-cell" style="bottom: 10px; left: 50%; transform: translateX(-50%);">
-                <div>💰</div>
-                <div>PAYDAY</div>
-            </div>
-            
-            <div class="board-cell opportunity-cell" style="bottom: 50px; left: 10px;">
-                <div>📊</div>
-                <div>Акции</div>
-            </div>
-            
-            <div class="board-cell expense-cell" style="bottom: 120px; left: 30px;">
-                <div>🏥</div>
-                <div>Медицина</div>
-            </div>
-            
-            <div class="board-cell opportunity-cell" style="top: 120px; left: 30px;">
-                <div>🥇</div>
-                <div>Золото</div>
-            </div>
-            
-            <div class="board-cell charity-cell" style="top: 50px; left: 10px;">
-                <div>❤️</div>
-                <div>Благотворительность</div>
-            </div>
-            
-            <!-- Центральная область -->
-            <div class="center-area">
-                <div class="dice-container">
-                    <div class="dice" id="dice1">0</div>
-                    <div class="dice" id="dice2">0</div>
-                </div>
-                <div class="dice-total" id="diceTotal">0</div>
-                <button class="roll-btn" onclick="rollDice()">🎲 Бросить</button>
-            </div>
+        <div id="loading" class="loading">
+            <h2>Загрузка игры...</h2>
+            <div style="width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto;"></div>
         </div>
         
-        <div class="status">
-            <p>Простая версия игры работает!</p>
-            <p>Время: <span id="currentTime"></span></p>
-        </div>
-        
-        <div style="margin-top: 2rem;">
-            <button onclick="window.location.href='/'">🏠 Полная версия</button>
-            <button onclick="window.location.href='/status'">📊 Статус</button>
+        <div id="game" class="game-board">
+            <div class="balance">💰 Баланс: <span id="balance">10000</span>$</div>
+            
+            <div class="board">
+                <div class="cell" onclick="movePlayer(1)">🏁 Старт</div>
+                <div class="cell" onclick="movePlayer(2)">💼 Работа</div>
+                <div class="cell" onclick="movePlayer(3)">🏢 Бизнес</div>
+                <div class="cell" onclick="movePlayer(4)">📉 Расходы</div>
+                <div class="cell" onclick="movePlayer(5)">💡 Возможность</div>
+                <div class="cell" onclick="movePlayer(6)">🎯 Цель</div>
+            </div>
+            
+            <button class="start-btn" onclick="startGame()">🎲 Бросить кубик</button>
         </div>
     </div>
-    
+
     <script>
-        function rollDice() {
-            const dice1 = Math.floor(Math.random() * 6) + 1;
-            const dice2 = Math.floor(Math.random() * 6) + 1;
-            const total = dice1 + dice2;
-            
-            document.getElementById('dice1').textContent = dice1;
-            document.getElementById('dice2').textContent = dice2;
-            document.getElementById('diceTotal').textContent = total;
-            
-            console.log(`🎲 Брошены кубики: ${dice1} + ${dice2} = ${total}`);
+        let gameState = {
+            balance: 10000,
+            position: 0,
+            isPlaying: false
+        };
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('game').style.display = 'none';
         }
-        
-        function updateTime() {
-            const now = new Date();
-            document.getElementById('currentTime').textContent = now.toLocaleTimeString();
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
         }
-        
-        // Обновление времени каждую секунду
-        setInterval(updateTime, 1000);
-        updateTime();
-        
-        console.log('✅ Простая версия игры загружена');
+
+        function updateBalance() {
+            document.getElementById('balance').textContent = gameState.balance;
+        }
+
+        function movePlayer(newPosition) {
+            if (!gameState.isPlaying) return;
+            
+            gameState.position = newPosition;
+            
+            // Простая логика игры
+            switch(newPosition) {
+                case 1: // Старт
+                    gameState.balance += 1000;
+                    alert('🎉 Получено 1000$ за прохождение старта!');
+                    break;
+                case 2: // Работа
+                    gameState.balance += 500;
+                    alert('💼 Заработано 500$ на работе!');
+                    break;
+                case 3: // Бизнес
+                    gameState.balance += 2000;
+                    alert('🏢 Бизнес принес 2000$!');
+                    break;
+                case 4: // Расходы
+                    gameState.balance -= 300;
+                    alert('📉 Потрачено 300$ на расходы');
+                    break;
+                case 5: // Возможность
+                    const bonus = Math.floor(Math.random() * 1000) + 100;
+                    gameState.balance += bonus;
+                    alert(`💡 Возможность принесла ${bonus}$!`);
+                    break;
+                case 6: // Цель
+                    gameState.balance += 5000;
+                    alert('🎯 Достигнута цель! Получено 5000$!');
+                    break;
+            }
+            
+            updateBalance();
+        }
+
+        function startGame() {
+            gameState.isPlaying = true;
+            alert('🎮 Игра началась! Кликайте на клетки для движения!');
+        }
+
+        // Инициализация
+        window.addEventListener('load', function() {
+            showLoading();
+            
+            // Симуляция загрузки
+            setTimeout(() => {
+                hideLoading();
+                updateBalance();
+            }, 2000);
+        });
     </script>
 </body>
 </html>
