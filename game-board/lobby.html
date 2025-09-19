@@ -653,12 +653,13 @@
             padding: 32px;
             max-width: 500px;
             width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: 
                 0 25px 50px rgba(0, 0, 0, 0.5),
                 0 0 0 1px rgba(255, 255, 255, 0.1),
                 inset 0 1px 0 rgba(255, 255, 255, 0.2);
             position: relative;
-            overflow: hidden;
             animation: modalSlideIn 0.3s ease;
         }
 
@@ -672,6 +673,25 @@
             background: linear-gradient(90deg, #00ff96, #00bfff, #ff6b6b, #ffd93d);
             background-size: 200% 100%;
             animation: gradientShift 3s ease infinite;
+        }
+
+        /* Custom scrollbar for modal */
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #00e687 0%, #00c49a 100%);
         }
 
         .modal-header {
@@ -1056,10 +1076,10 @@
                         <input type="text" id="room-name-input" placeholder="Введите название комнаты" required>
                     </div>
 
-                    <!-- 2. ID создателя -->
+                    <!-- 2. Имя создателя -->
                     <div class="modal-form-group">
-                        <label for="creator-id">2. ID создателя</label>
-                        <input type="text" id="creator-id" value="" readonly>
+                        <label for="creator-name">2. Имя создателя</label>
+                        <input type="text" id="creator-name" placeholder="Введите ваше имя" required>
                     </div>
 
                     <!-- 3. Профессия создателя -->
@@ -1165,7 +1185,7 @@
 
             // Initialize creator ID
             const creatorId = localStorage.getItem('username') || 'Player_' + Math.random().toString(36).substr(2, 9);
-            document.getElementById('creator-id').value = creatorId;
+            document.getElementById('creator-name').value = creatorId;
 
             // Profession selection handler
             document.getElementById('creator-profession').addEventListener('change', function() {
@@ -1249,7 +1269,7 @@
             // Create room functionality
             confirmBtn.addEventListener('click', function() {
                 const roomName = document.getElementById('room-name-input').value;
-                const creatorId = document.getElementById('creator-id').value;
+                const creatorName = document.getElementById('creator-name').value;
                 const creatorProfession = document.getElementById('creator-profession').value;
                 const assignProfession = document.getElementById('assign-profession').checked;
                 const maxPlayers = document.getElementById('max-players-input').value;
@@ -1269,13 +1289,13 @@
                 // Create new room with all 8 parameters
                 createNewRoom({
                     name: roomName,
-                    creatorId: creatorId,
+                    creatorId: creatorName,
                     creatorProfession: creatorProfession,
                     assignProfession: assignProfession,
                     maxPlayers: parseInt(maxPlayers),
                     password: roomPassword,
                     timer: parseInt(roomTimer),
-                    players: [creatorId]
+                    players: [creatorName]
                 });
                 closeModal();
             });
