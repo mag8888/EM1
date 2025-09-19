@@ -290,16 +290,22 @@ class Handlers {
     }
 
     async showEarnMoney(chatId, messageId) {
+        const user = await this.db.getUser(chatId);
+        const balance = user && typeof user.balance === 'number' ? user.balance : 0;
+        const header = `💰 Доход_____ Баланс ${balance.toFixed(2)}$`;
+        const body = (config.MESSAGES.EARN_MONEY || '').replace(/^.*?\n/, '');
+        const text = `${header}\n\n${body}`.trim();
+
         const payload = {
             chat_id: chatId,
             ...(messageId ? { message_id: messageId } : {}),
             ...Keyboards.getEarnMoneyKeyboard()
         };
         if (messageId) {
-            await this.bot.editMessageText(config.MESSAGES.EARN_MONEY, payload);
+            await this.bot.editMessageText(text, payload);
         } else {
             await this.bot.sendPhoto(chatId, config.MEDIA.EARN_MONEY, {
-                caption: config.MESSAGES.EARN_MONEY,
+                caption: text,
                 ...Keyboards.getEarnMoneyKeyboard()
             });
         }
