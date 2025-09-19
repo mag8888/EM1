@@ -39,6 +39,7 @@ class Handlers {
 
         // Регистрируем пользователя
         let user = await this.db.getUser(telegramId);
+        let justRegistered = false;
         if (!user) {
             try {
                 const userReferralCode = this.db.generateReferralCode(telegramId);
@@ -51,6 +52,7 @@ class Handlers {
                     referredBy
                 });
                 user = await this.db.getUser(telegramId);
+                justRegistered = true;
             } catch (error) {
                 if (error.code === 'SQLITE_CONSTRAINT') {
                     // Пользователь уже существует, получаем его данные
@@ -104,6 +106,16 @@ class Handlers {
                 ...Keyboards.getMainMenu()
             }
         );
+
+        // Если это первый вход пользователя, отправим сообщение через 30 секунд
+        if (justRegistered) {
+            setTimeout(() => {
+                this.bot.sendMessage(
+                    chatId,
+                    'Ваш счет пополнен на 10$ — приглашайте друзей и за каждого получите 10$, которые сможете потратить на игру'
+                ).catch(() => {});
+            }, 30000);
+        }
     }
 
     async handleCallbackQuery(callbackQuery) {
