@@ -3,1085 +3,264 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Board v2.0 - Монополия</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Game Board v2.0 - Минимализм</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        /* ЛАКОНИЧНЫЙ ДИЗАЙН v3.0 - МИНИМАЛИЗМ */
+        * {
             margin: 0;
             padding: 0;
-            background: 
-                radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255, 20, 147, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(0, 191, 255, 0.2) 0%, transparent 50%),
-                radial-gradient(circle at 60% 60%, rgba(138, 43, 226, 0.2) 0%, transparent 50%),
-                linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
-            background-size: 400% 400%, 300% 300%, 200% 200%, 250% 250%, 100% 100%;
-            animation: 
-                premiumGradientShift 30s ease infinite,
-                luxuryGlow 15s ease-in-out infinite alternate,
-                particleFloat 40s linear infinite;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #fafafa;
+            color: #1a1a1a;
+            line-height: 1.6;
             min-height: 100vh;
-            position: relative;
-            overflow-x: hidden;
-            perspective: 2000px;
-        }
-
-        @keyframes premiumGradientShift {
-            0% { background-position: 0% 50%, 0% 0%, 0% 0%, 0% 0%, 0% 50%; }
-            25% { background-position: 100% 50%, 50% 50%, 25% 25%, 25% 25%, 25% 75%; }
-            50% { background-position: 50% 100%, 100% 100%, 50% 50%, 50% 50%, 50% 0%; }
-            75% { background-position: 0% 0%, 0% 50%, 75% 75%, 75% 75%, 75% 25%; }
-            100% { background-position: 0% 50%, 0% 0%, 0% 0%, 0% 0%, 0% 50%; }
-        }
-
-        @keyframes luxuryGlow {
-            0% { 
-                filter: hue-rotate(0deg) brightness(1) saturate(1.2);
-                box-shadow: 0 0 100px rgba(255, 215, 0, 0.1);
-            }
-            100% { 
-                filter: hue-rotate(30deg) brightness(1.2) saturate(1.5);
-                box-shadow: 0 0 200px rgba(255, 20, 147, 0.2);
-            }
-        }
-
-        @keyframes particleFloat {
-            0% { transform: translateY(0px) rotate(0deg) scale(1); }
-            50% { transform: translateY(-50px) rotate(180deg) scale(1.1); }
-            100% { transform: translateY(-100px) rotate(360deg) scale(1); }
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="luxuryGrid" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255,215,0,0.1)" stroke-width="0.5"/><circle cx="15" cy="15" r="0.5" fill="rgba(255,215,0,0.2)"/></pattern></defs><rect width="100" height="100" fill="url(%23luxuryGrid)"/></svg>'),
-                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="premiumParticles" width="60" height="60" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1.5" fill="rgba(255,215,0,0.4)"/><circle cx="30" cy="20" r="1" fill="rgba(255,20,147,0.3)"/><circle cx="40" cy="40" r="2" fill="rgba(0,191,255,0.2)"/><circle cx="20" cy="35" r="1.2" fill="rgba(138,43,226,0.3)"/><circle cx="50" cy="10" r="0.8" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23premiumParticles)"/></svg>');
-            opacity: 0.6;
-            pointer-events: none;
-            z-index: 1;
-            animation: particleFloat 35s linear infinite;
-        }
-
-        body::after {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 30% 20%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 70% 80%, rgba(255, 20, 147, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(0, 191, 255, 0.1) 0%, transparent 70%);
-            animation: luxuryGlow 25s ease-in-out infinite alternate;
-            pointer-events: none;
-            z-index: 2;
-        }
-        
-        .test-container {
-            max-width: 1600px;
-            margin: 40px auto;
-            background: 
-                linear-gradient(135deg, 
-                    rgba(0, 0, 0, 0.9) 0%, 
-                    rgba(20, 20, 40, 0.95) 25%, 
-                    rgba(40, 20, 60, 0.9) 50%, 
-                    rgba(20, 20, 40, 0.95) 75%, 
-                    rgba(0, 0, 0, 0.9) 100%),
-                radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
-            backdrop-filter: blur(40px) saturate(1.8);
-            border: 3px solid transparent;
-            background-clip: padding-box;
-            border-radius: 40px;
-            box-shadow: 
-                0 0 0 2px rgba(255, 215, 0, 0.4),
-                0 0 100px rgba(255, 215, 0, 0.3),
-                0 0 200px rgba(255, 20, 147, 0.2),
-                0 0 300px rgba(0, 191, 255, 0.1),
-                0 60px 120px rgba(0, 0, 0, 0.6),
-                inset 0 2px 0 rgba(255, 255, 255, 0.2),
-                inset 0 -2px 0 rgba(255, 215, 0, 0.3);
-            overflow: hidden;
-            position: relative;
-            z-index: 10;
-            animation: 
-                premiumSlideUp 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-                luxuryPulse 6s ease-in-out infinite,
-                premiumGlow 8s ease-in-out infinite alternate;
-            transform-style: preserve-3d;
-        }
-
-        .test-container::before {
-            content: '';
-            position: absolute;
-            top: -3px;
-            left: -3px;
-            right: -3px;
-            bottom: -3px;
-            background: linear-gradient(45deg, 
-                #ffd700, #ff1493, #00bfff, #8a2be2, 
-                #ffd700, #ff1493, #00bfff, #8a2be2);
-            background-size: 800% 800%;
-            border-radius: 40px;
-            z-index: -1;
-            animation: premiumGradientShift 4s ease infinite, luxuryGlow 3s ease-in-out infinite alternate;
-            opacity: 0.8;
-        }
-
-        .test-container::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="luxuryPattern" width="20" height="20" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="20" height="20" fill="none" stroke="rgba(255,215,0,0.1)" stroke-width="0.5"/><circle cx="10" cy="10" r="1" fill="rgba(255,215,0,0.2)"/><path d="M 5 5 L 15 15 M 15 5 L 5 15" stroke="rgba(255,20,147,0.1)" stroke-width="0.3"/></pattern></defs><rect width="100" height="100" fill="url(%23luxuryPattern)"/></svg>');
-            opacity: 0.4;
-            animation: particleFloat 25s linear infinite;
-            pointer-events: none;
-        }
-
-        @keyframes premiumSlideUp {
-            from {
-                opacity: 0;
-                transform: translateY(80px) scale(0.8) rotateX(30deg);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1) rotateX(0deg);
-            }
-        }
-
-        @keyframes luxuryPulse {
-            0%, 100% { 
-                box-shadow: 
-                    0 0 0 2px rgba(255, 215, 0, 0.4),
-                    0 0 100px rgba(255, 215, 0, 0.3),
-                    0 0 200px rgba(255, 20, 147, 0.2),
-                    0 0 300px rgba(0, 191, 255, 0.1),
-                    0 60px 120px rgba(0, 0, 0, 0.6);
-            }
-            50% { 
-                box-shadow: 
-                    0 0 0 3px rgba(255, 215, 0, 0.6),
-                    0 0 150px rgba(255, 215, 0, 0.5),
-                    0 0 300px rgba(255, 20, 147, 0.3),
-                    0 0 450px rgba(0, 191, 255, 0.2),
-                    0 60px 120px rgba(0, 0, 0, 0.6);
-            }
-        }
-
-        @keyframes premiumGlow {
-            0% { 
-                filter: hue-rotate(0deg) brightness(1) saturate(1.2);
-            }
-            100% { 
-                filter: hue-rotate(20deg) brightness(1.1) saturate(1.4);
-            }
-        }
-        
-        .test-header {
-            background: 
-                linear-gradient(135deg, 
-                    rgba(255, 215, 0, 0.3) 0%, 
-                    rgba(255, 20, 147, 0.4) 25%, 
-                    rgba(0, 191, 255, 0.3) 50%, 
-                    rgba(138, 43, 226, 0.4) 75%, 
-                    rgba(255, 215, 0, 0.3) 100%),
-                linear-gradient(45deg, 
-                    rgba(0, 0, 0, 0.9) 0%, 
-                    rgba(20, 20, 40, 0.8) 50%, 
-                    rgba(0, 0, 0, 0.9) 100%);
-            background-size: 400% 400%, 100% 100%;
-            animation: 
-                premiumGradientShift 8s ease infinite,
-                luxuryScan 4s linear infinite;
-            color: #ffd700;
-            padding: 50px 40px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            border-bottom: 3px solid rgba(255, 215, 0, 0.5);
-        }
-
-        .test-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(255, 215, 0, 0.4), 
-                rgba(255, 20, 147, 0.4),
-                rgba(0, 191, 255, 0.4),
-                transparent);
-            animation: luxuryScan 3s linear infinite;
-        }
-
-        .test-header::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="luxuryHeader" width="25" height="25" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="25" height="25" fill="none" stroke="rgba(255,215,0,0.1)" stroke-width="0.5"/><circle cx="12.5" cy="12.5" r="1.5" fill="rgba(255,215,0,0.3)"/><path d="M 6 6 L 19 19 M 19 6 L 6 19" stroke="rgba(255,20,147,0.2)" stroke-width="0.3"/></pattern></defs><rect width="100" height="100" fill="url(%23luxuryHeader)"/></svg>');
-            opacity: 0.5;
-            animation: particleFloat 20s linear infinite;
-        }
-
-        @keyframes luxuryScan {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-        
-        .test-controls {
-            padding: 20px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
             display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
             align-items: center;
+            justify-content: center;
         }
-        
-        .btn {
-            padding: 20px 40px;
-            border: none;
-            border-radius: 25px;
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 24px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: 700;
+            margin: 0 auto 24px;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+        }
+
+        .subtitle {
             font-size: 18px;
-            font-weight: 900;
+            color: #666;
+            margin-bottom: 40px;
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        .btn {
+            padding: 16px 24px;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            background: white;
+            color: #1a1a1a;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.2s ease;
             text-decoration: none;
-            display: inline-block;
-            margin: 10px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            position: relative;
-            overflow: hidden;
-            transform-style: preserve-3d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(255, 255, 255, 0.4), 
-                rgba(255, 215, 0, 0.4),
-                rgba(255, 20, 147, 0.4),
-                transparent);
-            transition: left 1s;
-        }
-
-        .btn:hover::before {
-            left: 100%;
-        }
-
-        .btn::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: all 0.8s ease;
-        }
-
-        .btn:hover::after {
-            width: 400px;
-            height: 400px;
+        .btn:hover {
+            background: #f5f5f5;
+            border-color: #d0d0d0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .btn-primary {
-            background: 
-                linear-gradient(135deg, 
-                    #ffd700 0%, 
-                    #ff1493 25%, 
-                    #00bfff 50%, 
-                    #8a2be2 75%, 
-                    #ffd700 100%);
-            background-size: 400% 400%;
-            animation: 
-                premiumGradientShift 4s ease infinite,
-                luxuryPulse 3s ease-in-out infinite;
-            color: #000;
-            box-shadow: 
-                0 0 40px rgba(255, 215, 0, 0.6),
-                0 0 80px rgba(255, 20, 147, 0.4),
-                0 0 120px rgba(0, 191, 255, 0.3),
-                0 20px 60px rgba(0, 0, 0, 0.5),
-                inset 0 2px 0 rgba(255, 255, 255, 0.8);
-            border: 3px solid rgba(255, 215, 0, 0.8);
+            background: #1a1a1a;
+            color: white;
+            border-color: #1a1a1a;
         }
 
         .btn-primary:hover {
-            transform: translateY(-8px) scale(1.08) rotateX(10deg);
-            box-shadow: 
-                0 0 60px rgba(255, 215, 0, 0.8),
-                0 0 120px rgba(255, 20, 147, 0.6),
-                0 0 180px rgba(0, 191, 255, 0.4),
-                0 30px 80px rgba(0, 0, 0, 0.6),
-                inset 0 2px 0 rgba(255, 255, 255, 1);
-            animation-play-state: paused;
+            background: #333;
+            border-color: #333;
         }
 
         .btn-secondary {
-            background: 
-                linear-gradient(135deg, 
-                    rgba(0, 0, 0, 0.8) 0%, 
-                    rgba(20, 20, 40, 0.9) 100%);
-            color: #ffd700;
-            border: 3px solid rgba(255, 215, 0, 0.6);
-            box-shadow: 
-                0 0 30px rgba(255, 215, 0, 0.4),
-                inset 0 2px 0 rgba(255, 255, 255, 0.2);
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
         }
 
         .btn-secondary:hover {
-            background: 
-                linear-gradient(135deg, 
-                    rgba(0, 0, 0, 0.9) 0%, 
-                    rgba(20, 20, 40, 0.95) 100%);
-            border-color: rgba(255, 215, 0, 0.8);
-            box-shadow: 
-                0 0 50px rgba(255, 215, 0, 0.6),
-                inset 0 2px 0 rgba(255, 255, 255, 0.4);
-            transform: translateY(-5px) scale(1.05);
+            background: #5a6fd8;
+            border-color: #5a6fd8;
         }
 
-        .btn-success {
-            background: linear-gradient(135deg, #00ff00, #00aa00);
-            color: #000;
-            box-shadow: 
-                0 0 40px rgba(0, 255, 0, 0.6),
-                inset 0 2px 0 rgba(255, 255, 255, 0.8);
-            border: 3px solid rgba(0, 255, 0, 0.8);
+        .features {
+            margin-top: 60px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 24px;
         }
 
-        .btn-success:hover {
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 
-                0 0 60px rgba(0, 255, 0, 0.8),
-                inset 0 2px 0 rgba(255, 255, 255, 1);
+        .feature {
+            text-align: center;
         }
 
-        .btn-warning {
-            background: linear-gradient(135deg, #ffff00, #ffaa00);
-            color: #000;
-            box-shadow: 
-                0 0 40px rgba(255, 255, 0, 0.6),
-                inset 0 2px 0 rgba(255, 255, 255, 0.8);
-            border: 3px solid rgba(255, 255, 0, 0.8);
-        }
-
-        .btn-warning:hover {
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 
-                0 0 60px rgba(255, 255, 0, 0.8),
-                inset 0 2px 0 rgba(255, 255, 255, 1);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #ff0000, #aa0000);
-            color: #fff;
-            box-shadow: 
-                0 0 40px rgba(255, 0, 0, 0.6),
-                inset 0 2px 0 rgba(255, 255, 255, 0.8);
-            border: 3px solid rgba(255, 0, 0, 0.8);
-        }
-
-        .btn-danger:hover {
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 
-                0 0 60px rgba(255, 0, 0, 0.8),
-                inset 0 2px 0 rgba(255, 255, 255, 1);
-        }
-
-        .btn:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-            transform: none;
-            opacity: 0.6;
-        }
-        
-        .status-panel {
-            background: #e9ecef;
-            padding: 15px;
-            border-radius: 8px;
-            margin-left: auto;
-        }
-        
-        .status-item {
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: #f0f0f0;
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin: 0 auto 12px;
         }
-        
-        .status-label {
-            font-weight: bold;
-            color: #495057;
+
+        .feature h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 4px;
         }
-        
-        .status-value {
-            color: #6c757d;
+
+        .feature p {
+            font-size: 14px;
+            color: #666;
         }
-        
-        #game-board-container {
-            min-height: 600px;
-        }
-        
-        .log-panel {
+
+        .status {
+            margin-top: 40px;
+            padding: 16px;
             background: #f8f9fa;
-            border-top: 1px solid #dee2e6;
-            padding: 20px;
-            max-height: 200px;
-            overflow-y: auto;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #666;
         }
-        
-        .log-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #495057;
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        
-        .log-entry {
-            background: white;
-            padding: 8px 12px;
-            margin-bottom: 5px;
-            border-radius: 4px;
-            border-left: 3px solid #007bff;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
+
+        .container > * {
+            animation: fadeInUp 0.6s ease forwards;
         }
-        
-        .log-entry.error {
-            border-left-color: #dc3545;
-            background: #f8d7da;
+
+        .logo {
+            animation-delay: 0.1s;
         }
-        
-        .log-entry.success {
-            border-left-color: #28a745;
-            background: #d4edda;
+
+        h1 {
+            animation-delay: 0.2s;
         }
-        
-        .log-entry.warning {
-            border-left-color: #ffc107;
-            background: #fff3cd;
+
+        .subtitle {
+            animation-delay: 0.3s;
+        }
+
+        .actions {
+            animation-delay: 0.4s;
+        }
+
+        .features {
+            animation-delay: 0.5s;
+        }
+
+        .status {
+            animation-delay: 0.6s;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 24px 16px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            .subtitle {
+                font-size: 16px;
+            }
+
+            .actions {
+                max-width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="test-container">
-        <div class="test-header">
-            <h1 style="font-size: 48px; font-weight: 900; margin-bottom: 20px; text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 20, 147, 0.6), 0 0 60px rgba(0, 191, 255, 0.4); animation: luxuryGlow 3s ease-in-out infinite alternate; position: relative; z-index: 2;">🎮 Game Board v2.0 - Монополия</h1>
-            <p style="font-size: 24px; font-weight: 600; text-shadow: 0 0 10px rgba(255, 215, 0, 0.6); position: relative; z-index: 2;">Современная система игрового поля с регистрацией и лобби</p>
+    <div class="container">
+        <div class="logo">🎮</div>
+        
+        <h1>Game Board v2.0</h1>
+        <p class="subtitle">Современная система игрового поля с минималистичным дизайном</p>
+        
+        <div class="actions">
+            <a href="auth.html" class="btn btn-primary">🔐 Войти в игру</a>
+            <a href="lobby.html" class="btn btn-secondary">🏠 Лобби</a>
         </div>
         
-        <div class="test-controls">
-            <a href="auth.html" class="btn btn-primary" style="text-decoration: none; margin-right: 10px;">🔐 Войти в игру</a>
-            <a href="lobby.html" class="btn btn-secondary" style="text-decoration: none; margin-right: 10px;">🏠 Лобби</a>
-            <button id="init-btn" class="btn btn-success">🚀 Тест системы</button>
-            <button id="start-game-btn" class="btn" disabled>🎯 Начать игру</button>
-            <button id="roll-dice-btn" class="btn" disabled>🎲 Бросить кубик</button>
-            <button id="next-turn-btn" class="btn" disabled>➡️ Следующий ход</button>
-            <button id="pause-btn" class="btn btn-warning" disabled>⏸️ Пауза</button>
-            <button id="reset-btn" class="btn btn-danger">🔄 Сброс</button>
-            
-            <div class="status-panel">
-                <div class="status-item">
-                    <span class="status-label">Статус:</span>
-                    <span class="status-value" id="status-value">Не инициализирован</span>
-                </div>
-                <div class="status-item">
-                    <span class="status-label">Игроков:</span>
-                    <span class="status-value" id="players-count">0</span>
-                </div>
-                <div class="status-item">
-                    <span class="status-label">Ход:</span>
-                    <span class="status-value" id="turn-number">0</span>
-                </div>
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <h3>Быстро</h3>
+                <p>Мгновенная загрузка</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🎨</div>
+                <h3>Красиво</h3>
+                <p>Минималистичный дизайн</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔒</div>
+                <h3>Безопасно</h3>
+                <p>Защищенные данные</p>
             </div>
         </div>
         
-        <div id="game-board-container"></div>
-        
-        <div class="log-panel">
-            <div class="log-title">📋 Лог событий</div>
-            <div id="log-container"></div>
+        <div class="status">
+            <strong>Статус:</strong> Система работает нормально
         </div>
     </div>
 
-    <!-- Встраиваем код компонентов прямо в HTML -->
     <script>
-        // GameBoardService v2.0
-        class GameBoardService {
-            constructor() {
-                console.log('🎲 GameBoardService v2.0: Инициализация');
-                
-                this.config = {
-                    boardSize: 40,
-                    startMoney: 3000,
-                    passGoBonus: 200,
-                    maxPlayers: 8,
-                    diceSides: 6
-                };
-                
-                this.gameState = {
-                    players: [],
-                    currentPlayerIndex: 0,
-                    diceValue: 0,
-                    gamePhase: 'waiting',
-                    turnNumber: 0,
-                    gameStartTime: null,
-                    lastAction: null
-                };
-                
-                this.eventListeners = new Map();
-                this.initializeService();
-            }
-
-            initializeService() {
-                console.log('🎲 GameBoardService: Сервис инициализирован');
-                this.emit('serviceReady');
-            }
-
-            initializeBoard(players) {
-                console.log('🎲 GameBoardService: Инициализация поля для', players.length, 'игроков');
-                
-                if (players.length < 2) {
-                    throw new Error('Минимум 2 игрока для начала игры');
-                }
-                
-                if (players.length > this.config.maxPlayers) {
-                    throw new Error(`Максимум ${this.config.maxPlayers} игроков`);
-                }
-
-                this.gameState.players = players.map((player, index) => ({
-                    id: player._id || player.user_id || `player_${index}`,
-                    name: player.name || `Игрок ${index + 1}`,
-                    position: 0,
-                    color: this.getPlayerColor(index),
-                    token: this.getPlayerToken(index),
-                    money: this.config.startMoney,
-                    properties: [],
-                    isActive: true,
-                    stats: {
-                        totalMoves: 0,
-                        totalMoneyEarned: 0,
-                        totalMoneySpent: 0,
-                        propertiesOwned: 0,
-                        timesPassedGo: 0,
-                        jailTime: 0
-                    },
-                    effects: {
-                        inJail: false,
-                        jailTurns: 0,
-                        hasGetOutOfJailCard: false,
-                        isBankrupt: false
-                    }
-                }));
-
-                this.gameState.currentPlayerIndex = 0;
-                this.gameState.diceValue = 0;
-                this.gameState.gamePhase = 'playing';
-                this.gameState.turnNumber = 0;
-                this.gameState.gameStartTime = new Date();
-                this.gameState.lastAction = null;
-
-                console.log('🎲 GameBoardService: Поле инициализировано', this.gameState.players);
-                this.emit('boardInitialized', { players: this.gameState.players });
-                
-                return this.gameState.players;
-            }
-
-            getPlayerColor(index) {
-                const colors = [
-                    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4',
-                    '#FFEAA7', '#DDA0DD', '#FFB347', '#98D8C8'
-                ];
-                return colors[index % colors.length];
-            }
-
-            getPlayerToken(index) {
-                const tokens = ['🔴', '🔵', '🟢', '🟡', '🟣', '🟠', '🔶', '🔷'];
-                return tokens[index % tokens.length];
-            }
-
-            rollDice() {
-                const dice1 = Math.floor(Math.random() * this.config.diceSides) + 1;
-                const dice2 = Math.floor(Math.random() * this.config.diceSides) + 1;
-                this.gameState.diceValue = dice1 + dice2;
-                
-                console.log('🎲 GameBoardService: Выпало', dice1, '+', dice2, '=', this.gameState.diceValue);
-                
-                this.emit('diceRolled', { 
-                    dice1, 
-                    dice2, 
-                    total: this.gameState.diceValue,
-                    isDouble: dice1 === dice2
-                });
-                
-                return {
-                    dice1,
-                    dice2,
-                    total: this.gameState.diceValue,
-                    isDouble: dice1 === dice2
-                };
-            }
-
-            movePlayer(playerIndex, steps = null) {
-                if (playerIndex < 0 || playerIndex >= this.gameState.players.length) {
-                    throw new Error('Неверный индекс игрока');
-                }
-
-                const player = this.gameState.players[playerIndex];
-                if (!player.isActive || player.effects.isBankrupt) {
-                    throw new Error('Игрок не может ходить');
-                }
-
-                const moveSteps = steps !== null ? steps : this.gameState.diceValue;
-                const oldPosition = player.position;
-                const newPosition = (player.position + moveSteps) % this.config.boardSize;
-                
-                player.position = newPosition;
-                player.stats.totalMoves += moveSteps;
-                
-                const passedGo = this.checkPassedGo(oldPosition, newPosition);
-                if (passedGo) {
-                    player.money += this.config.passGoBonus;
-                    player.stats.totalMoneyEarned += this.config.passGoBonus;
-                    player.stats.timesPassedGo++;
-                    this.emit('playerPassedGo', { player, bonus: this.config.passGoBonus });
-                }
-
-                const moveResult = {
-                    player: player.name,
-                    playerIndex,
-                    oldPosition,
-                    newPosition,
-                    steps: moveSteps,
-                    passedGo,
-                    currentMoney: player.money
-                };
-
-                console.log('🎲 GameBoardService: Игрок перемещен', moveResult);
-                this.emit('playerMoved', moveResult);
-                
-                return moveResult;
-            }
-
-            checkPassedGo(oldPosition, newPosition) {
-                return newPosition < oldPosition;
-            }
-
-            nextTurn() {
-                this.gameState.turnNumber++;
-                this.gameState.currentPlayerIndex = (this.gameState.currentPlayerIndex + 1) % this.gameState.players.length;
-                
-                const currentPlayer = this.getCurrentPlayer();
-                console.log('🎲 GameBoardService: Ход передан игроку', currentPlayer.name);
-                
-                this.emit('turnChanged', { 
-                    currentPlayer, 
-                    turnNumber: this.gameState.turnNumber,
-                    playerIndex: this.gameState.currentPlayerIndex
-                });
-                
-                return this.gameState.currentPlayerIndex;
-            }
-
-            getCurrentPlayer() {
-                return this.gameState.players[this.gameState.currentPlayerIndex];
-            }
-
-            getPlayers() {
-                return this.gameState.players;
-            }
-
-            updatePlayerMoney(playerIndex, amount, reason = '') {
-                if (playerIndex < 0 || playerIndex >= this.gameState.players.length) {
-                    throw new Error('Неверный индекс игрока');
-                }
-
-                const player = this.gameState.players[playerIndex];
-                const oldMoney = player.money;
-                player.money += amount;
-                
-                if (amount > 0) {
-                    player.stats.totalMoneyEarned += amount;
-                } else {
-                    player.stats.totalMoneySpent += Math.abs(amount);
-                }
-                
-                if (player.money < 0) {
-                    player.effects.isBankrupt = true;
-                    player.isActive = false;
-                    this.emit('playerBankrupt', { player, oldMoney, newMoney: player.money });
-                }
-                
-                console.log('🎲 GameBoardService: Деньги обновлены', {
-                    player: player.name,
-                    amount,
-                    oldMoney,
-                    newMoney: player.money,
-                    reason
-                });
-
-                this.emit('moneyUpdated', { player, amount, reason, oldMoney, newMoney: player.money });
-                return player.money;
-            }
-
-            getGameStats() {
-                const activePlayers = this.gameState.players.filter(p => p.isActive && !p.effects.isBankrupt);
-                const gameDuration = this.gameState.gameStartTime ? 
-                    Date.now() - this.gameState.gameStartTime.getTime() : 0;
-                    
-                return {
-                    totalPlayers: this.gameState.players.length,
-                    activePlayers: activePlayers.length,
-                    currentPlayer: this.gameState.currentPlayerIndex,
-                    currentPlayerName: this.getCurrentPlayer().name,
-                    diceValue: this.gameState.diceValue,
-                    boardSize: this.config.boardSize,
-                    gamePhase: this.gameState.gamePhase,
-                    turnNumber: this.gameState.turnNumber,
-                    gameDuration: Math.floor(gameDuration / 1000),
-                    lastAction: this.gameState.lastAction
-                };
-            }
-
-            on(event, callback) {
-                if (!this.eventListeners.has(event)) {
-                    this.eventListeners.set(event, []);
-                }
-                this.eventListeners.get(event).push(callback);
-            }
-
-            emit(event, data) {
-                if (this.eventListeners.has(event)) {
-                    this.eventListeners.get(event).forEach(callback => {
-                        try {
-                            callback(data);
-                        } catch (error) {
-                            console.error('🎲 GameBoardService: Ошибка в обработчике события', event, error);
-                        }
-                    });
-                }
-            }
-
-            resetGame() {
-                this.gameState.players = [];
-                this.gameState.currentPlayerIndex = 0;
-                this.gameState.diceValue = 0;
-                this.gameState.gamePhase = 'waiting';
-                this.gameState.turnNumber = 0;
-                this.gameState.gameStartTime = null;
-                this.gameState.lastAction = null;
-                
-                console.log('🎲 GameBoardService: Игра сброшена');
-                this.emit('gameReset');
-            }
-        }
-
-        // Упрощенная версия GameBoardUI для демонстрации
-        class SimpleGameBoardUI {
-            constructor(containerId) {
-                this.containerId = containerId;
-                this.container = document.getElementById(containerId);
-                this.playerTokens = new Map();
-                this.initializeUI();
-            }
-
-            initializeUI() {
-                this.createSimpleBoard();
-            }
-
-            createSimpleBoard() {
-                this.container.innerHTML = `
-                    <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; padding: 20px; background: #f0f0f0;">
-                        ${Array.from({length: 40}, (_, i) => `
-                            <div class="board-cell" data-cell="${i}" style="
-                                background: white; 
-                                border: 2px solid #ddd; 
-                                border-radius: 8px; 
-                                padding: 10px; 
-                                text-align: center; 
-                                min-height: 60px;
-                                position: relative;
-                            ">
-                                <div style="font-size: 12px; font-weight: bold;">${i + 1}</div>
-                                <div style="font-size: 10px; margin: 5px 0;">Клетка ${i + 1}</div>
-                                <div class="tokens" id="tokens-${i}"></div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            }
-
-            createPlayerToken(playerIndex, playerName, color, position = 0) {
-                const token = document.createElement('div');
-                token.id = `player-${playerIndex}`;
-                token.style.cssText = `
-                    position: absolute;
-                    width: 30px;
-                    height: 30px;
-                    background: ${color};
-                    border: 2px solid white;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    font-weight: bold;
-                    font-size: 12px;
-                    z-index: 100;
-                    cursor: pointer;
-                `;
-                token.textContent = playerIndex + 1;
-                
-                this.positionToken(token, position);
-                this.container.appendChild(token);
-                this.playerTokens.set(playerIndex, token);
-            }
-
-            positionToken(token, position) {
-                const cell = document.querySelector(`[data-cell="${position}"]`);
-                if (cell) {
-                    const rect = cell.getBoundingClientRect();
-                    const containerRect = this.container.getBoundingClientRect();
-                    token.style.left = `${rect.left - containerRect.left + rect.width/2 - 15}px`;
-                    token.style.top = `${rect.top - containerRect.top + rect.height/2 - 15}px`;
-                }
-            }
-
-            moveToken(playerIndex, fromPosition, toPosition, steps) {
-                const token = this.playerTokens.get(playerIndex);
-                if (token) {
-                    this.positionToken(token, toPosition);
-                }
-            }
-
-            updatePlayersPanel(players) {
-                // Простая реализация для демонстрации
-                console.log('Обновление панели игроков:', players);
-            }
-
-            updateGameInfo(stats) {
-                // Простая реализация для демонстрации
-                console.log('Обновление информации о игре:', stats);
-            }
-
-            showNotification(message, type = 'info') {
-                console.log(`[${type.toUpperCase()}] ${message}`);
-            }
-
-            clearAllTokens() {
-                this.playerTokens.forEach(token => token.remove());
-                this.playerTokens.clear();
-            }
-        }
-
-        // Простой GameBoardManager
-        class SimpleGameBoardManager {
-            constructor(containerId) {
-                this.containerId = containerId;
-                this.service = new GameBoardService();
-                this.ui = new SimpleGameBoardUI(containerId);
-                this.isInitialized = true;
-                this.setupIntegration();
-            }
-
-            setupIntegration() {
-                this.service.on('boardInitialized', (data) => {
-                    this.ui.updatePlayersPanel(data.players);
-                    this.ui.showNotification('Игровое поле инициализировано', 'success');
-                });
-
-                this.service.on('playerMoved', (data) => {
-                    this.ui.moveToken(data.playerIndex, data.oldPosition, data.newPosition, data.steps);
-                    this.ui.updatePlayersPanel(this.service.getPlayers());
-                    this.ui.updateGameInfo(this.service.getGameStats());
-                });
-
-                this.service.on('diceRolled', (data) => {
-                    this.ui.showNotification(`Выпало: ${data.total}`, 'info');
-                });
-
-                this.service.on('turnChanged', (data) => {
-                    this.ui.showNotification(`Ход игрока: ${data.currentPlayer.name}`, 'info');
-                });
-            }
-
-            startGame(players) {
-                this.service.initializeBoard(players);
-                players.forEach((player, index) => {
-                    this.ui.createPlayerToken(
-                        index,
-                        player.name,
-                        this.service.getPlayerColor(index),
-                        0
-                    );
-                });
-            }
-
-            rollDiceAndMove() {
-                const diceResult = this.service.rollDice();
-                const moveResult = this.service.movePlayer(this.service.gameState.currentPlayerIndex);
-                this.service.nextTurn();
-                return { diceResult, moveResult };
-            }
-
-            getGameStats() {
-                return this.service.getGameStats();
-            }
-
-            resetGame() {
-                this.service.resetGame();
-                this.ui.clearAllTokens();
-            }
-        }
-
-        // Инициализация тестового интерфейса
-        let gameManager = null;
-        const testPlayers = [
-            { name: 'Алиса', _id: 'player1' },
-            { name: 'Боб', _id: 'player2' },
-            { name: 'Чарли', _id: 'player3' },
-            { name: 'Диана', _id: 'player4' }
-        ];
-
-        const initBtn = document.getElementById('init-btn');
-        const startGameBtn = document.getElementById('start-game-btn');
-        const rollDiceBtn = document.getElementById('roll-dice-btn');
-        const nextTurnBtn = document.getElementById('next-turn-btn');
-        const pauseBtn = document.getElementById('pause-btn');
-        const resetBtn = document.getElementById('reset-btn');
-        
-        const statusValue = document.getElementById('status-value');
-        const playersCount = document.getElementById('players-count');
-        const turnNumber = document.getElementById('turn-number');
-        const logContainer = document.getElementById('log-container');
-
-        function log(message, type = 'info') {
-            const timestamp = new Date().toLocaleTimeString();
-            const logEntry = document.createElement('div');
-            logEntry.className = `log-entry ${type}`;
-            logEntry.textContent = `[${timestamp}] ${message}`;
-            logContainer.appendChild(logEntry);
-            logContainer.scrollTop = logContainer.scrollHeight;
-        }
-
-        function updateStatus() {
-            if (!gameManager) {
-                statusValue.textContent = 'Не инициализирован';
-                playersCount.textContent = '0';
-                turnNumber.textContent = '0';
-                return;
-            }
-
-            const stats = gameManager.getGameStats();
-            statusValue.textContent = stats.gamePhase;
-            playersCount.textContent = stats.activePlayers;
-            turnNumber.textContent = stats.turnNumber;
-        }
-
-        initBtn.addEventListener('click', () => {
-            try {
-                log('Инициализация Game Board Manager...', 'info');
-                gameManager = new SimpleGameBoardManager('game-board-container');
-                log('Game Board Manager готов!', 'success');
-                initBtn.disabled = true;
-                startGameBtn.disabled = false;
-                updateStatus();
-            } catch (error) {
-                log(`Ошибка инициализации: ${error.message}`, 'error');
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Game Board v2.0 - Минималистичный дизайн загружен');
         });
-
-        startGameBtn.addEventListener('click', () => {
-            try {
-                log('Начало новой игры...', 'info');
-                gameManager.startGame(testPlayers);
-                log(`Игра начата с ${testPlayers.length} игроками`, 'success');
-                rollDiceBtn.disabled = false;
-                nextTurnBtn.disabled = false;
-                pauseBtn.disabled = false;
-                updateStatus();
-            } catch (error) {
-                log(`Ошибка начала игры: ${error.message}`, 'error');
-            }
-        });
-
-        rollDiceBtn.addEventListener('click', () => {
-            try {
-                const result = gameManager.rollDiceAndMove();
-                if (result) {
-                    log(`Кубик: ${result.diceResult.total}, Игрок: ${result.moveResult.player}`, 'info');
-                    updateStatus();
-                }
-            } catch (error) {
-                log(`Ошибка хода: ${error.message}`, 'error');
-            }
-        });
-
-        nextTurnBtn.addEventListener('click', () => {
-            try {
-                const currentPlayer = gameManager.service.getCurrentPlayer();
-                gameManager.service.nextTurn();
-                const newPlayer = gameManager.service.getCurrentPlayer();
-                log(`Ход передан от ${currentPlayer.name} к ${newPlayer.name}`, 'info');
-                updateStatus();
-            } catch (error) {
-                log(`Ошибка передачи хода: ${error.message}`, 'error');
-            }
-        });
-
-        pauseBtn.addEventListener('click', () => {
-            log('Функция паузы в разработке', 'warning');
-        });
-
-        resetBtn.addEventListener('click', () => {
-            try {
-                if (gameManager) {
-                    gameManager.resetGame();
-                    log('Игра сброшена', 'warning');
-                }
-                
-                initBtn.disabled = false;
-                startGameBtn.disabled = true;
-                rollDiceBtn.disabled = true;
-                nextTurnBtn.disabled = true;
-                pauseBtn.disabled = true;
-                
-                updateStatus();
-            } catch (error) {
-                log(`Ошибка сброса: ${error.message}`, 'error');
-            }
-        });
-
-        setInterval(updateStatus, 1000);
-        log('Страница загружена. Нажмите "Инициализировать" для начала тестирования.', 'info');
     </script>
 </body>
 </html>
