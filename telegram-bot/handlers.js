@@ -401,31 +401,39 @@ class Handlers {
     }
 
     async showMyPartners(chatId, messageId) {
-        await this.bot.editMessageText(
-            '👥 Мои партнеры\n\nВыберите действие:',
-            {
+        const text = '👥 Мои партнеры\n\nВыберите действие:';
+        try {
+            await this.bot.editMessageText(text, {
                 chat_id: chatId,
                 message_id: messageId,
                 ...Keyboards.getMyPartnersKeyboard()
-            }
-        );
+            });
+        } catch (error) {
+            await this.bot.sendMessage(chatId, text, {
+                ...Keyboards.getMyPartnersKeyboard()
+            });
+        }
     }
 
     async showPartnerStats(chatId, messageId) {
         const stats = await this.db.getReferralStats(chatId);
-        
-        await this.bot.editMessageText(
+        const text =
             `📊 Статистика партнеров\n\n` +
             `👥 Всего приглашено: ${stats.total_referrals}\n` +
             `💰 Общий бонус: ${stats.total_bonus}$\n` +
             `✅ Получено: ${stats.completed_bonus}$\n` +
-            `⏳ В обработке: ${stats.total_bonus - stats.completed_bonus}$`,
-            {
+            `⏳ В обработке: ${stats.total_bonus - stats.completed_bonus}$`;
+        try {
+            await this.bot.editMessageText(text, {
                 chat_id: chatId,
                 message_id: messageId,
                 ...Keyboards.getBackKeyboard('my_partners')
-            }
-        );
+            });
+        } catch (error) {
+            await this.bot.sendMessage(chatId, text, {
+                ...Keyboards.getBackKeyboard('my_partners')
+            });
+        }
     }
 
     async showPartnerList(chatId, messageId) {
@@ -446,15 +454,17 @@ class Handlers {
                 message += `   📅 Дата: ${date}\n\n`;
             });
         }
-        
-        await this.bot.editMessageText(
-            message,
-            {
+        try {
+            await this.bot.editMessageText(message, {
                 chat_id: chatId,
                 message_id: messageId,
                 ...Keyboards.getBackKeyboard('my_partners')
-            }
-        );
+            });
+        } catch (error) {
+            await this.bot.sendMessage(chatId, message, {
+                ...Keyboards.getBackKeyboard('my_partners')
+            });
+        }
     }
 
     async copyReferralLink(chatId, referralCode) {
