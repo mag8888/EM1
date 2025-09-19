@@ -181,6 +181,9 @@ class Keyboards {
                         { text: '📋 Копировать ссылку', callback_data: `copy_link_${referralCode}` }
                     ],
                     [
+                        { text: '🔢 Скопировать код', callback_data: `copy_code_${referralCode}` }
+                    ],
+                    [
                         { text: '⬅️ Назад', callback_data: 'earn_money' }
                     ]
                 ]

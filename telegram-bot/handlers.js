@@ -179,6 +179,9 @@ class Handlers {
                     if (data.startsWith('copy_link_')) {
                         const referralCode = data.replace('copy_link_', '');
                         await this.copyReferralLink(chatId, referralCode);
+                    } else if (data.startsWith('copy_code_')) {
+                        const referralCode = data.replace('copy_code_', '');
+                        await this.copyReferralCode(chatId, referralCode);
                     }
                     break;
             }
@@ -345,22 +348,23 @@ class Handlers {
 
         const referralLink = `https://t.me/energy_m_bot?start=${user.referral_code}`;
         
-        await this.bot.editMessageText(
+        const text =
             `👥 Пригласи друга и получи ${config.REFERRAL_BONUS}$!\n\n` +
-            `🔗 Ваша реферальная ссылка:\n` +
+            `🔗 Реферальная ссылка:\n` +
             `\`${referralLink}\`\n\n` +
+            `🔢 Твой реферальный код: \`${user.referral_code}\`\n\n` +
             `💡 Как это работает:\n` +
-            `• Отправьте ссылку другу\n` +
-            `• Друг регистрируется по ссылке\n` +
+            `• Отправьте ссылку или код другу\n` +
+            `• Друг регистрируется по ссылке/коду\n` +
             `• Вы получаете ${config.REFERRAL_BONUS}$ на счет\n` +
-            `• Дополнительно 10% от всех трат друга в игре`,
-            {
-                chat_id: chatId,
-                message_id: messageId,
-                parse_mode: 'Markdown',
-                ...Keyboards.getReferralLinkKeyboard(user.referral_code)
-            }
-        );
+            `• Дополнительно 10% от всех трат друга в игре`;
+
+        await this.bot.editMessageText(text, {
+            chat_id: chatId,
+            message_id: messageId,
+            parse_mode: 'Markdown',
+            ...Keyboards.getReferralLinkKeyboard(user.referral_code)
+        });
     }
 
     async showMyPartners(chatId, messageId) {
@@ -424,6 +428,14 @@ class Handlers {
         await this.bot.sendMessage(
             chatId,
             `📋 Реферальная ссылка скопирована!\n\n\`${referralLink}\`\n\n💡 Теперь можете поделиться ею с друзьями!`,
+            { parse_mode: 'Markdown' }
+        );
+    }
+
+    async copyReferralCode(chatId, referralCode) {
+        await this.bot.sendMessage(
+            chatId,
+            `📋 Реферальный код скопирован!\n\n\`${referralCode}\`\n\n💡 Отправьте его другу — он может запустить бота по ссылке и ввести код.`,
             { parse_mode: 'Markdown' }
         );
     }
