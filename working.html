@@ -8,6 +8,318 @@
     <link rel="stylesheet" href="assets/css/components/board.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0c1445 100%);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .game-container {
+            display: flex;
+            height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Игровое поле */
+        .game-board {
+            flex: 1;
+            background: rgba(22, 33, 62, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .board-wrapper {
+            position: relative;
+            width: 88vh;
+            height: 88vh;
+            max-width: 880px;
+            max-height: 880px;
+            filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.1));
+        }
+
+        /* Внешний периметр - 650x650 */
+        .outer-perimeter {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 650px;
+            height: 650px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+                0 0 20px rgba(255, 255, 255, 0.05);
+        }
+
+        .outer-squares {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .outer-square {
+            position: absolute;
+            width: 58px;
+            height: 58px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 2px 8px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .outer-square::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .outer-square:hover {
+            transform: scale(1.1) translateY(-2px);
+            z-index: 10;
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.3),
+                0 0 15px rgba(255, 255, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .outer-square:hover::before {
+            opacity: 1;
+        }
+
+        .outer-square .square-icon {
+            font-size: 23px;
+            margin-bottom: 2px;
+        }
+
+        .outer-square .square-number {
+            font-size: 15px;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Внутренний спиральный трек */
+        .inner-track {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 66%;
+            height: 66%;
+        }
+
+        .inner-squares {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .inner-square {
+            position: absolute;
+            width: 59px;
+            height: 59px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(8px);
+            box-shadow: 
+                0 2px 6px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .inner-square::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .inner-square:hover {
+            transform: scale(1.25) translateY(-2px);
+            z-index: 10;
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.3),
+                0 0 15px rgba(255, 255, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .inner-square:hover::before {
+            opacity: 1;
+        }
+
+        /* Цифры в углу клеток */
+        .square-number {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            z-index: 2;
+        }
+
+        /* Цифры в левом нижнем углу для клеток 11-24 */
+        .square-number.bottom-left {
+            top: auto;
+            right: auto;
+            bottom: 4px;
+            left: 4px;
+        }
+
+        /* Цифра в правом верхнем углу для клетки 24 */
+        .square-number.top-right {
+            top: 4px;
+            right: 4px;
+            bottom: auto;
+            left: auto;
+        }
+
+        /* Цифра в правом нижнем углу для клетки 2 */
+        .square-number.bottom-right {
+            top: auto;
+            right: 4px;
+            bottom: 4px;
+            left: auto;
+        }
+
+        /* Крупные однотонные иконки */
+        .square-icon {
+            font-size: 32px;
+            filter: grayscale(100%) brightness(1.2);
+            opacity: 0.9;
+        }
+
+        .inner-square .square-icon {
+            font-size: 28px;
+        }
+
+        /* Центральный логотип */
+        .center-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 160px;
+            height: 160px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                0 8px 32px rgba(255, 215, 0, 0.4),
+                0 0 0 4px rgba(255, 215, 0, 0.2);
+            z-index: 20;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .center-logo:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+
+        .logo-inner {
+            width: 140px;
+            height: 140px;
+            background: radial-gradient(circle, #000000 0%, #1a1a1a 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .dice {
+            font-size: 48px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 
+                0 0 20px rgba(255, 215, 0, 0.8),
+                0 0 40px rgba(255, 165, 0, 0.6);
+            z-index: 3;
+            position: relative;
+        }
+
+        /* Цвета клеток */
+        .square-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .square-pink { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); }
+        .square-orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .square-yellow { background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); }
+        .square-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .square-purple { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+        .square-black { background: linear-gradient(135deg, #374151 0%, #1f2937 100%); }
+        .square-red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        .square-gray { background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); }
+
+        /* Загрузочный экран */
         .loading-screen {
             position: fixed;
             top: 0;
@@ -62,125 +374,12 @@
             display: none;
         }
         
-        .game-board {
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .board-inner-track {
-            width: 400px;
-            height: 400px;
-            border: 3px solid #4a5568;
-            border-radius: 50%;
-            position: relative;
-            background: linear-gradient(135deg, #2d3748, #4a5568);
-            margin: 0 auto 20px;
-        }
-        
-        .board-cell {
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 10px;
-            text-align: center;
-            background: #2d3748;
-        }
-        
-        .board-cell:hover {
-            transform: scale(1.1);
-            background: #4a5568;
-        }
-        
-        .start-cell { background: #38a169; }
-        .payday-cell { background: #d69e2e; }
-        .opportunity-cell { background: #3182ce; }
-        .expense-cell { background: #e53e3e; }
-        .charity-cell { background: #d53f8c; }
-        
-        .center-area {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 150px;
-            height: 150px;
-            background: #1a202c;
-            border: 2px solid #e2e8f0;
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-        }
-        
-        .dice-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .dice {
-            width: 30px;
-            height: 30px;
-            background: white;
-            border: 2px solid #4a5568;
-            border-radius: 5px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 16px;
-            font-weight: bold;
-            color: #2d3748;
-        }
-        
-        .dice-total {
-            font-size: 18px;
-            font-weight: bold;
-            color: #f59e0b;
-            margin-bottom: 10px;
-        }
-        
-        .roll-btn {
-            background: #3182ce;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .roll-btn:hover {
-            background: #2c5aa0;
-        }
-        
-        .roll-btn:disabled {
-            background: #4a5568;
-            cursor: not-allowed;
-        }
-        
-        .game-title {
-            text-align: center;
-            font-size: 2rem;
-            margin-bottom: 2rem;
-            color: white;
-        }
-        
         .status {
-            text-align: center;
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
             color: #a0aec0;
-            margin-top: 20px;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -196,83 +395,114 @@
 
     <!-- Игровой контент -->
     <div id="gameContent" class="game-content">
-        <div class="game-board">
-            <h1 class="game-title">🎮 Энергия денег</h1>
-            
-            <div class="board-inner-track">
-                <!-- Клетки игрового поля -->
-                <div class="board-cell start-cell" style="top: 10px; left: 50%; transform: translateX(-50%);">
-                    <div>🏁</div>
-                    <div>Старт</div>
-                </div>
-                
-                <div class="board-cell opportunity-cell" style="top: 50px; right: 10px;">
-                    <div>📈</div>
-                    <div>Работа</div>
-                </div>
-                
-                <div class="board-cell opportunity-cell" style="top: 120px; right: 30px;">
-                    <div>🏢</div>
-                    <div>Бизнес</div>
-                </div>
-                
-                <div class="board-cell expense-cell" style="bottom: 120px; right: 30px;">
-                    <div>📉</div>
-                    <div>Расходы</div>
-                </div>
-                
-                <div class="board-cell opportunity-cell" style="bottom: 50px; right: 10px;">
-                    <div>🏠</div>
-                    <div>Недвижимость</div>
-                </div>
-                
-                <div class="board-cell payday-cell" style="bottom: 10px; left: 50%; transform: translateX(-50%);">
-                    <div>💰</div>
-                    <div>PAYDAY</div>
-                </div>
-                
-                <div class="board-cell opportunity-cell" style="bottom: 50px; left: 10px;">
-                    <div>📊</div>
-                    <div>Акции</div>
-                </div>
-                
-                <div class="board-cell expense-cell" style="bottom: 120px; left: 30px;">
-                    <div>🏥</div>
-                    <div>Медицина</div>
-                </div>
-                
-                <div class="board-cell opportunity-cell" style="top: 120px; left: 30px;">
-                    <div>🥇</div>
-                    <div>Золото</div>
-                </div>
-                
-                <div class="board-cell charity-cell" style="top: 50px; left: 10px;">
-                    <div>❤️</div>
-                    <div>Благотворительность</div>
-                </div>
-                
-                <!-- Центральная область -->
-                <div class="center-area">
-                    <div class="dice-container">
-                        <div class="dice" id="dice1">0</div>
-                        <div class="dice" id="dice2">0</div>
+        <div class="game-container">
+            <div class="game-board">
+                <div class="board-wrapper">
+                    <!-- Внешний периметр -->
+                    <div class="outer-perimeter">
+                        <div class="outer-squares" id="outerSquares"></div>
                     </div>
-                    <div class="dice-total" id="diceTotal">0</div>
-                    <button class="roll-btn" id="rollBtn" onclick="rollDice()">🎲 Бросить</button>
+
+                    <!-- Внутренний трек -->
+                    <div class="inner-track">
+                        <div class="inner-squares" id="innerSquares"></div>
+                    </div>
+
+                    <!-- Центральный логотип -->
+                    <div class="center-logo" onclick="rollDice()">
+                        <div class="logo-inner">
+                            <!-- Центральный результат броска кубика -->
+                            <div class="dice" id="dice">$</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            
-            <div class="status">
-                <p id="gameStatus">Готов к игре!</p>
-                <p>Время: <span id="currentTime"></span></p>
-            </div>
+        </div>
+        
+        <div class="status">
+            <p id="gameStatus">Готов к игре!</p>
+            <p>Время: <span id="currentTime"></span></p>
         </div>
     </div>
 
     <script>
-        // Простая игра без модулей
-        let diceValues = [0, 0];
+        // Данные о клетках внутреннего круга (1-24)
+        const innerCellData = {
+            // Клетка 1 (0) - Зеленая возможность
+            0: { name: "Зеленая возможность", type: "Возможность", cost: 0, income: 0, description: "Малая / большая сделка (на выбор)", color: "green", icon: "📈" },
+            
+            // Клетка 2 (1) - Розовая трата
+            1: { name: "Розовая трата", type: "Трата", cost: 100, income: 0, description: "Обязательные траты от 100 до 4000$ на разные нужды", color: "pink", icon: "💸" },
+            
+            // Клетка 3 (2) - Зеленая возможность
+            2: { name: "Зеленая возможность", type: "Возможность", cost: 0, income: 0, description: "Малая / большая сделка (на выбор)", color: "green", icon: "📈" },
+            
+            // Клетка 4 (3) - Оранжевая благотворительность
+            3: { name: "Оранжевая благотворительность", type: "Благотворительность", cost: 0, income: 0, description: "Пожертвовать 10% от дохода для возможности бросать 2 кубика", color: "orange", icon: "❤️" },
+            
+            // Клетка 5 (4) - Зеленая возможность
+            4: { name: "Зеленая возможность", type: "Возможность", cost: 0, income: 0, description: "Малая / большая сделка (на выбор)", color: "green", icon: "📈" },
+            
+            // Клетка 6 (5) - Желтая PayDay
+            5: { name: "Желтая PayDay", type: "PayDay", cost: 0, income: 0, description: "Получить зарплату", color: "yellow", icon: "💰" },
+            
+            // Клетка 7 (6) - Зеленая возможность
+            6: { name: "Зеленая возможность", type: "Возможность", cost: 0, income: 0, description: "Малая / большая сделка (на выбор)", color: "green", icon: "📈" },
+            
+            // Клетка 8 (7) - Голубая рынок
+            7: { name: "Голубая рынок", type: "Рынок", cost: 0, income: 0, description: "Появляются покупатели на разные активы", color: "blue", icon: "🏪" },
+            
+            // Клетка 9 (8) - Зеленая возможность
+            8: { name: "Зеленая возможность", type: "Возможность", cost: 0, income: 0, description: "Малая / большая сделка (на выбор)", color: "green", icon: "📈" },
+            
+            // Клетка 10 (9) - Розовая трата
+            9: { name: "Розовая трата", type: "Трата", cost: 100, income: 0, description: "Обязательные траты от 100 до 4000$ на разные нужды", color: "pink", icon: "💸" },
+            
+            // Клетка 11 (10) - Зеленая возможность
+            10: { name: "Зеленая возможность", type: "Возможность", cost: 0, income: 0, description: "Малая / большая сделка (на выбор)", color: "green", icon: "📈" },
+            
+            // Клетка 12 (11) - Фиолетовая ребенок
+            11: { name: "Фиолетовая ребенок", type: "Ребенок", cost: 0, income: 0, description: "Родился ребенок, увеличиваются ежемесячные расходы", color: "purple", icon: "👶" },
+            
+            // Клетка 13 (12) - Зеленая возможность
+            12: { name: "Зеленая возможность", type: "Возможность", cost: 0, income: 0, description: "Малая / большая сделка (на выбор)", color: "green", icon: "📈" },
+            
+            // Клетка 14 (13) - Желтая PayDay
+            13: { name: "Желтая PayDay", type: "PayDay", cost: 0, income: 0, description: "Получить зарплату", color: "yellow", icon: "💰" },
+            
+            // Клетка 15 (14) - Зеленая возможность
+            14: { name: "Зеленая возможность", type: "Возможность", cost: 0, income: 0, description: "Малая / большая сделка (на выбор)", color: "green", icon: "📈" },
+            
+            // Клетка 16 (15) - Рынок
+            15: { name: "Рынок", type: "Рынок", cost: 0, income: 0, description: "Появляются покупатели на разные активы", color: "blue", icon: "🏪" },
+            
+            // Клетка 17 (16) - Зеленая возможность
+            16: { name: "Зеленая возможность", type: "Возможность", cost: 0, income: 0, description: "Малая / большая сделка (на выбор)", color: "green", icon: "📈" },
+            
+            // Клетка 18 (17) - Розовая трата
+            17: { name: "Розовая трата", type: "Трата", cost: 100, income: 0, description: "Обязательные траты от 100 до 4000$ на разные нужды", color: "pink", icon: "💸" },
+            
+            // Клетка 19 (18) - Зеленая возможность
+            18: { name: "Зеленая возможность", type: "Возможность", cost: 0, income: 0, description: "Малая / большая сделка (на выбор)", color: "green", icon: "📈" },
+            
+            // Клетка 20 (19) - Черная потеря
+            19: { name: "Черная потеря", type: "Потеря", cost: 0, income: 0, description: "Увольнение - оплатите расходы или пропустите ходы", color: "black", icon: "💸" },
+            
+            // Клетка 21 (20) - Зеленая возможность
+            20: { name: "Зеленая возможность", type: "Возможность", cost: 0, income: 0, description: "Малая / большая сделка (на выбор)", color: "green", icon: "📈" },
+            
+            // Клетка 22 (21) - Желтая PayDay
+            21: { name: "Желтая PayDay", type: "PayDay", cost: 0, income: 0, description: "Получить зарплату", color: "yellow", icon: "💰" },
+            
+            // Клетка 23 (22) - Зеленая возможность
+            22: { name: "Зеленая возможность", type: "Возможность", cost: 0, income: 0, description: "Малая / большая сделка (на выбор)", color: "green", icon: "📈" },
+            
+            // Клетка 24 (23) - Рынок
+            23: { name: "Рынок", type: "Рынок", cost: 0, income: 0, description: "Появляются покупатели на разные активы", color: "blue", icon: "🏪" }
+        };
+
         let gameStarted = false;
+        let currentDiceValue = 0;
         
         // Функция загрузки
         function showLoadingScreen() {
@@ -300,6 +530,153 @@
             document.getElementById('gameContent').style.display = 'block';
             gameStarted = true;
             document.getElementById('gameStatus').textContent = 'Игра загружена! Бросайте кубики!';
+            
+            // Создаем игровое поле
+            createInnerTrack();
+            createOuterPerimeter();
+        }
+        
+        // Создание внутреннего трека (24 клетки)
+        function createInnerTrack() {
+            const innerSquares = document.getElementById('innerSquares');
+            innerSquares.innerHTML = '';
+            
+            for (let i = 1; i <= 24; i++) {
+                const cellIndex = i - 1; // 0-23
+                const cellData = innerCellData[cellIndex];
+                
+                const square = document.createElement('div');
+                square.className = `inner-square ${getCellColorClass(cellData.type)}`;
+                square.dataset.cell = i;
+                square.onclick = () => showCellPopup(i, true);
+                
+                // Ровное круговое позиционирование
+                const angle = (i - 1) * (360 / 24) * (Math.PI / 180);
+                let radius = 38.5; // фиксированный радиус для ровного круга
+                
+                // Поднимаем клетку 1 выше остальных
+                if (i === 1) {
+                    radius = 35;
+                    square.style.zIndex = '20';
+                }
+                
+                const x = 50 + radius * Math.cos(angle);
+                const y = 50 + radius * Math.sin(angle);
+                
+                square.style.left = `${x}%`;
+                square.style.top = `${y}%`;
+                square.style.transform = 'translate(-50%, -50%)';
+                
+                // Добавляем цифру в угол
+                const number = document.createElement('div');
+                if (i === 24) {
+                    number.className = 'square-number top-right';
+                } else if (i === 2) {
+                    number.className = 'square-number bottom-right';
+                } else {
+                    number.className = i >= 11 ? 'square-number bottom-left' : 'square-number';
+                }
+                number.textContent = i;
+                square.appendChild(number);
+                
+                // Добавляем иконку
+                const icon = document.createElement('div');
+                icon.className = 'square-icon';
+                icon.textContent = cellData.icon;
+                square.appendChild(icon);
+                
+                innerSquares.appendChild(square);
+            }
+        }
+        
+        // Создание внешнего периметра (44 клетки)
+        function createOuterPerimeter() {
+            const outerSquares = document.getElementById('outerSquares');
+            outerSquares.innerHTML = '';
+            
+            const cellSize = 58;
+            const spacing = 1;
+            const sideLength = 650;
+            const totalCells = 44;
+            const cellsPerSide = Math.floor(totalCells / 4); // 11 клеток на сторону
+            
+            // Создаем клетки по периметру
+            for (let i = 1; i <= totalCells; i++) {
+                const square = document.createElement('div');
+                square.className = 'outer-square square-gray';
+                square.dataset.cell = i;
+                square.onclick = () => showCellPopup(i, false);
+                
+                // Позиционирование по периметру
+                const side = Math.floor((i - 1) / cellsPerSide);
+                const position = (i - 1) % cellsPerSide;
+                
+                let x, y;
+                switch (side) {
+                    case 0: // Верхняя сторона
+                        x = position * (cellSize + spacing);
+                        y = 0;
+                        break;
+                    case 1: // Правая сторона
+                        x = sideLength - cellSize;
+                        y = position * (cellSize + spacing);
+                        break;
+                    case 2: // Нижняя сторона
+                        x = sideLength - cellSize - position * (cellSize + spacing);
+                        y = sideLength - cellSize;
+                        break;
+                    case 3: // Левая сторона
+                        x = 0;
+                        y = sideLength - cellSize - position * (cellSize + spacing);
+                        break;
+                }
+                
+                square.style.left = `${x}px`;
+                square.style.top = `${y}px`;
+                
+                // Добавляем номер
+                const number = document.createElement('div');
+                number.className = 'square-number';
+                number.textContent = i;
+                square.appendChild(number);
+                
+                // Добавляем иконку
+                const icon = document.createElement('div');
+                icon.className = 'square-icon';
+                icon.textContent = '💰';
+                square.appendChild(icon);
+                
+                outerSquares.appendChild(square);
+            }
+        }
+        
+        // Функция для получения CSS класса цвета по типу клетки
+        function getCellColorClass(type) {
+            const colorMap = {
+                'Старт': 'square-green',
+                'Возможность': 'square-green',
+                'Трата': 'square-pink',
+                'Благотворительность': 'square-orange',
+                'PayDay': 'square-yellow',
+                'Рынок': 'square-blue',
+                'Ребенок': 'square-purple',
+                'Потеря': 'square-black',
+                'Деньги': 'square-yellow',
+                'Мечта': 'square-blue',
+                'Бизнес': 'square-green',
+                'Доход': 'square-green',
+                'Расход': 'square-red',
+                'Инвестиция': 'square-purple',
+                'Недвижимость': 'square-orange',
+                'Образование': 'square-cyan',
+                'Страхование': 'square-pink',
+                'Кредит': 'square-red',
+                'Пенсия': 'square-blue',
+                'Путешествие': 'square-orange',
+                'Пустая': 'square-gray',
+                'Финиш': 'square-gold'
+            };
+            return colorMap[type] || 'square-gray';
         }
         
         function rollDice() {
@@ -309,22 +686,41 @@
             const dice2 = Math.floor(Math.random() * 6) + 1;
             const total = dice1 + dice2;
             
-            diceValues = [dice1, dice2];
+            currentDiceValue = total;
             
-            // Анимация кубиков
-            const diceElements = document.querySelectorAll('.dice');
-            diceElements[0].textContent = '?';
-            diceElements[1].textContent = '?';
-            document.getElementById('diceTotal').textContent = '?';
+            // Анимация кубика
+            const diceElement = document.getElementById('dice');
+            diceElement.textContent = '?';
             
             setTimeout(() => {
-                diceElements[0].textContent = dice1;
-                diceElements[1].textContent = dice2;
-                document.getElementById('diceTotal').textContent = total;
+                diceElement.textContent = total;
                 document.getElementById('gameStatus').textContent = `Брошено: ${dice1} + ${dice2} = ${total}`;
             }, 500);
             
             console.log(`🎲 Брошены кубики: ${dice1} + ${dice2} = ${total}`);
+        }
+        
+        function showCellPopup(cellNumber, isInner) {
+            if (!gameStarted) return;
+            
+            let cell;
+            if (isInner && cellNumber >= 1 && cellNumber <= 24) {
+                cell = innerCellData[cellNumber - 1];
+            } else {
+                cell = {
+                    name: `Клетка ${cellNumber}`,
+                    type: "Пустая",
+                    cost: 0,
+                    income: 0,
+                    description: `Описание клетки ${cellNumber}`,
+                    color: "gray",
+                    icon: "💰"
+                };
+            }
+            
+            if (cell) {
+                alert(`${cell.name}\nТип: ${cell.type}\nСтоимость: ${cell.cost > 0 ? '$' + cell.cost.toLocaleString() : 'Бесплатно'}\nОписание: ${cell.description}`);
+            }
         }
         
         function updateTime() {
