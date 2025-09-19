@@ -1402,8 +1402,13 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Health check для Railway
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 app.get('/table', (req, res) => {
-    res.sendFile(path.join(__dirname, 'table.html'));
+    res.redirect('/');
 });
 
 app.get('/auth', (req, res) => {
