@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест интеграции - Энергия денег</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/components/board.css">
+    <link rel="stylesheet" href="assets/css/components/notifications.css">
+    <style>
+        .test-panel {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: #2d3748;
+            border: 2px solid #4a5568;
+            border-radius: 8px;
+            padding: 15px;
+            color: white;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 10001;
+            max-width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .test-button {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin: 2px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        
+        .test-button:hover {
+            background: #3182ce;
+        }
+        
+        .test-button.success {
+            background: #38a169;
+        }
+        
+        .test-button.error {
+            background: #e53e3e;
+        }
+        
+        .test-log {
+            margin-top: 10px;
+            padding: 8px;
+            background: #1a202c;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 10px;
+            line-height: 1.4;
+        }
+        
+        .test-status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .test-status.pending {
+            background: #ffd700;
+        }
+        
+        .test-status.success {
+            background: #38a169;
+        }
+        
+        .test-status.error {
+            background: #e53e3e;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-panel">
+        <h3>🧪 Тест интеграции модулей</h3>
+        
+        <div>
+            <button class="test-button" onclick="runAllTests()">Запустить все тесты</button>
+            <button class="test-button" onclick="clearLog()">Очистить лог</button>
+        </div>
+        
+        <div id="testStatus">
+            <div><span class="test-status pending"></span>Инициализация...</div>
+        </div>
+        
+        <div class="test-log" id="testLog"></div>
+    </div>
+
+    <div id="game-container">
+        <header id="game-header">
+            <h1>Энергия денег - Тест интеграции</h1>
+            <div id="player-info">
+                <!-- Информация о текущем игроке -->
+            </div>
+        </header>
+
+        <main id="gameBoard">
+            <!-- Игровое поле будет рендериться здесь -->
+        </main>
+
+        <aside id="game-sidebar">
+            <div id="dice-section">
+                <button id="roll-dice-btn">Бросить кубик</button>
+                <div id="dice-result"></div>
+            </div>
+            <div id="bank-section">
+                <button id="open-bank-btn">Открыть Банк</button>
+            </div>
+            <div id="credit-section">
+                <button id="open-credit-btn">Взять Кредит</button>
+            </div>
+            <div id="game-log">
+                <h3>Лог Игры</h3>
+                <ul id="log-list"></ul>
+            </div>
+        </aside>
+    </div>
+
+    <script type="module">
+        import { GameCore } from './assets/js/core/GameCore.js';
+        
+        // Глобальные переменные для тестирования
+        window.gameCore = null;
+        window.testResults = {
+            initialization: 'pending',
+            modules: 'pending',
+            ui: 'pending',
+            events: 'pending',
+            integration: 'pending'
+        };
+        
+        // Функции тестирования
+        window.runAllTests = async function() {
+            log('🧪 Запуск всех тестов...');
+            await testInitialization();
+            await testModules();
+            await testUI();
+            await testEvents();
+            await testIntegration();
+            log('✅ Все тесты завершены!');
+            updateTestStatus();
+        };
+        
+        window.clearLog = function() {
+            document.getElementById('testLog').innerHTML = '';
+        };
+        
+        function log(message) {
+            const logElement = document.getElementById('testLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(`[TEST] ${message}`);
+        }
+        
+        function updateTestStatus() {
+            const statusElement = document.getElementById('testStatus');
+            statusElement.innerHTML = Object.entries(window.testResults)
+                .map(([key, status]) => {
+                    const statusText = {
+                        'pending': 'Ожидание',
+                        'success': 'Успех',
+                        'error': 'Ошибка'
+                    };
+                    return `<div><span class="test-status ${status}"></span>${key}: ${statusText[status]}</div>`;
+                })
+                .join('');
+        }
+        
+        async function testInitialization() {
+            try {
+                log('🔧 Тестирование инициализации GameCore...');
+                window.gameCore = new GameCore();
+                await window.gameCore.init();
+                
+                if (window.gameCore.isInitialized) {
+                    window.testResults.initialization = 'success';
+                    log('✅ GameCore инициализирован успешно');
+                } else {
+                    throw new Error('GameCore не инициализирован');
+                }
+            } catch (error) {
+                window.testResults.initialization = 'error';
+                log(`❌ Ошибка инициализации: ${error.message}`);
+            }
+            updateTestStatus();
+        }
+        
+        async function testModules() {
+            try {
+                log('📦 Тестирование модулей...');
+                
+                const moduleManager = window.gameCore.modules;
+                const stats = moduleManager.getStats();
+                
+                log(`📊 Статистика модулей: ${stats.totalModules} всего, ${stats.initializedModules} инициализированы`);
+                
+                // Тест доступности модулей
+                const requiredModules = ['diceModule', 'cardModule', 'movementModule', 'eventModule', 'bankModule'];
+                const availableModules = requiredModules.filter(name => moduleManager.has(name));
+                
+                if (availableModules.length === requiredModules.length) {
+                    window.testResults.modules = 'success';
+                    log('✅ Все требуемые модули доступны');
+                } else {
+                    throw new Error(`Доступны только: ${availableModules.join(', ')}`);
+                }
+            } catch (error) {
+                window.testResults.modules = 'error';
+                log(`❌ Ошибка тестирования модулей: ${error.message}`);
+            }
+            updateTestStatus();
+        }
+        
+        async function testUI() {
+            try {
+                log('🎨 Тестирование UI компонентов...');
+                
+                // Проверка существования элементов
+                const requiredElements = [
+                    'game-container',
+                    'gameBoard',
+                    'roll-dice-btn',
+                    'open-bank-btn'
+                ];
+                
+                const existingElements = requiredElements.filter(id => document.getElementById(id));
+                
+                if (existingElements.length === requiredElements.length) {
+                    window.testResults.ui = 'success';
+                    log('✅ Все UI элементы найдены');
+                } else {
+                    throw new Error(`Найдены только: ${existingElements.join(', ')}`);
+                }
+            } catch (error) {
+                window.testResults.ui = 'error';
+                log(`❌ Ошибка тестирования UI: ${error.message}`);
+            }
+            updateTestStatus();
+        }
+        
+        async function testEvents() {
+            try {
+                log('📡 Тестирование системы событий...');
+                
+                let eventReceived = false;
+                
+                // Подписка на тестовое событие
+                window.gameCore.eventBus.on('testEvent', () => {
+                    eventReceived = true;
+                });
+                
+                // Эмиссия тестового события
+                window.gameCore.eventBus.emit('testEvent', { test: true });
+                
+                // Проверка получения события
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                if (eventReceived) {
+                    window.testResults.events = 'success';
+                    log('✅ Система событий работает');
+                } else {
+                    throw new Error('Событие не получено');
+                }
+            } catch (error) {
+                window.testResults.events = 'error';
+                log(`❌ Ошибка тестирования событий: ${error.message}`);
+            }
+            updateTestStatus();
+        }
+        
+        async function testIntegration() {
+            try {
+                log('🔗 Тестирование интеграции...');
+                
+                // Тест добавления игрока
+                const playerManager = window.gameCore.getModule('playerManager');
+                if (playerManager) {
+                    const player = playerManager.addPlayer('Тестовый игрок');
+                    if (player && player.id) {
+                        log('✅ Игрок добавлен успешно');
+                    } else {
+                        throw new Error('Не удалось добавить игрока');
+                    }
+                }
+                
+                // Тест броска кубика
+                const diceModule = window.gameCore.getModule('diceModule');
+                if (diceModule) {
+                    const result = diceModule.rollDice();
+                    if (typeof result === 'number' && result >= 1 && result <= 6) {
+                        log('✅ Кубик работает корректно');
+                    } else {
+                        throw new Error('Кубик возвращает неверное значение');
+                    }
+                }
+                
+                // Тест банковского модуля
+                const bankModule = window.gameCore.getModule('bankModule');
+                if (bankModule) {
+                    const opened = bankModule.openBank();
+                    if (opened) {
+                        log('✅ Банковский модуль открывается');
+                        bankModule.closeBank();
+                    } else {
+                        throw new Error('Банковский модуль не открывается');
+                    }
+                }
+                
+                window.testResults.integration = 'success';
+                log('✅ Интеграция работает корректно');
+            } catch (error) {
+                window.testResults.integration = 'error';
+                log(`❌ Ошибка интеграции: ${error.message}`);
+            }
+            updateTestStatus();
+        }
+        
+        // Автоматический запуск тестов при загрузке
+        document.addEventListener('DOMContentLoaded', async () => {
+            log('🚀 Запуск автоматических тестов...');
+            updateTestStatus();
+            
+            // Небольшая задержка для полной загрузки
+            setTimeout(async () => {
+                await testInitialization();
+                if (window.testResults.initialization === 'success') {
+                    await testModules();
+                    await testUI();
+                    await testEvents();
+                    await testIntegration();
+                    log('🎉 Автоматическое тестирование завершено!');
+                }
+            }, 1000);
+        });
+        
+        // Обработчики для кнопок
+        document.addEventListener('DOMContentLoaded', () => {
+            // Кнопка броска кубика
+            document.getElementById('roll-dice-btn').addEventListener('click', () => {
+                if (window.gameCore) {
+                    const diceModule = window.gameCore.getModule('diceModule');
+                    if (diceModule) {
+                        const result = diceModule.rollDice();
+                        document.getElementById('dice-result').textContent = `Выпало: ${result}`;
+                        log(`🎲 Брошен кубик: ${result}`);
+                    }
+                }
+            });
+            
+            // Кнопка открытия банка
+            document.getElementById('open-bank-btn').addEventListener('click', () => {
+                if (window.gameCore) {
+                    const bankModule = window.gameCore.getModule('bankModule');
+                    if (bankModule) {
+                        bankModule.openBank();
+                        log('🏦 Банк открыт');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
