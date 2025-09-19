@@ -61,64 +61,58 @@
 
         .board-wrapper {
             position: relative;
-            width: 95vh;
-            height: 95vh;
-            max-width: 950px;
-            max-height: 950px;
+            width: 88vh;
+            height: 88vh;
+            max-width: 880px;
+            max-height: 880px;
             filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.1));
         }
 
-        /* Внешний периметр - убран */
-
-        /* Меню */
-        .game-menu {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            padding: 15px;
-            z-index: 100;
-            min-width: 200px;
-        }
-
-        .menu-item {
-            display: block;
-            width: 100%;
-            padding: 10px 15px;
-            margin: 5px 0;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
-            color: white;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .menu-item:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .menu-title {
-            color: #FFD700;
-            font-weight: bold;
-            margin-bottom: 10px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            padding-bottom: 10px;
-        }
-
-        .outer-squares {
+        /* Внешний периметр - 650x650 */
+        .outer-perimeter {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 600px;
-            height: 600px;
+            width: 650px;
+            height: 650px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+                0 0 20px rgba(255, 255, 255, 0.05);
+        }
+
+        .game-container {
+            display: flex;
+            height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Игровое поле */
+        .game-board {
+            flex: 1;
+            background: rgba(22, 33, 62, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .outer-squares {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
 
         .outer-square {
@@ -658,24 +652,15 @@
         </div>
     </div>
 
-    <!-- Меню игры -->
-    <div class="game-menu">
-        <div class="menu-title">🎮 Меню игры</div>
-        <button class="menu-item" onclick="rollDice()">🎲 Бросить кубики</button>
-        <button class="menu-item" onclick="showBankModal()">🏦 Банк</button>
-        <button class="menu-item" onclick="showAssetsModal()">💼 Мои активы</button>
-        <button class="menu-item" onclick="showPlayersModal()">👥 Игроки</button>
-        <button class="menu-item" onclick="showStatsModal()">📊 Статистика</button>
-        <button class="menu-item" onclick="toggleFullscreen()">🖥️ Полный экран</button>
-    </div>
-
     <!-- Игровой контент -->
     <div id="gameContent" class="game-content">
         <div class="game-container">
             <div class="game-board">
                 <div class="board-wrapper">
-                    <!-- Внешние клетки в квадрате -->
-                    <div class="outer-squares" id="outerSquares"></div>
+                    <!-- Внешний периметр -->
+                    <div class="outer-perimeter">
+                        <div class="outer-squares" id="outerSquares"></div>
+                    </div>
 
                     <!-- Внутренний трек -->
                     <div class="inner-track">
@@ -904,6 +889,12 @@
             
             // Обновляем боковое меню
             updateSidebar();
+            
+            // Добавляем обработчик для кнопки броска кубиков
+            const rollDiceBtn = document.getElementById('rollDiceBtn');
+            if (rollDiceBtn) {
+                rollDiceBtn.addEventListener('click', rollDice);
+            }
         }
         
         // Создание внутреннего трека (24 клетки)
@@ -1014,10 +1005,10 @@
             outerSquares.innerHTML = '';
             
             const cellSize = 58;
-            const spacing = 2;
+            const spacing = 1;
+            const sideLength = 650;
             const totalCells = 44;
-            const cellsPerRow = 11; // 11 клеток в ряду
-            const rows = 4; // 4 ряда
+            const cellsPerSide = Math.floor(totalCells / 4); // 11 клеток на сторону
             
             // Создаем клетки по периметру
             for (let i = 1; i <= totalCells; i++) {
@@ -1028,12 +1019,29 @@
                 square.dataset.cell = i;
                 square.onclick = () => showCellPopup(i, false);
                 
-                // Позиционирование в квадрат 11x4
-                const row = Math.floor((i - 1) / cellsPerRow); // 0-3 (ряд)
-                const col = (i - 1) % cellsPerRow; // 0-10 (колонка)
+                // Позиционирование по периметру
+                const side = Math.floor((i - 1) / cellsPerSide);
+                const position = (i - 1) % cellsPerSide;
                 
-                const x = col * (cellSize + spacing);
-                const y = row * (cellSize + spacing);
+                let x, y;
+                switch (side) {
+                    case 0: // Верхняя сторона
+                        x = position * (cellSize + spacing);
+                        y = 0;
+                        break;
+                    case 1: // Правая сторона
+                        x = sideLength - cellSize;
+                        y = position * (cellSize + spacing);
+                        break;
+                    case 2: // Нижняя сторона
+                        x = sideLength - cellSize - position * (cellSize + spacing);
+                        y = sideLength - cellSize;
+                        break;
+                    case 3: // Левая сторона
+                        x = 0;
+                        y = sideLength - cellSize - position * (cellSize + spacing);
+                        break;
+                }
                 
                 square.style.left = `${x}px`;
                 square.style.top = `${y}px`;
@@ -1151,30 +1159,6 @@
             document.getElementById('currentTime').textContent = now.toLocaleTimeString();
         }
 
-        // Функции для меню
-        function showBankModal() {
-            alert('Банк - функция в разработке');
-        }
-
-        function showAssetsModal() {
-            alert('Мои активы - функция в разработке');
-        }
-
-        function showPlayersModal() {
-            alert('Игроки - функция в разработке');
-        }
-
-        function showStatsModal() {
-            alert('Статистика - функция в разработке');
-        }
-
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
-        }
         
         // Инициализация
         document.addEventListener('DOMContentLoaded', () => {
