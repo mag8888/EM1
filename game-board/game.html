@@ -288,13 +288,88 @@
             z-index: 1;
         }
 
+        .board-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 600px;
+            margin: 0 auto;
+            z-index: 2;
+        }
+
         .board-grid {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 400px;
             display: grid;
             grid-template-columns: repeat(8, 1fr);
-            gap: 6px;
-            margin-bottom: 16px;
-            position: relative;
-            z-index: 2;
+            grid-template-rows: repeat(8, 1fr);
+            gap: 4px;
+        }
+
+        .special-cell {
+            position: absolute;
+            width: 120px;
+            height: 80px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+            color: #ffffff;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 3;
+        }
+
+        .special-cell.big-deal {
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #00bfff 0%, #0099cc 100%);
+        }
+
+        .special-cell.small-deal {
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+        }
+
+        .special-cell.expenses {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
+        }
+
+        .special-cell.market {
+            top: 50%;
+            left: 20px;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #a8e6cf 0%, #7fcdcd 100%);
+        }
+
+        .special-cell-title {
+            font-size: 14px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .special-cell-cards {
+            font-size: 11px;
+            opacity: 0.9;
+            margin-bottom: 2px;
+        }
+
+        .special-cell-discard {
+            font-size: 10px;
+            opacity: 0.7;
         }
 
         .cell {
@@ -303,15 +378,27 @@
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 8px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 12px;
+            font-size: 10px;
             color: #ffffff;
-            min-height: 50px;
+            min-height: 40px;
             position: relative;
             transition: all 0.3s ease;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .cell-number {
+            font-size: 12px;
+            font-weight: 800;
+            margin-bottom: 2px;
+        }
+
+        .cell-icon {
+            font-size: 14px;
+            margin-bottom: 1px;
         }
 
         .cell:hover {
@@ -322,10 +409,50 @@
         .cell.start {
             background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
             color: #1a1d24;
-            border: 2px solid #ffd700;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-            font-size: 16px;
+            border: 3px solid #ffd700;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+            font-size: 18px;
             font-weight: 900;
+            position: relative;
+            z-index: 4;
+        }
+
+        .cell.start::before {
+            content: '💰';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            font-size: 12px;
+        }
+
+        .cell.start::after {
+            content: '💰';
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            font-size: 12px;
+        }
+
+        .start-symbols {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .start-symbols-row {
+            display: flex;
+            gap: 4px;
+        }
+
+        .start-symbol {
+            font-size: 10px;
+            color: #1a1d24;
+            font-weight: 800;
         }
 
         .cell.money {
@@ -571,7 +698,34 @@
             </div>
 
             <div class="game-board">
-            <div class="board-grid" id="board-grid"></div>
+                <div class="board-container">
+                    <!-- Специальные ячейки по бокам -->
+                    <div class="special-cell big-deal">
+                        <div class="special-cell-title">Большая сделка</div>
+                        <div class="special-cell-cards">24 карт</div>
+                        <div class="special-cell-discard">Отбой: 0</div>
+                    </div>
+                    
+                    <div class="special-cell small-deal">
+                        <div class="special-cell-title">Малая сделка</div>
+                        <div class="special-cell-cards">62 карт</div>
+                    </div>
+                    
+                    <div class="special-cell expenses">
+                        <div class="special-cell-title">Расходы</div>
+                        <div class="special-cell-cards">24 карт</div>
+                        <div class="special-cell-discard">Отбой: 0</div>
+                    </div>
+                    
+                    <div class="special-cell market">
+                        <div class="special-cell-title">Рынок</div>
+                        <div class="special-cell-cards">24 карт</div>
+                        <div class="special-cell-discard">Отбой: 0</div>
+                    </div>
+                    
+                    <!-- Игровое поле -->
+                    <div class="board-grid" id="board-grid"></div>
+                </div>
 
             <div class="game-controls">
                 <div class="dice" id="dice">🎲</div>
@@ -707,28 +861,84 @@
             let currentTurn = 1;
             let playerPositions = [0, 0, 0, 0];
             let isRolling = false;
-            let totalCells = 16;
+            let totalCells = 76;
 
             function initBoard() {
                 const boardGrid = document.getElementById('board-grid');
                 boardGrid.innerHTML = '';
+
+                // Создаем спиральный путь: 1-24 внутренний квадрат, 25-76 внешний периметр
+                const spiralPath = createSpiralPath();
                 
-                for (let i = 0; i < totalCells; i++) {
+                spiralPath.forEach((cellData, index) => {
                     const cell = document.createElement('div');
                     cell.className = 'cell';
-                    cell.textContent = i + 1;
                     
-                    if (i === 0) cell.classList.add('start');
-                    if (i === totalCells - 1) cell.classList.add('finish');
-                    if (i % 4 === 0 && i > 0) cell.classList.add('special');
+                    if (index === 0) {
+                        cell.classList.add('start');
+                        cell.innerHTML = `
+                            <div class="start-symbols">
+                                <div class="start-symbols-row">
+                                    <span class="start-symbol">$</span>
+                                    <span class="start-symbol">$</span>
+                                </div>
+                                <div class="start-symbols-row">
+                                    <span class="start-symbol">$</span>
+                                    <span class="start-symbol">$</span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        cell.innerHTML = `
+                            <div class="cell-number">${cellData.number}</div>
+                            <div class="cell-icon">${cellData.icon}</div>
+                        `;
+                        cell.classList.add(cellData.type);
+                    }
                     
                     boardGrid.appendChild(cell);
-                }
+                });
+                
+                // Инициализируем токены игроков
+                initPlayerTokens();
+            }
 
-                const startCell = boardGrid.children[0];
-                for (let i = 1; i <= 4; i++) {
-                    const token = document.createElement('div');
-                    token.className = `player-token player-${i}`;
+            function createSpiralPath() {
+                const path = [];
+                
+                // Внутренний квадрат 1-24 (6x4)
+                const innerTypes = ['money', 'growth', 'expense', 'card', 'market', 'timer'];
+                const innerIcons = ['💰', '📈', '💸', '🃏', '🏪', '⏰'];
+                
+                for (let i = 1; i <= 24; i++) {
+                    const typeIndex = (i - 1) % innerTypes.length;
+                    path.push({
+                        number: i,
+                        type: innerTypes[typeIndex],
+                        icon: innerIcons[typeIndex]
+                    });
+                }
+                
+                // Внешний периметр 25-76 (добавляем больше ячеек)
+                for (let i = 25; i <= 76; i++) {
+                    const typeIndex = (i - 25) % innerTypes.length;
+                    path.push({
+                        number: i,
+                        type: innerTypes[typeIndex],
+                        icon: innerIcons[typeIndex]
+                    });
+                }
+                
+                return path;
+            }
+
+            // Инициализация токенов игроков
+            function initPlayerTokens() {
+                const startCell = document.querySelector('.cell.start');
+                if (startCell) {
+                    for (let i = 1; i <= 4; i++) {
+                        const token = document.createElement('div');
+                        token.className = `player-token player-${i}`;
                     token.textContent = i;
                     token.id = `player-${i}-token`;
                     startCell.appendChild(token);
