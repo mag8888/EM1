@@ -881,12 +881,13 @@
                 square.dataset.cell = i;
                 square.onclick = () => showCellPopup(i, true);
                 
-                // Ровное круговое позиционирование
-                const angle = (i - 1) * (360 / 24) * (Math.PI / 180);
+                // Ровное круговое позиционирование с сдвигом на 3 позиции вправо
+                const shiftedPosition = ((i - 1 + 3) % 24) + 1; // Сдвиг на 3 позиции вправо
+                const angle = (shiftedPosition - 1) * (360 / 24) * (Math.PI / 180);
                 let radius = 38.5; // фиксированный радиус для ровного круга
                 
-                // Поднимаем клетку 1 выше остальных
-                if (i === 1) {
+                // Поднимаем клетку 4 (бывшая клетка 1) выше остальных
+                if (shiftedPosition === 4) {
                     radius = 35;
                     square.style.zIndex = '20';
                 }
@@ -900,12 +901,12 @@
                 
                 // Добавляем цифру в угол
                 const number = document.createElement('div');
-                if (i === 24) {
+                if (i === 21) { // Клетка 21 (бывшая 24) - цифра в правый верхний угол
                     number.className = 'square-number top-right';
-                } else if (i === 2) {
+                } else if (i === 5) { // Клетка 5 (бывшая 2) - цифра в правый нижний угол
                     number.className = 'square-number bottom-right';
                 } else {
-                    number.className = i >= 11 ? 'square-number bottom-left' : 'square-number';
+                    number.className = i >= 8 ? 'square-number bottom-left' : 'square-number'; // Сдвинуто на 3
                 }
                 number.textContent = i;
                 square.appendChild(number);
@@ -988,14 +989,14 @@
                 square.dataset.cell = i;
                 square.onclick = () => showCellPopup(i, false);
                 
-                // Позиционирование по периметру
+                // Позиционирование по периметру с сдвигом на 1 клетку вправо
                 const side = Math.floor((i - 1) / cellsPerSide);
                 const position = (i - 1) % cellsPerSide;
                 
                 let x, y;
                 switch (side) {
                     case 0: // Верхняя сторона
-                        x = position * (cellSize + spacing);
+                        x = position * (cellSize + spacing) + (cellSize + spacing); // Сдвиг вправо
                         y = 0;
                         break;
                     case 1: // Правая сторона
