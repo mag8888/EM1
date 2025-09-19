@@ -67,21 +67,54 @@ export class GameCore {
      * Регистрация игровых модулей
      */
     async registerModules() {
-        // Динамический импорт модулей
-        const { PlayerManager } = await import('./PlayerManager.js');
-        const { DiceModule } = await import('../modules/DiceModule.js');
-        const { CardModule } = await import('../modules/CardModule.js');
-        const { MovementModule } = await import('../modules/MovementModule.js');
-        const { EventModule } = await import('../modules/EventModule.js');
-        const { BankModule } = await import('../modules/BankModule.js');
+        try {
+            // Динамический импорт модулей
+            const { PlayerManager } = await import('./PlayerManager.js');
+            const { DiceModule } = await import('../modules/DiceModule.js');
 
-        // Регистрация модулей
-        this.modules.register('playerManager', new PlayerManager(this));
-        this.modules.register('diceModule', new DiceModule(this));
-        this.modules.register('cardModule', new CardModule(this));
-        this.modules.register('movementModule', new MovementModule(this));
-        this.modules.register('eventModule', new EventModule(this));
-        this.modules.register('bankModule', new BankModule(this));
+            // Регистрация базовых модулей
+            this.modules.register('playerManager', new PlayerManager(this));
+            this.modules.register('diceModule', new DiceModule(this));
+            
+            console.log('✅ Базовые модули зарегистрированы');
+            
+            // Попытка загрузить дополнительные модули
+            try {
+                const { CardModule } = await import('../modules/CardModule.js');
+                this.modules.register('cardModule', new CardModule(this));
+                console.log('✅ CardModule зарегистрирован');
+            } catch (error) {
+                console.warn('⚠️ CardModule не загружен:', error.message);
+            }
+            
+            try {
+                const { MovementModule } = await import('../modules/MovementModule.js');
+                this.modules.register('movementModule', new MovementModule(this));
+                console.log('✅ MovementModule зарегистрирован');
+            } catch (error) {
+                console.warn('⚠️ MovementModule не загружен:', error.message);
+            }
+            
+            try {
+                const { EventModule } = await import('../modules/EventModule.js');
+                this.modules.register('eventModule', new EventModule(this));
+                console.log('✅ EventModule зарегистрирован');
+            } catch (error) {
+                console.warn('⚠️ EventModule не загружен:', error.message);
+            }
+            
+            try {
+                const { BankModule } = await import('../modules/BankModule.js');
+                this.modules.register('bankModule', new BankModule(this));
+                console.log('✅ BankModule зарегистрирован');
+            } catch (error) {
+                console.warn('⚠️ BankModule не загружен:', error.message);
+            }
+            
+        } catch (error) {
+            console.error('❌ Ошибка регистрации модулей:', error);
+            throw error;
+        }
     }
 
     /**
@@ -103,13 +136,27 @@ export class GameCore {
      */
     async initModules() {
         const moduleNames = this.modules.getModuleNames();
+        let initializedCount = 0;
         
         for (const moduleName of moduleNames) {
             const module = this.modules.get(moduleName);
             if (module && typeof module.init === 'function') {
-                console.log(`🔧 Инициализация модуля: ${moduleName}`);
-                await module.init();
+                try {
+                    console.log(`🔧 Инициализация модуля: ${moduleName}`);
+                    await module.init();
+                    console.log(`✅ Модуль ${moduleName} инициализирован`);
+                    initializedCount++;
+                } catch (error) {
+                    console.error(`❌ Ошибка инициализации модуля ${moduleName}:`, error);
+                    // Продолжаем инициализацию других модулей
+                }
             }
+        }
+        
+        console.log(`📊 Инициализировано ${initializedCount} из ${moduleNames.length} модулей`);
+        
+        if (initializedCount === 0) {
+            throw new Error('Ни один модуль не был инициализирован');
         }
     }
 
