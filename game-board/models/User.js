@@ -12,7 +12,6 @@ const userSchema = new mongoose.Schema({
     email: {
         type: String,
         sparse: true,
-        index: true,
         trim: true,
         lowercase: true,
         match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
@@ -125,6 +124,7 @@ const userSchema = new mongoose.Schema({
 
 // Indexes
 userSchema.index({ username: 1 });
+userSchema.index({ email: 1 }, { sparse: true });
 userSchema.index({ 'status.isOnline': 1 });
 userSchema.index({ 'gameStats.gamesPlayed': -1 });
 userSchema.index({ createdAt: -1 });
