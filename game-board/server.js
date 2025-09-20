@@ -905,6 +905,7 @@ app.use((req, res) => {
     res.status(404).json({
         error: 'Not Found',
         message: 'Страница не найдена',
+        requested: req.originalUrl,
         availableRoutes: [
             '/',
             '/auth',
