@@ -329,6 +329,11 @@ app.get('/lobby-module', (req, res) => {
     res.sendFile(path.join(__dirname, 'lobby-module.html'));
 });
 
+// Serve test routes page
+app.get('/test-routes', (req, res) => {
+    res.sendFile(path.join(__dirname, 'test-routes.html'));
+});
+
 // API маршруты для Game Board
 app.get('/api/health', (req, res) => {
     res.json({
@@ -862,6 +867,7 @@ app.use((req, res) => {
             '/lobby', 
             '/game',
             '/lobby-module',
+            '/test-routes',
             '/test',
             '/docs',
             '/api/health',
@@ -1164,7 +1170,7 @@ async function startServer() {
         
         // Start server
         server.listen(PORT, () => {
-            console.log('🎮 Game Board v2.7 Server запущен!');
+            console.log('🎮 Game Board v2.8 Server запущен!');
             console.log(`🚀 Сервер работает на порту ${PORT}`);
             console.log(`📱 Локальный адрес: http://localhost:${PORT}`);
             console.log(`🌐 Railway адрес: https://your-app.railway.app`);
