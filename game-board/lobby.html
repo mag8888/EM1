@@ -10,9 +10,9 @@
     <style>
         :root {
             --board-size: 700px;
-            --outer-cell-size: 54px;
+            --outer-cell-size: 56px;
             --outer-cell-gap: 4px;
-            --inner-cell-size: 54px;
+            --inner-cell-size: 52px;
             --sidebar-width: 320px;
             --panel-bg: rgba(21, 27, 42, 0.9);
             --panel-border: rgba(255, 255, 255, 0.08);
@@ -161,12 +161,12 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: calc(var(--computed-board-size, var(--board-size)) * 0.315);
-            height: calc(var(--computed-board-size, var(--board-size)) * 0.315);
-            max-width: 220px;
-            max-height: 220px;
-            min-width: 160px;
-            min-height: 160px;
+            width: calc(var(--computed-board-size, var(--board-size)) * 0.32);
+            height: calc(var(--computed-board-size, var(--board-size)) * 0.32);
+            max-width: 230px;
+            max-height: 230px;
+            min-width: 170px;
+            min-height: 170px;
             border-radius: 50%;
             background: radial-gradient(circle at 50% 40%, rgba(255, 209, 64, 0.78) 0%, rgba(255, 166, 0, 0.82) 34%, rgba(25, 25, 25, 0.96) 64%);
             box-shadow: 0 0 50px rgba(255, 196, 0, 0.5), inset 0 0 40px rgba(0, 0, 0, 0.55);
@@ -208,16 +208,49 @@
 
         .wheel-number {
             position: relative;
-            font-size: clamp(48px, calc(var(--computed-board-size, var(--board-size)) * 0.11), 78px);
+            font-size: clamp(48px, calc(var(--computed-board-size, var(--board-size)) * 0.12), 82px);
             font-weight: 800;
             color: #ffd15a;
             text-shadow: 0 0 20px rgba(255, 196, 0, 0.55);
             z-index: 2;
         }
 
-        .special-card {
+        .player-tokens {
             position: absolute;
-            width: clamp(150px, calc(var(--computed-board-size, var(--board-size)) * 0.22), 200px);
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .player-token {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.35);
+            border: 2px solid rgba(255, 255, 255, 0.22);
+            transform: translate(-50%, -50%);
+        }
+
+        .deal-strip {
+            position: absolute;
+            left: 50%;
+            bottom: calc(var(--computed-board-size, var(--board-size)) * 0.07);
+            transform: translateX(-50%);
+            display: flex;
+            gap: clamp(16px, calc(var(--computed-board-size, var(--board-size)) * 0.04), 28px);
+            align-items: flex-end;
+            pointer-events: none;
+            padding: 0 24px;
+        }
+
+        .special-card {
+            width: clamp(150px, calc(var(--computed-board-size, var(--board-size)) * 0.22), 210px);
             height: clamp(120px, calc(var(--computed-board-size, var(--board-size)) * 0.18), 150px);
             border-radius: 24px;
             padding: 18px;
@@ -228,7 +261,27 @@
             flex-direction: column;
             gap: 12px;
             justify-content: center;
-            pointer-events: none;
+            pointer-events: auto;
+        }
+
+        .special-card.big-deal {
+            border-color: rgba(0, 224, 255, 0.55);
+            box-shadow: 0 22px 40px rgba(0, 224, 255, 0.24);
+        }
+
+        .special-card.small-deal {
+            border-color: rgba(0, 132, 255, 0.55);
+            box-shadow: 0 22px 40px rgba(0, 132, 255, 0.2);
+        }
+
+        .special-card.expenses {
+            border-color: rgba(255, 64, 128, 0.55);
+            box-shadow: 0 24px 44px rgba(255, 64, 128, 0.26);
+        }
+
+        .special-card.market {
+            border-color: rgba(0, 255, 180, 0.55);
+            box-shadow: 0 24px 44px rgba(0, 255, 180, 0.2);
         }
 
         .special-title {
@@ -243,34 +296,6 @@
             font-size: 14px;
             font-weight: 600;
             color: rgba(255, 255, 255, 0.72);
-        }
-
-        .special-card.big-deal {
-            top: calc(var(--computed-board-size, var(--board-size)) * 0.14);
-            left: calc(var(--computed-board-size, var(--board-size)) * 0.14);
-            border-color: rgba(0, 224, 255, 0.55);
-            box-shadow: 0 22px 40px rgba(0, 224, 255, 0.24);
-        }
-
-        .special-card.small-deal {
-            top: calc(var(--computed-board-size, var(--board-size)) * 0.14);
-            right: calc(var(--computed-board-size, var(--board-size)) * 0.14);
-            border-color: rgba(0, 132, 255, 0.55);
-            box-shadow: 0 22px 40px rgba(0, 132, 255, 0.2);
-        }
-
-        .special-card.expenses {
-            bottom: calc(var(--computed-board-size, var(--board-size)) * 0.14);
-            left: calc(var(--computed-board-size, var(--board-size)) * 0.14);
-            border-color: rgba(255, 64, 128, 0.55);
-            box-shadow: 0 24px 44px rgba(255, 64, 128, 0.26);
-        }
-
-        .special-card.market {
-            bottom: calc(var(--computed-board-size, var(--board-size)) * 0.14);
-            right: calc(var(--computed-board-size, var(--board-size)) * 0.14);
-            border-color: rgba(0, 255, 180, 0.55);
-            box-shadow: 0 24px 44px rgba(0, 255, 180, 0.2);
         }
 
         .sidebar {
@@ -298,6 +323,56 @@
             margin-bottom: 18px;
         }
 
+        .status-panel .panel-body {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .status-chip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(123, 97, 255, 0.28) 0%, rgba(123, 97, 255, 0.14) 100%);
+            border: 1px solid rgba(123, 97, 255, 0.4);
+        }
+
+        .status-chip .status-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .status-chip .status-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #f3f4f6;
+            margin-top: 4px;
+        }
+
+        .status-chip .status-icon {
+            font-size: 28px;
+        }
+
+        .timer-readout {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .timer-readout .timer-value {
+            font-size: 34px;
+            font-weight: 800;
+        }
+
+        .timer-readout .timer-caption {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.55);
+        }
+
         .finance-grid {
             display: grid;
             gap: 14px;
@@ -319,13 +394,6 @@
             color: #ff6b8a;
         }
 
-        .panel-note {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.45);
-            margin-top: 16px;
-            line-height: 1.5;
-        }
-
         .loan-status {
             display: flex;
             justify-content: space-between;
@@ -334,6 +402,7 @@
             border-radius: 14px;
             background: linear-gradient(135deg, rgba(29, 233, 182, 0.15) 0%, rgba(29, 233, 182, 0.06) 100%);
             border: 1px solid rgba(29, 233, 182, 0.35);
+            margin-top: 18px;
             margin-bottom: 16px;
         }
 
@@ -377,57 +446,99 @@
             margin-top: 4px;
         }
 
-        .turn-state {
+        .cell-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(7, 12, 20, 0.78);
+            backdrop-filter: blur(12px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            z-index: 50;
+        }
+
+        .cell-modal.show {
+            display: flex;
+        }
+
+        .modal-card {
+            position: relative;
+            width: min(420px, 100%);
+            border-radius: 28px;
+            padding: 32px 28px 28px;
+            background: linear-gradient(165deg, rgba(20, 27, 44, 0.95), rgba(13, 18, 32, 0.95));
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 28px 66px rgba(0, 0, 0, 0.55);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .modal-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 28px;
+            background: var(--modal-accent, linear-gradient(135deg, rgba(79, 172, 254, 0.35), rgba(0, 242, 254, 0.22)));
+            opacity: 0.65;
+            z-index: -1;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.25);
+            border: none;
+            color: #fff;
+            font-size: 16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .modal-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 16px;
-            border-radius: 18px;
-            background: linear-gradient(135deg, rgba(123, 97, 255, 0.25) 0%, rgba(123, 97, 255, 0.12) 100%);
-            border: 1px solid rgba(123, 97, 255, 0.38);
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.82);
+            justify-content: center;
+            font-size: 28px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
 
-        .turn-state .state-label {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: rgba(255, 255, 255, 0.5);
-        }
-
-        .turn-state .state-value {
-            font-size: 16px;
+        .modal-title {
+            font-size: 24px;
             font-weight: 700;
         }
 
-        .timer-display {
-            display: flex;
-            align-items: baseline;
-            gap: 6px;
+        .modal-text {
+            font-size: 15px;
+            color: rgba(240, 244, 255, 0.82);
+            line-height: 1.6;
+        }
+
+        .modal-action {
+            align-self: flex-end;
+            padding: 12px 22px;
+            border-radius: 12px;
+            border: none;
             font-weight: 700;
-            color: rgba(255, 255, 255, 0.85);
-        }
-
-        .timer-value {
-            font-size: 32px;
-            font-weight: 800;
-        }
-
-        @keyframes spinOnce {
-            from { transform: translate(-50%, -50%) rotate(0deg); }
-            to { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-
-        .center-wheel.spin {
-            animation: spinOnce 0.8s ease forwards;
+            font-size: 14px;
+            color: #0b1624;
+            background: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
         }
 
         @media (max-width: 1280px) {
             :root {
                 --board-size: 640px;
                 --outer-cell-size: 48px;
-                --inner-cell-size: 48px;
+                --inner-cell-size: 46px;
                 --outer-cell-gap: 4px;
             }
             .page-shell { gap: 40px; }
@@ -436,8 +547,8 @@
         @media (max-width: 1080px) {
             :root {
                 --board-size: 600px;
-                --outer-cell-size: 46px;
-                --inner-cell-size: 46px;
+                --outer-cell-size: 44px;
+                --inner-cell-size: 44px;
                 --outer-cell-gap: 3px;
             }
         }
@@ -445,8 +556,8 @@
         @media (max-width: 960px) {
             :root {
                 --board-size: 560px;
-                --outer-cell-size: 42px;
-                --inner-cell-size: 42px;
+                --outer-cell-size: 40px;
+                --inner-cell-size: 40px;
                 --outer-cell-gap: 3px;
             }
             body { padding: 48px 32px 88px; }
@@ -463,33 +574,33 @@
         @media (max-width: 768px) {
             :root {
                 --board-size: 520px;
-                --outer-cell-size: 38px;
-                --inner-cell-size: 40px;
+                --outer-cell-size: 36px;
+                --inner-cell-size: 36px;
                 --outer-cell-gap: 3px;
             }
-            .special-card {
-                width: clamp(130px, calc(var(--computed-board-size, var(--board-size)) * 0.28), 180px);
-                height: clamp(110px, calc(var(--computed-board-size, var(--board-size)) * 0.2), 140px);
+            .deal-strip {
+                gap: 16px;
             }
         }
 
         @media (max-width: 640px) {
             :root {
                 --board-size: 480px;
-                --outer-cell-size: 34px;
-                --inner-cell-size: 36px;
+                --outer-cell-size: 32px;
+                --inner-cell-size: 34px;
                 --outer-cell-gap: 2px;
             }
             body { padding: 40px 24px 80px; }
             .special-card { display: none; }
+            .deal-strip { display: none; }
             .sidebar { width: 100%; }
         }
 
         @media (max-width: 520px) {
             :root {
                 --board-size: 440px;
-                --outer-cell-size: 30px;
-                --inner-cell-size: 34px;
+                --outer-cell-size: 28px;
+                --inner-cell-size: 30px;
                 --outer-cell-gap: 2px;
             }
         }
@@ -498,7 +609,7 @@
             :root {
                 --board-size: 400px;
                 --outer-cell-size: 26px;
-                --inner-cell-size: 30px;
+                --inner-cell-size: 28px;
                 --outer-cell-gap: 2px;
             }
             body { padding: 36px 16px 72px; }
@@ -512,38 +623,55 @@
             <div class="board-frame">
                 <div class="outer-track" id="outerTrack"></div>
                 <div class="inner-track" id="innerTrack"></div>
-
-                <div class="special-card big-deal">
-                    <div class="special-title">💼 Большая сделка</div>
-                    <div class="special-metric">24 карты</div>
-                    <div class="special-metric">Премиум возможности</div>
-                </div>
-
-                <div class="special-card small-deal">
-                    <div class="special-title">📦 Малая сделка</div>
-                    <div class="special-metric">32 карты</div>
-                    <div class="special-metric">Стартовые инвестиции</div>
-                </div>
-
-                <div class="special-card expenses">
-                    <div class="special-title">💳 Расходы</div>
-                    <div class="special-metric">24 карты</div>
-                    <div class="special-metric">Обязательные платежи</div>
-                </div>
-
-                <div class="special-card market">
-                    <div class="special-title">🛒 Рынок</div>
-                    <div class="special-metric">24 карты</div>
-                    <div class="special-metric">Спец. предложения</div>
-                </div>
+                <div class="player-tokens" id="playerTokens"></div>
 
                 <div class="center-wheel" id="centerWheel">
                     <div class="wheel-number" id="wheelNumber">1</div>
+                </div>
+
+                <div class="deal-strip">
+                    <div class="special-card big-deal">
+                        <div class="special-title">💼 Большая сделка</div>
+                        <div class="special-metric">24 карты</div>
+                        <div class="special-metric">Премиум возможности</div>
+                    </div>
+                    <div class="special-card small-deal">
+                        <div class="special-title">📦 Малая сделка</div>
+                        <div class="special-metric">32 карты</div>
+                        <div class="special-metric">Стартовые инвестиции</div>
+                    </div>
+                    <div class="special-card expenses">
+                        <div class="special-title">💳 Расходы</div>
+                        <div class="special-metric">24 карты</div>
+                        <div class="special-metric">Обязательные платежи</div>
+                    </div>
+                    <div class="special-card market">
+                        <div class="special-title">🛒 Рынок</div>
+                        <div class="special-metric">24 карты</div>
+                        <div class="special-metric">Спец. предложения</div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <aside class="sidebar">
+            <div class="panel status-panel">
+                <h3>ход и время</h3>
+                <div class="panel-body">
+                    <div class="status-chip" id="turnStatusChip">
+                        <div>
+                            <div class="status-label">Текущее состояние</div>
+                            <div class="status-value" id="turnState">Ожидание хода</div>
+                        </div>
+                        <div class="status-icon">🕒</div>
+                    </div>
+                    <div class="timer-readout">
+                        <span class="timer-value" id="timerValue">00:45</span>
+                        <span class="timer-caption">секунд осталось</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="panel">
                 <h3>Банковские операции</h3>
                 <div class="finance-grid">
@@ -566,7 +694,6 @@
                     <span class="finance-value">$0</span>
                 </div>
                 <button class="btn btn-danger" id="loanButton">🚫 Взять</button>
-                <p class="panel-note">Нажмите для управления кредитами и банковскими операциями.</p>
             </div>
 
             <div class="panel">
@@ -575,32 +702,80 @@
                 <div class="assets-caption">Доход: $0 / мес</div>
                 <button class="btn btn-primary" style="margin-top: 20px;">Портфель активов</button>
             </div>
-
-            <div class="panel">
-                <h3>Статус хода</h3>
-                <div class="turn-state">
-                    <div>
-                        <div class="state-label">Текущее состояние</div>
-                        <div class="state-value" id="turnState">Ожидание хода</div>
-                    </div>
-                    <div style="font-size: 28px;">🕒</div>
-                </div>
-                <p class="panel-note" id="turnNote">Не ваш ход. Дождитесь завершения действий текущего игрока.</p>
-            </div>
-
-            <div class="panel">
-                <h3>Время хода</h3>
-                <div class="timer-display">
-                    <span class="timer-value" id="timerValue">00:45</span>
-                    <span>секунд осталось</span>
-                </div>
-                <p class="panel-note">Таймер запускается автоматически при начале вашего хода.</p>
-            </div>
         </aside>
+    </div>
+
+    <div class="cell-modal" id="cellModal">
+        <div class="modal-card" id="modalCard">
+            <button class="modal-close" id="modalClose">✕</button>
+            <div class="modal-icon" id="modalIcon">🎲</div>
+            <div class="modal-title" id="modalTitle">Клетка №1</div>
+            <div class="modal-text" id="modalText">Совершите действие согласно карточке.</div>
+            <button class="modal-action" id="modalAction">Понятно</button>
+        </div>
     </div>
 
     <script>
         const OUTER_TRACK_CONFIG = { widthCells: 12, heightCells: 12 };
+        const PLAYER_TOKENS = [
+            { emoji: '🦁', name: 'Игрок 1', gradient: 'linear-gradient(135deg, #ff8576, #ff6262)' },
+            { emoji: '🐯', name: 'Игрок 2', gradient: 'linear-gradient(135deg, #ffcf71, #ff9f43)' },
+            { emoji: '🦊', name: 'Игрок 3', gradient: 'linear-gradient(135deg, #ff7ce3, #d05eff)' },
+            { emoji: '🐼', name: 'Игрок 4', gradient: 'linear-gradient(135deg, #7ae5ff, #3ca7ff)' },
+            { emoji: '🐸', name: 'Игрок 5', gradient: 'linear-gradient(135deg, #5effc0, #2cd978)' },
+            { emoji: '🦉', name: 'Игрок 6', gradient: 'linear-gradient(135deg, #ffe676, #ffbf3b)' },
+            { emoji: '🐙', name: 'Игрок 7', gradient: 'linear-gradient(135deg, #c27bff, #7f5bff)' },
+            { emoji: '🐳', name: 'Игрок 8', gradient: 'linear-gradient(135deg, #6ad3ff, #337fff)' }
+        ];
+
+        const CELL_THEMES = {
+            'cell-pink': {
+                accent: 'linear-gradient(140deg, rgba(255, 79, 147, 0.6), rgba(255, 39, 128, 0.4))',
+                title: 'Обязательные траты',
+                description: 'Покройте обязательные расходы и удержите баланс бюджета.'
+            },
+            'cell-green': {
+                accent: 'linear-gradient(140deg, rgba(50, 223, 141, 0.6), rgba(25, 184, 106, 0.4))',
+                title: 'Возможность',
+                description: 'Воспользуйтесь новой инвестиционной возможностью.'
+            },
+            'cell-teal': {
+                accent: 'linear-gradient(140deg, rgba(37, 208, 255, 0.6), rgba(0, 144, 245, 0.4))',
+                title: 'Особое событие',
+                description: 'Вам доступен специальный шанс — проверьте карточку.'
+            },
+            'cell-purple': {
+                accent: 'linear-gradient(140deg, rgba(167, 105, 255, 0.6), rgba(115, 81, 255, 0.4))',
+                title: 'Семейные новости',
+                description: 'В вашей семье произошло событие — выполните действие.'
+            },
+            'cell-orange': {
+                accent: 'linear-gradient(140deg, rgba(255, 179, 71, 0.6), rgba(255, 140, 66, 0.4))',
+                title: 'Благотворительность',
+                description: 'Поддержите благотворительность и получите бонус.'
+            },
+            'cell-yellow': {
+                accent: 'linear-gradient(140deg, rgba(255, 214, 90, 0.6), rgba(255, 183, 0, 0.4))',
+                title: 'PayDay',
+                description: 'Получите зарплату и обновите свой денежный поток.'
+            },
+            'cell-blue': {
+                accent: 'linear-gradient(140deg, rgba(78, 149, 255, 0.6), rgba(37, 99, 235, 0.4))',
+                title: 'Мечта',
+                description: 'Сделайте шаг к своей мечте и закрепите результат.'
+            },
+            'cell-red': {
+                accent: 'linear-gradient(140deg, rgba(255, 107, 107, 0.6), rgba(255, 59, 59, 0.4))',
+                title: 'Шанс',
+                description: 'Испытайте удачу — выполните действие по карточке.'
+            },
+            'cell-slate': {
+                accent: 'linear-gradient(140deg, rgba(52, 67, 90, 0.6), rgba(30, 40, 56, 0.4))',
+                title: 'Событие',
+                description: 'Следуйте указаниям карточки события.'
+            }
+        };
+
         let boardMetrics = null;
 
         function getCssNumber(variableName) {
@@ -667,7 +842,8 @@
 
             positions.forEach((pos, index) => {
                 const cell = document.createElement('div');
-                cell.className = `track-cell outer ${outerColors[index % outerColors.length]}`;
+                const colorClass = outerColors[index % outerColors.length];
+                cell.className = `track-cell outer ${colorClass}`;
                 cell.style.width = `${cellSize}px`;
                 cell.style.height = `${cellSize}px`;
                 cell.style.left = `${pos.x}px`;
@@ -679,7 +855,11 @@
                 `;
 
                 cell.addEventListener('click', () => {
-                    alert(`Клетка №${index + 1}. Совершите действие согласно карточке.`);
+                    openCellModal({
+                        number: index + 1,
+                        colorClass,
+                        icon: outerIcons[index % outerIcons.length]
+                    });
                 });
 
                 outerTrack.appendChild(cell);
@@ -722,35 +902,94 @@
             const { size, cellSize, innerCellSize, horizontalPadding, verticalPadding } = boardMetrics;
             const maxPadding = Math.max(horizontalPadding, verticalPadding);
             const radius = Math.max(
-                size / 2 - (cellSize + maxPadding + innerCellSize / 2 + 8),
+                size / 2 - (cellSize + maxPadding + innerCellSize / 2 + 12),
                 size * 0.22
             );
 
             for (let i = 0; i < totalCells; i++) {
+                const { color, icon } = innerPattern[i];
                 const angle = (i / totalCells) * Math.PI * 2;
                 const x = size / 2 + Math.cos(angle) * radius;
                 const y = size / 2 + Math.sin(angle) * radius;
 
                 const cell = document.createElement('div');
-                cell.className = `track-cell ${innerPattern[i].color}`;
+                cell.className = `track-cell ${color}`;
                 cell.style.width = `${innerCellSize}px`;
                 cell.style.height = `${innerCellSize}px`;
-                cell.style.left = `${x - innerCellSize / 2}px`;
-                cell.style.top = `${y - innerCellSize / 2}px`;
+                cell.style.left = `${x}px`;
+                cell.style.top = `${y}px`;
+                cell.style.transform = 'translate(-50%, -50%)';
 
                 cell.innerHTML = `
                     <span class="cell-number">${i + 1}</span>
-                    <span class="cell-icon">${innerPattern[i].icon}</span>
+                    <span class="cell-icon">${icon}</span>
                 `;
+
+                cell.addEventListener('click', () => {
+                    openCellModal({
+                        number: i + 1,
+                        colorClass: color,
+                        icon
+                    });
+                });
 
                 innerTrack.appendChild(cell);
             }
+        }
+
+        function renderPlayerTokens() {
+            const container = document.getElementById('playerTokens');
+            if (!container || !boardMetrics) { return; }
+
+            container.innerHTML = '';
+            const radius = Math.max(boardMetrics.size * 0.26, 140);
+            const tokenSize = 44;
+
+            PLAYER_TOKENS.forEach((token, index) => {
+                const angle = (index / PLAYER_TOKENS.length) * Math.PI * 2 - Math.PI / 2;
+                const x = boardMetrics.size / 2 + Math.cos(angle) * radius;
+                const y = boardMetrics.size / 2 + Math.sin(angle) * radius;
+
+                const el = document.createElement('div');
+                el.className = 'player-token';
+                el.style.background = token.gradient;
+                el.style.left = `${x}px`;
+                el.style.top = `${y}px`;
+                el.style.width = `${tokenSize}px`;
+                el.style.height = `${tokenSize}px`;
+                el.title = token.name;
+                el.textContent = token.emoji;
+
+                container.appendChild(el);
+            });
+        }
+
+        function openCellModal({ number, colorClass, icon }) {
+            const modal = document.getElementById('cellModal');
+            const card = document.getElementById('modalCard');
+            const modalIcon = document.getElementById('modalIcon');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalText = document.getElementById('modalText');
+
+            const theme = CELL_THEMES[colorClass] || CELL_THEMES['cell-slate'];
+            card.style.setProperty('--modal-accent', theme.accent);
+            modalIcon.textContent = icon || '🎲';
+            modalTitle.textContent = `Клетка №${number}`;
+            modalText.textContent = theme.description;
+
+            modal.classList.add('show');
+        }
+
+        function closeCellModal() {
+            const modal = document.getElementById('cellModal');
+            modal.classList.remove('show');
         }
 
         function rebuildBoard() {
             measureBoard();
             createOuterTrack();
             createInnerTrack();
+            renderPlayerTokens();
         }
 
         function initCenterWheel() {
@@ -767,9 +1006,24 @@
             });
         }
 
+        function initModal() {
+            const modal = document.getElementById('cellModal');
+            const closeBtn = document.getElementById('modalClose');
+            const actionBtn = document.getElementById('modalAction');
+
+            closeBtn.addEventListener('click', closeCellModal);
+            actionBtn.addEventListener('click', closeCellModal);
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    closeCellModal();
+                }
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             rebuildBoard();
             initCenterWheel();
+            initModal();
         });
 
         window.addEventListener('resize', () => {
