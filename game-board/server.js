@@ -290,6 +290,10 @@ app.get('/dream-selection', (req, res) => {
     res.sendFile(path.join(__dirname, 'dream-selection.html'));
 });
 
+app.get('/room-entry', (req, res) => {
+    res.sendFile(path.join(__dirname, 'room-entry.html'));
+});
+
 // API маршруты для Game Board
 app.get('/api/health', (req, res) => {
     res.json({
