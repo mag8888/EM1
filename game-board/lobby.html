@@ -1162,7 +1162,7 @@
                 }
 
                 roomsContainer.innerHTML = rooms.map(room => `
-                    <div class="room-item" data-room-id="${room.id}" onclick="joinRoom('${room.id}')">
+                    <div class="room-item" data-room-id="${room.id}" onclick="window.joinRoom('${room.id}')">
                         <div class="room-header">
                             <div class="room-name">${room.name}</div>
                             <div class="room-status ${room.status}">${getStatusText(room.status)}</div>
@@ -1178,7 +1178,7 @@
             }
             
             // Загружаем комнаты после инициализации всех функций
-            loadRooms();
+            window.loadRooms();
         });
     </script>
 </body>
