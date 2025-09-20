@@ -1025,37 +1025,6 @@
                 window.location.href = 'game.html';
             }
 
-            function openProfessionCard() {
-                // Проверяем, что пользователь в комнате
-                const currentRoom = localStorage.getItem('currentRoom');
-                if (!currentRoom) {
-                    alert('Сначала присоединитесь к комнате');
-                    return;
-                }
-                
-                // Открываем карточку профессии в новом окне
-                const professionWindow = window.open('profession-card.html', 'professionCard', 'width=700,height=900,scrollbars=yes,resizable=yes');
-                
-                if (!professionWindow) {
-                    alert('Пожалуйста, разрешите всплывающие окна для выбора профессии');
-                }
-            }
-
-            function openDreamSelection() {
-                // Проверяем, что пользователь в комнате
-                const currentRoom = localStorage.getItem('currentRoom');
-                if (!currentRoom) {
-                    alert('Сначала присоединитесь к комнате');
-                    return;
-                }
-                
-                // Открываем выбор мечты в новом окне
-                const dreamWindow = window.open('room-dream-selection.html', 'dreamSelection', 'width=1200,height=800,scrollbars=yes,resizable=yes');
-                
-                if (!dreamWindow) {
-                    alert('Пожалуйста, разрешите всплывающие окна для выбора мечты');
-                }
-            }
 
             // Функции enterRoom и leaveRoom уже определены глобально выше
 
