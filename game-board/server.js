@@ -271,6 +271,10 @@ app.get('/room/:roomId', (req, res) => {
     res.sendFile(rootRoomPath);
 });
 
+app.get('/game/:roomId', (req, res) => {
+    res.sendFile(path.join(__dirname, 'game.html'));
+});
+
 // Маршруты для страниц
 app.get('/auth', (req, res) => {
     res.sendFile(path.join(__dirname, 'auth.html'));
@@ -798,10 +802,6 @@ app.post('/api/rooms/:roomId/join', (req, res) => {
             return res.status(400).json({ success: false, error: 'Комната заполнена' });
         }
         
-        if (room.status === 'playing') {
-            return res.status(400).json({ success: false, error: 'Игра уже началась' });
-        }
-        
         // Проверка пароля (если требуется)
         if (room.password && room.password !== password) {
             return res.status(401).json({ success: false, error: 'Неверный пароль' });
@@ -817,7 +817,12 @@ app.post('/api/rooms/:roomId/join', (req, res) => {
         // Проверяем, не находится ли пользователь уже в комнате
         const existingPlayer = room.players.find(p => getPlayerIdentifier(p) === user.id);
         if (existingPlayer) {
-            return res.status(400).json({ success: false, error: 'Вы уже в этой комнате' });
+            existingPlayer.socketId = existingPlayer.socketId || null;
+            existingPlayer.isReady = existingPlayer.isReady || false;
+            return res.json({
+                success: true,
+                room: sanitizeRoom(room, { requestingUserId: user.id })
+            });
         }
         
         // Добавляем игрока
@@ -828,6 +833,8 @@ app.post('/api/rooms/:roomId/join', (req, res) => {
 
         room.players.push(newPlayer);
         room.updatedAt = new Date().toISOString();
+
+        broadcastRoomsUpdate();
 
         res.json({
             success: true,
