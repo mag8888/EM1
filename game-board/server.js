@@ -16,6 +16,7 @@ const Profession = require('./models/Profession');
 const BankAccount = require('./models/BankAccount');
 const { GAME_CELLS, GameCellsUtils } = require('./config/game-cells');
 const { MARKET_CARDS, EXPENSE_CARDS, SMALL_DEALS, BIG_DEALS, CardsUtils } = require('./config/cards-config');
+const userManager = require('./utils/userManager');
 
 const app = express();
 const server = http.createServer(app);
@@ -643,6 +644,13 @@ app.post('/api/rooms', (req, res) => {
             return res.status(400).json({ success: false, error: 'Название комнаты обязательно' });
         }
 
+        // Получаем пользователя из заголовков
+        const userEmail = req.headers['x-user-name'] || 'guest@example.com';
+        const user = userManager.getUserByEmail(userEmail) || userManager.registerUser({
+            email: userEmail,
+            username: userEmail.split('@')[0]
+        });
+
         const newRoom = {
             id: Date.now().toString(),
             name: name,
@@ -653,10 +661,14 @@ app.post('/api/rooms', (req, res) => {
             createdAt: new Date().toISOString(),
             assignProfessions: assign_professions || false,
             password: password || null,
-            defaultProfession: profession || 'entrepreneur'
+            defaultProfession: profession || 'entrepreneur',
+            creatorId: user.id,
+            creatorEmail: user.email
         };
         
         serverRooms.push(newRoom);
+        
+        console.log(`🏠 Комната "${name}" создана пользователем ${user.username} (${user.id})`);
         
         res.json({ 
             success: true, 
@@ -692,19 +704,23 @@ app.post('/api/rooms/:roomId/join', (req, res) => {
         }
         
         // Получаем пользователя из заголовков
-        const userId = req.headers['x-user-id'] || Date.now().toString();
-        const userName = req.headers['x-user-name'] || 'Игрок';
+        const userEmail = req.headers['x-user-name'] || 'guest@example.com';
+        const user = userManager.getUserByEmail(userEmail) || userManager.registerUser({
+            email: userEmail,
+            username: userEmail.split('@')[0]
+        });
         
         // Проверяем, не находится ли пользователь уже в комнате
-        const existingPlayer = room.players.find(p => p.id === userId);
+        const existingPlayer = room.players.find(p => p.id === user.id);
         if (existingPlayer) {
             return res.status(400).json({ success: false, error: 'Вы уже в этой комнате' });
         }
         
         // Добавляем игрока
         const newPlayer = {
-            id: userId,
-            name: userName,
+            id: user.id,
+            name: user.username,
+            email: user.email,
             isHost: room.players.length === 0,
             token: null,
             dream: null
@@ -725,7 +741,12 @@ app.post('/api/rooms/:roomId/join', (req, res) => {
 app.post('/api/rooms/:roomId/leave', (req, res) => {
     try {
         const { roomId } = req.params;
-        const userId = req.headers['x-user-id'] || '';
+        const userEmail = req.headers['x-user-name'] || 'guest@example.com';
+        const user = userManager.getUserByEmail(userEmail);
+        
+        if (!user) {
+            return res.status(400).json({ success: false, error: 'Пользователь не найден' });
+        }
         
         const room = serverRooms.find(r => r.id === roomId);
         if (!room) {
@@ -733,7 +754,7 @@ app.post('/api/rooms/:roomId/leave', (req, res) => {
         }
         
         // Удаляем игрока из комнаты
-        const playerIndex = room.players.findIndex(p => p.id === userId);
+        const playerIndex = room.players.findIndex(p => p.id === user.id);
         if (playerIndex === -1) {
             return res.status(400).json({ success: false, error: 'Вы не находитесь в этой комнате' });
         }
@@ -780,16 +801,26 @@ app.get('/api/rooms/:roomId', (req, res) => {
 // API маршруты для пользователя
 app.get('/api/user/profile', (req, res) => {
     try {
-        // Имитируем данные пользователя
-        const user = {
-            id: req.headers['x-user-id'] || Date.now().toString(),
-            username: req.headers['x-user-name'] || 'Игрок',
-            first_name: req.headers['x-user-name'] || 'Игрок',
-            email: 'player@example.com',
-            balance: 10000
+        const userEmail = req.headers['x-user-name'] || 'guest@example.com';
+        const user = userManager.getUserByEmail(userEmail) || userManager.registerUser({
+            email: userEmail,
+            username: userEmail.split('@')[0]
+        });
+        
+        // Добавляем игровые данные
+        const profile = {
+            id: user.id,
+            username: user.username,
+            first_name: user.first_name,
+            email: user.email,
+            balance: 10000, // Можно добавить в userManager
+            registeredAt: user.registeredAt,
+            lastSeen: user.lastSeen,
+            isOnline: user.isOnline,
+            connections: user.socketConnections.size
         };
         
-        res.json(user);
+        res.json(profile);
     } catch (error) {
         console.error('Ошибка получения профиля пользователя:', error);
         res.status(500).json({ success: false, error: error.message });
@@ -798,10 +829,19 @@ app.get('/api/user/profile', (req, res) => {
 
 app.get('/api/user/stats', (req, res) => {
     try {
+        const userEmail = req.headers['x-user-name'] || 'guest@example.com';
+        const user = userManager.getUserByEmail(userEmail);
+        
+        // Генерируем статистику на основе ID пользователя для стабильности
+        const userHash = user ? parseInt(user.id.replace('user_', ''), 36) : Math.random() * 1000000;
+        
         const stats = {
-            games_played: Math.floor(Math.random() * 50),
-            wins_count: Math.floor(Math.random() * 20),
-            level: Math.floor(Math.random() * 10) + 1
+            games_played: Math.floor((userHash % 100) + 1),
+            wins_count: Math.floor((userHash % 50) + 1),
+            level: Math.floor((userHash % 20) + 1),
+            total_users: userManager.getUserCount(),
+            online_users: userManager.getOnlineUserCount(),
+            user_id: user ? user.id : 'guest'
         };
         
         res.json(stats);
@@ -859,22 +899,32 @@ io.on('connection', (socket) => {
         console.log('👋 Пользователь отключился:', socket.id, 'Причина:', reason);
     });
     
-    // Регистрация пользователя
-    socket.on('registerUser', (userData) => {
-        const user = {
-            id: userData.id || socket.id, // Используем ID пользователя или socket.id как fallback
-            username: userData.username,
-            email: userData.email || '',
-            socketId: socket.id,
-            connectedAt: new Date()
-        };
-        
-        connectedUsers.set(socket.id, user);
-        console.log('👤 Пользователь зарегистрирован:', user.username, 'ID:', user.id);
-        
-        // Отправляем обновленный список комнат
-        socket.emit('roomsUpdate', serverRooms);
-    });
+                // Регистрация пользователя
+                socket.on('registerUser', (userData) => {
+                    try {
+                        // Валидируем данные пользователя
+                        const validatedData = userManager.validateUserData(userData);
+                        
+                        // Регистрируем пользователя с единым ID
+                        const user = userManager.registerUser(validatedData);
+                        
+                        // Добавляем WebSocket соединение
+                        userManager.addSocketConnection(user.id, socket.id);
+                        
+                        // Сохраняем связь socket.id -> user.id
+                        connectedUsers.set(socket.id, user);
+                        
+                        console.log('👤 Пользователь подключился:', user.username, 'ID:', user.id, 'Socket:', socket.id);
+                        console.log('📊 Статистика:', userManager.getStats());
+                        
+                        // Отправляем обновленный список комнат
+                        socket.emit('roomsUpdate', serverRooms);
+                        
+                    } catch (error) {
+                        console.error('❌ Ошибка регистрации пользователя:', error.message);
+                        socket.emit('error', { message: error.message });
+                    }
+                });
     
     // Создание комнаты
     socket.on('createRoom', (roomData) => {
@@ -1057,11 +1107,14 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         const user = connectedUsers.get(socket.id);
         if (user) {
-            console.log('👋 Пользователь отключился:', user.username);
+            console.log('👋 Пользователь отключился:', user.username, 'ID:', user.id, 'Socket:', socket.id);
+            
+            // Удаляем WebSocket соединение
+            userManager.removeSocketConnection(user.id, socket.id);
             
             // Удаляем пользователя из всех комнат
             serverRooms.forEach(room => {
-                const playerIndex = room.players.findIndex(p => p.socketId === socket.id);
+                const playerIndex = room.players.findIndex(p => p.id === user.id);
                 if (playerIndex !== -1) {
                     const player = room.players[playerIndex];
                     room.players.splice(playerIndex, 1);
@@ -1086,6 +1139,8 @@ io.on('connection', (socket) => {
             
             // Удаляем пользователя из списка подключенных
             connectedUsers.delete(socket.id);
+            
+            console.log('📊 Статистика после отключения:', userManager.getStats());
         } else {
             console.log('👋 Неизвестный пользователь отключился:', socket.id);
         }
@@ -1100,7 +1155,7 @@ async function startServer() {
         
         // Start server
         server.listen(PORT, () => {
-            console.log('🎮 Game Board v2.2 Server запущен!');
+            console.log('🎮 Game Board v2.3 Server запущен!');
             console.log(`🚀 Сервер работает на порту ${PORT}`);
             console.log(`📱 Локальный адрес: http://localhost:${PORT}`);
             console.log(`🌐 Railway адрес: https://your-app.railway.app`);

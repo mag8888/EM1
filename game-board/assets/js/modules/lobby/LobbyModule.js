@@ -160,25 +160,41 @@ export class LobbyModule {
 
     async validateAndUpdateUser() {
         try {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                return false;
+            // Проверяем, есть ли пользователь в localStorage
+            let userEmail = localStorage.getItem('email');
+            let username = localStorage.getItem('username');
+            
+            // Если нет данных в localStorage, используем гостевой режим
+            if (!userEmail) {
+                userEmail = `guest_${Date.now()}@example.com`;
+                username = 'Гость';
+                localStorage.setItem('email', userEmail);
+                localStorage.setItem('username', username);
             }
+            
+            // Получаем профиль пользователя
             const response = await fetch('/api/user/profile', {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { 
+                    'X-User-Name': userEmail,
+                    'Content-Type': 'application/json'
+                }
             });
+            
             if (!response.ok) {
                 return false;
             }
+            
             const data = await response.json();
-            if (!data.id && data._id) {
-                data.id = data._id;
-            }
             if (!data.id) {
                 return false;
             }
+            
+            // Сохраняем единый ID пользователя
+            localStorage.setItem('userId', data.id);
             localStorage.setItem('user', JSON.stringify(data));
             this.currentUser = data;
+            
+            console.log('👤 Пользователь валидирован:', data.username, 'ID:', data.id);
             return true;
         } catch (error) {
             console.error('Failed to validate user', error);
@@ -188,10 +204,11 @@ export class LobbyModule {
 
     async loadUserStats() {
         try {
-            const token = localStorage.getItem('authToken');
+            const userEmail = localStorage.getItem('email') || 'guest@example.com';
             const response = await fetch('/api/user/stats', {
                 headers: {
-                    Authorization: `Bearer ${token}`
+                    'X-User-Name': userEmail,
+                    'Content-Type': 'application/json'
                 }
             });
             if (!response.ok) return;
@@ -199,6 +216,7 @@ export class LobbyModule {
             if (this.dom.totalGames) this.dom.totalGames.textContent = stats.games_played ?? stats.gamesPlayed ?? 0;
             if (this.dom.totalWins) this.dom.totalWins.textContent = stats.wins_count ?? stats.totalWins ?? 0;
             if (this.dom.userLevel) this.dom.userLevel.textContent = stats.level ?? 1;
+            if (this.dom.onlinePlayers) this.dom.onlinePlayers.textContent = stats.online_users ?? 1;
         } catch (error) {
             console.error('Failed to load user stats', error);
         }

@@ -12,9 +12,13 @@ export class RoomApi {
 
     withUserHeaders(headers = {}) {
         const user = this.getCurrentUser();
+        const userEmail = localStorage.getItem('email') || user?.email || 'guest@example.com';
+        
         if (user?.id) {
             headers['X-User-ID'] = user.id;
-            headers['X-User-Name'] = user.first_name || user.username || user.email || 'Игрок';
+            headers['X-User-Name'] = userEmail; // Используем email как идентификатор
+        } else {
+            headers['X-User-Name'] = userEmail;
         }
         return headers;
     }
