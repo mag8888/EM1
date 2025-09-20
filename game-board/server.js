@@ -902,6 +902,15 @@ io.on('connection', (socket) => {
                 // Регистрация пользователя
                 socket.on('registerUser', (userData) => {
                     try {
+                        // Если нет данных пользователя, создаем гостевого пользователя
+                        if (!userData || !userData.email) {
+                            userData = {
+                                email: `guest_${Date.now()}@example.com`,
+                                username: 'Гость',
+                                first_name: 'Гость'
+                            };
+                        }
+                        
                         // Валидируем данные пользователя
                         const validatedData = userManager.validateUserData(userData);
                         
@@ -1155,7 +1164,7 @@ async function startServer() {
         
         // Start server
         server.listen(PORT, () => {
-            console.log('🎮 Game Board v2.4 Server запущен!');
+            console.log('🎮 Game Board v2.5 Server запущен!');
             console.log(`🚀 Сервер работает на порту ${PORT}`);
             console.log(`📱 Локальный адрес: http://localhost:${PORT}`);
             console.log(`🌐 Railway адрес: https://your-app.railway.app`);
