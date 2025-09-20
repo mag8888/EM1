@@ -8,7 +8,7 @@ const cors = require('cors');
 
 const CreditService = require('./credit-module/CreditService');
 const { GAME_CELLS, GameCellsUtils } = require('./game-board/config/game-cells.js');
-const { MARKET_CARDS, EXPENSE_CARDS, SMALL_DEALS, BIG_DEALS } = require('./game-board/config/cards-config');
+// Карты объявляются локально ниже
 const userManager = require('./game-board/utils/userManager');
 
 const app = express();
@@ -77,14 +77,21 @@ const TOKENS = [
     { id: 'whale', icon: '🐳', name: 'Кит' }
 ];
 
-const SMALL_DEAL_CARDS = [
+const MARKET_CARDS = [
+    { id: 'mkt_001', name: 'Акции Apple', price: 5000, income: 500, type: 'stock' },
+    { id: 'mkt_002', name: 'Недвижимость', price: 15000, income: 1500, type: 'real_estate' },
+    { id: 'mkt_003', name: 'Бизнес-проект', price: 25000, income: 3000, type: 'business' },
+    { id: 'mkt_004', name: 'Золото', price: 3000, income: 300, type: 'commodity' }
+];
+
+const SMALL_DEALS = [
     { id: 'small_001', name: 'Акции компании', amount: 5000, income: 500, type: 'stock' },
     { id: 'small_002', name: 'Облигации', amount: 3000, income: 250, type: 'bond' },
     { id: 'small_003', name: 'Франшиза кофе-точки', amount: 8000, income: 900, type: 'business' },
     { id: 'small_004', name: 'Мини-склад', amount: 7500, income: 850, type: 'real_estate' }
 ];
 
-const BIG_DEAL_CARDS = [
+const BIG_DEALS = [
     { id: 'big_001', name: 'Жилой комплекс', amount: 45000, income: 5200, type: 'real_estate' },
     { id: 'big_002', name: 'Частная клиника', amount: 60000, income: 6500, type: 'business' },
     { id: 'big_003', name: 'IT-стартап', amount: 80000, income: 9000, type: 'business' },
