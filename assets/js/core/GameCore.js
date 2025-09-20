@@ -107,6 +107,31 @@ export class GameCore {
             } catch (error) {
                 console.warn('⚠️ BankModule не загружен:', error.message);
             }
+
+            // Регистрация новых игровых модулей
+            try {
+                const { CellGenerator } = await import('../modules/game/CellGenerator.js');
+                this.modules.register('cellGenerator', new CellGenerator(this));
+                console.log('✅ CellGenerator зарегистрирован');
+            } catch (error) {
+                console.warn('⚠️ CellGenerator не загружен:', error.message);
+            }
+
+            try {
+                const { TurnController } = await import('../modules/game/TurnController.js');
+                this.modules.register('turnController', new TurnController(this));
+                console.log('✅ TurnController зарегистрирован');
+            } catch (error) {
+                console.warn('⚠️ TurnController не загружен:', error.message);
+            }
+
+            try {
+                const { GameFlowController } = await import('../modules/game/GameFlowController.js');
+                this.modules.register('gameFlowController', new GameFlowController(this));
+                console.log('✅ GameFlowController зарегистрирован');
+            } catch (error) {
+                console.warn('⚠️ GameFlowController не загружен:', error.message);
+            }
             
         } catch (error) {
             console.error('❌ Ошибка регистрации модулей:', error);
@@ -230,6 +255,43 @@ export class GameCore {
         
         // Инициализация игроков
         await this.initPlayers();
+
+        // Инициализация игрового поля
+        await this.initGameBoard();
+
+        // Инициализация системы ходов
+        await this.initTurnSystem();
+    }
+
+    /**
+     * Инициализация игрового поля
+     */
+    async initGameBoard() {
+        const cellGenerator = this.modules.get('cellGenerator');
+        if (cellGenerator) {
+            const cells = cellGenerator.generateGameBoard();
+            console.log(`🎯 Игровое поле инициализировано с ${cells.length} клетками`);
+            
+            // Сохраняем клетки в состоянии
+            this.state.setState({ gameBoard: { cells } });
+        }
+    }
+
+    /**
+     * Инициализация системы ходов
+     */
+    async initTurnSystem() {
+        const turnController = this.modules.get('turnController');
+        const playerManager = this.modules.get('playerManager');
+        
+        if (turnController && playerManager) {
+            const players = playerManager.getPlayers();
+            const turnOrder = turnController.initializeTurns(players);
+            console.log(`🎮 Система ходов инициализирована для ${players.length} игроков`);
+            
+            // Сохраняем порядок ходов в состоянии
+            this.state.setState({ turnSystem: { order: turnOrder } });
+        }
     }
 
     /**
@@ -361,6 +423,113 @@ export class GameCore {
 
     onError(error) {
         console.error('🚨 Ошибка в GameCore:', error);
+    }
+
+    /**
+     * Выполнение игрового хода
+     * @param {string} playerId - ID игрока
+     */
+    async executeTurn(playerId) {
+        if (!this.isRunning) {
+            throw new Error('Игра не запущена');
+        }
+
+        const gameFlowController = this.modules.get('gameFlowController');
+        if (!gameFlowController) {
+            throw new Error('Контроллер игрового процесса не найден');
+        }
+
+        return await gameFlowController.executeTurn(playerId);
+    }
+
+    /**
+     * Начало хода игрока
+     * @param {string} playerId - ID игрока
+     */
+    startPlayerTurn(playerId) {
+        const turnController = this.modules.get('turnController');
+        if (!turnController) {
+            throw new Error('Контроллер ходов не найден');
+        }
+
+        return turnController.startTurn(playerId);
+    }
+
+    /**
+     * Завершение хода игрока
+     * @param {string} playerId - ID игрока
+     * @param {Object} turnResult - Результат хода
+     */
+    endPlayerTurn(playerId, turnResult = {}) {
+        const turnController = this.modules.get('turnController');
+        if (!turnController) {
+            throw new Error('Контроллер ходов не найден');
+        }
+
+        return turnController.endTurn(playerId, turnResult);
+    }
+
+    /**
+     * Получение текущего игрока
+     */
+    getCurrentPlayer() {
+        const turnController = this.modules.get('turnController');
+        if (!turnController) {
+            return null;
+        }
+
+        return turnController.getCurrentPlayer();
+    }
+
+    /**
+     * Получение информации об игровом поле
+     */
+    getGameBoardInfo() {
+        const cellGenerator = this.modules.get('cellGenerator');
+        if (!cellGenerator) {
+            return null;
+        }
+
+        return cellGenerator.getBoardInfo();
+    }
+
+    /**
+     * Получение статистики игры
+     */
+    getGameStats() {
+        const stats = {
+            gameState: {
+                isRunning: this.isRunning,
+                isInitialized: this.isInitialized,
+                currentPlayer: this.getCurrentPlayer()
+            }
+        };
+
+        // Статистика ходов
+        const turnController = this.modules.get('turnController');
+        if (turnController) {
+            stats.turns = turnController.getTurnsStats();
+        }
+
+        // Статистика игрового процесса
+        const gameFlowController = this.modules.get('gameFlowController');
+        if (gameFlowController) {
+            stats.gameFlow = gameFlowController.getGameFlowStats();
+        }
+
+        // Статистика поля
+        const cellGenerator = this.modules.get('cellGenerator');
+        if (cellGenerator) {
+            stats.gameBoard = cellGenerator.getCellsStats();
+        }
+
+        // Статистика кубиков
+        const diceModule = this.modules.get('diceModule');
+        if (diceModule) {
+            stats.dice = diceModule.getStats();
+        }
+
+        return stats;
     }
 
     /**

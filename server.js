@@ -1,9 +1,15 @@
+// EM1 Game Board v2.0 - Main Server with Updated Game Logic
 const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
+const http = require('http');
+const socketIo = require('socket.io');
+const cors = require('cors');
 
 const CreditService = require('./credit-module/CreditService');
 const { GAME_CELLS, GameCellsUtils } = require('./game-board/config/game-cells.js');
+const { MARKET_CARDS, EXPENSE_CARDS, SMALL_DEALS, BIG_DEALS } = require('./game-board/config/cards-config');
+const userManager = require('./game-board/utils/userManager');
 
 const app = express();
 const PORT = process.env.PORT || 8080;

@@ -10,32 +10,51 @@ const DEFAULT_TOKENS = [
 ];
 
 export default class TokenSelector {
-    constructor({ state, container }) {
+    constructor({ state, container, searchInput }) {
         this.state = state;
         this.container = container;
         this.currentTokenId = null;
         this.isProcessing = false;
+        this.searchInput = searchInput || null;
+        this.lastRoom = null;
     }
 
     init() {
         if (!this.container) {
             return;
         }
+        if (this.searchInput) {
+            this.searchInput.addEventListener('input', () => {
+                if (this.lastRoom) {
+                    this.render(this.lastRoom, { force: true });
+                }
+            });
+        }
         this.state.on('change', (room) => this.render(room));
     }
 
-    render(room) {
+    render(room, { force = false } = {}) {
         if (!room) {
             return;
         }
+        this.lastRoom = room;
         const tokens = Array.isArray(room.availableTokens) && room.availableTokens.length
             ? room.availableTokens
             : DEFAULT_TOKENS;
         const player = room.currentPlayer;
         this.currentTokenId = player?.selectedToken ?? null;
-        this.container.innerHTML = '';
+        const query = this.searchInput?.value?.trim().toLowerCase() || '';
+        const list = query
+            ? tokens.filter(token => token.name?.toLowerCase().includes(query) || token.id.toLowerCase().includes(query))
+            : tokens;
 
-        tokens.forEach((token) => {
+        if (!force) {
+            this.container.innerHTML = '';
+        } else {
+            this.container.textContent = '';
+        }
+
+        list.forEach((token) => {
             const button = document.createElement('button');
             button.type = 'button';
             button.className = 'token-item';

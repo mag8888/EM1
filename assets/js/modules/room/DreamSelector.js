@@ -18,32 +18,51 @@ const DEFAULT_DREAMS = [
 ];
 
 export default class DreamSelector {
-    constructor({ state, container }) {
+    constructor({ state, container, searchInput }) {
         this.state = state;
         this.container = container;
         this.currentDreamId = null;
         this.isProcessing = false;
+        this.searchInput = searchInput || null;
+        this.lastRoom = null;
     }
 
     init() {
         if (!this.container) {
             return;
         }
+        if (this.searchInput) {
+            this.searchInput.addEventListener('input', () => {
+                if (this.lastRoom) {
+                    this.render(this.lastRoom, { force: true });
+                }
+            });
+        }
         this.state.on('change', (room) => this.render(room));
     }
 
-    render(room) {
+    render(room, { force = false } = {}) {
         if (!room) {
             return;
         }
+        this.lastRoom = room;
         const dreams = Array.isArray(room.availableDreams) && room.availableDreams.length
             ? room.availableDreams
             : DEFAULT_DREAMS;
         const player = room.currentPlayer;
         this.currentDreamId = player?.selectedDream ?? null;
-        this.container.innerHTML = '';
+        const query = this.searchInput?.value?.trim().toLowerCase() || '';
+        const list = query
+            ? dreams.filter(dream => dream.name.toLowerCase().includes(query))
+            : dreams;
 
-        dreams.forEach((dream) => {
+        if (!force) {
+            this.container.innerHTML = '';
+        } else {
+            this.container.textContent = '';
+        }
+
+        list.forEach((dream) => {
             const item = document.createElement('button');
             item.type = 'button';
             item.className = 'dream-item';

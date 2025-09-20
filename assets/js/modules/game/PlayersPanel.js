@@ -35,6 +35,11 @@ export default class PlayersPanel {
                     <span class="player-card-name">${player.name}</span>
                     <span class="player-card-cash">$${Number(player.cash || 0).toLocaleString()}</span>
                 </div>
+                ${player.profession ? `
+                <div class="player-card-profession">
+                    <span class="player-card-profession-icon">${player.profession.icon || '🚀'}</span>
+                    <span>${player.profession.name}</span>
+                </div>` : ''}
                 <div class="player-card-meta">
                     <span>Доход: $${Number(player.passiveIncome || 0).toLocaleString()}</span>
                     <span>Активы: ${player.assets?.length || 0}</span>

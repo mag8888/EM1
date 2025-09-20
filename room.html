@@ -438,6 +438,27 @@
             margin-bottom: 12px;
         }
 
+        .selection-toolbar {
+            margin-bottom: 12px;
+        }
+
+        .selection-search {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            background: rgba(15, 23, 42, 0.7);
+            color: white;
+            font-size: 14px;
+            transition: border 0.2s ease;
+        }
+
+        .selection-search:focus {
+            outline: none;
+            border-color: rgba(59, 130, 246, 0.6);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
         .dream-list,
         .token-list {
             display: grid;
@@ -669,12 +690,18 @@
                     <div class="selection-card dream-selection">
                         <div class="panel-title">Выберите мечту</div>
                         <div class="selection-description">Выберите цель, к которой вы будете идти во время игры.</div>
+                        <div class="selection-toolbar">
+                            <input type="search" id="dreamSearch" class="selection-search" placeholder="Поиск мечты...">
+                        </div>
                         <div class="dream-list" id="dreamList"></div>
                     </div>
 
                     <div class="selection-card token-selection">
                         <div class="panel-title">Выберите фишку</div>
                         <div class="selection-description">Выберите фишку, которая будет представлять вас на поле.</div>
+                        <div class="selection-toolbar">
+                            <input type="search" id="tokenSearch" class="selection-search" placeholder="Поиск фишки...">
+                        </div>
                         <div class="token-list" id="tokenList"></div>
                     </div>
                 </div>

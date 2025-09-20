@@ -49,14 +49,16 @@ export default class RoomModule {
     setupModules() {
         const dreamSelector = new DreamSelector({
             state: this.state,
-            container: document.getElementById('dreamList')
+            container: document.getElementById('dreamList'),
+            searchInput: document.getElementById('dreamSearch')
         });
         dreamSelector.init();
         this.modules.push(dreamSelector);
 
         const tokenSelector = new TokenSelector({
             state: this.state,
-            container: document.getElementById('tokenList')
+            container: document.getElementById('tokenList'),
+            searchInput: document.getElementById('tokenSearch')
         });
         tokenSelector.init();
         this.modules.push(tokenSelector);

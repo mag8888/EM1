@@ -124,7 +124,44 @@ app.use(express.json());
 // Helpers --------------------------------------------------------------
 const getPlayerIdentifier = (player) => player?.userId || player?.id || null;
 
-const createRoomPlayer = ({ user, isHost = false, socketId = null }) => ({
+const DEFAULT_STATS = () => ({
+    turnsTaken: 0,
+    diceRolled: 0,
+    dealsBought: 0,
+    dealsSkipped: 0,
+    dealsTransferred: 0,
+    assetsOwned: 0,
+    assetsSold: 0,
+    incomeReceived: 0,
+    expensesPaid: 0
+});
+
+const PROFESSIONS_INDEX = {
+    entrepreneur: {
+        id: 'entrepreneur',
+        name: 'Предприниматель',
+        description: 'Владелец успешного бизнеса',
+        salary: 10000,
+        expenses: 6200,
+        cashFlow: 3800,
+        icon: '🚀'
+    },
+    doctor: {
+        id: 'doctor',
+        name: 'Врач',
+        description: 'Специалист в области медицины',
+        salary: 8000,
+        expenses: 4500,
+        cashFlow: 3500,
+        icon: '👨‍⚕️'
+    }
+};
+
+const getProfessionCard = (professionId) => {
+    return PROFESSIONS_INDEX[professionId] || PROFESSIONS_INDEX.entrepreneur;
+};
+
+const createRoomPlayer = ({ user, isHost = false, socketId = null, professionId = 'entrepreneur' }) => ({
     userId: user.id,
     id: user.id, // alias for backward compatibility
     name: user.username,
@@ -137,7 +174,11 @@ const createRoomPlayer = ({ user, isHost = false, socketId = null }) => ({
     joinedAt: new Date().toISOString(),
     position: 0,
     cash: 10000,
-    passiveIncome: 0
+    passiveIncome: 0,
+    assets: [],
+    stats: DEFAULT_STATS(),
+    professionId,
+    profession: getProfessionCard(professionId)
 });
 
 const sanitizePlayer = (player = {}) => ({
@@ -148,7 +189,13 @@ const sanitizePlayer = (player = {}) => ({
     isReady: Boolean(player.isReady),
     selectedToken: player.selectedToken ?? player.token ?? null,
     selectedDream: player.selectedDream ?? player.dream ?? null,
-    joinedAt: player.joinedAt || null
+    joinedAt: player.joinedAt || null,
+    position: player.position || 0,
+    cash: player.cash ?? 10000,
+    passiveIncome: player.passiveIncome ?? 0,
+    assets: Array.isArray(player.assets) ? player.assets : [],
+    stats: player.stats || DEFAULT_STATS(),
+    profession: getProfessionCard(player.professionId)
 });
 
 const sanitizeRoom = (room, { requestingUserId = null } = {}) => {
@@ -183,6 +230,18 @@ const sanitizeRoom = (room, { requestingUserId = null } = {}) => {
 
 const broadcastRoomsUpdate = () => {
     io.emit('roomsUpdate', serverRooms.map(room => sanitizeRoom(room)));
+};
+
+const normalizeTurnOrder = (room) => {
+    if (!room.gameState) return;
+    const existingIds = new Set(room.players.map(player => getPlayerIdentifier(player)));
+    room.gameState.turnOrder = (room.gameState.turnOrder || []).filter(id => existingIds.has(id));
+    if (room.gameState.turnOrder.length === 0) {
+        room.gameState.turnOrder = Array.from(existingIds);
+        room.gameState.activePlayerIndex = 0;
+    } else {
+        room.gameState.activePlayerIndex = room.gameState.activePlayerIndex % room.gameState.turnOrder.length;
+    }
 };
 
 const getRequestUserId = (req) => {
@@ -239,6 +298,7 @@ const ensureGameState = (room) => {
             history: []
         };
     }
+    normalizeTurnOrder(room);
     return room.gameState;
 };
 
@@ -275,6 +335,109 @@ const buildGameState = (room, userId) => {
         lastRoll: gameState.lastRoll,
         players,
         currentPlayer
+    };
+};
+
+const rollDiceValues = () => {
+    const die1 = Math.floor(Math.random() * 6) + 1;
+    const die2 = Math.floor(Math.random() * 6) + 1;
+    return {
+        values: [die1, die2],
+        total: die1 + die2,
+        isDouble: die1 === die2
+    };
+};
+
+const getActivePlayer = (room) => {
+    if (!room.gameState || !room.gameState.turnOrder.length) return null;
+    const activePlayerId = room.gameState.turnOrder[room.gameState.activePlayerIndex];
+    return room.players.find(player => getPlayerIdentifier(player) === activePlayerId) || null;
+};
+
+const advanceTurn = (room) => {
+    if (!room.gameState || !room.gameState.turnOrder.length) {
+        return;
+    }
+    room.gameState.activePlayerIndex = (room.gameState.activePlayerIndex + 1) % room.gameState.turnOrder.length;
+    room.gameState.lastRoll = null;
+    room.gameState.phase = 'awaiting_roll';
+    room.gameState.roundsCompleted += room.gameState.activePlayerIndex === 0 ? 1 : 0;
+};
+
+const BOARD_SIZE = GAME_CELLS.length || 40;
+const PASS_START_BONUS = 2000;
+
+const applyCellEffects = (room, player, cell, events) => {
+    if (!cell) return;
+    const effects = cell.effects || {};
+
+    if (effects.income) {
+        const income = 2000;
+        player.cash += income;
+        player.stats.incomeReceived += income;
+        events.push({ type: 'income', amount: income, description: cell.name });
+    }
+
+    if (typeof effects.cashMultiplier === 'number') {
+        const delta = Math.round(player.cash * effects.cashMultiplier);
+        player.cash += delta;
+        if (delta >= 0) {
+            events.push({ type: 'bonus', amount: delta, description: cell.name });
+        } else {
+            player.stats.expensesPaid += Math.abs(delta);
+            events.push({ type: 'expense', amount: delta, description: cell.name });
+        }
+    }
+
+    if (typeof effects.monthlyIncome === 'number') {
+        player.passiveIncome += effects.monthlyIncome;
+        events.push({ type: 'income', amount: effects.monthlyIncome, description: `Пассивный доход: ${cell.name}` });
+    }
+
+    if (cell.type === 'dream') {
+        player.dreamAchieved = true;
+        events.push({ type: 'dream', description: `Мечта достигнута: ${cell.name}` });
+    }
+};
+
+const movePlayer = (room, player, rollResult) => {
+    const oldPosition = player.position || 0;
+    const totalSteps = rollResult.total;
+    const rawPosition = oldPosition + totalSteps;
+    const newPosition = BOARD_SIZE
+        ? ((rawPosition % BOARD_SIZE) + BOARD_SIZE) % BOARD_SIZE
+        : rawPosition;
+
+    let passedStart = false;
+    if (BOARD_SIZE && rawPosition >= BOARD_SIZE) {
+        passedStart = true;
+        player.cash += PASS_START_BONUS;
+        player.stats.incomeReceived += PASS_START_BONUS;
+    }
+
+    player.position = newPosition;
+
+    const cell = BOARD_SIZE ? GAME_CELLS[newPosition] : null;
+    const events = [];
+
+    applyCellEffects(room, player, cell, events);
+
+    player.stats.diceRolled += 1;
+
+    return {
+        playerId: player.userId,
+        oldPosition,
+        newPosition,
+        passedStart,
+        cell: cell
+            ? {
+                id: cell.id,
+                name: cell.name,
+                type: cell.type,
+                icon: cell.icon
+            }
+            : null,
+        events
     };
 };
 
@@ -872,7 +1035,8 @@ app.post('/api/rooms/:roomId/join', (req, res) => {
         const existingPlayer = room.players.find(p => getPlayerIdentifier(p) === user.id);
         if (existingPlayer) {
             existingPlayer.socketId = existingPlayer.socketId || null;
-            existingPlayer.isReady = existingPlayer.isReady || false;
+            existingPlayer.isReady = Boolean(existingPlayer.isReady);
+            existingPlayer.stats = existingPlayer.stats || DEFAULT_STATS();
             respondWithRoom(res, room, user.id);
             return;
         }
@@ -880,7 +1044,8 @@ app.post('/api/rooms/:roomId/join', (req, res) => {
         // Добавляем игрока
         const newPlayer = createRoomPlayer({
             user,
-            isHost: room.players.length === 0
+            isHost: room.players.length === 0,
+            professionId: room.defaultProfession || 'entrepreneur'
         });
 
         room.players.push(newPlayer);
@@ -1074,6 +1239,87 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
         res.json({ success: true, state: gameState });
     } catch (error) {
         console.error('Ошибка получения состояния игры:', error);
+        sendRoomError(res, error);
+    }
+});
+
+app.post('/api/rooms/:roomId/roll', (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const room = requireServerRoom(roomId);
+        const userId = getRequestUserId(req);
+        const player = requireRoomPlayer(room, userId);
+
+        ensureGameState(room);
+        const activePlayer = getActivePlayer(room);
+        if (!activePlayer || getPlayerIdentifier(activePlayer) !== userId) {
+            throw Object.assign(new Error('Сейчас не ваш ход'), { status: 403 });
+        }
+
+        const phase = room.gameState.phase || 'awaiting_roll';
+        if (phase !== 'awaiting_roll') {
+            throw Object.assign(new Error('Бросок кубиков сейчас недоступен'), { status: 400 });
+        }
+
+        const roll = rollDiceValues();
+        const move = movePlayer(room, player, roll);
+
+        room.gameState.lastRoll = {
+            playerId: player.userId,
+            values: roll.values,
+            total: roll.total,
+            cell: move.cell
+        };
+        room.gameState.phase = 'awaiting_end';
+        room.gameState.history.push({
+            type: 'roll',
+            playerId: player.userId,
+            values: roll.values,
+            total: roll.total,
+            timestamp: Date.now()
+        });
+
+        player.stats.turnsTaken = player.stats.turnsTaken || 0;
+
+        broadcastRoomsUpdate();
+
+        res.json({
+            success: true,
+            roll,
+            move,
+            state: buildGameState(room, userId)
+        });
+    } catch (error) {
+        console.error('Ошибка броска кубиков:', error);
+        sendRoomError(res, error);
+    }
+});
+
+app.post('/api/rooms/:roomId/end-turn', (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const room = requireServerRoom(roomId);
+        const userId = getRequestUserId(req);
+        const player = requireRoomPlayer(room, userId);
+
+        ensureGameState(room);
+        const activePlayer = getActivePlayer(room);
+        if (!activePlayer || getPlayerIdentifier(activePlayer) !== userId) {
+            throw Object.assign(new Error('Сейчас не ваш ход'), { status: 403 });
+        }
+
+        if (!(room.gameState.phase === 'awaiting_end' || room.gameState.phase === 'awaiting_roll')) {
+            throw Object.assign(new Error('Невозможно завершить ход сейчас'), { status: 400 });
+        }
+
+        player.stats.turnsTaken = (player.stats.turnsTaken || 0) + 1;
+
+        advanceTurn(room);
+        broadcastRoomsUpdate();
+
+        res.json({ success: true, state: buildGameState(room, userId) });
+    } catch (error) {
+        console.error('Ошибка завершения хода:', error);
         sendRoomError(res, error);
     }
 });
