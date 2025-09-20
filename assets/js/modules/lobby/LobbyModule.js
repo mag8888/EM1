@@ -69,6 +69,9 @@ export class LobbyModule {
             });
         }
 
+        const logoutBtn = document.querySelector('.logout-btn');
+        logoutBtn?.addEventListener('click', () => this.logout());
+
         if (this.dom.createRoomModal) {
             const closeBtn = this.dom.createRoomModal.querySelector('.close-btn');
             closeBtn?.addEventListener('click', () => this.hideCreateRoomModal());
@@ -356,11 +359,18 @@ export class LobbyModule {
         try {
             this.showLoader(this.dom.createRoomLoading, true);
             const room = await this.api.createRoom(payload);
-            this.hideCreateRoomModal();
             if (room?.id) {
-                await this.api.joinRoom(room.id, {});
+                localStorage.setItem('currentRoomId', room.id);
+                try {
+                    await this.api.joinRoom(room.id, {});
+                } catch (joinError) {
+                    console.warn('Auto-join after creation failed:', joinError);
+                }
+                this.hideCreateRoomModal();
                 window.location.href = `/room/${room.id}`;
+                return;
             }
+            this.showError(this.dom.createRoomError, 'Комната создана, но отсутствует идентификатор');
         } catch (error) {
             this.showError(this.dom.createRoomError, error.message || 'Не удалось создать комнату');
         } finally {
@@ -371,14 +381,20 @@ export class LobbyModule {
 
     async joinRoom(roomId) {
         if (!roomId) return;
+        const room = this.rooms.find(r => r.id === roomId);
         try {
-            this.showJoinRoomModal(roomId);
-            const password = this.dom.joinRoomPassword?.value;
-            await this.api.joinRoom(roomId, password ? { password } : {});
+            await this.api.joinRoom(roomId, {});
+            localStorage.setItem('currentRoomId', roomId);
             window.location.href = `/room/${roomId}`;
         } catch (error) {
-            this.showError(this.dom.joinRoomError, error.message || 'Не удалось присоединиться к комнате');
-            this.showLoader(this.dom.joinRoomLoading, false);
+            if (room?.requiresPassword) {
+                this.showJoinRoomModal(roomId);
+                this.showError(this.dom.joinRoomError, error.message || 'Требуется пароль комнаты');
+            } else {
+                this.showJoinRoomModal(roomId);
+                this.showError(this.dom.joinRoomError, error.message || 'Не удалось присоединиться к комнате');
+                this.showLoader(this.dom.joinRoomLoading, false);
+            }
         }
     }
 
@@ -388,6 +404,7 @@ export class LobbyModule {
             this.showLoader(this.dom.joinRoomLoading, true);
             const password = this.dom.joinRoomPassword?.value;
             await this.api.joinRoom(this.selectedRoomId, password ? { password } : {});
+            localStorage.setItem('currentRoomId', this.selectedRoomId);
             window.location.href = `/room/${this.selectedRoomId}`;
         } catch (error) {
             this.showError(this.dom.joinRoomError, error.message || 'Не удалось присоединиться к комнате');
@@ -401,7 +418,14 @@ export class LobbyModule {
         if (!available) {
             return this.showError(this.dom.createRoomError, 'Нет доступных комнат. Создайте свою!');
         }
-        await this.joinRoom(available.id);
+        try {
+            const password = available.requiresPassword ? this.dom.joinRoomPassword?.value : null;
+            await this.api.joinRoom(available.id, password ? { password } : {});
+            localStorage.setItem('currentRoomId', available.id);
+            window.location.href = `/room/${available.id}`;
+        } catch (error) {
+            this.showError(this.dom.createRoomError, error.message || 'Не удалось присоединиться к комнате');
+        }
     }
 
     showLoader(element, show) {

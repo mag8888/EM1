@@ -831,6 +831,15 @@ app.get('/health', (req, res) => {
 // Страница банковского модуля
 registerPage('/bank/modal', 'bank-module-v4/bank-modal-v4.html');
 
+// Динамические страницы
+app.get('/room/:roomId', (req, res) => {
+    res.sendFile(resolvePath('room.html'));
+});
+
+app.get('/game/:roomId', (req, res) => {
+    res.sendFile(resolvePath('game-board/game.html'));
+});
+
 // ---------------------------- Rooms API ----------------------------------
 app.get('/api/rooms', (req, res) => {
     const list = Array.from(rooms.values())
