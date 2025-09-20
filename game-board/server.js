@@ -46,11 +46,6 @@ app.get('/test', (req, res) => {
     res.sendFile(path.join(__dirname, 'test-board.html'));
 });
 
-// Маршрут для банковского игрового поля
-app.get('/test-banking', (req, res) => {
-    res.sendFile(path.join(__dirname, 'test-banking-board.html'));
-});
-
 // Маршрут для документации
 app.get('/docs', (req, res) => {
     res.sendFile(path.join(__dirname, 'README.md'));
@@ -67,7 +62,6 @@ app.use((req, res) => {
             '/lobby', 
             '/game',
             '/test',
-            '/test-banking',
             '/docs',
             '/api/health'
         ]

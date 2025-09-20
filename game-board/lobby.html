@@ -3,15 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>Лобби - Game Board v2.0 - Богатый дизайн</title>
+    <title>Энергия Денег — Лобби</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* БОГАТЫЙ СОВРЕМЕННЫЙ ДИЗАЙН v4.0 - БАНКОВСКИЙ СТИЛЬ */
+        :root {
+            --page-bg-start: #0f1323;
+            --page-bg-end: #191f33;
+            --board-size: 840px;
+            --outer-cell-size: 36px;
+            --outer-cell-gap: 4px;
+            --inner-cell-size: 54px;
+            --sidebar-width: 320px;
+            --panel-bg: rgba(21, 27, 42, 0.9);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            color-scheme: dark;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -20,1412 +29,669 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #1a1d24 0%, #242830 50%, #1a1d24 100%);
-            color: #ffffff;
-            line-height: 1.6;
             min-height: 100vh;
+            background: radial-gradient(circle at 15% 20%, rgba(0, 234, 255, 0.15) 0%, transparent 55%),
+                        radial-gradient(circle at 80% 80%, rgba(255, 0, 128, 0.15) 0%, transparent 55%),
+                        linear-gradient(150deg, var(--page-bg-start) 0%, var(--page-bg-end) 50%, #0c111d 100%);
+            color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 32px 48px;
             position: relative;
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
         body::before {
             content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 20%, rgba(0, 255, 150, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(255, 100, 200, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 40% 60%, rgba(100, 200, 255, 0.1) 0%, transparent 50%);
+            position: absolute;
+            inset: -40%;
+            background: radial-gradient(circle, rgba(255, 199, 0, 0.08) 0%, transparent 55%);
+            filter: blur(40px);
+            opacity: 0.7;
             pointer-events: none;
-            z-index: 1;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 24px;
+        .page-shell {
+            width: min(1600px, 100%);
+            display: flex;
+            gap: 56px;
+            align-items: center;
+            justify-content: center;
             position: relative;
             z-index: 2;
         }
 
-        /* Header */
-        .header {
+        .board-wrapper {
+            position: relative;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 0;
-            margin-bottom: 32px;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
-            padding: 16px 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
-            display: flex;
-            align-items: center;
             justify-content: center;
-            color: white;
-            font-weight: 700;
-            font-size: 18px;
-            box-shadow: 0 4px 16px rgba(0, 255, 150, 0.4);
-            position: relative;
-        }
-
-        .avatar::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(135deg, #00ff96, #00d4aa, #00bfff);
-            border-radius: 50%;
-            z-index: -1;
-            animation: rotate 3s linear infinite;
-        }
-
-        .user-details h3 {
-            font-size: 18px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 4px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .user-details p {
-            font-size: 14px;
-            color: #a0a0a0;
-            font-weight: 500;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 12px;
-        }
-
-        .btn {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
             align-items: center;
-            gap: 8px;
+        }
+
+        .board-frame {
             position: relative;
+            width: var(--board-size);
+            height: var(--board-size);
+            border-radius: 48px;
+            background: linear-gradient(160deg, #141b2f 0%, #121728 45%, #111523 100%);
+            box-shadow: 0 40px 120px rgba(0, 0, 0, 0.55), inset 0 0 60px rgba(255, 255, 255, 0.04);
             overflow: hidden;
         }
 
-        .btn::before {
+        .board-frame::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
+            inset: 18px;
+            border-radius: 40px;
+            background: radial-gradient(circle at 50% 45%, rgba(255, 213, 0, 0.12) 0%, transparent 60%),
+                        linear-gradient(200deg, rgba(30, 45, 80, 0.6) 0%, rgba(18, 23, 37, 0.9) 60%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            filter: blur(0.2px);
         }
 
-        .btn:hover::before {
-            left: 100%;
+        .outer-track,
+        .inner-track {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .track-cell {
+            position: absolute;
+            width: var(--outer-cell-size);
+            height: var(--outer-cell-size);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+            border: 2px solid rgba(255, 255, 255, 0.18);
+            pointer-events: auto;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .track-cell:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.45);
+        }
+
+        .cell-number {
+            position: absolute;
+            top: 4px;
+            left: 6px;
+            font-size: 11px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.92);
+            text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .cell-icon {
+            font-size: 18px;
+            filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.35));
+        }
+
+        .cell-pink { background: linear-gradient(145deg, #ff4f93 0%, #ff2780 100%); }
+        .cell-green { background: linear-gradient(145deg, #32df8d 0%, #19b86a 100%); }
+        .cell-teal { background: linear-gradient(145deg, #25d0ff 0%, #0090f5 100%); }
+        .cell-purple { background: linear-gradient(145deg, #a769ff 0%, #7351ff 100%); }
+        .cell-orange { background: linear-gradient(145deg, #ffb347 0%, #ff8c42 100%); }
+        .cell-yellow { background: linear-gradient(145deg, #ffd65a 0%, #ffb700 100%); color: #332c00; }
+        .cell-blue { background: linear-gradient(145deg, #4e95ff 0%, #2563eb 100%); }
+        .cell-red { background: linear-gradient(145deg, #ff6b6b 0%, #ff3b3b 100%); }
+        .cell-slate { background: linear-gradient(145deg, #34435a 0%, #1e2838 100%); }
+
+        .inner-track .track-cell {
+            width: var(--inner-cell-size);
+            height: var(--inner-cell-size);
+            border-radius: 14px;
+            font-size: 14px;
+            gap: 2px;
+            border-width: 1.5px;
+        }
+
+        .inner-track .cell-number {
+            font-size: 12px;
+            top: 6px;
+            right: 6px;
+            left: auto;
+        }
+
+        .center-wheel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 210px;
+            height: 210px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 40%, rgba(255, 209, 64, 0.75) 0%, rgba(255, 166, 0, 0.75) 30%, rgba(25, 25, 25, 0.95) 60%);
+            box-shadow: 0 0 40px rgba(255, 196, 0, 0.4), inset 0 0 40px rgba(0, 0, 0, 0.45);
+            border: 4px solid rgba(255, 205, 92, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .center-wheel::before {
+            content: '';
+            position: absolute;
+            inset: 18px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 45%, rgba(0, 0, 0, 0.9) 0%, rgba(40, 40, 40, 1) 65%, rgba(0, 0, 0, 0.92) 100%);
+            border: 2px solid rgba(255, 205, 92, 0.4);
+        }
+
+        .center-wheel::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .center-wheel:hover {
+            transform: translate(-50%, -50%) scale(1.03);
+            box-shadow: 0 0 60px rgba(255, 196, 0, 0.55), inset 0 0 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .center-wheel.spin::after {
+            opacity: 1;
+        }
+
+        .wheel-number {
+            position: relative;
+            font-size: 72px;
+            font-weight: 800;
+            color: #ffd15a;
+            text-shadow: 0 0 18px rgba(255, 196, 0, 0.5);
+            z-index: 2;
+        }
+
+        .special-card {
+            position: absolute;
+            width: 180px;
+            height: 140px;
+            border-radius: 20px;
+            backdrop-filter: blur(12px);
+            background: linear-gradient(160deg, rgba(25, 36, 58, 0.88) 0%, rgba(14, 21, 37, 0.94) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .special-card::after {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border-radius: 24px;
+            background: linear-gradient(120deg, rgba(0, 255, 234, 0.35), rgba(255, 0, 128, 0.25));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+
+        .special-card.highlight::after {
+            opacity: 1;
+        }
+
+        .special-title {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .special-metric {
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .special-card.big-deal {
+            top: 120px;
+            left: 120px;
+            border-color: rgba(0, 224, 255, 0.5);
+            box-shadow: 0 18px 36px rgba(0, 224, 255, 0.2);
+        }
+
+        .special-card.small-deal {
+            top: 120px;
+            right: 120px;
+            border-color: rgba(0, 132, 255, 0.5);
+            box-shadow: 0 18px 36px rgba(0, 132, 255, 0.18);
+        }
+
+        .special-card.expenses {
+            bottom: 140px;
+            left: 140px;
+            border-color: rgba(255, 64, 128, 0.55);
+            box-shadow: 0 20px 38px rgba(255, 64, 128, 0.2);
+        }
+
+        .special-card.market {
+            bottom: 140px;
+            right: 140px;
+            border-color: rgba(0, 255, 180, 0.55);
+            box-shadow: 0 20px 38px rgba(0, 255, 180, 0.18);
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 24px;
+            padding: 26px;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+        }
+
+        .panel h3 {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.82);
+            margin-bottom: 18px;
+        }
+
+        .finance-grid {
+            display: grid;
+            gap: 14px;
+        }
+
+        .finance-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .finance-value {
+            font-weight: 700;
+            color: #15f7a4;
+        }
+
+        .finance-value.negative {
+            color: #ff6b8a;
+        }
+
+        .panel-note {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.45);
+            margin-top: 16px;
+            line-height: 1.5;
+        }
+
+        .loan-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(9, 132, 227, 0.2) 0%, rgba(9, 132, 227, 0.05) 100%);
+            border: 1px solid rgba(9, 132, 227, 0.3);
+            margin-bottom: 16px;
+        }
+
+        .loan-status.ok {
+            background: linear-gradient(135deg, rgba(29, 233, 182, 0.15) 0%, rgba(29, 233, 182, 0.05) 100%);
+            border-color: rgba(29, 233, 182, 0.35);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            border: none;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #16f79e 0%, #06b973 100%);
+            color: #03110a;
+            box-shadow: 0 14px 24px rgba(6, 185, 115, 0.35);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff3b3b 100%);
+            color: #fff;
+            box-shadow: 0 14px 28px rgba(255, 59, 59, 0.35);
         }
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
-            color: #1a1d24;
-            box-shadow: 0 4px 16px rgba(0, 255, 150, 0.3);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(20px);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
-            color: #ffffff;
-            box-shadow: 0 4px 16px rgba(255, 71, 87, 0.3);
-        }
-
-        /* Main Layout */
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 32px;
-        }
-
-        /* Rooms Section */
-        .rooms-section h2 {
-            font-size: 28px;
+        .assets-total {
+            font-size: 42px;
             font-weight: 800;
-            color: #ffffff;
-            margin-bottom: 24px;
+            color: #16f79e;
+            text-shadow: 0 0 22px rgba(22, 247, 158, 0.35);
+        }
+
+        .assets-caption {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.55);
+            margin-top: 4px;
+        }
+
+        .turn-state {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .create-room-btn {
-            background: linear-gradient(135deg, #00bfff 0%, #0099cc 100%);
-            color: white;
-            border: none;
-            padding: 14px 24px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 16px rgba(0, 191, 255, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .create-room-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .create-room-btn:hover::before {
-            left: 100%;
-        }
-
-        .create-room-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 191, 255, 0.4);
-        }
-
-        .rooms-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 20px;
-        }
-
-        .room-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            padding: 24px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .room-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #00ff96, #00bfff, #ff6b6b, #ffd93d);
-            background-size: 200% 100%;
-            animation: gradientShift 3s ease infinite;
-        }
-
-        .room-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            border-color: rgba(0, 255, 150, 0.5);
-        }
-
-        .room-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 16px;
-        }
-
-        .room-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #ffffff;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .room-status {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .status-waiting {
-            background: linear-gradient(135deg, #ffd93d 0%, #ffb347 100%);
-            color: #1a1d24;
-        }
-
-        .status-playing {
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
-            color: #1a1d24;
-        }
-
-        .status-full {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
-            color: #ffffff;
-        }
-
-        .room-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            font-size: 14px;
-            color: #a0a0a0;
-            font-weight: 500;
-        }
-
-        .room-players {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-
-        .player-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: 700;
-            color: white;
-            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-            position: relative;
-        }
-
-        .player-avatar::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(135deg, #ff6b6b, #ff8e8e, #ffb3ba);
-            border-radius: 50%;
-            z-index: -1;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        .room-actions {
-            display: flex;
-            gap: 12px;
-        }
-
-        .join-btn {
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
-            color: #1a1d24;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 16px rgba(0, 255, 150, 0.3);
-            flex: 1;
-        }
-
-        .join-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 255, 150, 0.4);
-        }
-
-        .join-btn:disabled {
-            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-            color: #ffffff;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .sidebar-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            padding: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .sidebar-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #00ff96, #00bfff, #ff6b6b);
-            background-size: 200% 100%;
-            animation: gradientShift 4s ease infinite;
-        }
-
-        .sidebar-card h3 {
-            font-size: 20px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 20px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
+            padding: 16px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(123, 97, 255, 0.25) 0%, rgba(123, 97, 255, 0.12) 100%);
+            border: 1px solid rgba(123, 97, 255, 0.4);
             font-weight: 600;
-            color: #ffffff;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            color: rgba(255, 255, 255, 0.82);
         }
 
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 14px 16px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #ffffff;
-            backdrop-filter: blur(20px);
-            transition: all 0.3s ease;
+        .turn-state .state-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.5);
         }
 
-        .form-group input::placeholder {
-            color: #a0a0a0;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #00ff96;
-            box-shadow: 0 0 0 3px rgba(0, 255, 150, 0.2);
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .quick-start-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #00bfff 0%, #0099cc 100%);
-            color: white;
-            border: none;
-            padding: 16px 24px;
-            border-radius: 12px;
+        .turn-state .state-value {
             font-size: 16px;
             font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 16px rgba(0, 191, 255, 0.3);
-            position: relative;
-            overflow: hidden;
         }
 
-        .quick-start-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .quick-start-btn:hover::before {
-            left: 100%;
-        }
-
-        .quick-start-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 191, 255, 0.4);
-        }
-
-        .player-list {
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .player-item {
+        .timer-display {
             display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .player-item:last-child {
-            border-bottom: none;
-        }
-
-        .player-item:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            padding-left: 8px;
-            padding-right: 8px;
-        }
-
-        .player-status {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            box-shadow: 0 0 8px rgba(0, 255, 150, 0.5);
-        }
-
-        .player-status.away {
-            background: #ffd93d;
-            box-shadow: 0 0 8px rgba(255, 217, 61, 0.5);
-        }
-
-        .player-status.busy {
-            background: #ff6b6b;
-            box-shadow: 0 0 8px rgba(255, 107, 107, 0.5);
-        }
-
-        .player-name {
-            font-size: 14px;
-            color: #ffffff;
-            font-weight: 500;
-        }
-
-        /* Animations */
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .room-card {
-            animation: fadeInUp 0.6s ease forwards;
-        }
-
-        .sidebar-card {
-            animation: fadeInUp 0.6s ease forwards;
-        }
-
-        /* Mobile Navigation */
-        .mobile-nav {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(135deg, rgba(26, 29, 36, 0.95) 0%, rgba(36, 40, 48, 0.95) 100%);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 12px 16px;
-            z-index: 1000;
-        }
-
-        .mobile-nav-buttons {
-            display: flex;
-            justify-content: space-around;
-            gap: 8px;
-        }
-
-        .mobile-nav-btn {
-            flex: 1;
-            padding: 12px 8px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            color: #ffffff;
-            text-decoration: none;
-            text-align: center;
-            font-size: 10px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .mobile-nav-btn:hover {
-            background: linear-gradient(135deg, rgba(0, 255, 150, 0.2) 0%, rgba(0, 212, 170, 0.1) 100%);
-            border-color: rgba(0, 255, 150, 0.5);
-        }
-
-        .mobile-nav-btn.active {
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
-            color: #1a1d24;
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(15px);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .modal.show {
-            display: flex;
-        }
-
-        .modal-content {
-            background: linear-gradient(135deg, rgba(26, 29, 36, 0.95) 0%, rgba(36, 40, 48, 0.9) 100%);
-            backdrop-filter: blur(30px);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 20px;
-            padding: 32px;
-            max-width: 500px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 
-                0 25px 50px rgba(0, 0, 0, 0.5),
-                0 0 0 1px rgba(255, 255, 255, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-            position: relative;
-            animation: modalSlideIn 0.3s ease;
-        }
-
-        .modal-content::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #00ff96, #00bfff, #ff6b6b, #ffd93d);
-            background-size: 200% 100%;
-            animation: gradientShift 3s ease infinite;
-        }
-
-        /* Custom scrollbar for modal */
-        .modal-content::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .modal-content::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-        }
-
-        .modal-content::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
-            border-radius: 4px;
-        }
-
-        .modal-content::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #00e687 0%, #00c49a 100%);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-
-        .modal-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #ffffff;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: #a0a0a0;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .modal-close:hover {
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .modal-body {
-            margin-bottom: 24px;
-        }
-
-        .modal-form-group {
-            margin-bottom: 20px;
-        }
-
-        .modal-form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #ffffff;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-        }
-
-        .modal-form-group input,
-        .modal-form-group select,
-        .modal-form-group textarea {
-            width: 100%;
-            padding: 14px 16px;
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #ffffff;
-            backdrop-filter: blur(20px);
-            transition: all 0.3s ease;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
-        }
-
-        .modal-form-group input::placeholder,
-        .modal-form-group textarea::placeholder {
-            color: #a0a0a0;
-        }
-
-        .modal-form-group input:focus,
-        .modal-form-group select:focus,
-        .modal-form-group textarea:focus {
-            outline: none;
-            border-color: #00ff96;
-            box-shadow: 
-                0 0 0 3px rgba(0, 255, 150, 0.3),
-                inset 0 1px 3px rgba(0, 0, 0, 0.2);
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .modal-footer {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-
-        .modal-btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .modal-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .modal-btn:hover::before {
-            left: 100%;
-        }
-
-        .modal-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-        }
-
-        .modal-btn-primary {
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
-            color: #1a1d24;
-            box-shadow: 0 4px 16px rgba(0, 255, 150, 0.3);
-        }
-
-        .modal-btn-secondary {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-50px) scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        /* Players Preview */
-        .players-preview {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .player-preview {
-            display: flex;
-            align-items: center;
+            align-items: baseline;
             gap: 6px;
-            background: linear-gradient(135deg, rgba(0, 255, 150, 0.1) 0%, rgba(0, 212, 170, 0.05) 100%);
-            border: 1px solid rgba(0, 255, 150, 0.3);
-            border-radius: 8px;
-            padding: 6px 10px;
-            font-size: 12px;
-            color: #ffffff;
-        }
-
-        .player-preview-avatar {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
             font-weight: 700;
-            color: #1a1d24;
+            color: rgba(255, 255, 255, 0.85);
         }
 
-        .profession-info {
-            background: linear-gradient(135deg, rgba(0, 191, 255, 0.1) 0%, rgba(0, 153, 204, 0.05) 100%);
-            border: 1px solid rgba(0, 191, 255, 0.3);
-            border-radius: 6px;
-            padding: 8px;
-            margin-top: 6px;
-            font-size: 11px;
-            color: #a0a0a0;
+        .timer-value {
+            font-size: 32px;
+            font-weight: 800;
         }
 
-        .profession-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-            margin-top: 6px;
+        @keyframes spinOnce {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
-        .stat-item {
-            text-align: center;
-            padding: 3px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 3px;
+        .center-wheel.spin {
+            animation: spinOnce 0.8s ease forwards;
         }
 
-        .stat-value {
-            font-weight: 700;
-            color: #00ff96;
-            font-size: 11px;
-        }
-
-        .stat-label {
-            font-size: 9px;
-            color: #a0a0a0;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .container {
-                padding-bottom: 80px;
-            }
-
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-            
-            .header {
+        @media (max-width: 1460px) {
+            .page-shell {
                 flex-direction: column;
-                gap: 20px;
-                align-items: flex-start;
+                gap: 40px;
             }
-            
-            .rooms-grid {
-                grid-template-columns: 1fr;
+            .sidebar {
+                width: 100%;
+                max-width: 420px;
             }
+        }
 
-            .mobile-nav {
-                display: block;
+        @media (max-width: 960px) {
+            body {
+                padding: 24px;
+            }
+            .board-frame {
+                transform: scale(0.82);
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="user-info">
-                <div class="avatar">X</div>
-                <div class="user-details">
-                    <h3 id="user-name">xqrmedia</h3>
-                    <p id="user-status">В лобби</p>
-                </div>
-            </div>
-            <div class="header-actions">
-                <button class="btn btn-secondary" id="refresh-btn">🔄 Обновить</button>
-                <button class="btn btn-secondary" id="settings-btn">⚙️ Настройки</button>
-                <button class="btn btn-danger" id="logout-btn">🚪 Выйти</button>
-            </div>
-        </div>
+    <div class="page-shell">
+        <div class="board-wrapper">
+            <div class="board-frame">
+                <div class="outer-track" id="outerTrack"></div>
+                <div class="inner-track" id="innerTrack"></div>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Rooms Section -->
-            <div class="rooms-section">
-                <h2>
-                    🎮 Игровые комнаты
-                    <button class="create-room-btn" id="create-room-btn">+ Создать комнату</button>
-                </h2>
-                <div class="rooms-grid" id="rooms-grid">
-                    <!-- Room 1 -->
-                    <div class="room-card">
-                        <div class="room-header">
-                            <div class="room-title">Комната новичков</div>
-                            <div class="room-status status-waiting">Ожидание</div>
-                        </div>
-                        <div class="room-info">
-                            <span>Игроков: 2/4</span>
-                            <span>Хост: Алиса</span>
-                        </div>
-                        <div class="room-players">
-                            <div class="player-avatar">А</div>
-                            <div class="player-avatar">Б</div>
-                        </div>
-                        <div class="room-actions">
-                            <button class="join-btn">Войти</button>
-                        </div>
-                    </div>
-
-                    <!-- Room 2 -->
-                    <div class="room-card">
-                        <div class="room-header">
-                            <div class="room-title">Турнир чемпионов</div>
-                            <div class="room-status status-playing">Игра</div>
-                        </div>
-                        <div class="room-info">
-                            <span>Игроков: 4/4</span>
-                            <span>Хост: Чарли</span>
-                        </div>
-                        <div class="room-players">
-                            <div class="player-avatar">Ч</div>
-                            <div class="player-avatar">Д</div>
-                            <div class="player-avatar">Е</div>
-                            <div class="player-avatar">Ф</div>
-                        </div>
-                        <div class="room-actions">
-                            <button class="join-btn" disabled>Полная</button>
-                        </div>
-                    </div>
-
-                    <!-- Room 3 -->
-                    <div class="room-card">
-                        <div class="room-header">
-                            <div class="room-title">Быстрая игра</div>
-                            <div class="room-status status-waiting">Ожидание</div>
-                        </div>
-                        <div class="room-info">
-                            <span>Игроков: 1/6</span>
-                            <span>Хост: Грейс</span>
-                        </div>
-                        <div class="room-players">
-                            <div class="player-avatar">Г</div>
-                        </div>
-                        <div class="room-actions">
-                            <button class="join-btn">Войти</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sidebar -->
-            <div class="sidebar">
-                <!-- Quick Game -->
-                <div class="sidebar-card">
-                    <h3>🚀 Быстрая игра</h3>
-                    <div class="form-group">
-                        <label for="room-name">Название комнаты</label>
-                        <input type="text" id="room-name" placeholder="Введите название">
-                    </div>
-                    <div class="form-group">
-                        <label for="max-players">Максимум игроков</label>
-                        <select id="max-players">
-                            <option value="2">2 игрока</option>
-                            <option value="4" selected>4 игрока</option>
-                            <option value="6">6 игроков</option>
-                            <option value="8">8 игроков</option>
-                        </select>
-                    </div>
-                    <button class="quick-start-btn" id="quick-start-btn">🚀 Быстрый старт</button>
+                <div class="special-card big-deal highlight">
+                    <div class="special-title">💼 Большая сделка</div>
+                    <div class="special-metric">24 карты</div>
+                    <div class="special-metric">Премиум возможности</div>
                 </div>
 
-                <!-- Online Players -->
-                <div class="sidebar-card">
-                    <h3>👥 Онлайн игроки</h3>
-                    <div class="player-list" id="player-list">
-                        <div class="player-item">
-                            <div class="player-status"></div>
-                            <div class="player-name">Алиса</div>
-                        </div>
-                        <div class="player-item">
-                            <div class="player-status away"></div>
-                            <div class="player-name">Боб</div>
-                        </div>
-                        <div class="player-item">
-                            <div class="player-status"></div>
-                            <div class="player-name">Чарли</div>
-                        </div>
-                        <div class="player-item">
-                            <div class="player-status busy"></div>
-                            <div class="player-name">Диана</div>
-                        </div>
-                    </div>
+                <div class="special-card small-deal highlight">
+                    <div class="special-title">📦 Малая сделка</div>
+                    <div class="special-metric">32 карты</div>
+                    <div class="special-metric">Стартовые инвестиции</div>
+                </div>
+
+                <div class="special-card expenses highlight">
+                    <div class="special-title">💳 Расходы</div>
+                    <div class="special-metric">24 карты</div>
+                    <div class="special-metric">Обязательные платежи</div>
+                </div>
+
+                <div class="special-card market highlight">
+                    <div class="special-title">🛒 Рынок</div>
+                    <div class="special-metric">24 карты</div>
+                    <div class="special-metric">Спец. предложения</div>
+                </div>
+
+                <div class="center-wheel" id="centerWheel">
+                    <div class="wheel-number" id="wheelNumber">1</div>
                 </div>
             </div>
         </div>
+
+        <aside class="sidebar">
+            <div class="panel">
+                <h3>Банковские операции</h3>
+                <div class="finance-grid">
+                    <div class="finance-row">
+                        <span>Доход:</span>
+                        <span class="finance-value" id="incomeValue">$0</span>
+                    </div>
+                    <div class="finance-row">
+                        <span>Расходы:</span>
+                        <span class="finance-value negative" id="expenseValue">$0</span>
+                    </div>
+                    <div class="finance-row">
+                        <span>PAYDAY:</span>
+                        <span class="finance-value" id="paydayValue">$0/мес</span>
+                    </div>
+                </div>
+
+                <div class="loan-status ok">
+                    <span>Кредит:</span>
+                    <span class="finance-value">$0</span>
+                </div>
+                <button class="btn btn-danger" id="loanButton">🚫 Взять</button>
+                <p class="panel-note">Нажмите для открытия банковских операций и управления кредитами.</p>
+            </div>
+
+            <div class="panel">
+                <h3>Активы</h3>
+                <div class="assets-total" id="assetsTotal">$0</div>
+                <div class="assets-caption">Доход: $0 / мес</div>
+                <button class="btn btn-primary" style="margin-top: 20px;">Портфель активов</button>
+            </div>
+
+            <div class="panel">
+                <h3>Статус хода</h3>
+                <div class="turn-state">
+                    <div>
+                        <div class="state-label">Текущее состояние</div>
+                        <div class="state-value" id="turnState">Ожидание хода</div>
+                    </div>
+                    <div style="font-size: 28px;">🕒</div>
+                </div>
+                <p class="panel-note" id="turnNote">Не ваш ход. Дождитесь завершения действий текущего игрока.</p>
+            </div>
+
+            <div class="panel">
+                <h3>Время хода</h3>
+                <div class="timer-display">
+                    <span class="timer-value" id="timerValue">00:45</span>
+                    <span>секунд осталось</span>
+                </div>
+                <p class="panel-note">Таймер автоматически запускается при начале вашего хода.</p>
+            </div>
+        </aside>
     </div>
 
-    <!-- Create Room Modal -->
-    <div class="modal" id="create-room-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">🎮 Создание комнаты</h2>
-                <button class="modal-close" id="close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="create-room-form">
-                    <!-- 1. Название комнаты -->
-                    <div class="modal-form-group">
-                        <label for="room-name-input">1. Название комнаты *</label>
-                        <input type="text" id="room-name-input" placeholder="Введите название комнаты" required>
-                    </div>
+    <script>
+        const BOARD_SETTINGS = {
+            perSideSteps: 20,
+            cellSize: 36,
+            cellGap: 4,
+            offset: 48,
+            innerRadius: 190
+        };
 
-                    <!-- 2. Имя создателя -->
-                    <div class="modal-form-group">
-                        <label for="creator-name">2. Имя создателя</label>
-                        <input type="text" id="creator-name" placeholder="Введите ваше имя" required>
-                    </div>
+        const outerColors = ['cell-pink', 'cell-green', 'cell-teal', 'cell-purple'];
+        const outerIcons = ['💵', '🏠', '🚗', '💡', '🎯', '💰', '🛍️', '💼'];
+        const innerPattern = [
+            { color: 'cell-green', icon: '📈' },
+            { color: 'cell-pink', icon: '💸' },
+            { color: 'cell-green', icon: '📈' },
+            { color: 'cell-orange', icon: '❤️' },
+            { color: 'cell-green', icon: '📈' },
+            { color: 'cell-yellow', icon: '💰' },
+            { color: 'cell-green', icon: '📈' },
+            { color: 'cell-blue', icon: '🎯' },
+            { color: 'cell-green', icon: '📈' },
+            { color: 'cell-pink', icon: '💳' },
+            { color: 'cell-green', icon: '📈' },
+            { color: 'cell-purple', icon: '👶' },
+            { color: 'cell-green', icon: '📈' },
+            { color: 'cell-blue', icon: '🏆' },
+            { color: 'cell-green', icon: '📈' },
+            { color: 'cell-yellow', icon: '💰' },
+            { color: 'cell-green', icon: '📈' },
+            { color: 'cell-pink', icon: '💳' },
+            { color: 'cell-green', icon: '📈' },
+            { color: 'cell-orange', icon: '❤️' },
+            { color: 'cell-green', icon: '📈' },
+            { color: 'cell-blue', icon: '🎯' },
+            { color: 'cell-green', icon: '📈' },
+            { color: 'cell-pink', icon: '💸' }
+        ];
 
-                    <!-- 3. Профессия создателя -->
-                    <div class="modal-form-group">
-                        <label for="creator-profession">3. Профессия создателя *</label>
-                        <select id="creator-profession" required>
-                            <option value="">Выберите профессию</option>
-                            <option value="entrepreneur">🚀 Предприниматель</option>
-                            <option value="doctor">👨‍⚕️ Врач</option>
-                            <option value="engineer">⚙️ Инженер</option>
-                            <option value="teacher">👨‍🏫 Учитель</option>
-                            <option value="lawyer">⚖️ Юрист</option>
-                            <option value="artist">🎨 Художник</option>
-                        </select>
-                    </div>
+        function setBoardSizeVariable() {
+            const step = BOARD_SETTINGS.cellSize + BOARD_SETTINGS.cellGap;
+            const boardSize = BOARD_SETTINGS.offset * 2 + BOARD_SETTINGS.cellSize + BOARD_SETTINGS.perSideSteps * step;
+            document.documentElement.style.setProperty('--board-size', `${boardSize}px`);
+        }
 
-                    <!-- 4. Назначить профессию всем игрокам -->
-                    <div class="modal-form-group">
-                        <label for="assign-profession">
-                            <input type="checkbox" id="assign-profession" checked style="margin-right: 8px;">
-                            4. Назначить профессию всем игрокам
-                        </label>
-                    </div>
+        function createOuterTrack() {
+            const outerTrack = document.getElementById('outerTrack');
+            outerTrack.innerHTML = '';
 
-                    <!-- 5. Максимум игроков -->
-                    <div class="modal-form-group">
-                        <label for="max-players-input">5. Максимум игроков *</label>
-                        <select id="max-players-input" required>
-                            <option value="2">2 игрока</option>
-                            <option value="4" selected>4 игрока</option>
-                            <option value="6">6 игроков</option>
-                            <option value="8">8 игроков</option>
-                        </select>
-                    </div>
+            const { perSideSteps, cellSize, cellGap, offset } = BOARD_SETTINGS;
+            const step = cellSize + cellGap;
+            const positions = [];
 
-                    <!-- 6. Пароль комнаты -->
-                    <div class="modal-form-group">
-                        <label for="room-password">6. Пароль комнаты (необязательно)</label>
-                        <input type="password" id="room-password" placeholder="Введите пароль для приватной комнаты">
-                    </div>
+            let x = 0;
+            let y = 0;
+            positions.push({ x, y });
+            const directions = [
+                { dx: 1, dy: 0 },
+                { dx: 0, dy: 1 },
+                { dx: -1, dy: 0 },
+                { dx: 0, dy: -1 }
+            ];
 
-                    <!-- 7. Тайминг комнаты -->
-                    <div class="modal-form-group">
-                        <label for="room-timer">7. Тайминг комнаты (минуты)</label>
-                        <select id="room-timer">
-                            <option value="0">Без ограничений</option>
-                            <option value="30">30 минут</option>
-                            <option value="60" selected>1 час</option>
-                            <option value="90">1.5 часа</option>
-                            <option value="120">2 часа</option>
-                            <option value="180">3 часа</option>
-                        </select>
-                    </div>
-
-                    <!-- 8. Игроки в комнате (показывается после создания) -->
-                    <div class="modal-form-group" id="players-in-room" style="display: none;">
-                        <label>8. Игроки в комнате</label>
-                        <div id="players-list" class="players-preview"></div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="modal-btn modal-btn-secondary" id="cancel-create">Отмена</button>
-                <button type="button" class="modal-btn modal-btn-primary" id="confirm-create">Создать комнату</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Mobile Navigation -->
-    <div class="mobile-nav">
-        <div class="mobile-nav-buttons">
-            <a href="index.html" class="mobile-nav-btn">
-                <span>🏠</span>
-                <span>Главная</span>
-            </a>
-            <a href="lobby.html" class="mobile-nav-btn active">
-                <span>🎮</span>
-                <span>Лобби</span>
-            </a>
-            <a href="game.html" class="mobile-nav-btn">
-                <span>🎯</span>
-                <span>Игра</span>
-            </a>
-            <a href="auth.html" class="mobile-nav-btn">
-                <span>👤</span>
-                <span>Профиль</span>
-            </a>
-        </div>
-    </div>
-
-    <script type="module">
-        // Import profession data
-        import { PROFESSIONS, DREAMS, LOSSES, INVESTMENT_CARDS } from './professions-data.js';
-
-        document.addEventListener('DOMContentLoaded', function() {
-            // Modal elements
-            const modal = document.getElementById('create-room-modal');
-            const createRoomBtn = document.getElementById('create-room-btn');
-            const closeModalBtn = document.getElementById('close-modal');
-            const cancelBtn = document.getElementById('cancel-create');
-            const confirmBtn = document.getElementById('confirm-create');
-            const createRoomForm = document.getElementById('create-room-form');
-
-            // Initialize creator ID
-            const creatorId = localStorage.getItem('username') || 'Player_' + Math.random().toString(36).substr(2, 9);
-            document.getElementById('creator-name').value = creatorId;
-
-            // Profession selection handler
-            document.getElementById('creator-profession').addEventListener('change', function() {
-                const selectedProfession = PROFESSIONS.find(p => p.id === this.value);
-                if (selectedProfession) {
-                    showProfessionInfo(selectedProfession);
+            directions.forEach(direction => {
+                for (let i = 0; i < perSideSteps; i++) {
+                    x += direction.dx;
+                    y += direction.dy;
+                    positions.push({ x, y });
                 }
             });
 
-            function showProfessionInfo(profession) {
-                const professionInfo = document.createElement('div');
-                professionInfo.className = 'profession-info';
-                professionInfo.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                        <span style="font-size: 20px;">${profession.icon}</span>
-                        <div>
-                            <div style="font-weight: 700; color: #ffffff;">${profession.name}</div>
-                            <div style="font-size: 11px; color: #a0a0a0;">${profession.description}</div>
-                        </div>
-                    </div>
-                    <div class="profession-stats">
-                        <div class="stat-item">
-                            <div class="stat-value">$${profession.salary.toLocaleString()}</div>
-                            <div class="stat-label">Зарплата</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">$${profession.expenses.toLocaleString()}</div>
-                            <div class="stat-label">Расходы</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">$${profession.cashFlow.toLocaleString()}</div>
-                            <div class="stat-label">Денежный поток</div>
-                        </div>
-                    </div>
+            positions.pop();
+
+            positions.forEach((pos, index) => {
+                const cell = document.createElement('div');
+                cell.className = `track-cell outer ${outerColors[index % outerColors.length]}`;
+                cell.style.width = `${cellSize}px`;
+                cell.style.height = `${cellSize}px`;
+                cell.style.left = `${offset + pos.x * step}px`;
+                cell.style.top = `${offset + pos.y * step}px`;
+
+                cell.innerHTML = `
+                    <span class="cell-number">${index + 1}</span>
+                    <span class="cell-icon">${outerIcons[index % outerIcons.length]}</span>
                 `;
 
-                // Remove existing profession info
-                const existingInfo = document.querySelector('.profession-info');
-                if (existingInfo) {
-                    existingInfo.remove();
-                }
-
-                // Add new profession info after the profession select
-                document.getElementById('creator-profession').parentNode.appendChild(professionInfo);
-            }
-
-            // Add click handlers
-            document.getElementById('refresh-btn').addEventListener('click', function() {
-                location.reload();
-            });
-
-            // Create room modal handlers
-            createRoomBtn.addEventListener('click', function() {
-                modal.classList.add('show');
-                document.body.style.overflow = 'hidden';
-            });
-
-            closeModalBtn.addEventListener('click', closeModal);
-            cancelBtn.addEventListener('click', closeModal);
-
-            // Close modal when clicking outside
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    closeModal();
-                }
-            });
-
-            // Close modal with Escape key
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && modal.classList.contains('show')) {
-                    closeModal();
-                }
-            });
-
-            function closeModal() {
-                modal.classList.remove('show');
-                document.body.style.overflow = 'auto';
-                createRoomForm.reset();
-            }
-
-            // Create room functionality
-            confirmBtn.addEventListener('click', function() {
-                const roomName = document.getElementById('room-name-input').value;
-                const creatorName = document.getElementById('creator-name').value;
-                const creatorProfession = document.getElementById('creator-profession').value;
-                const assignProfession = document.getElementById('assign-profession').checked;
-                const maxPlayers = document.getElementById('max-players-input').value;
-                const roomPassword = document.getElementById('room-password').value;
-                const roomTimer = document.getElementById('room-timer').value;
-
-                if (!roomName.trim()) {
-                    alert('Пожалуйста, введите название комнаты');
-                    return;
-                }
-
-                if (!creatorProfession) {
-                    alert('Пожалуйста, выберите профессию');
-                    return;
-                }
-
-                // Create new room with all 8 parameters
-                createNewRoom({
-                    name: roomName,
-                    creatorId: creatorName,
-                    creatorProfession: creatorProfession,
-                    assignProfession: assignProfession,
-                    maxPlayers: parseInt(maxPlayers),
-                    password: roomPassword,
-                    timer: parseInt(roomTimer),
-                    players: [creatorName]
+                cell.addEventListener('click', () => {
+                    alert(`Клетка №${index + 1}. Совершите действие согласно карточке.`);
                 });
-                closeModal();
+
+                outerTrack.appendChild(cell);
             });
+        }
 
-            function createNewRoom(roomData) {
-                const roomsGrid = document.getElementById('rooms-grid');
-                const newRoom = document.createElement('div');
-                newRoom.className = 'room-card';
-                newRoom.dataset.roomId = 'room_' + Date.now();
-                newRoom.dataset.roomData = JSON.stringify(roomData);
+        function createInnerTrack() {
+            const innerTrack = document.getElementById('innerTrack');
+            innerTrack.innerHTML = '';
 
-                const profession = PROFESSIONS.find(p => p.id === roomData.creatorProfession);
-                const professionIcon = profession ? profession.icon : '👤';
-                const professionName = profession ? profession.name : 'Неизвестно';
+            const totalCells = innerPattern.length;
+            for (let i = 0; i < totalCells; i++) {
+                const angle = (i / totalCells) * Math.PI * 2;
+                const radius = BOARD_SETTINGS.innerRadius;
+                const cell = document.createElement('div');
+                cell.className = `track-cell ${innerPattern[i].color}`;
+                cell.style.left = `calc(50% + ${(Math.cos(angle) * radius)}px)`;
+                cell.style.top = `calc(50% + ${(Math.sin(angle) * radius)}px)`;
+                cell.style.transform = 'translate(-50%, -50%)';
 
-                newRoom.innerHTML = `
-                    <div class="room-header">
-                        <div class="room-title">${roomData.name}</div>
-                        <div class="room-status status-waiting">Ожидание</div>
-                    </div>
-                    <div class="room-info">
-                        <span>Игроков: 1/${roomData.maxPlayers}</span>
-                        <span>Хост: ${roomData.creatorId}</span>
-                    </div>
-                    <div class="room-info">
-                        <span>Профессия: ${professionIcon} ${professionName}</span>
-                        <span>Таймер: ${roomData.timer > 0 ? roomData.timer + ' мин' : 'Без ограничений'}</span>
-                    </div>
-                    <div class="room-players">
-                        <div class="player-avatar" title="${roomData.creatorId}">${roomData.creatorId.charAt(0).toUpperCase()}</div>
-                    </div>
-                    <div class="room-actions">
-                        <button class="join-btn" onclick="joinRoom('${newRoom.dataset.roomId}')">Войти</button>
-                    </div>
+                cell.innerHTML = `
+                    <span class="cell-number">${i + 1}</span>
+                    <span class="cell-icon">${innerPattern[i].icon}</span>
                 `;
 
-                // Add hover effects to new room
-                newRoom.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-8px)';
-                });
-                
-                newRoom.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0)';
-                });
-
-                roomsGrid.insertBefore(newRoom, roomsGrid.firstChild);
-                
-                // Show success message
-                alert(`Комната "${roomData.name}" успешно создана!\nПрофессия: ${professionName}\nМаксимум игроков: ${roomData.maxPlayers}\nТаймер: ${roomData.timer > 0 ? roomData.timer + ' минут' : 'Без ограничений'}`);
+                innerTrack.appendChild(cell);
             }
+        }
 
-            // Global function for joining rooms
-            window.joinRoom = function(roomId) {
-                const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
-                if (!roomElement) return;
-
-                const roomData = JSON.parse(roomElement.dataset.roomData);
-                const currentPlayer = localStorage.getItem('username') || 'Player_' + Math.random().toString(36).substr(2, 9);
-
-                // Check if room has password
-                if (roomData.password) {
-                    const password = prompt('Введите пароль для входа в комнату:');
-                    if (password !== roomData.password) {
-                        alert('Неверный пароль!');
-                        return;
-                    }
-                }
-
-                // Check if room is full
-                if (roomData.players.length >= roomData.maxPlayers) {
-                    alert('Комната заполнена!');
-                    return;
-                }
-
-                // Add player to room
-                if (!roomData.players.includes(currentPlayer)) {
-                    roomData.players.push(currentPlayer);
-                    roomElement.dataset.roomData = JSON.stringify(roomData);
-                    
-                    // Update room display
-                    const playersContainer = roomElement.querySelector('.room-players');
-                    const playerAvatar = document.createElement('div');
-                    playerAvatar.className = 'player-avatar';
-                    playerAvatar.title = currentPlayer;
-                    playerAvatar.textContent = currentPlayer.charAt(0).toUpperCase();
-                    playersContainer.appendChild(playerAvatar);
-
-                    // Update player count
-                    const playerCount = roomElement.querySelector('.room-info span');
-                    playerCount.textContent = `Игроков: ${roomData.players.length}/${roomData.maxPlayers}`;
-                }
-
-                alert(`Вход в комнату "${roomData.name}" успешен!`);
-                // Here you would normally redirect to the game
-                window.location.href = 'game.html';
-            };
-
-            document.getElementById('quick-start-btn').addEventListener('click', function() {
-                const roomName = document.getElementById('room-name').value;
-                const maxPlayers = document.getElementById('max-players').value;
-                
-                if (!roomName.trim()) {
-                    alert('Пожалуйста, введите название комнаты для быстрого старта');
-                    return;
-                }
-                
-                createNewRoom(roomName, '', maxPlayers, 'public');
+        function initCenterWheel() {
+            const wheel = document.getElementById('centerWheel');
+            const display = document.getElementById('wheelNumber');
+            wheel.addEventListener('click', () => {
+                wheel.classList.remove('spin');
+                void wheel.offsetWidth;
+                wheel.classList.add('spin');
+                const value = Math.floor(Math.random() * 6) + 1;
+                display.textContent = value;
             });
+        }
 
-            // Add hover effects to room cards
-            document.querySelectorAll('.room-card').forEach(card => {
-                card.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-8px)';
-                });
-                
-                card.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0)';
-                });
-            });
-
-            // Add join functionality to existing rooms
-            document.querySelectorAll('.join-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const roomCard = this.closest('.room-card');
-                    const roomName = roomCard.querySelector('.room-title').textContent;
-                    alert(`Вход в комнату "${roomName}"`);
-                    window.location.href = 'game.html';
-                });
-            });
+        document.addEventListener('DOMContentLoaded', () => {
+            setBoardSizeVariable();
+            createOuterTrack();
+            createInnerTrack();
+            initCenterWheel();
         });
     </script>
 </body>
