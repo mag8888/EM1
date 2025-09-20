@@ -134,7 +134,10 @@ const createRoomPlayer = ({ user, isHost = false, socketId = null }) => ({
     selectedToken: null,
     selectedDream: null,
     socketId,
-    joinedAt: new Date().toISOString()
+    joinedAt: new Date().toISOString(),
+    position: 0,
+    cash: 10000,
+    passiveIncome: 0
 });
 
 const sanitizePlayer = (player = {}) => ({
@@ -222,6 +225,57 @@ const respondWithRoom = (res, room, userId, { includePlayers = true } = {}) => {
         success: true,
         room: sanitizeRoom(room, { includePlayers, requestingUserId: userId })
     });
+};
+
+const ensureGameState = (room) => {
+    if (!room.gameState) {
+        const turnOrder = room.players.map(player => getPlayerIdentifier(player)).filter(Boolean);
+        room.gameState = {
+            startedAt: new Date().toISOString(),
+            activePlayerIndex: 0,
+            turnOrder,
+            roundsCompleted: 0,
+            lastRoll: null,
+            history: []
+        };
+    }
+    return room.gameState;
+};
+
+const buildGameState = (room, userId) => {
+    const gameState = ensureGameState(room);
+    const playersMap = new Map(room.players.map(player => [getPlayerIdentifier(player), player]));
+    const players = gameState.turnOrder
+        .map(id => playersMap.get(id))
+        .filter(Boolean)
+        .map(player => ({
+            userId: player.userId,
+            name: player.name,
+            isHost: Boolean(player.isHost),
+            isReady: Boolean(player.isReady),
+            selectedDream: player.selectedDream || null,
+            selectedToken: player.selectedToken || null,
+            position: player.position || 0,
+            cash: player.cash ?? 10000,
+            passiveIncome: player.passiveIncome ?? 0
+        }));
+
+    const activePlayerId = gameState.turnOrder[gameState.activePlayerIndex] || null;
+    const currentPlayer = userId ? players.find(player => player.userId === userId) || null : null;
+
+    return {
+        roomId: room.id,
+        name: room.name,
+        status: room.status,
+        startedAt: gameState.startedAt,
+        turnTime: room.turnTime,
+        activePlayerId,
+        turnOrder: [...gameState.turnOrder],
+        roundsCompleted: gameState.roundsCompleted,
+        lastRoll: gameState.lastRoll,
+        players,
+        currentPlayer
+    };
 };
 
 // Банковские данные (в реальном проекте это была бы база данных)
@@ -819,10 +873,8 @@ app.post('/api/rooms/:roomId/join', (req, res) => {
         if (existingPlayer) {
             existingPlayer.socketId = existingPlayer.socketId || null;
             existingPlayer.isReady = existingPlayer.isReady || false;
-            return res.json({
-                success: true,
-                room: sanitizeRoom(room, { requestingUserId: user.id })
-            });
+            respondWithRoom(res, room, user.id);
+            return;
         }
         
         // Добавляем игрока
@@ -834,12 +886,15 @@ app.post('/api/rooms/:roomId/join', (req, res) => {
         room.players.push(newPlayer);
         room.updatedAt = new Date().toISOString();
 
+        if (room.gameState) {
+            const turnOrder = new Set(room.gameState.turnOrder);
+            turnOrder.add(newPlayer.userId);
+            room.gameState.turnOrder = Array.from(turnOrder);
+        }
+
         broadcastRoomsUpdate();
 
-        res.json({
-            success: true,
-            room: sanitizeRoom(room, { requestingUserId: user.id })
-        });
+        respondWithRoom(res, room, user.id);
     } catch (error) {
         console.error('Ошибка присоединения к комнате:', error);
         res.status(500).json({ success: false, error: error.message });
@@ -1000,11 +1055,25 @@ app.post('/api/rooms/:roomId/start', (req, res) => {
         room.status = 'playing';
         room.startedAt = new Date().toISOString();
         room.updatedAt = new Date().toISOString();
+        ensureGameState(room);
 
         broadcastRoomsUpdate();
         respondWithRoom(res, room, userId);
     } catch (error) {
         console.error('Ошибка запуска игры:', error);
+        sendRoomError(res, error);
+    }
+});
+
+app.get('/api/rooms/:roomId/game-state', (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const room = requireServerRoom(roomId);
+        const userId = getRequestUserId(req);
+        const gameState = buildGameState(room, userId);
+        res.json({ success: true, state: gameState });
+    } catch (error) {
+        console.error('Ошибка получения состояния игры:', error);
         sendRoomError(res, error);
     }
 });
