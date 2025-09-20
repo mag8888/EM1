@@ -16,12 +16,18 @@ export default class UpdateIndicator {
         if (!this.element) {
             return;
         }
+        const label = this.element.querySelector('.update-label');
+
         if (isLoading) {
             this.element.className = 'update-indicator updating';
-            this.element.querySelector('.update-label')?.textContent = 'Обновление...';
+            if (label) {
+                label.textContent = 'Обновление...';
+            }
         } else {
             this.element.className = 'update-indicator ready';
-            this.element.querySelector('.update-label')?.textContent = 'Готово';
+            if (label) {
+                label.textContent = 'Готово';
+            }
         }
     }
 }
