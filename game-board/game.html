@@ -3,11 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Игра - Game Board v2.0 - Мобильная адаптация</title>
+    <title>Игровая доска — Game Board v2.0</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --board-size: 700px;
+            --outer-cell-size: 54px;
+            --outer-cell-gap: 4px;
+            --inner-cell-size: 50px;
+            --sidebar-width: 320px;
+            --panel-bg: rgba(21, 27, 42, 0.9);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            color-scheme: dark;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -16,1069 +27,1156 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #0f1419 0%, #1a1d24 25%, #242830 50%, #1a1d24 75%, #0f1419 100%);
-            color: #ffffff;
-            line-height: 1.6;
             min-height: 100vh;
+            background: radial-gradient(circle at 15% 20%, rgba(0, 234, 255, 0.18) 0%, transparent 55%),
+                        radial-gradient(circle at 78% 82%, rgba(255, 0, 128, 0.18) 0%, transparent 55%),
+                        linear-gradient(150deg, #0c1424 0%, #181f32 50%, #0a101f 100%);
+            color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 56px 48px 96px;
             position: relative;
             overflow-x: hidden;
         }
 
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 20%, rgba(0, 255, 150, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(255, 100, 200, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 40% 60%, rgba(100, 200, 255, 0.1) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 16px;
+        .page-shell {
+            width: 100%;
+            max-width: 1600px;
+            display: flex;
+            align-items: flex-start;
+            gap: 56px;
             position: relative;
             z-index: 2;
-            padding-bottom: 80px;
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 24px;
-            min-height: calc(100vh - 32px);
         }
 
-        .game-board-container {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 24px;
+        .content-column {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: clamp(24px, calc(var(--computed-board-size, var(--board-size)) * 0.04), 36px);
+        }
+
+        .board-wrapper {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .board-frame {
             position: relative;
-            overflow: hidden;
+            width: var(--board-size);
+            height: var(--board-size);
+            border-radius: 48px;
+            background: linear-gradient(160deg, #151d30 0%, #111527 45%, #0f1422 100%);
+            box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6), inset 0 0 60px rgba(255, 255, 255, 0.04);
+            overflow: visible;
         }
 
-        .game-board-container::before {
+        .board-frame::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(0, 255, 150, 0.03) 0%, rgba(0, 191, 255, 0.02) 100%);
+            inset: 16px;
+            border-radius: 40px;
+            background: radial-gradient(circle at 50% 42%, rgba(255, 205, 64, 0.12) 0%, transparent 60%),
+                        linear-gradient(200deg, rgba(32, 48, 78, 0.7) 0%, rgba(16, 22, 34, 0.95) 62%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             pointer-events: none;
-            z-index: -1;
         }
 
-        .sidebar {
-            background: linear-gradient(135deg, rgba(26, 29, 36, 0.95) 0%, rgba(36, 40, 48, 0.9) 100%);
-            backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 24px;
-            height: fit-content;
-            position: sticky;
-            top: 16px;
+        .outer-track,
+        .inner-track {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
         }
 
-        .sidebar-section {
-            margin-bottom: 24px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar-section:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-
-        .sidebar-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .sidebar-title .icon {
-            font-size: 16px;
-        }
-
-        .financial-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            padding: 8px 0;
-        }
-
-        .financial-label {
-            font-size: 12px;
-            color: #a0a0a0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .financial-value {
-            font-size: 14px;
-            font-weight: 700;
-        }
-
-        .financial-value.income {
-            color: #00ff96;
-        }
-
-        .financial-value.expense {
-            color: #ff6b6b;
-        }
-
-        .financial-value.credit {
-            color: #00bfff;
-        }
-
-        .financial-value.assets {
-            color: #00ff96;
-        }
-
-        .btn-sidebar {
-            width: 100%;
-            padding: 10px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 8px;
+        .track-cell {
+            position: absolute;
+            width: var(--outer-cell-size);
+            height: var(--outer-cell-size);
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-        }
-
-        .btn-sidebar.primary {
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
-            color: #1a1d24;
-        }
-
-        .btn-sidebar.secondary {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
-            color: #ffffff;
-        }
-
-        .btn-sidebar:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .turn-status {
-            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
-            border-radius: 8px;
-            padding: 12px;
-            text-align: center;
-            margin-bottom: 16px;
-        }
-
-        .turn-status-text {
-            font-size: 12px;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 4px;
-        }
-
-        .turn-status-subtext {
-            font-size: 10px;
-            color: #e0e0e0;
-        }
-
-        .turn-timer {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            color: #a0a0a0;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 0;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .game-title {
-            font-size: 20px;
-            font-weight: 900;
-            color: #ffffff;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 8px 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
+            flex-direction: column;
             gap: 4px;
-            white-space: nowrap;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
-            color: #1a1d24;
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
-            color: #ffffff;
-        }
-
-        .game-board {
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.1) 100%);
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 
-                0 20px 40px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .game-board::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 20%, rgba(0, 255, 150, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(0, 191, 255, 0.05) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .board-container {
-            position: relative;
-            width: 100%;
-            max-width: 600px;
-            height: 600px;
-            margin: 0 auto;
-            z-index: 2;
-        }
-
-        .board-grid {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 500px;
-            height: 500px;
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            grid-template-rows: repeat(10, 1fr);
-            gap: 2px;
-        }
-
-        .special-cell {
-            position: absolute;
-            width: 120px;
-            height: 80px;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            font-size: 20px;
             font-weight: 700;
-            font-size: 12px;
-            color: #ffffff;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            z-index: 3;
+            color: #fff;
+            box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45);
+            border: 2px solid rgba(255, 255, 255, 0.14);
+            pointer-events: auto;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
         }
 
-        .special-cell.big-deal {
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #00bfff 0%, #0099cc 100%);
-        }
-
-        .special-cell.small-deal {
-            top: 50%;
-            right: 20px;
-            transform: translateY(-50%);
-            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
-        }
-
-        .special-cell.expenses {
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
-        }
-
-        .special-cell.market {
-            top: 50%;
-            left: 20px;
-            transform: translateY(-50%);
-            background: linear-gradient(135deg, #a8e6cf 0%, #7fcdcd 100%);
-        }
-
-        .special-cell-title {
-            font-size: 14px;
-            font-weight: 800;
-            margin-bottom: 4px;
-        }
-
-        .special-cell-cards {
-            font-size: 11px;
-            opacity: 0.9;
-            margin-bottom: 2px;
-        }
-
-        .special-cell-discard {
-            font-size: 10px;
-            opacity: 0.7;
-        }
-
-        .cell {
-            aspect-ratio: 1;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 4px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 8px;
-            color: #ffffff;
-            min-height: 30px;
-            position: relative;
-            transition: all 0.3s ease;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        .track-cell:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 22px 46px rgba(0, 0, 0, 0.55);
         }
 
         .cell-number {
-            font-size: 10px;
+            position: absolute;
+            top: 6px;
+            left: 8px;
+            font-size: 12px;
             font-weight: 800;
-            margin-bottom: 1px;
+            color: rgba(255, 255, 255, 0.92);
+            text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
         }
 
         .cell-icon {
-            font-size: 10px;
-            margin-bottom: 1px;
+            font-size: 22px;
+            filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.35));
         }
 
-        .cell:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        .cell-pink { background: linear-gradient(145deg, #ff4f93 0%, #ff2780 100%); }
+        .cell-green { background: linear-gradient(145deg, #32df8d 0%, #19b86a 100%); }
+        .cell-teal { background: linear-gradient(145deg, #25d0ff 0%, #0090f5 100%); }
+        .cell-purple { background: linear-gradient(145deg, #a769ff 0%, #7351ff 100%); }
+        .cell-orange { background: linear-gradient(145deg, #ffb347 0%, #ff8c42 100%); }
+        .cell-yellow { background: linear-gradient(145deg, #ffd65a 0%, #ffb700 100%); color: #2f2600; }
+        .cell-blue { background: linear-gradient(145deg, #4e95ff 0%, #2563eb 100%); }
+        .cell-red { background: linear-gradient(145deg, #ff6b6b 0%, #ff3b3b 100%); }
+        .cell-slate { background: linear-gradient(145deg, #34435a 0%, #1e2838 100%); }
+
+        .inner-track .track-cell {
+            width: var(--inner-cell-size);
+            height: var(--inner-cell-size);
+            font-size: 18px;
+            border-width: 1.5px;
         }
 
-        .cell.start {
-            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-            color: #1a1d24;
-            border: 3px solid #ffd700;
-            box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
-            font-size: 16px;
-            font-weight: 900;
-            position: relative;
-            z-index: 4;
-            border-radius: 50%;
-            width: 70px;
-            height: 70px;
-            margin: auto;
+        .inner-track .cell-number {
+            right: 8px;
+            left: auto;
+            font-size: 12px;
         }
 
-        .cell.start::before {
-            content: '$';
-            position: absolute;
-            top: -12px;
-            left: -12px;
-            font-size: 14px;
-            font-weight: 900;
-            color: #ffd700;
-        }
-
-        .cell.start::after {
-            content: '$';
-            position: absolute;
-            top: -12px;
-            right: -12px;
-            font-size: 14px;
-            font-weight: 900;
-            color: #ffd700;
-        }
-
-        .start-symbols {
+        .center-wheel {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            width: calc(var(--computed-board-size, var(--board-size)) * 0.32);
+            height: calc(var(--computed-board-size, var(--board-size)) * 0.32);
+            max-width: 230px;
+            max-height: 230px;
+            min-width: 170px;
+            min-height: 170px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 40%, rgba(255, 209, 64, 0.78) 0%, rgba(255, 166, 0, 0.82) 34%, rgba(25, 25, 25, 0.96) 64%);
+            box-shadow: 0 0 50px rgba(255, 196, 0, 0.5), inset 0 0 40px rgba(0, 0, 0, 0.55);
+            border: 4px solid rgba(255, 205, 92, 0.55);
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 2px;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
         }
 
-        .start-symbols-row {
-            display: flex;
-            gap: 4px;
+        .center-wheel::before {
+            content: '';
+            position: absolute;
+            inset: 18px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 45%, rgba(0, 0, 0, 0.92) 0%, rgba(40, 40, 40, 1) 65%, rgba(0, 0, 0, 0.94) 100%);
+            border: 2px solid rgba(255, 205, 92, 0.45);
         }
 
-        .start-symbol {
-            font-size: 12px;
-            color: #1a1d24;
-            font-weight: 900;
+        .center-wheel::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.35);
+            opacity: 0;
+            transition: opacity 0.4s ease;
         }
 
-        .cell.money {
-            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-            color: #1a1d24;
+        .center-wheel:hover {
+            transform: translate(-50%, -50%) scale(1.03);
+            box-shadow: 0 0 70px rgba(255, 196, 0, 0.65), inset 0 0 44px rgba(0, 0, 0, 0.6);
         }
 
-        .cell.growth {
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
-            color: #1a1d24;
+        .center-wheel.spin::after {
+            opacity: 1;
         }
 
-        .cell.expense {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
-            color: #ffffff;
+        .wheel-number {
+            position: relative;
+            font-size: clamp(48px, calc(var(--computed-board-size, var(--board-size)) * 0.12), 82px);
+            font-weight: 800;
+            color: #ffd15a;
+            text-shadow: 0 0 20px rgba(255, 196, 0, 0.55);
+            z-index: 2;
         }
 
-        .cell.card {
-            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
-            color: #ffffff;
-        }
-
-        .cell.market {
-            background: linear-gradient(135deg, #a8e6cf 0%, #7fcdcd 100%);
-            color: #1a1d24;
-        }
-
-        .cell.timer {
-            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
-            color: #1a1d24;
-        }
-
-        .cell.special {
-            background: linear-gradient(135deg, #00bfff 0%, #0099cc 100%);
-            color: #ffffff;
+        .player-tokens {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
         }
 
         .player-token {
-            width: 20px;
-            height: 20px;
+            position: absolute;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 20px;
             font-weight: 700;
-            font-size: 10px;
-            color: #1a1d24;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            color: #fff;
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.35);
+            border: 2px solid rgba(255, 255, 255, 0.22);
+            transform: translate(-50%, -50%);
         }
 
-        .player-1 { background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%); }
-        .player-2 { background: linear-gradient(135deg, #00bfff 0%, #0099cc 100%); }
-        .player-3 { background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%); }
-        .player-4 { background: linear-gradient(135deg, #ffd93d 0%, #ffb347 100%); }
-
-        .game-controls {
+        .deal-strip {
+            margin-top: clamp(24px, calc(var(--computed-board-size, var(--board-size)) * 0.04), 36px);
             display: flex;
             justify-content: center;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
             flex-wrap: wrap;
+            gap: clamp(16px, calc(var(--computed-board-size, var(--board-size)) * 0.04), 24px);
         }
 
-        .dice {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
+        .special-card {
+            width: clamp(150px, calc(var(--computed-board-size, var(--board-size)) * 0.22), 210px);
+            height: clamp(120px, calc(var(--computed-board-size, var(--board-size)) * 0.18), 150px);
+            border-radius: 24px;
+            padding: 18px;
+            background: linear-gradient(160deg, rgba(25, 36, 58, 0.92) 0%, rgba(14, 21, 37, 0.96) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 22px 44px rgba(0, 0, 0, 0.45);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            justify-content: center;
+            pointer-events: auto;
+        }
+
+        .special-card.big-deal {
+            border-color: rgba(0, 224, 255, 0.55);
+            box-shadow: 0 22px 40px rgba(0, 224, 255, 0.24);
+        }
+
+        .special-card.small-deal {
+            border-color: rgba(0, 132, 255, 0.55);
+            box-shadow: 0 22px 40px rgba(0, 132, 255, 0.2);
+        }
+
+        .special-card.expenses {
+            border-color: rgba(255, 64, 128, 0.55);
+            box-shadow: 0 24px 44px rgba(255, 64, 128, 0.26);
+        }
+
+        .special-card.market {
+            border-color: rgba(0, 255, 180, 0.55);
+            box-shadow: 0 24px 44px rgba(0, 255, 180, 0.2);
+        }
+
+        .special-title {
+            font-size: 18px;
+            font-weight: 700;
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: 900;
-            color: #1a1d24;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .dice:hover {
-            transform: scale(1.1);
-        }
-
-        .dice.rolling {
-            animation: diceRoll 0.6s ease-in-out;
-        }
-
-        @keyframes diceRoll {
-            0%, 100% { transform: scale(1) rotate(0deg); }
-            25% { transform: scale(1.2) rotate(90deg); }
-            50% { transform: scale(1.1) rotate(180deg); }
-            75% { transform: scale(1.2) rotate(270deg); }
-        }
-
-        .game-info {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .info-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            padding: 12px;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .info-card h3 {
-            font-size: 12px;
-            font-weight: 600;
-            color: #a0a0a0;
-            margin-bottom: 4px;
-        }
-
-        .info-card p {
-            font-size: 18px;
-            font-weight: 900;
-            color: #ffffff;
-        }
-
-        .mobile-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(135deg, rgba(26, 29, 36, 0.95) 0%, rgba(36, 40, 48, 0.95) 100%);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 12px 16px;
-            z-index: 1000;
-        }
-
-        .mobile-nav-buttons {
-            display: flex;
-            justify-content: space-around;
             gap: 8px;
         }
 
-        .mobile-nav-btn {
-            flex: 1;
-            padding: 12px 8px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            color: #ffffff;
-            text-decoration: none;
-            text-align: center;
-            font-size: 10px;
+        .special-metric {
+            font-size: 14px;
             font-weight: 600;
-            transition: all 0.3s ease;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            flex-shrink: 0;
             display: flex;
             flex-direction: column;
+            gap: 22px;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 24px;
+            padding: 26px;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+        }
+
+        .panel h3 {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.82);
+            margin-bottom: 18px;
+        }
+
+        .status-panel .panel-body {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .status-chip {
+            display: flex;
             align-items: center;
-            gap: 4px;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(123, 97, 255, 0.28) 0%, rgba(123, 97, 255, 0.14) 100%);
+            border: 1px solid rgba(123, 97, 255, 0.4);
         }
 
-        .mobile-nav-btn.active {
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
-            color: #1a1d24;
+        .status-chip .status-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.55);
         }
 
-        @media (min-width: 769px) {
-            .board-grid {
-                grid-template-columns: repeat(8, 1fr);
-                gap: 6px;
-            }
+        .status-chip .status-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #f3f4f6;
+            margin-top: 4px;
+        }
 
-            .cell {
-                font-size: 12px;
-                min-height: 50px;
-            }
+        .status-chip .status-icon {
+            font-size: 28px;
+        }
 
-            .player-token {
-                width: 28px;
-                height: 28px;
-                font-size: 12px;
-            }
+        .timer-readout {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
 
-            .dice {
-                width: 80px;
-                height: 80px;
-                font-size: 32px;
-            }
+        .timer-readout .timer-value {
+            font-size: 34px;
+            font-weight: 800;
+        }
 
-            .game-info {
-                grid-template-columns: repeat(4, 1fr);
-            }
+        .timer-readout .timer-caption {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.55);
+        }
 
-            .mobile-nav {
-                display: none;
+        .finance-grid {
+            display: grid;
+            gap: 14px;
+        }
+
+        .finance-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .finance-value {
+            font-weight: 700;
+            color: #15f7a4;
+        }
+
+        .finance-value.negative {
+            color: #ff6b8a;
+        }
+
+        .loan-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(29, 233, 182, 0.15) 0%, rgba(29, 233, 182, 0.06) 100%);
+            border: 1px solid rgba(29, 233, 182, 0.35);
+            margin-top: 18px;
+            margin-bottom: 16px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            border: none;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #16f79e 0%, #06b973 100%);
+            color: #03110a;
+            box-shadow: 0 14px 26px rgba(6, 185, 115, 0.35);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff3b3b 100%);
+            color: #fff;
+            box-shadow: 0 14px 28px rgba(255, 59, 59, 0.32);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .assets-total {
+            font-size: 42px;
+            font-weight: 800;
+            color: #16f79e;
+            text-shadow: 0 0 22px rgba(22, 247, 158, 0.35);
+        }
+
+        .assets-caption {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.55);
+            margin-top: 4px;
+        }
+
+        .cell-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(7, 12, 20, 0.78);
+            backdrop-filter: blur(12px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            z-index: 50;
+        }
+
+        .cell-modal.show {
+            display: flex;
+        }
+
+        .modal-card {
+            position: relative;
+            width: min(420px, 100%);
+            border-radius: 28px;
+            padding: 32px 28px 28px;
+            background: linear-gradient(165deg, rgba(20, 27, 44, 0.95), rgba(13, 18, 32, 0.95));
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 28px 66px rgba(0, 0, 0, 0.55);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .modal-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 28px;
+            background: var(--modal-accent, linear-gradient(135deg, rgba(79, 172, 254, 0.35), rgba(0, 242, 254, 0.22)));
+            opacity: 0.65;
+            z-index: -1;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.25);
+            border: none;
+            color: #fff;
+            font-size: 16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .modal-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .modal-text {
+            font-size: 15px;
+            color: rgba(240, 244, 255, 0.82);
+            line-height: 1.6;
+        }
+
+        .modal-action {
+            align-self: flex-end;
+            padding: 12px 22px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            font-size: 14px;
+            color: #0b1624;
+            background: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+        }
+
+        @media (max-width: 1280px) {
+            :root {
+                --board-size: 640px;
+                --outer-cell-size: 48px;
+                --inner-cell-size: 46px;
+                --outer-cell-gap: 4px;
+            }
+            .page-shell { gap: 40px; }
+        }
+
+        @media (max-width: 1080px) {
+            :root {
+                --board-size: 600px;
+                --outer-cell-size: 44px;
+                --inner-cell-size: 44px;
+                --outer-cell-gap: 3px;
+            }
+        }
+
+        @media (max-width: 960px) {
+            :root {
+                --board-size: 560px;
+                --outer-cell-size: 40px;
+                --inner-cell-size: 40px;
+                --outer-cell-gap: 3px;
+            }
+            body { padding: 48px 32px 88px; }
+            .page-shell {
+                flex-direction: column;
+                align-items: center;
+                gap: 32px;
+            }
+            .content-column { order: 1; width: 100%; }
+            .deal-strip { order: 2; width: 100%; }
+            .sidebar {
+                width: min(440px, 100%);
+                order: 3;
             }
         }
 
         @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
+            :root {
+                --board-size: 520px;
+                --outer-cell-size: 36px;
+                --inner-cell-size: 36px;
+                --outer-cell-gap: 3px;
+            }
+            .deal-strip {
                 gap: 16px;
-                padding-bottom: 80px;
             }
+        }
 
-            .sidebar {
-                position: static;
-                order: -1;
+        @media (max-width: 640px) {
+            :root {
+                --board-size: 480px;
+                --outer-cell-size: 32px;
+                --inner-cell-size: 34px;
+                --outer-cell-gap: 2px;
             }
+            body { padding: 40px 24px 80px; }
+            .special-card { display: none; }
+            .deal-strip { display: none; }
+            .sidebar { width: 100%; }
+        }
 
-            .game-board-container {
-                padding: 16px;
+        @media (max-width: 520px) {
+            :root {
+                --board-size: 440px;
+                --outer-cell-size: 28px;
+                --inner-cell-size: 30px;
+                --outer-cell-gap: 2px;
             }
+        }
 
-            .board-grid {
-                grid-template-columns: repeat(6, 1fr);
-                gap: 4px;
+        @media (max-width: 460px) {
+            :root {
+                --board-size: 400px;
+                --outer-cell-size: 26px;
+                --inner-cell-size: 28px;
+                --outer-cell-gap: 2px;
             }
-
-            .cell {
-                min-height: 40px;
-                font-size: 10px;
-            }
-
-            .sidebar-section {
-                margin-bottom: 16px;
-                padding-bottom: 16px;
-            }
+            body { padding: 36px 16px 72px; }
+            .panel { padding: 20px; border-radius: 20px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="game-board-container">
-            <div class="header">
-                <h1 class="game-title">🎮 Game Board v2.0</h1>
-                <div class="header-actions">
-                    <button class="btn btn-secondary" id="pause-btn">⏸️ Пауза</button>
-                    <button class="btn btn-secondary" id="settings-btn">⚙️</button>
-                    <button class="btn btn-danger" id="exit-btn">🚪 Выйти</button>
+    <div class="page-shell">
+        <div class="content-column">
+            <div class="board-wrapper">
+                <div class="board-frame">
+                    <div class="outer-track" id="outerTrack"></div>
+                    <div class="inner-track" id="innerTrack"></div>
+                    <div class="player-tokens" id="playerTokens"></div>
+
+                    <div class="center-wheel" id="centerWheel">
+                        <div class="wheel-number" id="wheelNumber">1</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="game-board">
-                <div class="board-container">
-                    <!-- Специальные ячейки по бокам -->
-                    <div class="special-cell big-deal">
-                        <div class="special-cell-title">Большая сделка</div>
-                        <div class="special-cell-cards">24 карт</div>
-                        <div class="special-cell-discard">Отбой: 0</div>
-                    </div>
-                    
-                    <div class="special-cell small-deal">
-                        <div class="special-cell-title">Малая сделка</div>
-                        <div class="special-cell-cards">62 карт</div>
-                    </div>
-                    
-                    <div class="special-cell expenses">
-                        <div class="special-cell-title">Расходы</div>
-                        <div class="special-cell-cards">24 карт</div>
-                        <div class="special-cell-discard">Отбой: 0</div>
-                    </div>
-                    
-                    <div class="special-cell market">
-                        <div class="special-cell-title">Рынок</div>
-                        <div class="special-cell-cards">24 карт</div>
-                        <div class="special-cell-discard">Отбой: 0</div>
-                    </div>
-                    
-                    <!-- Игровое поле -->
-                    <div class="board-grid" id="board-grid"></div>
+            <div class="deal-strip">
+                <div class="special-card big-deal">
+                    <div class="special-title">💼 Большая сделка</div>
+                    <div class="special-metric">24 карты</div>
+                    <div class="special-metric">Премиум возможности</div>
                 </div>
-
-            <div class="game-controls">
-                <div class="dice" id="dice">🎲</div>
-                <button class="btn btn-primary" id="roll-btn">Бросить кубик</button>
-            </div>
-
-            <div class="game-info">
-                <div class="info-card">
-                    <h3>Игрок</h3>
-                    <p id="current-player">1</p>
+                <div class="special-card small-deal">
+                    <div class="special-title">📦 Малая сделка</div>
+                    <div class="special-metric">32 карты</div>
+                    <div class="special-metric">Стартовые инвестиции</div>
                 </div>
-                <div class="info-card">
-                    <h3>Ход</h3>
-                    <p id="current-turn">1</p>
+                <div class="special-card expenses">
+                    <div class="special-title">💳 Расходы</div>
+                    <div class="special-metric">24 карты</div>
+                    <div class="special-metric">Обязательные платежи</div>
                 </div>
-                <div class="info-card">
-                    <h3>Позиция</h3>
-                    <p id="current-position">1</p>
-                </div>
-                <div class="info-card">
-                    <h3>Результат</h3>
-                    <p id="dice-result">-</p>
+                <div class="special-card market">
+                    <div class="special-title">🛒 Рынок</div>
+                    <div class="special-metric">24 карты</div>
+                    <div class="special-metric">Спец. предложения</div>
                 </div>
             </div>
         </div>
 
-        <!-- Боковая панель -->
-        <div class="sidebar">
-            <!-- Статус хода -->
-            <div class="turn-status">
-                <div class="turn-status-text">ОЖИДАНИЕ ХОДА</div>
-                <div class="turn-status-subtext">НЕ ВАШ ход</div>
-            </div>
-            <div class="turn-timer">
-                <span>🕐</span>
-                <span>Время хода</span>
+        <aside class="sidebar">
+            <div class="panel status-panel">
+                <h3>Игровая информация</h3>
+                <div class="panel-body">
+                    <div class="status-chip" id="turnStatusChip">
+                        <div>
+                            <div class="status-label">Текущее состояние</div>
+                            <div class="status-value" id="turnState">Ожидание хода</div>
+                        </div>
+                        <div class="status-icon">🕒</div>
+                    </div>
+                    <div class="timer-readout">
+                        <span class="timer-value" id="timerValue">00:45</span>
+                        <span class="timer-caption">секунд осталось</span>
+                    </div>
+                </div>
             </div>
 
-            <!-- Финансовая информация -->
-            <div class="sidebar-section">
-                <div class="sidebar-title">
-                    <span class="icon">💰</span>
-                    <span>Финансы</span>
-                </div>
-                <div class="financial-item">
-                    <div class="financial-label">
-                        <span>📈</span>
+            <div class="panel">
+                <h3>Банковские операции</h3>
+                <div class="finance-grid">
+                    <div class="finance-row">
                         <span>Доход:</span>
+                        <span class="finance-value" id="incomeValue">$0</span>
                     </div>
-                    <div class="financial-value income">$0</div>
-                </div>
-                <div class="financial-item">
-                    <div class="financial-label">
-                        <span>📉</span>
+                    <div class="finance-row">
                         <span>Расходы:</span>
+                        <span class="finance-value negative" id="expenseValue">$0</span>
                     </div>
-                    <div class="financial-value expense">$0</div>
-                </div>
-                <div class="financial-item">
-                    <div class="financial-label">
-                        <span>💵</span>
-                        <span>$ PAYDAY:</span>
+                    <div class="finance-row">
+                        <span>PAYDAY:</span>
+                        <span class="finance-value" id="paydayValue">$0/мес</span>
                     </div>
-                    <div class="financial-value">$0/мес</div>
                 </div>
-            </div>
 
-            <!-- Кредит -->
-            <div class="sidebar-section">
-                <div class="sidebar-title">
-                    <span class="icon">🏦</span>
+                <div class="loan-status">
                     <span>Кредит:</span>
+                    <span class="finance-value">$0</span>
                 </div>
-                <div class="financial-item">
-                    <div class="financial-label">Кредит:</div>
-                    <div class="financial-value credit">$0</div>
-                </div>
-                <div class="financial-item">
-                    <div class="financial-label">Макс. кредит:</div>
-                    <div class="financial-value credit">$0</div>
-                </div>
-                <button class="btn-sidebar primary">
-                    <span>✅</span>
-                    <span>Без кредитов</span>
-                </button>
-                <button class="btn-sidebar secondary">
-                    <span>📊</span>
-                    <span>Взять</span>
-                </button>
-                <div style="font-size: 10px; color: #a0a0a0; text-align: center; margin-top: 8px;">
-                    Нажмите для открытия банковских операций
-                </div>
+                <button class="btn btn-primary" id="bankButton" onclick="openBankModule()">🏦 Банк</button>
             </div>
 
-            <!-- Активы -->
-            <div class="sidebar-section">
-                <div class="sidebar-title">
-                    <span class="icon">📁</span>
-                    <span>Активы</span>
-                </div>
-                <div style="text-align: center; margin-bottom: 12px;">
-                    <div class="financial-value assets" style="font-size: 24px;">$0</div>
-                    <div style="font-size: 12px; color: #a0a0a0;">Доход: $0/мес</div>
-                </div>
+            <div class="panel">
+                <h3>Активы</h3>
+                <div class="assets-total" id="assetsTotal">$0</div>
+                <div class="assets-caption">Доход: $0 / мес</div>
+                <button class="btn btn-primary" style="margin-top: 20px;">Портфель активов</button>
             </div>
-        </div>
+        </aside>
     </div>
 
-    <div class="mobile-nav">
-        <div class="mobile-nav-buttons">
-            <a href="index.html" class="mobile-nav-btn">
-                <span>🏠</span>
-                <span>Главная</span>
-            </a>
-            <a href="lobby.html" class="mobile-nav-btn">
-                <span>🎮</span>
-                <span>Лобби</span>
-            </a>
-            <a href="game.html" class="mobile-nav-btn active">
-                <span>🎯</span>
-                <span>Игра</span>
-            </a>
-            <a href="auth.html" class="mobile-nav-btn">
-                <span>👤</span>
-                <span>Профиль</span>
-            </a>
+    <div class="cell-modal" id="cellModal">
+        <div class="modal-card" id="modalCard">
+            <button class="modal-close" id="modalClose">✕</button>
+            <div class="modal-icon" id="modalIcon">🎲</div>
+            <div class="modal-title" id="modalTitle">Клетка №1</div>
+            <div class="modal-text" id="modalText">Совершите действие согласно карточке.</div>
+            <button class="modal-action" id="modalAction">Понятно</button>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            let currentPlayer = 1;
-            let currentTurn = 1;
-            let playerPositions = [0, 0, 0, 0];
-            let isRolling = false;
-            let totalCells = 76;
+        // Проверяем, что игрок находится в комнате
+        const currentRoom = localStorage.getItem('currentRoom');
+        if (!currentRoom) {
+            alert('Вы не находитесь в комнате. Переход в лобби...');
+            window.location.href = 'lobby.html';
+        }
 
-            function initBoard() {
-                const boardGrid = document.getElementById('board-grid');
-                boardGrid.innerHTML = '';
+        const room = JSON.parse(currentRoom);
+        const username = localStorage.getItem('username') || 'Гость';
+        
+        // Проверяем, что пользователь в списке игроков комнаты
+        const player = room.players.find(p => p.name === username);
+        if (!player) {
+            alert('Вы не являетесь участником этой комнаты. Переход в лобби...');
+            window.location.href = 'lobby.html';
+        }
 
-                // Создаем спиральный путь
-                const spiralPath = createSpiralPath();
-                
-                spiralPath.forEach((cellData, index) => {
-                    const cell = document.createElement('div');
-                    cell.className = 'cell';
-                    
-                    if (cellData) {
-                        if (cellData.type === 'start') {
-                            cell.classList.add('start');
-                            cell.innerHTML = `
-                                <div class="start-symbols">
-                                    <div class="start-symbols-row">
-                                        <span class="start-symbol">$</span>
-                                        <span class="start-symbol">$</span>
-                                    </div>
-                                    <div class="start-symbols-row">
-                                        <span class="start-symbol">$</span>
-                                        <span class="start-symbol">$</span>
-                                    </div>
-                                </div>
-                            `;
-                        } else {
-                            cell.innerHTML = `
-                                <div class="cell-number">${cellData.number}</div>
-                                <div class="cell-icon">${cellData.icon}</div>
-                            `;
-                            cell.classList.add(cellData.type);
-                        }
-                    }
-                    
-                    boardGrid.appendChild(cell);
+        const OUTER_TRACK_CONFIG = { widthCells: 12, heightCells: 12 };
+        const PLAYER_TOKENS = [
+            { emoji: '🦁', name: 'Игрок 1', gradient: 'linear-gradient(135deg, #ff8576, #ff6262)' },
+            { emoji: '🐯', name: 'Игрок 2', gradient: 'linear-gradient(135deg, #ffcf71, #ff9f43)' },
+            { emoji: '🦊', name: 'Игрок 3', gradient: 'linear-gradient(135deg, #ff7ce3, #d05eff)' },
+            { emoji: '🐼', name: 'Игрок 4', gradient: 'linear-gradient(135deg, #7ae5ff, #3ca7ff)' },
+            { emoji: '🐸', name: 'Игрок 5', gradient: 'linear-gradient(135deg, #5effc0, #2cd978)' },
+            { emoji: '🦉', name: 'Игрок 6', gradient: 'linear-gradient(135deg, #ffe676, #ffbf3b)' },
+            { emoji: '🐙', name: 'Игрок 7', gradient: 'linear-gradient(135deg, #c27bff, #7f5bff)' },
+            { emoji: '🐳', name: 'Игрок 8', gradient: 'linear-gradient(135deg, #6ad3ff, #337fff)' }
+        ];
+
+        const CELL_THEMES = {
+            'cell-pink': {
+                accent: 'linear-gradient(140deg, rgba(255, 79, 147, 0.6), rgba(255, 39, 128, 0.4))',
+                title: 'Обязательные траты',
+                description: 'Покройте обязательные расходы и удержите баланс бюджета.'
+            },
+            'cell-green': {
+                accent: 'linear-gradient(140deg, rgba(50, 223, 141, 0.6), rgba(25, 184, 106, 0.4))',
+                title: 'Возможность',
+                description: 'Воспользуйтесь новой инвестиционной возможностью.'
+            },
+            'cell-teal': {
+                accent: 'linear-gradient(140deg, rgba(37, 208, 255, 0.6), rgba(0, 144, 245, 0.4))',
+                title: 'Особое событие',
+                description: 'Вам доступен специальный шанс — проверьте карточку.'
+            },
+            'cell-purple': {
+                accent: 'linear-gradient(140deg, rgba(167, 105, 255, 0.6), rgba(115, 81, 255, 0.4))',
+                title: 'Семейные новости',
+                description: 'В вашей семье произошло событие — выполните действие.'
+            },
+            'cell-orange': {
+                accent: 'linear-gradient(140deg, rgba(255, 179, 71, 0.6), rgba(255, 140, 66, 0.4))',
+                title: 'Благотворительность',
+                description: 'Поддержите благотворительность и получите бонус.'
+            },
+            'cell-yellow': {
+                accent: 'linear-gradient(140deg, rgba(255, 214, 90, 0.6), rgba(255, 183, 0, 0.4))',
+                title: 'PayDay',
+                description: 'Получите зарплату и обновите свой денежный поток.'
+            },
+            'cell-blue': {
+                accent: 'linear-gradient(140deg, rgba(78, 149, 255, 0.6), rgba(37, 99, 235, 0.4))',
+                title: 'Мечта',
+                description: 'Сделайте шаг к своей мечте и закрепите результат.'
+            },
+            'cell-red': {
+                accent: 'linear-gradient(140deg, rgba(255, 107, 107, 0.6), rgba(255, 59, 59, 0.4))',
+                title: 'Шанс',
+                description: 'Испытайте удачу — выполните действие по карточке.'
+            },
+            'cell-slate': {
+                accent: 'linear-gradient(140deg, rgba(52, 67, 90, 0.6), rgba(30, 40, 56, 0.4))',
+                title: 'Событие',
+                description: 'Следуйте указаниям карточки события.'
+            }
+        };
+
+        let boardMetrics = null;
+
+        function getCssNumber(variableName) {
+            const raw = getComputedStyle(document.documentElement).getPropertyValue(variableName);
+            return parseFloat(raw) || 0;
+        }
+
+        function measureBoard() {
+            const boardFrame = document.querySelector('.board-frame');
+            if (!boardFrame) { return; }
+
+            const rect = boardFrame.getBoundingClientRect();
+            const boardSize = rect.width;
+            const cellSize = getCssNumber('--outer-cell-size');
+            const spacing = getCssNumber('--outer-cell-gap');
+            const innerCellSize = getCssNumber('--inner-cell-size');
+
+            const horizontalPadding = Math.max((boardSize - (OUTER_TRACK_CONFIG.widthCells * cellSize + (OUTER_TRACK_CONFIG.widthCells - 1) * spacing)) / 2, 0);
+            const verticalPadding = Math.max((boardSize - (OUTER_TRACK_CONFIG.heightCells * cellSize + (OUTER_TRACK_CONFIG.heightCells - 1) * spacing)) / 2, 0);
+
+            boardMetrics = {
+                size: boardSize,
+                cellSize,
+                spacing,
+                innerCellSize,
+                horizontalPadding,
+                verticalPadding
+            };
+
+            document.documentElement.style.setProperty('--computed-board-size', `${boardSize}px`);
+        }
+
+        function createOuterTrack() {
+            const outerTrack = document.getElementById('outerTrack');
+            if (!outerTrack || !boardMetrics) { return; }
+
+            outerTrack.innerHTML = '';
+            const { widthCells, heightCells } = OUTER_TRACK_CONFIG;
+            const { cellSize, spacing, horizontalPadding, verticalPadding } = boardMetrics;
+
+            const topRowStartX = horizontalPadding;
+            const topRowY = verticalPadding;
+            const step = cellSize + spacing;
+            const positions = [];
+
+            for (let i = 0; i < widthCells; i++) {
+                positions.push({ x: topRowStartX + i * step, y: topRowY });
+            }
+
+            for (let j = 1; j < heightCells; j++) {
+                positions.push({ x: topRowStartX + (widthCells - 1) * step, y: topRowY + j * step });
+            }
+
+            for (let i = widthCells - 2; i >= 0; i--) {
+                positions.push({ x: topRowStartX + i * step, y: topRowY + (heightCells - 1) * step });
+            }
+
+            for (let j = heightCells - 2; j >= 1; j--) {
+                positions.push({ x: topRowStartX, y: topRowY + j * step });
+            }
+
+            const outerColors = ['cell-pink', 'cell-green', 'cell-teal', 'cell-purple'];
+            const outerIcons = ['💵', '🏠', '🚗', '💡', '🎯', '💰', '🛍️', '💼'];
+
+            positions.forEach((pos, index) => {
+                const cell = document.createElement('div');
+                const colorClass = outerColors[index % outerColors.length];
+                cell.className = `track-cell outer ${colorClass}`;
+                cell.style.width = `${cellSize}px`;
+                cell.style.height = `${cellSize}px`;
+                cell.style.left = `${pos.x}px`;
+                cell.style.top = `${pos.y}px`;
+
+                cell.innerHTML = `
+                    <span class="cell-number">${index + 1}</span>
+                    <span class="cell-icon">${outerIcons[index % outerIcons.length]}</span>
+                `;
+
+                cell.addEventListener('click', () => {
+                    openCellModal({
+                        number: index + 1,
+                        colorClass,
+                        icon: outerIcons[index % outerIcons.length]
+                    });
                 });
-                
-                // Инициализируем токены игроков
-                initPlayerTokens();
+
+                outerTrack.appendChild(cell);
+            });
+        }
+
+        function createInnerTrack() {
+            const innerTrack = document.getElementById('innerTrack');
+            if (!innerTrack || !boardMetrics) { return; }
+
+            innerTrack.innerHTML = '';
+            const innerPattern = [
+                { color: 'cell-green', icon: '📈' },
+                { color: 'cell-pink', icon: '💸' },
+                { color: 'cell-green', icon: '📈' },
+                { color: 'cell-orange', icon: '❤️' },
+                { color: 'cell-green', icon: '📈' },
+                { color: 'cell-yellow', icon: '💰' },
+                { color: 'cell-green', icon: '📈' },
+                { color: 'cell-blue', icon: '🎯' },
+                { color: 'cell-green', icon: '📈' },
+                { color: 'cell-pink', icon: '💳' },
+                { color: 'cell-green', icon: '📈' },
+                { color: 'cell-purple', icon: '👶' },
+                { color: 'cell-green', icon: '📈' },
+                { color: 'cell-blue', icon: '🏆' },
+                { color: 'cell-green', icon: '📈' },
+                { color: 'cell-yellow', icon: '💰' },
+                { color: 'cell-green', icon: '📈' },
+                { color: 'cell-pink', icon: '💳' },
+                { color: 'cell-green', icon: '📈' },
+                { color: 'cell-orange', icon: '❤️' },
+                { color: 'cell-green', icon: '📈' },
+                { color: 'cell-blue', icon: '🎯' },
+                { color: 'cell-green', icon: '📈' },
+                { color: 'cell-pink', icon: '💸' }
+            ];
+
+            const totalCells = innerPattern.length;
+            const { size, cellSize, innerCellSize, horizontalPadding, verticalPadding } = boardMetrics;
+            const maxPadding = Math.max(horizontalPadding, verticalPadding);
+            const radius = Math.max(
+                size / 2 - (cellSize + maxPadding + innerCellSize / 2 + 12),
+                size * 0.22
+            );
+
+            for (let i = 0; i < totalCells; i++) {
+                const { color, icon } = innerPattern[i];
+                const angle = (i / totalCells) * Math.PI * 2;
+                const x = size / 2 + Math.cos(angle) * radius;
+                const y = size / 2 + Math.sin(angle) * radius;
+
+                const cell = document.createElement('div');
+                cell.className = `track-cell ${color}`;
+                cell.style.width = `${innerCellSize}px`;
+                cell.style.height = `${innerCellSize}px`;
+                cell.style.left = `${x}px`;
+                cell.style.top = `${y}px`;
+                cell.style.transform = 'translate(-50%, -50%)';
+
+                cell.innerHTML = `
+                    <span class="cell-number">${i + 1}</span>
+                    <span class="cell-icon">${icon}</span>
+                `;
+
+                cell.addEventListener('click', () => {
+                    openCellModal({
+                        number: i + 1,
+                        colorClass: color,
+                        icon
+                    });
+                });
+
+                innerTrack.appendChild(cell);
             }
+        }
 
-            function createSpiralPath() {
-                const path = [];
-                const gridSize = 10;
-                const totalCells = gridSize * gridSize;
-                
-                // Создаем пустую сетку
-                for (let i = 0; i < totalCells; i++) {
-                    path.push(null);
-                }
-                
-                // Спиральный путь от центра
-                const center = Math.floor(gridSize / 2);
-                const types = ['money', 'growth', 'expense', 'card', 'market', 'timer'];
-                const icons = ['💰', '📈', '💸', '🃏', '🏪', '⏰'];
-                
-                let x = center;
-                let y = center;
-                let direction = 0; // 0: right, 1: down, 2: left, 3: up
-                let steps = 1;
-                let stepCount = 0;
-                let cellNumber = 1;
-                
-                // Центральная ячейка
-                path[y * gridSize + x] = {
-                    number: 1,
-                    type: 'start',
-                    icon: '1'
-                };
-                cellNumber++;
-                
-                // Спираль наружу - более четкий путь
-                while (cellNumber <= 76) {
-                    for (let i = 0; i < steps; i++) {
-                        // Двигаемся в текущем направлении
-                        switch (direction) {
-                            case 0: x++; break;
-                            case 1: y++; break;
-                            case 2: x--; break;
-                            case 3: y--; break;
-                        }
-                        
-                        // Проверяем границы
-                        if (x >= 0 && x < gridSize && y >= 0 && y < gridSize && cellNumber <= 76) {
-                            const typeIndex = (cellNumber - 2) % types.length;
-                            path[y * gridSize + x] = {
-                                number: cellNumber,
-                                type: types[typeIndex],
-                                icon: icons[typeIndex]
-                            };
-                            cellNumber++;
-                        }
-                    }
-                    
-                    // Поворачиваем
-                    direction = (direction + 1) % 4;
-                    stepCount++;
-                    
-                    // Увеличиваем шаги каждые 2 поворота
-                    if (stepCount % 2 === 0) {
-                        steps++;
-                    }
-                }
-                
-                return path;
-            }
+        function renderPlayerTokens() {
+            const container = document.getElementById('playerTokens');
+            if (!container || !boardMetrics) { return; }
 
-            // Инициализация токенов игроков
-            function initPlayerTokens() {
-                const startCell = document.querySelector('.cell.start');
-                if (startCell) {
-                    for (let i = 1; i <= 4; i++) {
-                        const token = document.createElement('div');
-                        token.className = `player-token player-${i}`;
-                    token.textContent = i;
-                    token.id = `player-${i}-token`;
-                    startCell.appendChild(token);
-                }
-            }
+            container.innerHTML = '';
+            const radius = Math.max(boardMetrics.size * 0.26, 140);
+            const tokenSize = 44;
 
-            function rollDice() {
-                if (isRolling) return;
-                
-                isRolling = true;
-                const dice = document.getElementById('dice');
-                const rollBtn = document.getElementById('roll-btn');
-                
-                dice.classList.add('rolling');
-                rollBtn.disabled = true;
-                rollBtn.textContent = 'Бросаем...';
+            PLAYER_TOKENS.forEach((token, index) => {
+                const angle = (index / PLAYER_TOKENS.length) * Math.PI * 2 - Math.PI / 2;
+                const x = boardMetrics.size / 2 + Math.cos(angle) * radius;
+                const y = boardMetrics.size / 2 + Math.sin(angle) * radius;
 
-                setTimeout(() => {
-                    const roll = Math.floor(Math.random() * 6) + 1;
-                    dice.textContent = roll === 6 ? '🎲' : roll;
-                    dice.classList.remove('rolling');
-                    
-                    document.getElementById('dice-result').textContent = roll;
-                    movePlayer(roll);
-                    
-                    isRolling = false;
-                    rollBtn.disabled = false;
-                    rollBtn.textContent = 'Бросить кубик';
-                }, 600);
-            }
+                const el = document.createElement('div');
+                el.className = 'player-token';
+                el.style.background = token.gradient;
+                el.style.left = `${x}px`;
+                el.style.top = `${y}px`;
+                el.style.width = `${tokenSize}px`;
+                el.style.height = `${tokenSize}px`;
+                el.title = token.name;
+                el.textContent = token.emoji;
 
-            function movePlayer(steps) {
-                const oldPosition = playerPositions[currentPlayer - 1];
-                playerPositions[currentPlayer - 1] = Math.min(oldPosition + steps, totalCells - 1);
-                const newPosition = playerPositions[currentPlayer - 1];
+                container.appendChild(el);
+            });
+        }
 
-                const token = document.getElementById(`player-${currentPlayer}-token`);
-                const oldCell = document.getElementById('board-grid').children[oldPosition];
-                const newCell = document.getElementById('board-grid').children[newPosition];
-                
-                if (oldCell.contains(token)) {
-                    oldCell.removeChild(token);
-                }
-                newCell.appendChild(token);
+        function openCellModal({ number, colorClass, icon }) {
+            const modal = document.getElementById('cellModal');
+            const card = document.getElementById('modalCard');
+            const modalIcon = document.getElementById('modalIcon');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalText = document.getElementById('modalText');
 
-                updateGameInfo();
+            const theme = CELL_THEMES[colorClass] || CELL_THEMES['cell-slate'];
+            card.style.setProperty('--modal-accent', theme.accent);
+            modalIcon.textContent = icon || '🎲';
+            modalTitle.textContent = `Клетка №${number}`;
+            modalText.textContent = theme.description;
 
-                if (newPosition === totalCells - 1) {
-                    alert(`🎉 Игрок ${currentPlayer} выиграл!`);
-                    resetGame();
-                    return;
-                }
+            modal.classList.add('show');
+        }
 
-                if (steps !== 6) {
-                    currentPlayer = currentPlayer === 4 ? 1 : currentPlayer + 1;
-                    if (currentPlayer === 1) currentTurn++;
-                }
-            }
+        function closeCellModal() {
+            const modal = document.getElementById('cellModal');
+            modal.classList.remove('show');
+        }
 
-            function updateGameInfo() {
-                document.getElementById('current-player').textContent = currentPlayer;
-                document.getElementById('current-turn').textContent = currentTurn;
-                document.getElementById('current-position').textContent = playerPositions[currentPlayer - 1] + 1;
-            }
+        function rebuildBoard() {
+            measureBoard();
+            createOuterTrack();
+            createInnerTrack();
+            renderPlayerTokens();
+        }
 
-            function resetGame() {
-                currentPlayer = 1;
-                currentTurn = 1;
-                playerPositions = [0, 0, 0, 0];
-                
-                for (let i = 1; i <= 4; i++) {
-                    const token = document.getElementById(`player-${i}-token`);
-                    const startCell = document.getElementById('board-grid').children[0];
-                    if (token && startCell) {
-                        startCell.appendChild(token);
-                    }
-                }
-                
-                updateGameInfo();
-                document.getElementById('dice-result').textContent = '-';
-            }
+        function initCenterWheel() {
+            const wheel = document.getElementById('centerWheel');
+            const display = document.getElementById('wheelNumber');
+            if (!wheel || !display) { return; }
 
-            document.getElementById('roll-btn').addEventListener('click', rollDice);
-            document.getElementById('dice').addEventListener('click', rollDice);
-            document.getElementById('pause-btn').addEventListener('click', () => alert('⏸️ Игра приостановлена'));
-            document.getElementById('exit-btn').addEventListener('click', () => {
-                if (confirm('🚪 Вы уверены, что хотите выйти из игры?')) {
-                    window.location.href = 'lobby.html';
+            wheel.addEventListener('click', () => {
+                wheel.classList.remove('spin');
+                void wheel.offsetWidth;
+                wheel.classList.add('spin');
+                const value = Math.floor(Math.random() * 6) + 1;
+                display.textContent = value;
+            });
+        }
+
+        function initModal() {
+            const modal = document.getElementById('cellModal');
+            const closeBtn = document.getElementById('modalClose');
+            const actionBtn = document.getElementById('modalAction');
+
+            closeBtn.addEventListener('click', closeCellModal);
+            actionBtn.addEventListener('click', closeCellModal);
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    closeCellModal();
                 }
             });
+        }
 
-            initBoard();
-            updateGameInfo();
+        document.addEventListener('DOMContentLoaded', () => {
+            // Обновляем информацию о комнате
+            updateRoomInfo();
+            
+            // Проверяем выбор профессии
+            checkProfessionSelected();
+            
+            // Проверяем готовность игроков
+            if (checkPlayersReady()) {
+                showStartButton();
+            }
+            
+            rebuildBoard();
+            initCenterWheel();
+            initModal();
+        });
+
+        function updateRoomInfo() {
+            const playersInfo = room.players.map(p => p.name).join(', ');
+            document.title = `${room.name} - Game Board v2.0`;
+            
+            // Обновляем информацию о игроках
+            const turnStateElement = document.getElementById('turnState');
+            if (turnStateElement) {
+                turnStateElement.textContent = `Комната: ${room.name} (${room.players.length}/${room.maxPlayers || 4})`;
+            }
+            
+            // Обновляем информацию о профессии
+            updateProfessionInfo();
+        }
+
+        function updateProfessionInfo() {
+            const professionData = localStorage.getItem('selectedProfession');
+            if (professionData) {
+                const profession = JSON.parse(professionData);
+                
+                // Обновляем финансовую информацию в боковой панели
+                const incomeElement = document.getElementById('incomeValue');
+                const expenseElement = document.getElementById('expenseValue');
+                const paydayElement = document.getElementById('paydayValue');
+                
+                if (incomeElement) incomeElement.textContent = `$${profession.income.toLocaleString()}`;
+                if (expenseElement) expenseElement.textContent = `$${profession.expenses.toLocaleString()}`;
+                if (paydayElement) paydayElement.textContent = `$${profession.cashflow.toLocaleString()}/мес`;
+                
+                // Показываем информацию о профессии
+                console.log('Выбранная профессия:', profession);
+            }
+        }
+
+        function checkPlayersReady() {
+            return room.players.length >= 2;
+        }
+
+        function showStartButton() {
+            const hostPlayer = room.players.find(p => p.isHost);
+            if (hostPlayer && hostPlayer.name === username && room.status !== 'playing') {
+                // Добавляем кнопку старта в интерфейс
+                const statusPanel = document.querySelector('.status-panel .panel-body');
+                const existingStartBtn = document.getElementById('start-game-btn');
+                
+                if (!existingStartBtn) {
+                    const startBtn = document.createElement('button');
+                    startBtn.id = 'start-game-btn';
+                    startBtn.className = 'btn btn-primary';
+                    startBtn.innerHTML = '🚀 Начать игру';
+                    startBtn.style.marginTop = '16px';
+                    startBtn.addEventListener('click', startGame);
+                    statusPanel.appendChild(startBtn);
+                }
+            }
+        }
+
+        function checkProfessionSelected() {
+            const professionData = localStorage.getItem('selectedProfession');
+            if (!professionData) {
+                // Показываем кнопку выбора профессии
+                const statusPanel = document.querySelector('.status-panel .panel-body');
+                const existingProfessionBtn = document.getElementById('select-profession-btn');
+                
+                if (!existingProfessionBtn) {
+                    const professionBtn = document.createElement('button');
+                    professionBtn.id = 'select-profession-btn';
+                    professionBtn.className = 'btn btn-primary';
+                    professionBtn.innerHTML = '👤 Выбрать профессию';
+                    professionBtn.style.marginTop = '16px';
+                    professionBtn.addEventListener('click', openProfessionCard);
+                    statusPanel.appendChild(professionBtn);
+                }
+            }
+        }
+
+        function openProfessionCard() {
+            // Открываем карточку профессии в новом окне
+            const professionWindow = window.open('profession-card.html', 'professionCard', 'width=700,height=900,scrollbars=yes,resizable=yes');
+            
+            if (!professionWindow) {
+                alert('Пожалуйста, разрешите всплывающие окна для выбора профессии');
+            }
+        }
+
+        function startGame() {
+            const hostPlayer = room.players.find(p => p.isHost);
+            if (!hostPlayer || hostPlayer.name !== username) {
+                alert('Только хост может начать игру');
+                return;
+            }
+
+            if (!checkPlayersReady()) {
+                alert('Для начала игры нужно минимум 2 игрока');
+                return;
+            }
+
+            // Обновляем статус комнаты
+            room.status = 'playing';
+            localStorage.setItem('currentRoom', JSON.stringify(room));
+            
+            // Удаляем кнопку старта
+            const startBtn = document.getElementById('start-game-btn');
+            if (startBtn) {
+                startBtn.remove();
+            }
+            
+            // Показываем сообщение о начале игры
+            alert('🎮 Игра началась! Удачной игры!');
+            
+            // Обновляем интерфейс
+            updateRoomInfo();
+        }
+
+        function openBankModule() {
+            // Открываем банковский модуль в новом окне
+            const bankWindow = window.open('bank-module.html', 'bankModule', 'width=700,height=800,scrollbars=yes,resizable=yes');
+            
+            if (!bankWindow) {
+                alert('Пожалуйста, разрешите всплывающие окна для работы банковского модуля');
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            window.requestAnimationFrame(rebuildBoard);
         });
     </script>
 </body>

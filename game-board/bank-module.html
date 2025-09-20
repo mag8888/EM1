@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Банковский модуль - Game Board v2.0</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at 15% 20%, rgba(0, 234, 255, 0.18) 0%, transparent 55%),
+                        radial-gradient(circle at 78% 82%, rgba(255, 0, 128, 0.18) 0%, transparent 55%),
+                        linear-gradient(150deg, #0c1424 0%, #181f32 50%, #0a101f 100%);
+            color: #f3f4f6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .bank-container {
+            background: linear-gradient(160deg, #151d30 0%, #111527 45%, #0f1422 100%);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6), inset 0 0 60px rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bank-container::before {
+            content: '';
+            position: absolute;
+            inset: 16px;
+            border-radius: 16px;
+            background: radial-gradient(circle at 50% 42%, rgba(255, 205, 64, 0.12) 0%, transparent 60%),
+                        linear-gradient(200deg, rgba(32, 48, 78, 0.7) 0%, rgba(16, 22, 34, 0.95) 62%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .bank-header {
+            text-align: center;
+            margin-bottom: 32px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .bank-title {
+            font-size: 28px;
+            font-weight: 900;
+            color: #ffd15a;
+            text-shadow: 0 0 20px rgba(255, 196, 0, 0.55);
+            margin-bottom: 8px;
+        }
+
+        .bank-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .balance-section {
+            background: linear-gradient(135deg, rgba(22, 247, 158, 0.1) 0%, rgba(6, 185, 115, 0.05) 100%);
+            border: 1px solid rgba(22, 247, 158, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .balance-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .balance-amount {
+            font-size: 36px;
+            font-weight: 900;
+            color: #16f79e;
+            text-shadow: 0 0 20px rgba(22, 247, 158, 0.5);
+        }
+
+        .transfer-section {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            font-size: 14px;
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #16f79e;
+            box-shadow: 0 0 0 3px rgba(22, 247, 158, 0.2);
+        }
+
+        .form-group select option {
+            background: #1a1d24;
+            color: #ffffff;
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #16f79e 0%, #06b973 100%);
+            color: #03110a;
+            box-shadow: 0 14px 26px rgba(6, 185, 115, 0.35);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(6, 185, 115, 0.5);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .history-section {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .history-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-info {
+            flex: 1;
+        }
+
+        .history-amount {
+            font-weight: 700;
+            color: #16f79e;
+        }
+
+        .history-amount.outgoing {
+            color: #ff6b6b;
+        }
+
+        .history-time {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #ffffff;
+            font-size: 18px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 3;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 71, 87, 0.05) 100%);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            color: #ff6b6b;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success-message {
+            background: linear-gradient(135deg, rgba(22, 247, 158, 0.1) 0%, rgba(6, 185, 115, 0.05) 100%);
+            border: 1px solid rgba(22, 247, 158, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            color: #16f79e;
+            font-size: 14px;
+            display: none;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .bank-container {
+                padding: 24px;
+                margin: 10px;
+            }
+
+            .balance-amount {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bank-container">
+        <button class="close-btn" onclick="closeBankModule()">✕</button>
+        
+        <div class="bank-header">
+            <div class="bank-title">🏦 БАНКОВСКИЕ ОПЕРАЦИИ</div>
+            <div class="bank-subtitle">Управление финансами в игре</div>
+        </div>
+
+        <div class="balance-section">
+            <div class="balance-label">Ваш баланс</div>
+            <div class="balance-amount" id="currentBalance">$1000</div>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+
+        <div class="transfer-section">
+            <div class="section-title">
+                <span>💸</span>
+                <span>Перевод средств</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="recipientSelect">Выберите получателя</label>
+                <select id="recipientSelect">
+                    <option value="">Выберите игрока...</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="transferAmount">Сумма перевода</label>
+                <input type="number" id="transferAmount" placeholder="Введите сумму" min="1">
+            </div>
+            
+            <button class="btn btn-primary" id="transferBtn" onclick="makeTransfer()">
+                💳 Перевести средства
+            </button>
+        </div>
+
+        <div class="history-section">
+            <div class="section-title">
+                <span>📋</span>
+                <span>История переводов</span>
+            </div>
+            <div class="history-list" id="historyList">
+                <div style="text-align: center; color: rgba(255, 255, 255, 0.5); padding: 20px;">
+                    История переводов пуста
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Глобальные переменные
+        let socket;
+        let currentUser;
+        let currentRoom;
+        let currentBalance = 1000;
+        let roomPlayers = [];
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            // Получаем данные из localStorage
+            currentUser = localStorage.getItem('username') || 'Гость';
+            const roomData = localStorage.getItem('currentRoom');
+            
+            if (!roomData) {
+                showError('Вы не находитесь в комнате');
+                return;
+            }
+            
+            currentRoom = JSON.parse(roomData);
+            roomPlayers = currentRoom.players || [];
+            
+            // Подключаемся к WebSocket
+            socket = io();
+            
+            // Подписываемся на события
+            socket.on('connect', () => {
+                console.log('Подключен к серверу');
+                socket.emit('joinRoom', currentRoom.id);
+            });
+            
+            socket.on('bankUpdate', handleBankUpdate);
+            socket.on('roomUpdate', handleRoomUpdate);
+            
+            // Инициализируем модуль
+            initializeBankModule();
+        });
+
+        function initializeBankModule() {
+            loadBalance();
+            loadPlayers();
+            loadTransferHistory();
+        }
+
+        async function loadBalance() {
+            try {
+                const response = await fetch(`/api/bank/balance/${currentUser}/${currentRoom.id}`);
+                const data = await response.json();
+                currentBalance = data.amount;
+                updateBalanceDisplay();
+            } catch (error) {
+                console.error('Ошибка загрузки баланса:', error);
+                showError('Ошибка загрузки баланса');
+            }
+        }
+
+        function loadPlayers() {
+            const select = document.getElementById('recipientSelect');
+            select.innerHTML = '<option value="">Выберите игрока...</option>';
+            
+            roomPlayers.forEach(player => {
+                if (player.name !== currentUser) {
+                    const option = document.createElement('option');
+                    option.value = player.name;
+                    option.textContent = player.name;
+                    select.appendChild(option);
+                }
+            });
+        }
+
+        async function loadTransferHistory() {
+            try {
+                const response = await fetch(`/api/bank/history/${currentRoom.id}`);
+                const history = await response.json();
+                updateHistoryDisplay(history);
+            } catch (error) {
+                console.error('Ошибка загрузки истории:', error);
+            }
+        }
+
+        function updateBalanceDisplay() {
+            document.getElementById('currentBalance').textContent = `$${currentBalance}`;
+        }
+
+        function updateHistoryDisplay(history) {
+            const historyList = document.getElementById('historyList');
+            
+            if (history.length === 0) {
+                historyList.innerHTML = '<div style="text-align: center; color: rgba(255, 255, 255, 0.5); padding: 20px;">История переводов пуста</div>';
+                return;
+            }
+            
+            historyList.innerHTML = history.slice(-10).reverse().map(transfer => {
+                const isOutgoing = transfer.from === currentUser;
+                const isIncoming = transfer.to === currentUser;
+                
+                let displayText = '';
+                let amountClass = '';
+                
+                if (isOutgoing) {
+                    displayText = `Перевод игроку ${transfer.to}`;
+                    amountClass = 'outgoing';
+                } else if (isIncoming) {
+                    displayText = `Получено от ${transfer.from}`;
+                    amountClass = '';
+                } else {
+                    displayText = `${transfer.from} → ${transfer.to}`;
+                    amountClass = '';
+                }
+                
+                const time = new Date(transfer.timestamp).toLocaleTimeString('ru-RU', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                return `
+                    <div class="history-item">
+                        <div class="history-info">
+                            <div>${displayText}</div>
+                            <div class="history-time">${time}</div>
+                        </div>
+                        <div class="history-amount ${amountClass}">
+                            ${isOutgoing ? '-' : '+'}$${transfer.amount}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function makeTransfer() {
+            const recipient = document.getElementById('recipientSelect').value;
+            const amount = parseInt(document.getElementById('transferAmount').value);
+            
+            // Валидация
+            if (!recipient) {
+                showError('Выберите получателя');
+                return;
+            }
+            
+            if (!amount || amount <= 0) {
+                showError('Введите корректную сумму');
+                return;
+            }
+            
+            if (amount > currentBalance) {
+                showError('Недостаточно средств');
+                return;
+            }
+            
+            // Показываем загрузку
+            const transferBtn = document.getElementById('transferBtn');
+            transferBtn.disabled = true;
+            transferBtn.textContent = 'Переводим...';
+            
+            try {
+                const response = await fetch('/api/bank/transfer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        from: currentUser,
+                        to: recipient,
+                        amount: amount,
+                        roomId: currentRoom.id
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showSuccess('Перевод выполнен успешно!');
+                    currentBalance = result.newBalance.amount;
+                    updateBalanceDisplay();
+                    
+                    // Очищаем форму
+                    document.getElementById('recipientSelect').value = '';
+                    document.getElementById('transferAmount').value = '';
+                    
+                    // Обновляем историю
+                    loadTransferHistory();
+                } else {
+                    showError(result.error || 'Ошибка при переводе');
+                }
+            } catch (error) {
+                console.error('Ошибка перевода:', error);
+                showError('Ошибка соединения с сервером');
+            } finally {
+                transferBtn.disabled = false;
+                transferBtn.textContent = '💳 Перевести средства';
+            }
+        }
+
+        function handleBankUpdate(data) {
+            console.log('Получено обновление банка:', data);
+            
+            if (data.type === 'transfer') {
+                // Обновляем баланс если это касается текущего пользователя
+                if (data.from === currentUser || data.to === currentUser) {
+                    loadBalance();
+                }
+                
+                // Обновляем историю
+                loadTransferHistory();
+                
+                // Показываем уведомление
+                if (data.to === currentUser) {
+                    showSuccess(`Получен перевод $${data.amount} от ${data.from}`);
+                }
+            }
+        }
+
+        function handleRoomUpdate(data) {
+            console.log('Получено обновление комнаты:', data);
+            
+            if (data.type === 'userJoined') {
+                // Обновляем список игроков если нужно
+                loadPlayers();
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        function closeBankModule() {
+            if (socket) {
+                socket.emit('leaveRoom', currentRoom.id);
+                socket.disconnect();
+            }
+            window.close();
+        }
+
+        // Обработка закрытия окна
+        window.addEventListener('beforeunload', () => {
+            if (socket) {
+                socket.emit('leaveRoom', currentRoom.id);
+            }
+        });
+    </script>
+</body>
+</html>

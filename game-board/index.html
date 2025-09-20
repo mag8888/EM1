@@ -3,15 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>Game Board v2.0 - Богатый дизайн</title>
+    <title>Game Board v2.0 - Главная</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        /* БОГАТЫЙ СОВРЕМЕННЫЙ ДИЗАЙН v4.0 - БАНКОВСКИЙ СТИЛЬ */
         * {
             margin: 0;
             padding: 0;
@@ -20,13 +16,10 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #1a1d24 0%, #242830 50%, #1a1d24 100%);
+            background: linear-gradient(135deg, #0f1419 0%, #1a1d24 25%, #242830 50%, #1a1d24 75%, #0f1419 100%);
             color: #ffffff;
             line-height: 1.6;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             position: relative;
             overflow-x: hidden;
         }
@@ -47,58 +40,20 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 40px 24px;
-            text-align: center;
+            padding: 40px 20px;
             position: relative;
             z-index: 2;
+            padding-bottom: 120px;
         }
 
-        .logo {
-            width: 100px;
-            height: 100px;
-            border-radius: 24px;
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 50%, #00bfff 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #1a1d24;
-            font-size: 40px;
-            font-weight: 900;
-            margin: 0 auto 32px;
-            box-shadow: 
-                0 20px 40px rgba(0, 255, 150, 0.3),
-                0 0 0 4px rgba(255, 255, 255, 0.1);
-            position: relative;
-            overflow: hidden;
+        .hero {
+            text-align: center;
+            margin-bottom: 60px;
         }
 
-        .logo::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(135deg, #00ff96, #00d4aa, #00bfff, #ff6b6b);
-            border-radius: 24px;
-            z-index: -1;
-            animation: rotate 4s linear infinite;
-        }
-
-        .logo::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            animation: shimmer 3s ease-in-out infinite;
-        }
-
-        h1 {
+        .hero h1 {
             font-size: 48px;
             font-weight: 900;
             color: #ffffff;
@@ -110,58 +65,35 @@
             background-clip: text;
         }
 
-        .subtitle {
+        .hero p {
             font-size: 20px;
             color: #a0a0a0;
-            margin-bottom: 48px;
             font-weight: 500;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            margin: 0 auto 32px;
         }
 
-        .actions {
+        .cta-buttons {
             display: flex;
-            flex-direction: column;
-            gap: 20px;
-            max-width: 400px;
-            margin: 0 auto 60px;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin-bottom: 60px;
         }
 
         .btn {
-            padding: 20px 32px;
+            padding: 16px 32px;
             border: none;
-            border-radius: 16px;
-            font-size: 18px;
+            border-radius: 12px;
+            font-size: 16px;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
             text-decoration: none;
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
             gap: 12px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .btn:hover::before {
-            left: 100%;
-        }
-
-        .btn:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+            white-space: nowrap;
         }
 
         .btn-primary {
@@ -171,7 +103,8 @@
         }
 
         .btn-primary:hover {
-            box-shadow: 0 16px 48px rgba(0, 255, 150, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 255, 150, 0.4);
         }
 
         .btn-secondary {
@@ -181,181 +114,74 @@
         }
 
         .btn-secondary:hover {
-            box-shadow: 0 16px 48px rgba(0, 191, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 191, 255, 0.4);
         }
 
         .features {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 32px;
-            margin-bottom: 48px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 60px;
         }
 
-        .feature {
-            text-align: center;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        .feature-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
-            padding: 32px 24px;
+            padding: 32px;
+            text-align: center;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
         }
 
-        .feature::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #00ff96, #00bfff, #ff6b6b);
-            background-size: 200% 100%;
-            animation: gradientShift 3s ease infinite;
-        }
-
-        .feature:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            border-color: rgba(0, 255, 150, 0.5);
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(0, 255, 150, 0.3);
         }
 
         .feature-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            margin: 0 auto 20px;
-            box-shadow: 0 8px 24px rgba(0, 255, 150, 0.3);
-            position: relative;
+            font-size: 48px;
+            margin-bottom: 16px;
         }
 
-        .feature-icon::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(135deg, #00ff96, #00d4aa, #00bfff);
-            border-radius: 16px;
-            z-index: -1;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        .feature h3 {
+        .feature-card h3 {
             font-size: 20px;
             font-weight: 700;
             color: #ffffff;
-            margin-bottom: 8px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 12px;
         }
 
-        .feature p {
-            font-size: 16px;
+        .feature-card p {
+            font-size: 14px;
             color: #a0a0a0;
-            font-weight: 500;
+            line-height: 1.6;
         }
 
-        .status {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        .game-preview {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
-            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .game-preview h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 16px;
+        }
+
+        .game-preview p {
             font-size: 16px;
             color: #a0a0a0;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            position: relative;
-            overflow: hidden;
+            margin-bottom: 24px;
         }
 
-        .status::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #00ff96, #00bfff);
-            background-size: 200% 100%;
-            animation: gradientShift 4s ease infinite;
-        }
-
-        .status strong {
-            color: #00ff96;
-            font-weight: 700;
-        }
-
-        /* Animations */
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        @keyframes shimmer {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(40px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .container > * {
-            animation: fadeInUp 0.8s ease forwards;
-        }
-
-        .logo {
-            animation-delay: 0.1s;
-        }
-
-        h1 {
-            animation-delay: 0.2s;
-        }
-
-        .subtitle {
-            animation-delay: 0.3s;
-        }
-
-        .actions {
-            animation-delay: 0.4s;
-        }
-
-        .features {
-            animation-delay: 0.5s;
-        }
-
-        .status {
-            animation-delay: 0.6s;
-        }
-
-        /* Mobile Navigation */
         .mobile-nav {
-            display: none;
             position: fixed;
             bottom: 0;
             left: 0;
@@ -391,81 +217,80 @@
             gap: 4px;
         }
 
-        .mobile-nav-btn:hover {
-            background: linear-gradient(135deg, rgba(0, 255, 150, 0.2) 0%, rgba(0, 212, 170, 0.1) 100%);
-            border-color: rgba(0, 255, 150, 0.5);
-        }
-
         .mobile-nav-btn.active {
             background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
             color: #1a1d24;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
-            .container {
-                padding: 24px 16px;
-                padding-bottom: 80px;
+            .hero h1 {
+                font-size: 32px;
             }
 
-            h1 {
-                font-size: 36px;
+            .hero p {
+                font-size: 16px;
             }
 
-            .subtitle {
-                font-size: 18px;
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
             }
 
-            .actions {
-                max-width: 100%;
-            }
-
-            .features {
-                grid-template-columns: 1fr;
-            }
-
-            .mobile-nav {
-                display: block;
+            .btn {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="logo">🎮</div>
-        
-        <h1>Game Board v2.0</h1>
-        <p class="subtitle">Современная система игрового поля с богатым дизайном</p>
-        
-        <div class="actions">
-            <a href="auth.html" class="btn btn-primary">🔐 Войти в игру</a>
-            <a href="lobby.html" class="btn btn-secondary">🏠 Лобби</a>
+        <div class="hero">
+            <h1>🎮 Game Board v2.0</h1>
+            <p>Финансовая настольная игра "Энергия Денег" - изучайте основы инвестирования и управления деньгами в увлекательной игровой форме</p>
+            
+            <div class="cta-buttons">
+                <a href="lobby.html" class="btn btn-primary">
+                    🚀 Начать игру
+                </a>
+                <a href="auth.html" class="btn btn-secondary">
+                    🔐 Авторизация
+                </a>
+            </div>
         </div>
-        
+
         <div class="features">
-            <div class="feature">
-                <div class="feature-icon">⚡</div>
-                <h3>Быстро</h3>
-                <p>Мгновенная загрузка и отзывчивость</p>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>Образовательная игра</h3>
+                <p>Изучайте финансовую грамотность через увлекательную настольную игру</p>
             </div>
-            <div class="feature">
-                <div class="feature-icon">🎨</div>
-                <h3>Красиво</h3>
-                <p>Богатый современный дизайн</p>
+            
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>Многопользовательская</h3>
+                <p>Играйте с друзьями онлайн в комнатах до 8 игроков</p>
             </div>
-            <div class="feature">
-                <div class="feature-icon">🔒</div>
-                <h3>Безопасно</h3>
-                <p>Защищенные данные и соединения</p>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3>Мобильная адаптация</h3>
+                <p>Играйте на любом устройстве - компьютере, планшете или телефоне</p>
             </div>
         </div>
-        
-        <div class="status">
-            <strong>Статус:</strong> Система работает нормально • Все сервисы доступны
+
+        <div class="game-preview">
+            <h2>🎲 Как играть?</h2>
+            <p>1. Создайте комнату или присоединитесь к существующей<br>
+            2. Дождитесь готовности всех игроков<br>
+            3. Хост начинает игру<br>
+            4. Бросайте кубик и двигайтесь по полю<br>
+            5. Приобретайте активы и управляйте финансами<br>
+            6. Первый игрок, достигший финансовой независимости, побеждает!</p>
         </div>
     </div>
 
-    <!-- Mobile Navigation -->
     <div class="mobile-nav">
         <div class="mobile-nav-buttons">
             <a href="index.html" class="mobile-nav-btn active">
@@ -489,7 +314,22 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Game Board v2.0 - Богатый дизайн загружен');
+            // Проверяем авторизацию
+            const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+            const username = localStorage.getItem('username');
+
+            if (isAuthenticated && username) {
+                // Обновляем кнопки для авторизованного пользователя
+                const ctaButtons = document.querySelector('.cta-buttons');
+                ctaButtons.innerHTML = `
+                    <a href="lobby.html" class="btn btn-primary">
+                        🚀 Играть как ${username}
+                    </a>
+                    <a href="lobby.html" class="btn btn-secondary">
+                        🎮 Лобби
+                    </a>
+                `;
+            }
         });
     </script>
 </body>

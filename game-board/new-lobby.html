@@ -16,27 +16,36 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a1d24 25%, #242830 50%, #1a1d24 75%, #0f1419 100%);
+            color: #ffffff;
+            line-height: 1.6;
             min-height: 100vh;
-            background: radial-gradient(circle at 15% 20%, rgba(0, 234, 255, 0.18) 0%, transparent 55%),
-                        radial-gradient(circle at 78% 82%, rgba(255, 0, 128, 0.18) 0%, transparent 55%),
-                        linear-gradient(150deg, #0c1424 0%, #181f32 50%, #0a101f 100%);
-            color: #f3f4f6;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 56px 48px 96px;
             position: relative;
             overflow-x: hidden;
         }
 
-        .page-shell {
-            width: 100%;
-            max-width: 1600px;
-            display: flex;
-            align-items: flex-start;
-            gap: 56px;
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(0, 255, 150, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 100, 200, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 60%, rgba(100, 200, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
             position: relative;
             z-index: 2;
+            padding-bottom: 80px;
         }
 
         .header {
@@ -62,54 +71,48 @@
             font-weight: 500;
         }
 
-        .content-column {
-            flex: 1 1 auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: clamp(24px, calc(var(--computed-board-size, 700px) * 0.04), 36px);
+        .lobby-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 24px;
+            align-items: start;
         }
 
-        .lobby-board {
+        .rooms-section {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
             position: relative;
-            width: 700px;
-            height: 700px;
-            border-radius: 48px;
-            background: linear-gradient(160deg, #151d30 0%, #111527 45%, #0f1422 100%);
-            box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6), inset 0 0 60px rgba(255, 255, 255, 0.04);
-            overflow: visible;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 40px;
+            overflow: hidden;
         }
 
-        .lobby-board::before {
+        .rooms-section::before {
             content: '';
             position: absolute;
-            inset: 16px;
-            border-radius: 40px;
-            background: radial-gradient(circle at 50% 42%, rgba(255, 205, 64, 0.12) 0%, transparent 60%),
-                        linear-gradient(200deg, rgba(32, 48, 78, 0.7) 0%, rgba(16, 22, 34, 0.95) 62%);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0, 255, 150, 0.03) 0%, rgba(0, 191, 255, 0.02) 100%);
             pointer-events: none;
+            z-index: -1;
         }
 
-        .lobby-title {
-            font-size: 32px;
-            font-weight: 900;
-            color: #ffd15a;
-            text-shadow: 0 0 20px rgba(255, 196, 0, 0.55);
-            z-index: 2;
-            text-align: center;
+        .rooms-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
-        .lobby-subtitle {
-            font-size: 16px;
-            color: rgba(255, 255, 255, 0.8);
-            text-align: center;
-            z-index: 2;
+        .rooms-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
         }
 
         .btn {
@@ -128,17 +131,14 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #16f79e 0%, #06b973 100%);
-            color: #03110a;
-            box-shadow: 0 14px 26px rgba(6, 185, 115, 0.35);
-            font-weight: 700;
-            font-size: 16px;
-            padding: 16px 32px;
+            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
+            color: #1a1d24;
+            box-shadow: 0 8px 32px rgba(0, 255, 150, 0.3);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 20px 40px rgba(6, 185, 115, 0.5);
+            box-shadow: 0 12px 40px rgba(0, 255, 150, 0.4);
         }
 
         .btn-secondary {
@@ -149,28 +149,6 @@
 
         .btn-secondary:hover {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
-            border: 1px solid rgba(0, 255, 150, 0.3);
-            color: #1a1d24;
-            font-weight: 700;
-            box-shadow: 0 8px 24px rgba(0, 255, 150, 0.3);
-        }
-
-        .btn-success:hover {
-            background: linear-gradient(135deg, #00e085 0%, #00b894 100%);
-            transform: translateY(-3px);
-            box-shadow: 0 12px 32px rgba(0, 255, 150, 0.4);
-        }
-
-        .btn-success:disabled {
-            background: linear-gradient(135deg, rgba(0, 255, 150, 0.3) 0%, rgba(0, 255, 150, 0.2) 100%);
-            color: rgba(26, 29, 36, 0.5);
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
         }
 
         .create-room-form {
@@ -223,19 +201,17 @@
         .room-item {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 14px;
-            padding: 18px;
+            border-radius: 12px;
+            padding: 16px;
             margin-bottom: 12px;
             transition: all 0.3s ease;
             cursor: pointer;
-            box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45);
         }
 
         .room-item:hover {
             background: linear-gradient(135deg, rgba(0, 255, 150, 0.1) 0%, rgba(0, 255, 150, 0.05) 100%);
             border-color: rgba(0, 255, 150, 0.3);
-            transform: translateY(-6px);
-            box-shadow: 0 22px 46px rgba(0, 0, 0, 0.55);
+            transform: translateY(-2px);
         }
 
         .room-header {
@@ -259,18 +235,18 @@
         }
 
         .room-status.waiting {
-            background: linear-gradient(135deg, #ffd65a 0%, #ffb700 100%);
-            color: #2f2600;
+            background: linear-gradient(135deg, #ffd93d 0%, #ffb347 100%);
+            color: #1a1d24;
         }
 
         .room-status.full {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff3b3b 100%);
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
             color: #ffffff;
         }
 
         .room-status.playing {
-            background: linear-gradient(135deg, #16f79e 0%, #06b973 100%);
-            color: #03110a;
+            background: linear-gradient(135deg, #00bfff 0%, #0099cc 100%);
+            color: #ffffff;
         }
 
         .room-info {
@@ -300,19 +276,14 @@
         }
 
         .sidebar {
-            width: 320px;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 22px;
-        }
-
-        .panel {
-            background: rgba(21, 27, 42, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            padding: 26px;
-            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+            background: linear-gradient(135deg, rgba(26, 29, 36, 0.95) 0%, rgba(36, 40, 48, 0.9) 100%);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
         }
 
         .sidebar-section {
@@ -326,13 +297,14 @@
             margin-bottom: 0;
         }
 
-        .panel h3 {
+        .sidebar-title {
             font-size: 16px;
             font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.82);
-            margin-bottom: 18px;
+            color: #ffffff;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .sidebar-title .icon {
@@ -443,24 +415,19 @@
         }
 
         @media (max-width: 768px) {
-            .page-shell {
-                flex-direction: column;
-                align-items: center;
-                gap: 32px;
-            }
-
-            .lobby-board {
-                width: 100%;
-                max-width: 500px;
-                height: auto;
-                min-height: 500px;
+            .lobby-content {
+                grid-template-columns: 1fr;
+                gap: 16px;
             }
 
             .sidebar {
-                width: 100%;
-                max-width: 500px;
                 position: static;
                 order: -1;
+            }
+
+            .rooms-header {
+                flex-direction: column;
+                align-items: stretch;
             }
 
             .btn {
@@ -471,84 +438,88 @@
     </style>
 </head>
 <body>
-    <div class="page-shell">
-        <div class="content-column">
-            <div class="lobby-board">
-                <div class="lobby-title">🎮 ЛОББИ</div>
-                <div class="lobby-subtitle">Выберите комнату или создайте новую игру</div>
-                
-                <div style="display: flex; flex-direction: column; gap: 20px; width: 80%; z-index: 2;">
-                    <div class="create-room-form">
-                        <h3 style="margin-bottom: 16px; color: #ffffff; font-size: 18px; text-align: center;">Создать комнату</h3>
-                        <div class="form-group">
-                            <label for="room-name">Название комнаты</label>
-                            <input type="text" id="room-name" placeholder="Введите название комнаты">
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Лобби</h1>
+            <p>Выберите комнату или создайте новую игру</p>
+        </div>
+
+        <div class="lobby-content">
+            <div class="rooms-section">
+                <div class="rooms-header">
+                    <h2 class="rooms-title">Доступные комнаты</h2>
+                    <button class="btn btn-primary" id="refresh-rooms">🔄 Обновить</button>
+                </div>
+
+                <div class="create-room-form">
+                    <h3 style="margin-bottom: 16px; color: #ffffff; font-size: 16px;">Создать комнату</h3>
+                    <div class="form-group">
+                        <label for="room-name">Название комнаты</label>
+                        <input type="text" id="room-name" placeholder="Введите название комнаты">
+                    </div>
+                    <div class="form-group">
+                        <label for="max-players">Максимум игроков</label>
+                        <input type="number" id="max-players" value="4" min="2" max="8">
+                    </div>
+                    <button class="btn btn-primary" id="create-room" style="width: 100%;">🏠 Создать комнату</button>
+                </div>
+
+                <div class="rooms-list" id="rooms-list">
+                    <!-- Комнаты будут загружены динамически -->
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-title">
+                        <span class="icon">👤</span>
+                        <span>Профиль</span>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-avatar" id="user-avatar">U</div>
+                        <div class="user-details">
+                            <h3 id="username">Пользователь</h3>
+                            <p>Онлайн</p>
                         </div>
-                        <div class="form-group">
-                            <label for="max-players">Максимум игроков</label>
-                            <input type="number" id="max-players" value="4" min="2" max="8">
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-title">
+                        <span class="icon">📊</span>
+                        <span>Статистика</span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="games-played">0</div>
+                            <div class="stat-label">Игр сыграно</div>
                         </div>
-                        <button class="btn btn-primary" id="create-room" style="width: 100%;">🏠 Создать комнату</button>
+                        <div class="stat-item">
+                            <div class="stat-value" id="games-won">0</div>
+                            <div class="stat-label">Побед</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="win-rate">0%</div>
+                            <div class="stat-label">Процент побед</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="total-players">1</div>
+                            <div class="stat-label">Игроков онлайн</div>
+                        </div>
                     </div>
-                    
-                    <div style="text-align: center;">
-                        <button class="btn btn-secondary" id="refresh-rooms">🔄 Обновить комнаты</button>
-                        <button class="btn btn-primary" id="select-profession" onclick="openProfessionCard()" style="margin-top: 12px;">👤 Выбрать профессию</button>
-                        
-                        <!-- Кнопка Старт - показывается только хостом комнаты -->
-                        <button class="btn btn-success" id="start-game" onclick="startGame()" style="margin-top: 12px; display: none;">
-                            🚀 Начать игру
-                        </button>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-title">
+                        <span class="icon">⚙️</span>
+                        <span>Настройки</span>
                     </div>
-                    
-                    <div class="rooms-list" id="rooms-list">
-                        <!-- Комнаты будут загружены динамически -->
-                    </div>
+                    <button class="btn btn-secondary" style="width: 100%; margin-bottom: 8px;">🔧 Настройки</button>
+                    <button class="btn btn-secondary" style="width: 100%; margin-bottom: 8px;">📖 Правила</button>
+                    <button class="btn btn-secondary" style="width: 100%;" id="logout-btn">🚪 Выйти</button>
                 </div>
             </div>
         </div>
-
-        <aside class="sidebar">
-            <div class="panel">
-                <h3>👤 Профиль</h3>
-                <div class="user-info">
-                    <div class="user-avatar" id="user-avatar">U</div>
-                    <div class="user-details">
-                        <h3 id="username">Пользователь</h3>
-                        <p>Онлайн</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel">
-                <h3>📊 Статистика</h3>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-value" id="games-played">0</div>
-                        <div class="stat-label">Игр сыграно</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="games-won">0</div>
-                        <div class="stat-label">Побед</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="win-rate">0%</div>
-                        <div class="stat-label">Процент побед</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="total-players">1</div>
-                        <div class="stat-label">Игроков онлайн</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel">
-                <h3>⚙️ Настройки</h3>
-                <button class="btn btn-secondary" style="width: 100%; margin-bottom: 8px;">🔧 Настройки</button>
-                <button class="btn btn-secondary" style="width: 100%; margin-bottom: 8px;">📖 Правила</button>
-                <button class="btn btn-secondary" style="width: 100%;" id="logout-btn">🚪 Выйти</button>
-            </div>
-        </aside>
     </div>
 
     <div class="mobile-nav">
@@ -557,7 +528,7 @@
                 <span>🏠</span>
                 <span>Главная</span>
             </a>
-            <a href="lobby.html" class="mobile-nav-btn active">
+            <a href="new-lobby.html" class="mobile-nav-btn active">
                 <span>🎮</span>
                 <span>Лобби</span>
             </a>
@@ -617,7 +588,6 @@
                             <div style="font-size: 14px;">Создайте новую комнату для начала игры</div>
                         </div>
                     `;
-                    updateStartButton(); // Обновляем кнопку старт даже если нет комнат
                     return;
                 }
 
@@ -643,9 +613,6 @@
                         joinRoom(roomId);
                     });
                 });
-                
-                // Обновляем кнопку старт после загрузки комнат
-                updateStartButton();
             }
 
             function generatePlayerAvatars(players) {
@@ -701,9 +668,6 @@
                 
                 // Присоединяемся к созданной комнате
                 joinRoom(roomId);
-                
-                // Обновляем кнопку старт
-                updateStartButton();
             }
 
             function joinRoom(roomId) {
@@ -728,9 +692,9 @@
                 // Проверяем, не находится ли пользователь уже в этой комнате
                 const existingPlayer = room.players.find(p => p.name === username);
                 if (existingPlayer) {
-                    // Пользователь уже в комнате, остаемся в лобби и показываем кнопку старт если хост
+                    // Пользователь уже в комнате, переходим к игре
                     localStorage.setItem('currentRoom', JSON.stringify(room));
-                    updateStartButton();
+                    window.location.href = 'game.html';
                     return;
                 }
 
@@ -751,93 +715,8 @@
                 // Перезагружаем список комнат
                 loadRooms();
 
-                // Обновляем кнопку старт
-                updateStartButton();
-
                 // Показываем сообщение о присоединении
                 alert(`Вы присоединились к комнате "${room.name}"`);
-            }
-
-            function updateStartButton() {
-                const currentRoom = localStorage.getItem('currentRoom');
-                const startButton = document.getElementById('start-game');
-                
-                if (!currentRoom) {
-                    startButton.style.display = 'none';
-                    return;
-                }
-                
-                const room = JSON.parse(currentRoom);
-                const isHost = room.players.find(p => p.name === username && p.isHost);
-                
-                if (isHost && room.players.length >= 2) {
-                    // Показываем кнопку старт только хосту и только если есть минимум 2 игрока
-                    startButton.style.display = 'block';
-                    startButton.disabled = false;
-                    startButton.textContent = `🚀 Начать игру (${room.players.length}/${room.maxPlayers})`;
-                } else if (isHost) {
-                    // Хост, но недостаточно игроков
-                    startButton.style.display = 'block';
-                    startButton.disabled = true;
-                    startButton.textContent = `⏳ Ждем игроков (${room.players.length}/${room.maxPlayers})`;
-                } else {
-                    // Не хост - скрываем кнопку
-                    startButton.style.display = 'none';
-                }
-            }
-
-            function startGame() {
-                const currentRoom = localStorage.getItem('currentRoom');
-                if (!currentRoom) {
-                    alert('Вы не находитесь в комнате');
-                    return;
-                }
-                
-                const room = JSON.parse(currentRoom);
-                const isHost = room.players.find(p => p.name === username && p.isHost);
-                
-                if (!isHost) {
-                    alert('Только хост может начать игру');
-                    return;
-                }
-                
-                if (room.players.length < 2) {
-                    alert('Недостаточно игроков для начала игры (минимум 2)');
-                    return;
-                }
-                
-                // Обновляем статус комнаты
-                room.status = 'playing';
-                room.startedAt = new Date().toISOString();
-                
-                // Обновляем комнату в localStorage
-                const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
-                const roomIndex = rooms.findIndex(r => r.id === room.id);
-                if (roomIndex !== -1) {
-                    rooms[roomIndex] = room;
-                    localStorage.setItem('rooms', JSON.stringify(rooms));
-                }
-                
-                localStorage.setItem('currentRoom', JSON.stringify(room));
-                
-                // Переходим к игровой доске
-                window.location.href = 'game.html';
-            }
-
-            function openProfessionCard() {
-                // Проверяем, что пользователь в комнате
-                const currentRoom = localStorage.getItem('currentRoom');
-                if (!currentRoom) {
-                    alert('Сначала присоединитесь к комнате');
-                    return;
-                }
-                
-                // Открываем карточку профессии в новом окне
-                const professionWindow = window.open('profession-card.html', 'professionCard', 'width=700,height=900,scrollbars=yes,resizable=yes');
-                
-                if (!professionWindow) {
-                    alert('Пожалуйста, разрешите всплывающие окна для выбора профессии');
-                }
             }
 
             function logout() {
@@ -845,7 +724,6 @@
                     localStorage.removeItem('username');
                     localStorage.removeItem('isAuthenticated');
                     localStorage.removeItem('currentRoom');
-                    localStorage.removeItem('selectedProfession');
                     window.location.href = 'auth.html';
                 }
             }

@@ -4,14 +4,54 @@
  */
 
 const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
 const path = require('path');
 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 const PORT = process.env.PORT || 8080;
 
 // Middleware
 app.use(express.static(path.join(__dirname)));
 app.use(express.json());
+
+// Банковские данные (в реальном проекте это была бы база данных)
+const bankData = {
+    balances: {}, // { userId: { amount: 1000, roomId: 'room123' } }
+    transferHistory: [] // { from: 'user1', to: 'user2', amount: 100, timestamp: Date, roomId: 'room123' }
+};
+
+// Функции банковских операций
+function getBalance(userId, roomId) {
+    const key = `${userId}_${roomId}`;
+    return bankData.balances[key] || { amount: 1000, roomId }; // Стартовый баланс 1000
+}
+
+function setBalance(userId, roomId, amount) {
+    const key = `${userId}_${roomId}`;
+    bankData.balances[key] = { amount, roomId };
+}
+
+function addTransferHistory(from, to, amount, roomId) {
+    bankData.transferHistory.push({
+        from,
+        to,
+        amount,
+        timestamp: new Date(),
+        roomId
+    });
+}
+
+function getTransferHistory(roomId) {
+    return bankData.transferHistory.filter(t => t.roomId === roomId);
+}
 
 // Основной маршрут
 app.get('/', (req, res) => {
@@ -31,6 +71,18 @@ app.get('/game', (req, res) => {
     res.sendFile(path.join(__dirname, 'game.html'));
 });
 
+app.get('/game-board', (req, res) => {
+    res.sendFile(path.join(__dirname, 'game-board.html'));
+});
+
+app.get('/bank-module', (req, res) => {
+    res.sendFile(path.join(__dirname, 'bank-module.html'));
+});
+
+app.get('/profession-card', (req, res) => {
+    res.sendFile(path.join(__dirname, 'profession-card.html'));
+});
+
 // API маршруты для Game Board
 app.get('/api/health', (req, res) => {
     res.json({
@@ -38,6 +90,174 @@ app.get('/api/health', (req, res) => {
         service: 'Game Board v2.0',
         version: '2.0.0',
         timestamp: new Date().toISOString()
+    });
+});
+
+// Банковские API маршруты
+app.get('/api/bank/balance/:userId/:roomId', (req, res) => {
+    const { userId, roomId } = req.params;
+    const balance = getBalance(userId, roomId);
+    res.json(balance);
+});
+
+app.post('/api/bank/transfer', (req, res) => {
+    const { from, to, amount, roomId } = req.body;
+    
+    // Валидация
+    if (!from || !to || !amount || !roomId) {
+        return res.status(400).json({ error: 'Недостаточно данных для перевода' });
+    }
+    
+    if (from === to) {
+        return res.status(400).json({ error: 'Нельзя переводить самому себе' });
+    }
+    
+    if (amount <= 0) {
+        return res.status(400).json({ error: 'Сумма должна быть положительной' });
+    }
+    
+    const fromBalance = getBalance(from, roomId);
+    if (fromBalance.amount < amount) {
+        return res.status(400).json({ error: 'Недостаточно средств для перевода' });
+    }
+    
+    // Выполняем перевод
+    const toBalance = getBalance(to, roomId);
+    
+    // Списываем у отправителя
+    setBalance(from, roomId, fromBalance.amount - amount);
+    
+    // Зачисляем получателю
+    setBalance(to, roomId, toBalance.amount + amount);
+    
+    // Добавляем в историю
+    addTransferHistory(from, to, amount, roomId);
+    
+    // Отправляем push-события всем участникам комнаты
+    io.to(roomId).emit('bankUpdate', {
+        type: 'transfer',
+        from,
+        to,
+        amount,
+        roomId,
+        timestamp: new Date()
+    });
+    
+    res.json({ 
+        success: true, 
+        message: 'Перевод выполнен успешно',
+        newBalance: getBalance(from, roomId)
+    });
+});
+
+app.get('/api/bank/history/:roomId', (req, res) => {
+    const { roomId } = req.params;
+    const history = getTransferHistory(roomId);
+    res.json(history);
+});
+
+app.get('/api/bank/room-balances/:roomId', (req, res) => {
+    const { roomId } = req.params;
+    const balances = {};
+    
+    // Получаем все балансы для комнаты
+    Object.keys(bankData.balances).forEach(key => {
+        const [userId, userRoomId] = key.split('_');
+        if (userRoomId === roomId) {
+            balances[userId] = bankData.balances[key];
+        }
+    });
+    
+    res.json(balances);
+});
+
+// API для управления профессиями
+app.get('/api/profession/:userId/:roomId', (req, res) => {
+    const { userId, roomId } = req.params;
+    const key = `profession_${userId}_${roomId}`;
+    
+    // Возвращаем данные профессии или начальные значения
+    const professionData = bankData.professions?.[key] || {
+        profession: 'Предприниматель',
+        income: 10000,
+        expenses: 6200,
+        cashflow: 3800,
+        liabilities: {
+            taxes: 1300,
+            other: 1500,
+            carLoan: { payment: 700, principal: 14000 },
+            educationLoan: { payment: 500, principal: 10000 },
+            mortgage: { payment: 1200, principal: 240000 },
+            creditCards: { payment: 1000, principal: 20000 }
+        },
+        totalLiabilities: 284000
+    };
+    
+    res.json(professionData);
+});
+
+app.post('/api/profession/update', (req, res) => {
+    const { userId, roomId, updates } = req.body;
+    
+    if (!userId || !roomId || !updates) {
+        return res.status(400).json({ error: 'Недостаточно данных для обновления' });
+    }
+    
+    const key = `profession_${userId}_${roomId}`;
+    
+    // Инициализируем структуру данных профессий если нужно
+    if (!bankData.professions) {
+        bankData.professions = {};
+    }
+    
+    // Получаем текущие данные или создаем новые
+    const currentData = bankData.professions[key] || {
+        profession: 'Предприниматель',
+        income: 10000,
+        expenses: 6200,
+        cashflow: 3800,
+        liabilities: {
+            taxes: 1300,
+            other: 1500,
+            carLoan: { payment: 700, principal: 14000 },
+            educationLoan: { payment: 500, principal: 10000 },
+            mortgage: { payment: 1200, principal: 240000 },
+            creditCards: { payment: 1000, principal: 20000 }
+        },
+        totalLiabilities: 284000
+    };
+    
+    // Обновляем данные
+    const updatedData = { ...currentData, ...updates };
+    
+    // Пересчитываем денежный поток
+    updatedData.cashflow = updatedData.income - updatedData.expenses;
+    
+    // Пересчитываем общий долг
+    if (updatedData.liabilities) {
+        updatedData.totalLiabilities = 
+            updatedData.liabilities.carLoan?.principal || 0 +
+            updatedData.liabilities.educationLoan?.principal || 0 +
+            updatedData.liabilities.mortgage?.principal || 0 +
+            updatedData.liabilities.creditCards?.principal || 0;
+    }
+    
+    // Сохраняем обновленные данные
+    bankData.professions[key] = updatedData;
+    
+    // Отправляем push-событие всем участникам комнаты
+    io.to(roomId).emit('professionUpdate', {
+        type: 'professionChanged',
+        userId,
+        roomId,
+        professionData: updatedData,
+        timestamp: new Date()
+    });
+    
+    res.json({ 
+        success: true, 
+        message: 'Данные профессии обновлены',
+        professionData: updatedData
     });
 });
 
@@ -77,13 +297,51 @@ app.use((err, req, res, next) => {
     });
 });
 
+// WebSocket подключения
+io.on('connection', (socket) => {
+    console.log('👤 Пользователь подключился:', socket.id);
+    
+    // Присоединение к комнате
+    socket.on('joinRoom', (roomId) => {
+        socket.join(roomId);
+        console.log(`🏠 Пользователь ${socket.id} присоединился к комнате ${roomId}`);
+        
+        // Отправляем обновленные балансы всем в комнате
+        const balances = {};
+        Object.keys(bankData.balances).forEach(key => {
+            const [userId, userRoomId] = key.split('_');
+            if (userRoomId === roomId) {
+                balances[userId] = bankData.balances[key];
+            }
+        });
+        
+        socket.to(roomId).emit('roomUpdate', {
+            type: 'userJoined',
+            userId: socket.id,
+            balances
+        });
+    });
+    
+    // Отключение от комнаты
+    socket.on('leaveRoom', (roomId) => {
+        socket.leave(roomId);
+        console.log(`🚪 Пользователь ${socket.id} покинул комнату ${roomId}`);
+    });
+    
+    // Отключение
+    socket.on('disconnect', () => {
+        console.log('👋 Пользователь отключился:', socket.id);
+    });
+});
+
 // Запуск сервера
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log('🎮 Game Board v2.0 Server запущен!');
     console.log(`🚀 Сервер работает на порту ${PORT}`);
     console.log(`📱 Локальный адрес: http://localhost:${PORT}`);
     console.log(`🌐 Railway адрес: https://your-app.railway.app`);
     console.log('✅ Готов к обслуживанию файлов');
+    console.log('🔌 WebSocket сервер активен');
 });
 
 // Graceful shutdown
