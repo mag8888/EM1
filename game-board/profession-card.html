@@ -310,6 +310,13 @@
             flex: 1;
         }
 
+        .liability-payoff {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
         .btn-pay-off {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             border: none;
@@ -320,7 +327,6 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-left: 12px;
         }
 
         .btn-pay-off:hover:not(:disabled) {
@@ -437,30 +443,38 @@
                 <div class="liability-item">
                     <div class="liability-info">
                         <span class="liability-name">Кредит на авто: <span id="carLoanPayment">$700</span></span>
-                        <span class="liability-amount principal"><span id="carLoanPrincipal">$14,000</span> (тело)</span>
                     </div>
-                    <button class="btn-pay-off" onclick="payOffLiability('carLoan', 14000)">Погасить</button>
+                    <div class="liability-payoff">
+                        <span class="liability-amount principal"><span id="carLoanPrincipal">$14,000</span> (тело)</span>
+                        <button class="btn-pay-off" onclick="payOffLiability('carLoan', 14000)">Погасить</button>
+                    </div>
                 </div>
                 <div class="liability-item">
                     <div class="liability-info">
                         <span class="liability-name">Образовательный кредит: <span id="educationLoanPayment">$500</span></span>
-                        <span class="liability-amount principal"><span id="educationLoanPrincipal">$10,000</span> (тело)</span>
                     </div>
-                    <button class="btn-pay-off" onclick="payOffLiability('educationLoan', 10000)">Погасить</button>
+                    <div class="liability-payoff">
+                        <span class="liability-amount principal"><span id="educationLoanPrincipal">$10,000</span> (тело)</span>
+                        <button class="btn-pay-off" onclick="payOffLiability('educationLoan', 10000)">Погасить</button>
+                    </div>
                 </div>
                 <div class="liability-item">
                     <div class="liability-info">
                         <span class="liability-name">Ипотека: <span id="mortgagePayment">$1,200</span></span>
-                        <span class="liability-amount principal"><span id="mortgagePrincipal">$240,000</span> (тело)</span>
                     </div>
-                    <button class="btn-pay-off" onclick="payOffLiability('mortgage', 240000)">Погасить</button>
+                    <div class="liability-payoff">
+                        <span class="liability-amount principal"><span id="mortgagePrincipal">$240,000</span> (тело)</span>
+                        <button class="btn-pay-off" onclick="payOffLiability('mortgage', 240000)">Погасить</button>
+                    </div>
                 </div>
                 <div class="liability-item">
                     <div class="liability-info">
                         <span class="liability-name">Кредитные карты: <span id="creditCardsPayment">$1,000</span></span>
-                        <span class="liability-amount principal"><span id="creditCardsPrincipal">$20,000</span> (тело)</span>
                     </div>
-                    <button class="btn-pay-off" onclick="payOffLiability('creditCards', 20000)">Погасить</button>
+                    <div class="liability-payoff">
+                        <span class="liability-amount principal"><span id="creditCardsPrincipal">$20,000</span> (тело)</span>
+                        <button class="btn-pay-off" onclick="payOffLiability('creditCards', 20000)">Погасить</button>
+                    </div>
                 </div>
             </div>
             
