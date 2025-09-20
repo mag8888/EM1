@@ -562,59 +562,16 @@
                 <div class="lobby-subtitle">Выберите комнату или создайте новую игру</div>
                 
                 <div style="display: flex; flex-direction: column; gap: 20px; width: 80%; z-index: 2;">
-                    <div class="create-room-form">
-                        <h3 style="margin-bottom: 16px; color: #ffffff; font-size: 18px; text-align: center;">Создать комнату</h3>
-                        <div class="form-group">
-                            <label for="room-name">Название комнаты</label>
-                            <input type="text" id="room-name" placeholder="Введите название комнаты">
-                        </div>
-                        <div class="form-group">
-                            <label for="max-players">Максимум игроков</label>
-                            <input type="number" id="max-players" value="4" min="2" max="8">
-                        </div>
-                        <div class="form-group">
-                            <label for="turn-time">Время на ход (минуты)</label>
-                            <input type="number" id="turn-time" value="3" min="1" max="5">
-                        </div>
-                        <button class="btn btn-primary" id="create-room" style="width: 100%;">🏠 Создать комнату</button>
-                    </div>
-                    
-                    <div style="text-align: center;">
-                        <button class="btn btn-secondary" id="refresh-rooms">🔄 Обновить комнаты</button>
-                        
-                        <!-- Кнопка Старт - показывается только хостом комнаты -->
-                        <button class="btn btn-success" id="start-game" onclick="startGame()" style="margin-top: 12px; display: none;">
-                            🚀 Начать игру
-                        </button>
-                    </div>
-                    
-                    <div class="rooms-list" id="rooms-list">
-                        <!-- Комнаты будут загружены динамически -->
+                    <div style="text-align: center; padding: 40px; color: #ffffff;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">🎮</div>
+                        <div style="font-size: 24px; margin-bottom: 8px; font-weight: bold;">Добро пожаловать в лобби!</div>
+                        <div style="font-size: 16px; opacity: 0.8;">Функции создания комнат временно отключены</div>
                     </div>
                 </div>
             </div>
         </div>
 
         <aside class="sidebar">
-            <!-- Информация о текущей комнате -->
-            <div class="panel" id="current-room-panel" style="display: none;">
-                <h3>🏠 Текущая комната</h3>
-                <div class="room-details">
-                    <div class="room-name" id="current-room-name">Название комнаты</div>
-                    <div class="room-players" id="current-room-players">
-                        <div class="players-count" id="players-count">0/4 игроков</div>
-                        <div class="players-list" id="players-list"></div>
-                    </div>
-                    <div class="room-actions">
-                        <button class="btn btn-primary" id="enter-room-btn" onclick="enterRoom()" style="width: 100%; margin-bottom: 8px;">
-                            🚪 Войти в комнату
-                        </button>
-                        <button class="btn btn-secondary" id="leave-room-btn" onclick="leaveRoom()" style="width: 100%;">
-                            🚪 Покинуть комнату
-                        </button>
-                    </div>
-                </div>
-            </div>
 
             <div class="panel">
                 <h3>👤 Профиль</h3>
@@ -689,74 +646,6 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         // Глобальные функции для кнопок (доступны до загрузки DOM)
-        function enterRoom() {
-            const currentRoom = localStorage.getItem('currentRoom');
-            if (!currentRoom) {
-                alert('Вы не находитесь в комнате');
-                return;
-            }
-            
-            const room = JSON.parse(currentRoom);
-            
-            // Проверяем, что игра не началась
-            if (room.status === 'playing') {
-                alert('Игра уже началась! Переход к игровой доске...');
-                window.location.href = 'game.html';
-                return;
-            }
-            
-            // Переходим на страницу входа в комнату
-            window.location.href = 'room-entry.html';
-        }
-
-        function leaveRoom() {
-            const currentRoom = localStorage.getItem('currentRoom');
-            if (!currentRoom) {
-                alert('Вы не находитесь в комнате');
-                return;
-            }
-            
-            if (confirm('Вы уверены, что хотите покинуть комнату?')) {
-                const room = JSON.parse(currentRoom);
-                const username = localStorage.getItem('username') || 'Гость';
-                
-                // Обновляем список комнат
-                const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
-                const roomIndex = rooms.findIndex(r => r.id === room.id);
-                
-                if (roomIndex !== -1) {
-                    // Удаляем игрока из комнаты
-                    rooms[roomIndex].players = rooms[roomIndex].players.filter(p => p.name !== username);
-                    
-                    // Если это был хост и в комнате остались игроки, назначаем нового хоста
-                    const isHost = room.players.find(p => p.name === username && p.isHost);
-                    if (isHost && rooms[roomIndex].players.length > 0) {
-                        rooms[roomIndex].players[0].isHost = true;
-                    }
-                    
-                    // Если комната пустая, удаляем её
-                    if (rooms[roomIndex].players.length === 0) {
-                        rooms.splice(roomIndex, 1);
-                    }
-                    
-                    localStorage.setItem('rooms', JSON.stringify(rooms));
-                }
-                
-                // Очищаем текущую комнату
-                localStorage.removeItem('currentRoom');
-                localStorage.removeItem('selectedDream');
-                
-                // Обновляем UI
-                if (typeof updateCurrentRoomDisplay === 'function') {
-                    updateCurrentRoomDisplay();
-                }
-                if (typeof loadRooms === 'function') {
-                    loadRooms();
-                }
-                
-                alert('Вы покинули комнату');
-            }
-        }
 
         // WebSocket подключение
         let socket = null;
@@ -802,32 +691,9 @@
             
             socket.emit('registerUser', userData);
             
-            // Обработчики WebSocket событий
-            socket.on('roomsUpdate', (rooms) => {
-                updateRoomsDisplay(rooms);
-            });
-            
-            socket.on('roomCreated', (room) => {
-                localStorage.setItem('currentRoom', JSON.stringify(room));
-                updateCurrentRoomDisplay();
-                alert(`Комната "${room.name}" создана!`);
-            });
-            
-            socket.on('roomUpdate', (room) => {
-                localStorage.setItem('currentRoom', JSON.stringify(room));
-                updateCurrentRoomDisplay();
-            });
-            
-            socket.on('error', (error) => {
-                alert('Ошибка: ' + error.message);
-            });
-
             // Обновляем информацию пользователя
             document.getElementById('username').textContent = username;
             document.getElementById('user-avatar').textContent = username.charAt(0).toUpperCase();
-            
-            // Обновляем отображение текущей комнаты
-            updateCurrentRoomDisplay();
 
             // Если не авторизован, предлагаем войти
             if (!isAuthenticated) {
@@ -836,318 +702,30 @@
                 }
             }
 
-            // Инициализируем комнаты
-            initRooms();
-
             // Обработчики событий
-            document.getElementById('create-room').addEventListener('click', window.createRoom);
-            document.getElementById('refresh-rooms').addEventListener('click', window.loadRooms);
             document.getElementById('logout-btn').addEventListener('click', logout);
 
-            function initRooms() {
-                // Инициализируем localStorage для комнат если нужно
-                if (!localStorage.getItem('rooms')) {
-                    localStorage.setItem('rooms', JSON.stringify([]));
-                }
-            }
-
-            // Глобальная функция для загрузки комнат
-            window.loadRooms = function() {
-                const roomsContainer = document.getElementById('rooms-list');
-                const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
-                
-                // Сортируем комнаты по дате создания (новые сверху)
-                rooms.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                
-                if (rooms.length === 0) {
-                    roomsContainer.innerHTML = `
-                        <div style="text-align: center; padding: 40px; color: #a0a0a0;">
-                            <div style="font-size: 48px; margin-bottom: 16px;">🏠</div>
-                            <div style="font-size: 16px; margin-bottom: 8px;">Нет доступных комнат</div>
-                            <div style="font-size: 14px;">Создайте новую комнату для начала игры</div>
-                        </div>
-                    `;
-                    updateStartButton(); // Обновляем кнопку старт даже если нет комнат
-                    return;
-                }
-
-                roomsContainer.innerHTML = rooms.map(room => `
-                    <div class="room-item" data-room-id="${room.id}">
-                        <div class="room-header">
-                            <div class="room-name">${room.name}</div>
-                            <div class="room-status ${room.status}">${getStatusText(room.status)}</div>
-                        </div>
-                        <div class="room-info">
-                            <div class="room-players">
-                                ${generatePlayerAvatars(room.players)}
-                            </div>
-                            <div>${room.players.length}/${room.maxPlayers} игроков${room.turnTime ? ` • ${room.turnTime} мин/ход` : ''}</div>
-                        </div>
-                    </div>
-                `).join('');
-
-                // Добавляем обработчики кликов на комнаты
-                document.querySelectorAll('.room-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        const roomId = item.dataset.roomId;
-                        joinRoom(roomId);
-                    });
-                });
-                
-                // Обновляем кнопку старт после загрузки комнат
-                updateStartButton();
-            };
-
-            function generatePlayerAvatars(players) {
-                return players.map((player, index) => `
-                    <div class="player-avatar" title="${player.name}">${player.name.charAt(0).toUpperCase()}</div>
-                `).join('');
-            }
-
-            function getStatusText(status) {
-                switch (status) {
-                    case 'waiting': return 'Ожидание';
-                    case 'full': return 'Полная';
-                    case 'playing': return 'Игра';
-                    default: return 'Неизвестно';
-                }
-            }
-
-            // Глобальная функция для создания комнаты
-            window.createRoom = function() {
-                const roomName = document.getElementById('room-name').value.trim();
-                const maxPlayers = parseInt(document.getElementById('max-players').value);
-                const turnTime = parseInt(document.getElementById('turn-time').value);
-
-                if (!roomName) {
-                    alert('Введите название комнаты');
-                    return;
-                }
-
-                if (maxPlayers < 2 || maxPlayers > 8) {
-                    alert('Количество игроков должно быть от 2 до 8');
-                    return;
-                }
-
-                if (turnTime < 1 || turnTime > 5) {
-                    alert('Время на ход должно быть от 1 до 5 минут');
-                    return;
-                }
-
-                // Отправляем данные на сервер через WebSocket
-                socket.emit('createRoom', {
-                    name: roomName,
-                    maxPlayers: maxPlayers,
-                    turnTime: turnTime
-                });
-                
-                // Очищаем форму
-                document.getElementById('room-name').value = '';
-                document.getElementById('max-players').value = '4';
-                document.getElementById('turn-time').value = '3';
-            };
-
-            // Глобальная функция для входа в комнату
-            window.joinRoom = function(roomId) {
-                // Проверяем, что пользователь зарегистрирован
-                if (!socket) {
-                    alert('Подключение к серверу не установлено');
-                    return;
-                }
-                
-                // Отправляем запрос на присоединение через WebSocket
-                socket.emit('joinRoom', roomId);
-            };
-
-            function updateStartButton() {
-                const currentRoom = localStorage.getItem('currentRoom');
-                const startButton = document.getElementById('start-game');
-                
-                if (!currentRoom) {
-                    startButton.style.display = 'none';
-                    return;
-                }
-                
-                const room = JSON.parse(currentRoom);
-                const isHost = room.players.find(p => p.name === username && p.isHost);
-                
-                if (isHost && room.players.length >= 2) {
-                    // Показываем кнопку старт только хосту и только если есть минимум 2 игрока
-                    startButton.style.display = 'block';
-                    startButton.disabled = false;
-                    startButton.textContent = `🚀 Начать игру (${room.players.length}/${room.maxPlayers})`;
-                } else if (isHost) {
-                    // Хост, но недостаточно игроков
-                    startButton.style.display = 'block';
-                    startButton.disabled = true;
-                    startButton.textContent = `⏳ Ждем игроков (${room.players.length}/${room.maxPlayers})`;
-                } else {
-                    // Не хост - скрываем кнопку
-                    startButton.style.display = 'none';
-                }
-            }
-
-            function startGame() {
-                const currentRoom = localStorage.getItem('currentRoom');
-                if (!currentRoom) {
-                    alert('Вы не находитесь в комнате');
-                    return;
-                }
-                
-                const room = JSON.parse(currentRoom);
-                const isHost = room.players.find(p => p.name === username && p.isHost);
-                
-                if (!isHost) {
-                    alert('Только хост может начать игру');
-                    return;
-                }
-                
-                if (room.players.length < 2) {
-                    alert('Недостаточно игроков для начала игры (минимум 2)');
-                    return;
-                }
-                
-                // Обновляем статус комнаты
-                room.status = 'playing';
-                room.startedAt = new Date().toISOString();
-                
-                // Обновляем комнату в localStorage
-                const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
-                const roomIndex = rooms.findIndex(r => r.id === room.id);
-                if (roomIndex !== -1) {
-                    rooms[roomIndex] = room;
-                    localStorage.setItem('rooms', JSON.stringify(rooms));
-                }
-                
-                localStorage.setItem('currentRoom', JSON.stringify(room));
-                
-                // Переходим к игровой доске
-                window.location.href = 'game.html';
-            }
 
 
-            // Функции enterRoom и leaveRoom уже определены глобально выше
 
-            function updateCurrentRoomDisplay() {
-                const currentRoom = localStorage.getItem('currentRoom');
-                const currentRoomPanel = document.getElementById('current-room-panel');
-                
-                if (currentRoom) {
-                    const room = JSON.parse(currentRoom);
-                    
-                    // Показываем панель комнаты
-                    currentRoomPanel.style.display = 'block';
-                    
-                    // Обновляем информацию о комнате
-                    document.getElementById('current-room-name').textContent = room.name;
-                    const turnTimeText = room.turnTime ? ` (${room.turnTime} мин/ход)` : '';
-                    document.getElementById('players-count').textContent = `${room.players.length}/${room.maxPlayers} игроков${turnTimeText}`;
-                    
-                    // Обновляем список игроков
-                    const playersList = document.getElementById('players-list');
-                    playersList.innerHTML = '';
-                    
-                    room.players.forEach((player, index) => {
-                        const playerChip = document.createElement('div');
-                        playerChip.className = 'player-chip';
-                        
-                        const avatar = document.createElement('div');
-                        avatar.className = 'player-avatar-small';
-                        avatar.style.background = getPlayerColor(index).gradient;
-                        avatar.textContent = player.name.charAt(0).toUpperCase();
-                        
-                        const name = document.createElement('span');
-                        name.textContent = player.name;
-                        
-                        if (player.isHost) {
-                            name.innerHTML += ' 👑';
-                        }
-                        
-                        playerChip.appendChild(avatar);
-                        playerChip.appendChild(name);
-                        playersList.appendChild(playerChip);
-                    });
-                    
-                    // Обновляем кнопки в зависимости от статуса комнаты
-                    const enterBtn = document.getElementById('enter-room-btn');
-                    const leaveBtn = document.getElementById('leave-room-btn');
-                    
-                    if (room.status === 'playing') {
-                        enterBtn.textContent = '🎮 Игра началась!';
-                        enterBtn.disabled = false;
-                    } else {
-                        enterBtn.textContent = '🚪 Войти в комнату';
-                        enterBtn.disabled = false;
-                    }
-                    
-                } else {
-                    // Скрываем панель комнаты
-                    currentRoomPanel.style.display = 'none';
-                }
-            }
 
-            function getPlayerColor(index) {
-                const colors = [
-                    { name: 'Синий', gradient: 'linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%)' },
-                    { name: 'Красный', gradient: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)' },
-                    { name: 'Зеленый', gradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)' },
-                    { name: 'Фиолетовый', gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' },
-                    { name: 'Оранжевый', gradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)' },
-                    { name: 'Розовый', gradient: 'linear-gradient(135deg, #EC4899 0%, #DB2777 100%)' },
-                    { name: 'Бирюзовый', gradient: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)' },
-                    { name: 'Желтый', gradient: 'linear-gradient(135deg, #EAB308 0%, #CA8A04 100%)' }
-                ];
-                
-                return colors[index % colors.length];
-            }
+
+
+
+
 
             function logout() {
                 if (confirm('Вы уверены, что хотите выйти?')) {
                     localStorage.removeItem('username');
                     localStorage.removeItem('isAuthenticated');
                     localStorage.removeItem('currentRoom');
-                    localStorage.removeItem('selectedProfession');
+                    localStorage.removeItem('selectedDream');
+                    localStorage.removeItem('selectedToken');
+                    localStorage.removeItem('userId');
                     window.location.href = 'auth.html';
                 }
             }
 
-            // Функция для обновления отображения комнат с сервера
-            function updateRoomsDisplay(rooms) {
-                const roomsContainer = document.getElementById('rooms-list');
-                
-                // Сортируем комнаты по дате создания (новые сверху)
-                rooms.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                
-                if (rooms.length === 0) {
-                    roomsContainer.innerHTML = `
-                        <div style="text-align: center; padding: 40px; color: #a0a0a0;">
-                            <div style="font-size: 48px; margin-bottom: 16px;">🏠</div>
-                            <div style="font-size: 16px; margin-bottom: 8px;">Нет доступных комнат</div>
-                            <div style="font-size: 14px;">Создайте новую комнату для начала игры</div>
-                        </div>
-                    `;
-                    updateStartButton();
-                    return;
-                }
-
-                roomsContainer.innerHTML = rooms.map(room => `
-                    <div class="room-item" data-room-id="${room.id}" onclick="window.joinRoom('${room.id}')">
-                        <div class="room-header">
-                            <div class="room-name">${room.name}</div>
-                            <div class="room-status ${room.status}">${getStatusText(room.status)}</div>
-                        </div>
-                        <div class="room-info">
-                            <div class="room-players">
-                                ${generatePlayerAvatars(room.players)}
-                            </div>
-                            <div>${room.players.length}/${room.maxPlayers} игроков${room.turnTime ? ` • ${room.turnTime} мин/ход` : ''}</div>
-                        </div>
-                    </div>
-                `).join('');
-            }
-            
-            // Загружаем комнаты после инициализации всех функций
-            window.loadRooms();
         });
     </script>
 </body>
