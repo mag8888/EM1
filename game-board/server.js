@@ -1155,7 +1155,7 @@ async function startServer() {
         
         // Start server
         server.listen(PORT, () => {
-            console.log('🎮 Game Board v2.3 Server запущен!');
+            console.log('🎮 Game Board v2.4 Server запущен!');
             console.log(`🚀 Сервер работает на порту ${PORT}`);
             console.log(`📱 Локальный адрес: http://localhost:${PORT}`);
             console.log(`🌐 Railway адрес: https://your-app.railway.app`);
