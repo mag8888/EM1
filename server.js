@@ -813,7 +813,8 @@ app.get('/health', (req, res) => {
 
 // Основные страницы приложения
 [
-    ['/', 'index.html'],
+    ['/', 'game-board/game.html'],
+    ['/index', 'index.html'],
     ['/index-old', 'index_old.html'],
     ['/lobby', 'lobby.html'],
     ['/auth', 'auth.html'],
