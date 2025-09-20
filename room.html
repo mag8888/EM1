@@ -348,6 +348,14 @@
             color: #e2e8f0;
         }
 
+        .player-token {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #fbbf24;
+        }
+
         .player-dream .dream-icon {
             font-size: 12px;
             flex-shrink: 0;
@@ -406,7 +414,8 @@
             border: 1px solid rgba(107, 114, 128, 0.3);
         }
 
-        .dream-selection {
+        .dream-selection,
+        .token-selection {
             background: rgba(30, 41, 59, 0.8);
             backdrop-filter: blur(20px);
             border-radius: 20px;
@@ -415,46 +424,80 @@
             margin-bottom: 20px;
         }
 
-        .dream-list {
+        .dream-list,
+        .token-list {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 10px;
-            max-height: 300px;
-            overflow-y: auto;
         }
 
-        .dream-item {
-            background: rgba(59, 130, 246, 0.1);
-            border: 2px solid transparent;
-            border-radius: 10px;
-            padding: 12px;
+        .dream-item,
+        .token-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 14px;
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            color: inherit;
+            font: inherit;
+            text-align: left;
         }
 
-        .dream-item:hover {
+        .token-item {
+            flex-direction: row;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dream-item:hover,
+        .token-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .dream-item.selected,
+        .token-item.selected {
             background: rgba(59, 130, 246, 0.2);
             border-color: #3b82f6;
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25);
         }
 
-        .dream-item.selected {
-            background: rgba(59, 130, 246, 0.3);
-            border-color: #3b82f6;
-        }
-
-        .dream-item.selected::after {
-            content: '❤️';
+        .dream-item.selected::after,
+        .token-item.selected::after {
+            content: 'Выбрано';
             position: absolute;
             top: 8px;
-            right: 8px;
-            font-size: 16px;
+            right: 10px;
+            background: rgba(16, 185, 129, 0.25);
+            color: #10b981;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
         }
 
-        .dream-name {
+        .token-item.taken {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .token-item.taken::after {
+            content: 'Занято';
+            background: rgba(239, 68, 68, 0.25);
+            color: #ef4444;
+        }
+
+        .dream-name,
+        .token-name {
             font-weight: 600;
             color: white;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .dream-cost {
@@ -463,9 +506,9 @@
             font-weight: 500;
         }
 
-        .dream-icon {
+        .dream-icon,
+        .token-icon {
             font-size: 20px;
-            margin-bottom: 8px;
         }
 
         .room-settings {
@@ -525,6 +568,10 @@
             display: none;
         }
 
+        .error-message.visible {
+            display: block;
+        }
+
         @media (max-width: 768px) {
             .room-content {
                 grid-template-columns: 1fr;
@@ -543,14 +590,14 @@
             <div class="room-info">
                 <h1 id="roomName">Загрузка...</h1>
                 <p id="roomStatus">Подключение к комнате...</p>
-                <div class="update-indicator" id="updateIndicator">
+                <div class="update-indicator ready" id="updateIndicator">
                     <span class="update-dot"></span>
-                    <span>Готово</span>
+                    <span class="update-label">Готово</span>
                 </div>
             </div>
             <div class="header-buttons">
-                <button class="refresh-btn" onclick="loadRoomData()" title="Обновить данные">🔄</button>
-                <button class="back-btn" onclick="goBack()">← Назад в лобби</button>
+                <button class="refresh-btn" title="Обновить данные">🔄</button>
+                <button class="back-btn">← Назад в лобби</button>
             </div>
         </div>
 
@@ -574,12 +621,8 @@
                         Игра начнется, когда все игроки будут готовы
                     </div>
                     <div class="button-group">
-                        <button class="start-btn" id="startBtn" onclick="startGame()" style="display: none;">
-                            🚀 Начать игру
-                        </button>
-                        <button class="ready-btn" id="readyBtn" onclick="toggleReady()">
-                            Готов к игре
-                        </button>
+                        <button class="start-btn" id="startBtn" style="display: none;">🚀 Старт</button>
+                        <button class="ready-btn" id="readyBtn">Готов</button>
                     </div>
                 </div>
             </div>
@@ -602,6 +645,12 @@
                     </div>
                 </div>
 
+                <!-- Token Selection -->
+                <div class="token-selection">
+                    <div class="panel-title">Выберите фишку</div>
+                    <div class="token-list" id="tokenList"></div>
+                </div>
+
                 <!-- Room Settings -->
                 <div class="room-settings">
                     <div class="panel-title">Настройки комнаты</div>
@@ -622,616 +671,7 @@
         </div>
     </div>
 
-    <script>
-        // Global variables
-        let currentUser = null;
-        let currentRoom = null;
-        let roomId = null;
-        let selectedDream = null;
-        let updateTimeout = null; // Debounce timer for updates
+    <script type="module" src="assets/js/modules/room/index.js"></script>
 
-        // Dreams data from the big circle
-        const dreamsData = [
-            { id: 2, name: 'Построить дом мечты для семьи', cost: 100000, icon: '🏠' },
-            { id: 6, name: 'Посетить Антарктиду', cost: 150000, icon: '✈️' },
-            { id: 12, name: 'Подняться на все высочайшие вершины мира', cost: 500000, icon: '⛰️' },
-            { id: 16, name: 'Жить год на яхте в Средиземном море', cost: 300000, icon: '⛵' },
-            { id: 18, name: 'Создать фонд поддержки талантов', cost: 300000, icon: '🎗️' },
-            { id: 20, name: 'Организовать мировой фестиваль', cost: 200000, icon: '🎪' },
-            { id: 24, name: 'Туристический комплекс (эко-ранчо)', cost: 1000000, icon: '🏞️' },
-            { id: 28, name: 'NFT-платформа', cost: 400000, icon: '💎' },
-            { id: 30, name: 'Полет на Марс', cost: 300000, icon: '🚀' },
-            { id: 32, name: 'Создать школу будущего для детей', cost: 300000, icon: '🏫' },
-            { id: 35, name: 'Кругосветное плавание на паруснике', cost: 200000, icon: '⛵' },
-            { id: 37, name: 'Белоснежная Яхта', cost: 300000, icon: '⛵' },
-            { id: 42, name: 'Белоснежная Яхта', cost: 300000, icon: '⛵' },
-            { id: 44, name: 'Организовать благотворительный фонд', cost: 200000, icon: '🎗️' },
-            { id: 46, name: 'Полёт в космос', cost: 250000, icon: '🚀' },
-            { id: 48, name: 'Кругосветное путешествие', cost: 300000, icon: '🌍' },
-            { id: 50, name: 'Создать собственный остров', cost: 500000, icon: '🏝️' }
-        ];
-
-        // Initialize room
-        document.addEventListener('DOMContentLoaded', function() {
-            checkAuthStatus();
-            getRoomIdFromURL();
-            
-            // Initialize update indicator
-            const updateIndicator = document.getElementById('updateIndicator');
-            if (updateIndicator) {
-                updateIndicator.className = 'update-indicator ready';
-                updateIndicator.querySelector('span:last-child').textContent = 'Готово';
-            }
-            
-            if (roomId) {
-                loadRoomData();
-            }
-        });
-
-        // Check authentication status
-        function checkAuthStatus() {
-            const token = localStorage.getItem('authToken');
-            const user = localStorage.getItem('user');
-            
-            if (!token || !user) {
-                window.location.href = '/auth';
-                return;
-            }
-            
-            try {
-                currentUser = JSON.parse(user);
-                
-                // Проверяем, что у пользователя есть ID
-                if (!currentUser.id && currentUser._id) {
-                    currentUser.id = currentUser._id;
-                    localStorage.setItem('user', JSON.stringify(currentUser));
-                }
-                if (!currentUser.id) {
-                    console.error('User ID not found, redirecting to auth');
-                    window.location.href = '/auth';
-                    return;
-                }
-                
-                // Логируем данные пользователя для отладки
-                console.log('Current user data:', currentUser);
-                console.log('User ID:', currentUser.id);
-            } catch (error) {
-                console.error('Error parsing user data:', error);
-                window.location.href = '/auth';
-            }
-        }
-
-        // Get room ID from URL
-        function getRoomIdFromURL() {
-            const pathParts = window.location.pathname.split('/');
-            roomId = pathParts[pathParts.length - 1];
-        }
-
-        // Load room data with debouncing
-        async function loadRoomData(showLoadingIndicator = true) {
-            // Clear previous timeout to debounce rapid calls
-            if (updateTimeout) {
-                clearTimeout(updateTimeout);
-            }
-            
-            // Debounce auto-refresh calls
-            if (!showLoadingIndicator) {
-                updateTimeout = setTimeout(async () => {
-                    await performLoadRoomData(showLoadingIndicator);
-                }, 1000); // 1 second debounce
-                return;
-            }
-            
-            await performLoadRoomData(showLoadingIndicator);
-        }
-        
-        async function performLoadRoomData(showLoadingIndicator = true) {
-            try {
-                if (showLoadingIndicator) {
-                    showLoading(true);
-                } else {
-                    // Show updating state for auto-refresh
-                    const updateIndicator = document.getElementById('updateIndicator');
-                    if (updateIndicator) {
-                        updateIndicator.className = 'update-indicator updating';
-                        updateIndicator.querySelector('span:last-child').textContent = 'Обновление...';
-                    }
-                }
-                
-                if (!currentUser || !currentUser.id) {
-                    showError('Данные пользователя не найдены');
-                    setTimeout(() => {
-                        window.location.href = '/auth';
-                    }, 2000);
-                    return;
-                }
-                
-                const response = await fetch(`/api/rooms/${roomId}?user_id=${currentUser.id}`);
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Check if data has changed to avoid unnecessary re-renders
-                    const hasChanged = !currentRoom || 
-                        currentRoom.players.length !== data.players.length ||
-                        currentRoom.game_started !== data.game_started ||
-                        JSON.stringify(currentRoom.players.map(p => ({id: p.user_id, ready: p.is_ready, dream: p.selected_dream}))) !== 
-                        JSON.stringify(data.players.map(p => ({id: p.user_id, ready: p.is_ready, dream: p.selected_dream})));
-                    
-                    // Only update if there are actual changes
-                    if (hasChanged) {
-                        currentRoom = data;
-                        renderRoom();
-                    } else if (showLoadingIndicator) {
-                        // Only update for manual refresh
-                        currentRoom = data;
-                        renderRoom();
-                    } else {
-                        // For auto-refresh without changes, just update the data silently
-                        currentRoom = data;
-                    }
-                } else {
-                    showError(data.message || 'Ошибка загрузки комнаты');
-                    setTimeout(() => {
-                        window.location.href = '/lobby';
-                    }, 3000);
-                }
-            } catch (error) {
-                showError('Ошибка соединения с сервером');
-                console.error('Load room error:', error);
-            } finally {
-                if (showLoadingIndicator) {
-                    showLoading(false);
-                } else {
-                    // Show ready state
-                    const updateIndicator = document.getElementById('updateIndicator');
-                    if (updateIndicator) {
-                        updateIndicator.className = 'update-indicator ready';
-                        updateIndicator.querySelector('span:last-child').textContent = 'Готово';
-                    }
-                }
-            }
-        }
-
-        // Render room
-        function renderRoom() {
-            if (!currentRoom) return;
-            
-            // Check if game has started and redirect all players
-            if (currentRoom.game_started) {
-                console.log('Game has started, redirecting to game board...');
-                window.location.href = `/table?room=${roomId}`;
-                return;
-            }
-            
-            // Store previous state to avoid unnecessary DOM updates
-            if (!window.lastRoomState) {
-                window.lastRoomState = {};
-            }
-            
-            const currentState = {
-                roomName: currentRoom.name,
-                readyPlayers: currentRoom.players.filter(p => p.is_ready).length,
-                totalPlayers: currentRoom.players.length,
-                turnTime: currentRoom.turn_time,
-                professionMode: currentRoom.assign_professions,
-                creatorName: currentRoom.creator_name,
-                playersData: currentRoom.players.map(p => ({
-                    id: p.user_id,
-                    name: p.name,
-                    ready: p.is_ready,
-                    dream: p.selected_dream
-                }))
-            };
-            
-            // Check if state has actually changed
-            const stateChanged = JSON.stringify(window.lastRoomState) !== JSON.stringify(currentState);
-            if (!stateChanged) {
-                return; // No changes, skip rendering
-            }
-            
-            window.lastRoomState = currentState;
-            
-            // Update header
-            document.getElementById('roomName').textContent = currentRoom.name;
-            
-            // Check if all players are ready
-            const readyPlayers = currentRoom.players.filter(p => p.is_ready).length;
-            const totalPlayers = currentRoom.players.length;
-            const isHost = currentRoom.creator_id && currentRoom.creator_id.toString() === currentUser.id.toString();
-            
-            if (readyPlayers >= 2 && totalPlayers >= 2 && isHost) {
-                document.getElementById('roomStatus').textContent = 'Готово к запуску! Нажмите "Старт"';
-                document.getElementById('waitingTitle').textContent = 'Готово к запуску!';
-                document.getElementById('waitingText').textContent = 'Все игроки готовы. Нажмите "Старт" для начала игры.';
-            } else if (readyPlayers >= 2 && totalPlayers >= 2) {
-                document.getElementById('roomStatus').textContent = 'Все готовы! Ожидание запуска...';
-                document.getElementById('waitingTitle').textContent = 'Все готовы!';
-                document.getElementById('waitingText').textContent = 'Ожидание запуска игры создателем комнаты...';
-            } else {
-                document.getElementById('roomStatus').textContent = `Ожидание игроков (${readyPlayers}/${totalPlayers} готовы)`;
-                document.getElementById('waitingTitle').textContent = 'Ожидание игроков';
-                document.getElementById('waitingText').textContent = `Игра начнется, когда все игроки будут готовы (${readyPlayers}/${totalPlayers} готовы)`;
-            }
-            
-            // Update room settings
-            document.getElementById('turnTime').textContent = `${currentRoom.turn_time} мин`;
-            document.getElementById('professionMode').textContent = currentRoom.assign_professions ? 'Назначены' : 'Свободный выбор';
-            document.getElementById('creatorName').textContent = currentRoom.creator_name;
-            
-            // Update players
-            document.getElementById('playersCount').textContent = currentRoom.players.length;
-            document.getElementById('maxPlayers').textContent = currentRoom.max_players;
-            
-            renderPlayers();
-            
-            // Render dreams
-            renderDreams();
-            
-            // Show room content
-            document.getElementById('roomContent').style.display = 'grid';
-        }
-
-        // Render players list
-        function renderPlayers() {
-            if (!currentRoom || !currentRoom.players) {
-                console.error('currentRoom or players not available');
-                return;
-            }
-            
-            const playersList = document.getElementById('playersList');
-            
-            playersList.innerHTML = currentRoom.players.map((player, index) => {
-                const isCurrentUser = player.user_id.toString() === currentUser.id;
-                const isReady = player.is_ready;
-                const selectedDream = player.selected_dream ? 
-                    dreamsData.find(dream => dream.id === player.selected_dream) : null;
-                
-                // Определяем статус в зависимости от состояния игры
-                let statusClass, statusText;
-                if (currentRoom.game_started) {
-                    // Если игра началась, показываем статус хода
-                    if (index === currentRoom.current_player) {
-                        statusClass = 'status-your-turn';
-                        statusText = 'Ваш ход';
-                    } else {
-                        statusClass = 'status-waiting-turn';
-                        statusText = 'Ожидание';
-                    }
-                } else {
-                    // Если игра не началась, показываем статус готовности
-                    if (isReady) {
-                        statusClass = 'status-ready';
-                        statusText = 'Готов';
-                    } else {
-                        statusClass = 'status-waiting';
-                        statusText = 'Ожидает';
-                    }
-                }
-                
-                return `
-                    <div class="player-item ${isCurrentUser ? 'current-user' : ''}">
-                        <div class="player-avatar">${player.name.charAt(0)}</div>
-                        <div class="player-info">
-                            <div class="player-name">${player.name} ${isCurrentUser ? '(Вы)' : ''}</div>
-                            <div class="player-profession">${player.profession || 'Без профессии'}</div>
-                            ${selectedDream ? `
-                                <div class="player-dream">
-                                    <span class="dream-icon">${selectedDream.icon}</span>
-                                    <span class="dream-name">${selectedDream.name}</span>
-                                </div>
-                            ` : ''}
-                        </div>
-                        <div class="player-status ${statusClass}">
-                            ${statusText}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            // Update ready button
-            const currentPlayer = currentRoom.players.find(p => p.user_id.toString() === currentUser.id);
-            const readyBtn = document.getElementById('readyBtn');
-            const startBtn = document.getElementById('startBtn');
-            
-            console.log('DOM elements found:', {
-                currentPlayer: !!currentPlayer,
-                readyBtn: !!readyBtn,
-                startBtn: !!startBtn
-            });
-            
-            if (currentPlayer && readyBtn && startBtn) {
-                const hasDream = currentPlayer.selected_dream !== null && currentPlayer.selected_dream !== undefined;
-                const isHost = currentRoom.creator_id && currentRoom.creator_id.toString() === currentUser.id.toString();
-                const readyPlayers = currentRoom.players.filter(p => p.is_ready).length;
-                const canStart = isHost && readyPlayers >= 2 && currentRoom.players.length >= 2;
-                
-                // Debug logging
-                console.log('Debug room data:', {
-                    currentUser_id: currentUser.id,
-                    creator_id: currentRoom.creator_id,
-                    isHost: isHost,
-                    readyPlayers: readyPlayers,
-                    totalPlayers: currentRoom.players.length,
-                    canStart: canStart,
-                    fullRoomData: currentRoom
-                });
-                
-                if (currentRoom.game_started) {
-                    // Если игра началась, скрываем кнопку готовности
-                    readyBtn.style.display = 'none';
-                } else {
-                    // Если игра не началась, показываем кнопку готовности
-                    readyBtn.style.display = 'inline-block';
-                    if (currentPlayer.is_ready) {
-                        readyBtn.textContent = 'Отменить готовность';
-                        readyBtn.disabled = false;
-                    } else if (hasDream) {
-                        readyBtn.textContent = 'Готов к игре';
-                        readyBtn.disabled = false;
-                    } else {
-                        readyBtn.textContent = 'Выберите мечту';
-                        readyBtn.disabled = true;
-                    }
-                }
-                
-                readyBtn.classList.toggle('ready', currentPlayer.is_ready);
-                readyBtn.classList.toggle('disabled', !hasDream && !currentPlayer.is_ready);
-                
-                // Show/hide start button for host
-                if (canStart) {
-                    startBtn.style.display = 'block';
-                    console.log('Start button should be visible');
-                } else {
-                    startBtn.style.display = 'none';
-                    console.log('Start button hidden - canStart:', canStart);
-                }
-            }
-        }
-
-        // Toggle ready status
-        async function toggleReady() {
-            try {
-                if (!currentUser || !currentUser.id) {
-                    showError('Данные пользователя не найдены');
-                    return;
-                }
-                
-                // Check if dream is selected
-                if (!selectedDream) {
-                    showError('Сначала выберите мечту!');
-                    return;
-                }
-                
-                const response = await fetch(`/api/rooms/${roomId}/ready`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_id: currentUser.id
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    loadRoomData(); // Reload room data
-                } else {
-                    showError(data.message || 'Ошибка обновления статуса');
-                }
-            } catch (error) {
-                showError('Ошибка соединения с сервером');
-                console.error('Toggle ready error:', error);
-            }
-        }
-
-        // Start game
-        async function startGame() {
-            try {
-                if (!currentUser || !currentUser.id) {
-                    showError('Данные пользователя не найдены');
-                    return;
-                }
-                
-                if (!currentRoom || !currentRoom.creator_id) {
-                    showError('Данные комнаты не найдены');
-                    return;
-                }
-                
-                const isHost = currentRoom.creator_id.toString() === currentUser.id.toString();
-                if (!isHost) {
-                    showError('Только создатель комнаты может начать игру');
-                    return;
-                }
-                
-                const response = await fetch(`/api/rooms/${roomId}/start`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_id: currentUser.id
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    console.log('Game started successfully, redirecting...');
-                    // Show success message
-                    showError('errorMessage', 'Игра началась! Перенаправление...');
-                    
-                    // Redirect to game board after a short delay
-                    setTimeout(() => {
-                        window.location.href = `/table?room=${roomId}`;
-                    }, 1000);
-                } else {
-                    showError('errorMessage', data.message || 'Ошибка запуска игры');
-                }
-            } catch (error) {
-                showError('Ошибка соединения с сервером');
-                console.error('Start game error:', error);
-            }
-        }
-
-        // Go back to lobby
-        function goBack() {
-            if (confirm('Вы уверены, что хотите покинуть комнату?')) {
-                leaveRoom();
-            }
-        }
-
-        // Leave room
-        async function leaveRoom() {
-            try {
-                if (!currentUser || !currentUser.id) {
-                    showError('Данные пользователя не найдены');
-                    return;
-                }
-                
-                const response = await fetch(`/api/rooms/${roomId}/leave`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_id: currentUser.id
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Принудительно обновляем лобби перед переходом
-                    console.log('Successfully left room, redirecting to lobby');
-                    window.location.href = '/lobby?refresh=' + Date.now();
-                } else {
-                    showError(data.message || 'Ошибка выхода из комнаты');
-                }
-            } catch (error) {
-                showError('Ошибка соединения с сервером');
-                console.error('Leave room error:', error);
-            }
-        }
-
-        // Render dreams list
-        function renderDreams() {
-            const dreamList = document.getElementById('dreamList');
-            
-            dreamList.innerHTML = dreamsData.map(dream => `
-                <div class="dream-item" onclick="selectDream(${dream.id})" data-dream-id="${dream.id}">
-                    <div class="dream-icon">${dream.icon}</div>
-                    <div class="dream-name">${dream.name}</div>
-                    <div class="dream-cost">$${dream.cost.toLocaleString()}</div>
-                </div>
-            `).join('');
-        }
-
-        // Select dream
-        function selectDream(dreamId) {
-            // Remove previous selection
-            document.querySelectorAll('.dream-item').forEach(item => {
-                item.classList.remove('selected');
-            });
-            
-            // Add selection to clicked item
-            const dreamItem = document.querySelector(`[data-dream-id="${dreamId}"]`);
-            if (dreamItem) {
-                dreamItem.classList.add('selected');
-                selectedDream = dreamId;
-                
-                // Save dream selection to server
-                saveDreamSelection(dreamId);
-                
-                // Update ready button state
-                updateReadyButtonState();
-            }
-        }
-
-        // Update ready button state
-        function updateReadyButtonState() {
-            if (!currentRoom || !currentRoom.players) {
-                console.error('currentRoom or players not available for updateReadyButtonState');
-                return;
-            }
-            
-            const currentPlayer = currentRoom.players.find(p => p.user_id.toString() === currentUser.id);
-            const readyBtn = document.getElementById('readyBtn');
-            
-            if (currentPlayer && readyBtn) {
-                const hasDream = selectedDream !== null && selectedDream !== undefined;
-                
-                if (currentRoom.game_started) {
-                    // Если игра началась, скрываем кнопку готовности
-                    readyBtn.style.display = 'none';
-                } else {
-                    // Если игра не началась, показываем кнопку готовности
-                    readyBtn.style.display = 'inline-block';
-                    if (currentPlayer.is_ready) {
-                        readyBtn.textContent = 'Отменить готовность';
-                        readyBtn.disabled = false;
-                    } else if (hasDream) {
-                        readyBtn.textContent = 'Готов к игре';
-                        readyBtn.disabled = false;
-                    } else {
-                        readyBtn.textContent = 'Выберите мечту';
-                        readyBtn.disabled = true;
-                    }
-                }
-                
-                readyBtn.classList.toggle('disabled', !hasDream && !currentPlayer.is_ready);
-            }
-        }
-
-        // Save dream selection to server
-        async function saveDreamSelection(dreamId) {
-            try {
-                if (!currentUser || !currentUser.id) {
-                    console.error('No user data found');
-                    return;
-                }
-                
-                const response = await fetch(`/api/rooms/${roomId}/dream`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_id: currentUser.id,
-                        dream_id: dreamId
-                    })
-                });
-                
-                if (!response.ok) {
-                    console.error('Failed to save dream selection');
-                }
-            } catch (error) {
-                console.error('Error saving dream selection:', error);
-            }
-        }
-
-        // Utility functions
-        function showError(message) {
-            const errorElement = document.getElementById('errorMessage');
-            errorElement.textContent = message;
-            errorElement.style.display = 'block';
-            
-            setTimeout(() => {
-                errorElement.style.display = 'none';
-            }, 5000);
-        }
-
-        function showLoading(show) {
-            document.getElementById('loading').style.display = show ? 'block' : 'none';
-        }
-
-        // Check for game start every 5 seconds (reduced frequency to prevent flickering)
-        setInterval(() => {
-            if (roomId && currentRoom && !currentRoom.game_started) {
-                loadRoomData(false); // Don't show loading indicator for auto-refresh
-            }
-        }, 5000);
-    </script>
 </body>
 </html>

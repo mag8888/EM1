@@ -308,6 +308,55 @@
             box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
         }
 
+        .players-panel {
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .players-list-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .player-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: border 0.2s ease;
+        }
+
+        .player-card.is-active {
+            border-color: rgba(59, 130, 246, 0.6);
+            box-shadow: 0 10px 24px rgba(59, 130, 246, 0.25);
+        }
+
+        .player-card.is-self {
+            border-color: rgba(16, 185, 129, 0.6);
+        }
+
+        .player-card-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+
+        .player-card-cash {
+            color: #22c55e;
+        }
+
+        .player-card-meta,
+        .player-card-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.65);
+        }
+
         .panel h3 {
             font-size: 16px;
             font-weight: 700;
@@ -333,6 +382,11 @@
             border: 1px solid rgba(123, 97, 255, 0.4);
         }
 
+        .status-chip.is-my-turn {
+            border-color: rgba(16, 185, 129, 0.6);
+            box-shadow: 0 0 24px rgba(16, 185, 129, 0.35);
+        }
+
         .status-chip .status-label {
             font-size: 12px;
             text-transform: uppercase;
@@ -349,6 +403,27 @@
 
         .status-chip .status-icon {
             font-size: 28px;
+        }
+
+        .last-roll {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.65);
+        }
+
+        .turn-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .turn-controls .btn {
+            flex: 1;
+        }
+
+        .turn-controls .btn.loading {
+            opacity: 0.7;
+            pointer-events: none;
         }
 
         .timer-readout {
@@ -370,6 +445,12 @@
         .finance-grid {
             display: grid;
             gap: 14px;
+        }
+
+        .finance-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
         }
 
         .finance-row {
@@ -504,6 +585,68 @@
             margin-top: 4px;
         }
 
+        .assets-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .assets-placeholder {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .asset-item {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .asset-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+
+        .asset-type {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .asset-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.65);
+        }
+
+        .asset-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .asset-transfer {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .asset-transfer-select {
+            flex: 1;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.05);
+            color: #f3f4f6;
+            padding: 8px;
+        }
+
         .cell-modal {
             position: fixed;
             inset: 0;
@@ -514,6 +657,95 @@
             justify-content: center;
             padding: 24px;
             z-index: 50;
+        }
+
+        .deal-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            z-index: 80;
+        }
+
+        .deal-modal.visible {
+            display: flex;
+        }
+
+        .deal-modal-content {
+            background: rgba(18, 24, 40, 0.95);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            border-radius: 20px;
+            padding: 28px;
+            width: min(420px, 90vw);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+        }
+
+        .deal-modal-header {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .deal-modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .deal-modal-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .deal-modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .deal-card-details {
+            display: grid;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        .deal-card-details span:first-child {
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .game-toast {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            background: rgba(17, 24, 39, 0.92);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 14px 20px;
+            border-radius: 14px;
+            font-size: 14px;
+            color: #e5e7eb;
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            z-index: 1200;
+        }
+
+        .game-toast.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .cell-modal.show {
@@ -724,18 +956,27 @@
                     <div class="status-chip" id="turnStatusChip">
                         <div>
                             <div class="status-label">Текущее состояние</div>
-                            <div class="status-value" id="turnState">Ожидание хода</div>
-                </div>
+                            <div class="status-value" id="turnState">Подключение...</div>
+                        </div>
                         <div class="status-icon">🕒</div>
-            </div>
-                    <div class="timer-readout">
-                        <span class="timer-value" id="timerValue">00:45</span>
-                        <span class="timer-caption">секунд осталось</span>
-        </div>
-            </div>
+                    </div>
+                    <div class="last-roll">
+                        <span>Последний бросок:</span>
+                        <span id="lastRollValue">—</span>
+                    </div>
+                    <div class="turn-controls">
+                        <button class="btn btn-primary" id="rollDiceBtn">Бросить кубик</button>
+                        <button class="btn btn-secondary" id="endTurnBtn" disabled>Завершить ход</button>
+                    </div>
+                </div>
             </div>
 
-            <div class="panel">
+            <div class="panel players-panel">
+                <h3>Игроки</h3>
+                <div id="playersPanelList" class="players-list-panel"></div>
+            </div>
+
+            <div class="panel finance-panel">
                 <h3>Банковские операции</h3>
                 <div class="finance-grid">
                     <div class="finance-row">
@@ -749,41 +990,51 @@
                     <div class="finance-row">
                         <span>PAYDAY:</span>
                         <span class="finance-value" id="paydayValue">$0/мес</span>
+                    </div>
                 </div>
-            </div>
-
                 <div class="loan-status">
                     <span>Кредит:</span>
-                    <span class="finance-value">$0</span>
+                    <span class="finance-value" id="loanValue">$0</span>
                 </div>
-                <button class="btn btn-primary" id="bankButton" onclick="openBankModule()">🏦 Банк</button>
-                <button class="btn btn-primary" id="dealsButton" onclick="openDealsModule()">🃏 Сделки</button>
+                <div class="finance-actions">
+                    <button class="btn btn-primary" id="bankButton">🏦 Банк</button>
+                    <button class="btn btn-primary" id="dealsButton">🃏 Сделки</button>
                 </div>
-
-            <div class="panel">
-                <h3>Активы</h3>
-                <div class="assets-total" id="assetsTotal">$0</div>
-                <div class="assets-caption">Доход: $0 / мес</div>
-                <button class="btn btn-primary" style="margin-top: 20px;">Портфель активов</button>
             </div>
 
-            <div class="panel">
+            <div class="panel assets-panel">
+                <h3>Активы</h3>
+                <div class="assets-total" id="assetsTotal">$0</div>
+                <div class="assets-caption" id="assetsIncome">Доход: $0 / мес</div>
+                <div class="assets-list" id="assetsList"></div>
+            </div>
+
+            <div class="panel profile-panel">
                 <h3>👤 Профиль</h3>
                 <div class="user-info">
                     <div class="user-avatar" id="user-avatar">U</div>
                     <div class="user-details">
                         <h3 id="username">Пользователь</h3>
-                        <p>Онлайн</p>
-                </div>
+                        <p id="userStatus">Онлайн</p>
+                    </div>
                 </div>
                 <div class="profile-actions">
-                    <button class="btn btn-exit" id="logout-btn" onclick="logout()">
+                    <button class="btn btn-exit" id="leaveRoomBtn">
                         <span>🚪</span>
-                        <span>Выход</span>
+                        <span>Выйти</span>
                     </button>
+                </div>
             </div>
-        </div>
         </aside>
+    </div>
+
+    <div class="deal-modal" id="dealModal">
+        <div class="deal-modal-content">
+            <button class="deal-modal-close" data-role="deal-close">✕</button>
+            <div class="deal-modal-header" data-role="deal-header">Сделка</div>
+            <div class="deal-modal-body" data-role="deal-body"></div>
+            <div class="deal-modal-actions" data-role="deal-actions"></div>
+        </div>
     </div>
 
     <div class="cell-modal" id="cellModal">
@@ -796,741 +1047,9 @@
         </div>
     </div>
 
-    <script>
-        // Проверяем, что игрок находится в комнате
-        const currentRoom = localStorage.getItem('currentRoom');
-        if (!currentRoom) {
-            alert('Вы не находитесь в комнате. Переход в лобби...');
-            window.location.href = 'lobby.html';
-        }
+    <div class="game-toast" id="gameToast"></div>
 
-        const room = JSON.parse(currentRoom);
-        const username = localStorage.getItem('username') || 'Гость';
-        
-        // Загрузка конфигурации игровых клеток
-        let gameCells = [];
-        let selectedDream = null;
-        
-        // Проверяем, что пользователь в списке игроков комнаты
-        const player = room.players.find(p => p.name === username);
-        if (!player) {
-            alert('Вы не являетесь участником этой комнаты. Переход в лобби...');
-            window.location.href = 'lobby.html';
-        }
+    <script type="module" src="../assets/js/modules/game/index.js"></script>
 
-        const OUTER_TRACK_CONFIG = { widthCells: 12, heightCells: 12 };
-        const PLAYER_TOKENS = [
-            { emoji: '🦁', name: 'Игрок 1', gradient: 'linear-gradient(135deg, #ff8576, #ff6262)' },
-            { emoji: '🐯', name: 'Игрок 2', gradient: 'linear-gradient(135deg, #ffcf71, #ff9f43)' },
-            { emoji: '🦊', name: 'Игрок 3', gradient: 'linear-gradient(135deg, #ff7ce3, #d05eff)' },
-            { emoji: '🐼', name: 'Игрок 4', gradient: 'linear-gradient(135deg, #7ae5ff, #3ca7ff)' },
-            { emoji: '🐸', name: 'Игрок 5', gradient: 'linear-gradient(135deg, #5effc0, #2cd978)' },
-            { emoji: '🦉', name: 'Игрок 6', gradient: 'linear-gradient(135deg, #ffe676, #ffbf3b)' },
-            { emoji: '🐙', name: 'Игрок 7', gradient: 'linear-gradient(135deg, #c27bff, #7f5bff)' },
-            { emoji: '🐳', name: 'Игрок 8', gradient: 'linear-gradient(135deg, #6ad3ff, #337fff)' }
-        ];
-
-        const CELL_THEMES = {
-            'cell-pink': {
-                accent: 'linear-gradient(140deg, rgba(255, 79, 147, 0.6), rgba(255, 39, 128, 0.4))',
-                title: 'Обязательные траты',
-                description: 'Покройте обязательные расходы и удержите баланс бюджета.'
-            },
-            'cell-green': {
-                accent: 'linear-gradient(140deg, rgba(50, 223, 141, 0.6), rgba(25, 184, 106, 0.4))',
-                title: 'Возможность',
-                description: 'Воспользуйтесь новой инвестиционной возможностью.'
-            },
-            'cell-teal': {
-                accent: 'linear-gradient(140deg, rgba(37, 208, 255, 0.6), rgba(0, 144, 245, 0.4))',
-                title: 'Особое событие',
-                description: 'Вам доступен специальный шанс — проверьте карточку.'
-            },
-            'cell-purple': {
-                accent: 'linear-gradient(140deg, rgba(167, 105, 255, 0.6), rgba(115, 81, 255, 0.4))',
-                title: 'Семейные новости',
-                description: 'В вашей семье произошло событие — выполните действие.'
-            },
-            'cell-orange': {
-                accent: 'linear-gradient(140deg, rgba(255, 179, 71, 0.6), rgba(255, 140, 66, 0.4))',
-                title: 'Благотворительность',
-                description: 'Поддержите благотворительность и получите бонус.'
-            },
-            'cell-yellow': {
-                accent: 'linear-gradient(140deg, rgba(255, 214, 90, 0.6), rgba(255, 183, 0, 0.4))',
-                title: 'PayDay',
-                description: 'Получите зарплату и обновите свой денежный поток.'
-            },
-            'cell-blue': {
-                accent: 'linear-gradient(140deg, rgba(78, 149, 255, 0.6), rgba(37, 99, 235, 0.4))',
-                title: 'Мечта',
-                description: 'Сделайте шаг к своей мечте и закрепите результат.'
-            },
-            'cell-red': {
-                accent: 'linear-gradient(140deg, rgba(255, 107, 107, 0.6), rgba(255, 59, 59, 0.4))',
-                title: 'Шанс',
-                description: 'Испытайте удачу — выполните действие по карточке.'
-            },
-            'cell-slate': {
-                accent: 'linear-gradient(140deg, rgba(52, 67, 90, 0.6), rgba(30, 40, 56, 0.4))',
-                title: 'Событие',
-                description: 'Следуйте указаниям карточки события.'
-            }
-        };
-
-        let boardMetrics = null;
-
-        function getCssNumber(variableName) {
-            const raw = getComputedStyle(document.documentElement).getPropertyValue(variableName);
-            return parseFloat(raw) || 0;
-        }
-
-        function measureBoard() {
-            const boardFrame = document.querySelector('.board-frame');
-            if (!boardFrame) { return; }
-
-            const rect = boardFrame.getBoundingClientRect();
-            const boardSize = rect.width;
-            const cellSize = getCssNumber('--outer-cell-size');
-            const spacing = getCssNumber('--outer-cell-gap');
-            const innerCellSize = getCssNumber('--inner-cell-size');
-
-            const horizontalPadding = Math.max((boardSize - (OUTER_TRACK_CONFIG.widthCells * cellSize + (OUTER_TRACK_CONFIG.widthCells - 1) * spacing)) / 2, 0);
-            const verticalPadding = Math.max((boardSize - (OUTER_TRACK_CONFIG.heightCells * cellSize + (OUTER_TRACK_CONFIG.heightCells - 1) * spacing)) / 2, 0);
-
-            boardMetrics = {
-                size: boardSize,
-                cellSize,
-                spacing,
-                innerCellSize,
-                horizontalPadding,
-                verticalPadding
-            };
-
-            document.documentElement.style.setProperty('--computed-board-size', `${boardSize}px`);
-        }
-
-        function createOuterTrack() {
-            const outerTrack = document.getElementById('outerTrack');
-            if (!outerTrack || !boardMetrics) { return; }
-
-            outerTrack.innerHTML = '';
-            const { widthCells, heightCells } = OUTER_TRACK_CONFIG;
-            const { cellSize, spacing, horizontalPadding, verticalPadding } = boardMetrics;
-
-            const topRowStartX = horizontalPadding;
-            const topRowY = verticalPadding;
-            const step = cellSize + spacing;
-            const positions = [];
-
-            for (let i = 0; i < widthCells; i++) {
-                positions.push({ x: topRowStartX + i * step, y: topRowY });
-            }
-
-            for (let j = 1; j < heightCells; j++) {
-                positions.push({ x: topRowStartX + (widthCells - 1) * step, y: topRowY + j * step });
-            }
-
-            for (let i = widthCells - 2; i >= 0; i--) {
-                positions.push({ x: topRowStartX + i * step, y: topRowY + (heightCells - 1) * step });
-            }
-
-            for (let j = heightCells - 2; j >= 1; j--) {
-                positions.push({ x: topRowStartX, y: topRowY + j * step });
-            }
-
-            const outerColors = ['cell-pink', 'cell-green', 'cell-teal', 'cell-purple'];
-            const outerIcons = ['💵', '🏠', '🚗', '💡', '🎯', '💰', '🛍️', '💼'];
-
-            positions.forEach((pos, index) => {
-                    const cell = document.createElement('div');
-                const colorClass = outerColors[index % outerColors.length];
-                cell.className = `track-cell outer ${colorClass}`;
-                cell.style.width = `${cellSize}px`;
-                cell.style.height = `${cellSize}px`;
-                cell.style.left = `${pos.x}px`;
-                cell.style.top = `${pos.y}px`;
-
-                            cell.innerHTML = `
-                    <span class="cell-number">${index + 1}</span>
-                    <span class="cell-icon">${outerIcons[index % outerIcons.length]}</span>
-                `;
-
-                cell.addEventListener('click', () => {
-                    openCellModal({
-                        number: index + 1,
-                        colorClass,
-                        icon: outerIcons[index % outerIcons.length]
-                    });
-                });
-
-                outerTrack.appendChild(cell);
-            });
-        }
-
-        function createInnerTrack() {
-            const innerTrack = document.getElementById('innerTrack');
-            if (!innerTrack || !boardMetrics) { return; }
-
-            innerTrack.innerHTML = '';
-            const innerPattern = [
-                { color: 'cell-green', icon: '📈' },
-                { color: 'cell-pink', icon: '💸' },
-                { color: 'cell-green', icon: '📈' },
-                { color: 'cell-orange', icon: '❤️' },
-                { color: 'cell-green', icon: '📈' },
-                { color: 'cell-yellow', icon: '💰' },
-                { color: 'cell-green', icon: '📈' },
-                { color: 'cell-blue', icon: '🎯' },
-                { color: 'cell-green', icon: '📈' },
-                { color: 'cell-pink', icon: '💳' },
-                { color: 'cell-green', icon: '📈' },
-                { color: 'cell-purple', icon: '👶' },
-                { color: 'cell-green', icon: '📈' },
-                { color: 'cell-blue', icon: '🏆' },
-                { color: 'cell-green', icon: '📈' },
-                { color: 'cell-yellow', icon: '💰' },
-                { color: 'cell-green', icon: '📈' },
-                { color: 'cell-pink', icon: '💳' },
-                { color: 'cell-green', icon: '📈' },
-                { color: 'cell-orange', icon: '❤️' },
-                { color: 'cell-green', icon: '📈' },
-                { color: 'cell-blue', icon: '🎯' },
-                { color: 'cell-green', icon: '📈' },
-                { color: 'cell-pink', icon: '💸' }
-            ];
-
-            const totalCells = innerPattern.length;
-            const { size, cellSize, innerCellSize, horizontalPadding, verticalPadding } = boardMetrics;
-            const maxPadding = Math.max(horizontalPadding, verticalPadding);
-            const radius = Math.max(
-                size / 2 - (cellSize + maxPadding + innerCellSize / 2 + 12),
-                size * 0.22
-            );
-
-            for (let i = 0; i < totalCells; i++) {
-                const { color, icon } = innerPattern[i];
-                const angle = (i / totalCells) * Math.PI * 2;
-                const x = size / 2 + Math.cos(angle) * radius;
-                const y = size / 2 + Math.sin(angle) * radius;
-
-                const cell = document.createElement('div');
-                cell.className = `track-cell ${color}`;
-                cell.style.width = `${innerCellSize}px`;
-                cell.style.height = `${innerCellSize}px`;
-                cell.style.left = `${x}px`;
-                cell.style.top = `${y}px`;
-                cell.style.transform = 'translate(-50%, -50%)';
-
-                            cell.innerHTML = `
-                    <span class="cell-number">${i + 1}</span>
-                    <span class="cell-icon">${icon}</span>
-                `;
-
-                cell.addEventListener('click', () => {
-                    openCellModal({
-                        number: i + 1,
-                        colorClass: color,
-                        icon
-                    });
-                });
-
-                innerTrack.appendChild(cell);
-            }
-        }
-
-        function renderPlayerTokens() {
-            const container = document.getElementById('playerTokens');
-            if (!container || !boardMetrics) { return; }
-
-            container.innerHTML = '';
-            const radius = Math.max(boardMetrics.size * 0.26, 140);
-            const tokenSize = 44;
-
-            PLAYER_TOKENS.forEach((token, index) => {
-                const angle = (index / PLAYER_TOKENS.length) * Math.PI * 2 - Math.PI / 2;
-                const x = boardMetrics.size / 2 + Math.cos(angle) * radius;
-                const y = boardMetrics.size / 2 + Math.sin(angle) * radius;
-
-                const el = document.createElement('div');
-                el.className = 'player-token';
-                el.style.background = token.gradient;
-                el.style.left = `${x}px`;
-                el.style.top = `${y}px`;
-                el.style.width = `${tokenSize}px`;
-                el.style.height = `${tokenSize}px`;
-                el.title = token.name;
-                el.textContent = token.emoji;
-
-                container.appendChild(el);
-            });
-        }
-
-        function openCellModal({ number, colorClass, icon }) {
-            const modal = document.getElementById('cellModal');
-            const card = document.getElementById('modalCard');
-            const modalIcon = document.getElementById('modalIcon');
-            const modalTitle = document.getElementById('modalTitle');
-            const modalText = document.getElementById('modalText');
-
-            const theme = CELL_THEMES[colorClass] || CELL_THEMES['cell-slate'];
-            card.style.setProperty('--modal-accent', theme.accent);
-            modalIcon.textContent = icon || '🎲';
-            modalTitle.textContent = `Клетка №${number}`;
-            modalText.textContent = theme.description;
-
-            modal.classList.add('show');
-        }
-
-        function closeCellModal() {
-            const modal = document.getElementById('cellModal');
-            modal.classList.remove('show');
-        }
-
-        function rebuildBoard() {
-            measureBoard();
-            createOuterTrack();
-            createInnerTrack();
-            renderPlayerTokens();
-        }
-
-        function initCenterWheel() {
-            const wheel = document.getElementById('centerWheel');
-            const display = document.getElementById('wheelNumber');
-            if (!wheel || !display) { return; }
-
-            wheel.addEventListener('click', () => {
-                wheel.classList.remove('spin');
-                void wheel.offsetWidth;
-                wheel.classList.add('spin');
-                const value = Math.floor(Math.random() * 6) + 1;
-                display.textContent = value;
-            });
-        }
-
-        function initModal() {
-            const modal = document.getElementById('cellModal');
-            const closeBtn = document.getElementById('modalClose');
-            const actionBtn = document.getElementById('modalAction');
-
-            closeBtn.addEventListener('click', closeCellModal);
-            actionBtn.addEventListener('click', closeCellModal);
-            modal.addEventListener('click', (event) => {
-                if (event.target === modal) {
-                    closeCellModal();
-                }
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            // Обновляем информацию о комнате
-            updateRoomInfo();
-            
-            // Проверяем выбор профессии
-            checkProfessionSelected();
-            
-            // Загружаем игровые клетки и мечту
-            loadGameCells();
-            loadSelectedDream();
-            
-            // Проверяем готовность игроков
-            if (checkPlayersReady()) {
-                showStartButton();
-            }
-            
-            rebuildBoard();
-            initCenterWheel();
-            initModal();
-        });
-
-        function updateRoomInfo() {
-            const playersInfo = room.players.map(p => p.name).join(', ');
-            document.title = `${room.name} - Game Board v2.0`;
-            
-            // Обновляем информацию о игроках
-            const turnStateElement = document.getElementById('turnState');
-            if (turnStateElement) {
-                turnStateElement.textContent = `Комната: ${room.name} (${room.players.length}/${room.maxPlayers || 4})`;
-            }
-            
-            // Обновляем информацию о профессии
-            updateProfessionInfo();
-        }
-
-        function updateProfessionInfo() {
-            const professionData = localStorage.getItem('selectedProfession');
-            if (professionData) {
-                const profession = JSON.parse(professionData);
-                
-                // Обновляем финансовую информацию в боковой панели
-                const incomeElement = document.getElementById('incomeValue');
-                const expenseElement = document.getElementById('expenseValue');
-                const paydayElement = document.getElementById('paydayValue');
-                
-                if (incomeElement) incomeElement.textContent = `$${profession.income.toLocaleString()}`;
-                if (expenseElement) expenseElement.textContent = `$${profession.expenses.toLocaleString()}`;
-                if (paydayElement) paydayElement.textContent = `$${profession.cashflow.toLocaleString()}/мес`;
-                
-                // Показываем информацию о профессии
-                console.log('Выбранная профессия:', profession);
-            }
-        }
-
-        function checkPlayersReady() {
-            return room.players.length >= 2;
-        }
-
-        function showStartButton() {
-            const hostPlayer = room.players.find(p => p.isHost);
-            if (hostPlayer && hostPlayer.name === username && room.status !== 'playing') {
-                // Добавляем кнопку старта в интерфейс
-                const statusPanel = document.querySelector('.status-panel .panel-body');
-                const existingStartBtn = document.getElementById('start-game-btn');
-                
-                if (!existingStartBtn) {
-                    const startBtn = document.createElement('button');
-                    startBtn.id = 'start-game-btn';
-                    startBtn.className = 'btn btn-primary';
-                    startBtn.innerHTML = '🚀 Начать игру';
-                    startBtn.style.marginTop = '16px';
-                    startBtn.addEventListener('click', startGame);
-                    statusPanel.appendChild(startBtn);
-                }
-            }
-        }
-
-        function checkProfessionSelected() {
-            const professionData = localStorage.getItem('selectedProfession');
-            if (!professionData) {
-                // Показываем кнопку выбора профессии
-                const statusPanel = document.querySelector('.status-panel .panel-body');
-                const existingProfessionBtn = document.getElementById('select-profession-btn');
-                
-                if (!existingProfessionBtn) {
-                    const professionBtn = document.createElement('button');
-                    professionBtn.id = 'select-profession-btn';
-                    professionBtn.className = 'btn btn-primary';
-                    professionBtn.innerHTML = '👤 Выбрать профессию';
-                    professionBtn.style.marginTop = '16px';
-                    professionBtn.addEventListener('click', openProfessionCard);
-                    statusPanel.appendChild(professionBtn);
-                }
-            }
-        }
-
-        async function loadGameCells() {
-            try {
-                const response = await fetch('/api/game-cells');
-                if (response.ok) {
-                    gameCells = await response.json();
-                    console.log('Игровые клетки загружены:', gameCells.length);
-                    renderGameBoard();
-                } else {
-                    console.error('Ошибка загрузки игровых клеток');
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки игровых клеток:', error);
-            }
-        }
-
-        async function loadSelectedDream() {
-            try {
-                const dreamData = localStorage.getItem('selectedDream');
-                if (dreamData) {
-                    selectedDream = JSON.parse(dreamData);
-                    console.log('Выбранная мечта:', selectedDream);
-                    updateDreamDisplay();
-                }
-                
-                // Также загружаем с сервера для синхронизации
-                const response = await fetch(`/api/room/${room.id}/dreams`);
-                if (response.ok) {
-                    const roomDreams = await response.json();
-                    console.log('Мечты комнаты:', roomDreams);
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки мечты:', error);
-            }
-        }
-
-        function renderGameBoard() {
-            // Здесь будет логика рендеринга игрового поля с клетками
-            console.log('Рендеринг игрового поля с', gameCells.length, 'клетками');
-            
-            // Пример: обновление информации о клетках в UI
-            updateCellsInfo();
-        }
-
-        function updateCellsInfo() {
-            const stats = {
-                dreams: gameCells.filter(cell => cell.type === 'dream').length,
-                businesses: gameCells.filter(cell => cell.type === 'business').length,
-                money: gameCells.filter(cell => cell.type === 'money').length,
-                losses: gameCells.filter(cell => cell.type === 'loss').length,
-                charity: gameCells.filter(cell => cell.type === 'charity').length
-            };
-            
-            console.log('Статистика клеток:', stats);
-        }
-
-        function updateDreamDisplay() {
-            if (selectedDream) {
-                console.log('Обновление отображения мечты:', selectedDream.name);
-                
-                // Получаем цвет игрока
-                const playerIndex = room.players.findIndex(p => p.name === username);
-                const playerColor = getPlayerColor(playerIndex);
-                
-                // Создаем или обновляем элемент мечты на игровом поле
-                createDreamHeart(selectedDream, playerColor);
-                
-                // Обновляем информацию в UI
-                updateDreamInfo(selectedDream, playerColor);
-            }
-        }
-
-        function getPlayerColor(index) {
-            const colors = [
-                { name: 'Синий', primary: '#3B82F6', secondary: '#1E40AF' },
-                { name: 'Красный', primary: '#EF4444', secondary: '#DC2626' },
-                { name: 'Зеленый', primary: '#10B981', secondary: '#059669' },
-                { name: 'Фиолетовый', primary: '#8B5CF6', secondary: '#7C3AED' },
-                { name: 'Оранжевый', primary: '#F59E0B', secondary: '#D97706' },
-                { name: 'Розовый', primary: '#EC4899', secondary: '#DB2777' },
-                { name: 'Бирюзовый', primary: '#06B6D4', secondary: '#0891B2' },
-                { name: 'Желтый', primary: '#EAB308', secondary: '#CA8A04' }
-            ];
-            
-            return colors[index % colors.length];
-        }
-
-        function createDreamHeart(dream, playerColor) {
-            // Удаляем старый элемент мечты, если есть
-            const existingHeart = document.getElementById('dream-heart');
-            if (existingHeart) {
-                existingHeart.remove();
-            }
-            
-            // Создаем новый элемент сердечка
-            const heart = document.createElement('div');
-            heart.id = 'dream-heart';
-            heart.innerHTML = '❤️';
-            heart.style.cssText = `
-                position: absolute;
-                top: 20px;
-                right: 20px;
-                font-size: 32px;
-                cursor: pointer;
-                z-index: 1000;
-                filter: drop-shadow(0 0 10px ${playerColor.primary});
-                transition: all 0.3s ease;
-                animation: heartbeat 2s infinite;
-            `;
-            
-            // Добавляем анимацию сердцебиения
-            if (!document.getElementById('heartbeat-animation')) {
-                const style = document.createElement('style');
-                style.id = 'heartbeat-animation';
-                style.textContent = `
-                    @keyframes heartbeat {
-                        0%, 100% { transform: scale(1); }
-                        50% { transform: scale(1.1); }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-            
-            // Добавляем tooltip с информацией о мечте
-            heart.title = `${dream.name}\n${dream.description}\nСтоимость: $${dream.cost.toLocaleString()}`;
-            
-            // Добавляем обработчик клика
-            heart.addEventListener('click', () => {
-                showDreamModal(dream, playerColor);
-            });
-            
-            heart.addEventListener('mouseenter', () => {
-                heart.style.transform = 'scale(1.2)';
-                heart.style.filter = `drop-shadow(0 0 20px ${playerColor.primary})`;
-            });
-            
-            heart.addEventListener('mouseleave', () => {
-                heart.style.transform = 'scale(1)';
-                heart.style.filter = `drop-shadow(0 0 10px ${playerColor.primary})`;
-            });
-            
-            // Добавляем сердечко на страницу
-            document.body.appendChild(heart);
-        }
-
-        function updateDreamInfo(dream, playerColor) {
-            // Обновляем информацию о мечте в боковой панели
-            const dreamInfoElement = document.getElementById('dream-info');
-            if (!dreamInfoElement) {
-                // Создаем элемент, если его нет
-                const statusPanel = document.querySelector('.status-panel .panel-body');
-                const dreamInfo = document.createElement('div');
-                dreamInfo.id = 'dream-info';
-                dreamInfo.className = 'dream-info-section';
-                dreamInfo.innerHTML = `
-                    <h4 style="color: ${playerColor.primary}; margin-bottom: 8px;">🌟 Ваша мечта</h4>
-                    <div style="font-size: 14px; color: #ffffff; font-weight: 600;">${dream.name}</div>
-                    <div style="font-size: 12px; color: #a0a0a0; margin-top: 4px;">${dream.description}</div>
-                    <div style="font-size: 12px; color: #ffd15a; margin-top: 4px;">Стоимость: $${dream.cost.toLocaleString()}</div>
-                `;
-                statusPanel.appendChild(dreamInfo);
-            } else {
-                // Обновляем существующий элемент
-                dreamInfoElement.innerHTML = `
-                    <h4 style="color: ${playerColor.primary}; margin-bottom: 8px;">🌟 Ваша мечта</h4>
-                    <div style="font-size: 14px; color: #ffffff; font-weight: 600;">${dream.name}</div>
-                    <div style="font-size: 12px; color: #a0a0a0; margin-top: 4px;">${dream.description}</div>
-                    <div style="font-size: 12px; color: #ffd15a; margin-top: 4px;">Стоимость: $${dream.cost.toLocaleString()}</div>
-                `;
-            }
-        }
-
-        function showDreamModal(dream, playerColor) {
-            // Создаем модальное окно с информацией о мечте
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.8);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 10000;
-                backdrop-filter: blur(10px);
-            `;
-            
-            modal.innerHTML = `
-                <div style="
-                    background: linear-gradient(160deg, #151d30 0%, #111527 45%, #0f1422 100%);
-                    border-radius: 24px;
-                    padding: 32px;
-                    max-width: 500px;
-                    width: 90%;
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6);
-                    text-align: center;
-                ">
-                    <div style="font-size: 48px; margin-bottom: 16px;">❤️</div>
-                    <h2 style="color: ${playerColor.primary}; font-size: 24px; font-weight: 700; margin-bottom: 16px;">
-                        ${dream.name}
-                    </h2>
-                    <p style="color: #a0a0a0; font-size: 16px; margin-bottom: 20px; line-height: 1.5;">
-                        ${dream.description}
-                    </p>
-                    <div style="
-                        background: rgba(255, 255, 255, 0.05);
-                        border-radius: 12px;
-                        padding: 16px;
-                        margin-bottom: 24px;
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                    ">
-                        <div style="color: #ffd15a; font-size: 20px; font-weight: 700;">
-                            Стоимость: $${dream.cost.toLocaleString()}
-                        </div>
-                    </div>
-                    <button onclick="this.parentElement.parentElement.remove()" style="
-                        background: linear-gradient(135deg, #06b973 0%, #00d4aa 100%);
-                        color: #1a1d24;
-                        border: none;
-                        border-radius: 12px;
-                        padding: 12px 24px;
-                        font-size: 16px;
-                        font-weight: 700;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                    ">
-                        Закрыть
-                    </button>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // Закрытие по клику вне модального окна
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
-        }
-
-        function openProfessionCard() {
-            // Открываем карточку профессии в новом окне
-            const professionWindow = window.open('profession-card.html', 'professionCard', 'width=700,height=900,scrollbars=yes,resizable=yes');
-            
-            if (!professionWindow) {
-                alert('Пожалуйста, разрешите всплывающие окна для выбора профессии');
-            }
-        }
-
-        function startGame() {
-            const hostPlayer = room.players.find(p => p.isHost);
-            if (!hostPlayer || hostPlayer.name !== username) {
-                alert('Только хост может начать игру');
-                return;
-            }
-
-            if (!checkPlayersReady()) {
-                alert('Для начала игры нужно минимум 2 игрока');
-                return;
-            }
-
-            // Обновляем статус комнаты
-            room.status = 'playing';
-            localStorage.setItem('currentRoom', JSON.stringify(room));
-            
-            // Удаляем кнопку старта
-            const startBtn = document.getElementById('start-game-btn');
-            if (startBtn) {
-                startBtn.remove();
-            }
-            
-            // Показываем сообщение о начале игры
-            alert('🎮 Игра началась! Удачной игры!');
-            
-            // Обновляем интерфейс
-            updateRoomInfo();
-        }
-
-        function openBankModule() {
-            // Открываем банковский модуль в новом окне
-            const bankWindow = window.open('bank-module.html', 'bankModule', 'width=700,height=800,scrollbars=yes,resizable=yes');
-            
-            if (!bankWindow) {
-                alert('Пожалуйста, разрешите всплывающие окна для работы банковского модуля');
-            }
-        }
-
-        function openDealsModule() {
-            // Открываем модуль карточек сделок в новом окне
-            const dealsWindow = window.open('deals-module.html', 'dealsModule', 'width=1400,height=900,scrollbars=yes,resizable=yes');
-            
-            if (!dealsWindow) {
-                alert('Пожалуйста, разрешите всплывающие окна для модуля карточек сделок');
-            }
-        }
-
-        function logout() {
-            if (confirm('Вы уверены, что хотите выйти?')) {
-                localStorage.removeItem('username');
-                localStorage.removeItem('isAuthenticated');
-                localStorage.removeItem('currentRoom');
-                localStorage.removeItem('selectedProfession');
-                localStorage.removeItem('selectedDream');
-                window.location.href = 'auth.html';
-            }
-        }
-
-        window.addEventListener('resize', () => {
-            window.requestAnimationFrame(rebuildBoard);
-        });
-    </script>
 </body>
 </html>

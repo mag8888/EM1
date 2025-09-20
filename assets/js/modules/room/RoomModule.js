@@ -1,0 +1,141 @@
+import RoomApi from '../api/RoomApi.js';
+import RoomState from './RoomState.js';
+import DreamSelector from './DreamSelector.js';
+import TokenSelector from './TokenSelector.js';
+import PlayersList from './PlayersList.js';
+import ReadyButton from './ReadyButton.js';
+import StartButton from './StartButton.js';
+import StatusPanel from './StatusPanel.js';
+import UpdateIndicator from './UpdateIndicator.js';
+import ErrorDisplay from './ErrorDisplay.js';
+
+export default class RoomModule {
+    constructor({ roomId, pollInterval = 4000 } = {}) {
+        this.roomId = roomId;
+        this.api = new RoomApi();
+        this.state = new RoomState({ roomId, api: this.api, pollInterval });
+        this.errorDisplay = new ErrorDisplay(document.getElementById('errorMessage'));
+        this.modules = [];
+        this.redirecting = false;
+    }
+
+    async init() {
+        if (!this.roomId) {
+            throw new Error('roomId отсутствует в URL');
+        }
+        this.setupModules();
+        this.setupListeners();
+        const loading = document.getElementById('loading');
+        if (loading) {
+            loading.style.display = 'flex';
+        }
+        try {
+            await this.state.init();
+            if (loading) {
+                loading.style.display = 'none';
+            }
+            const content = document.getElementById('roomContent');
+            if (content) {
+                content.style.display = 'grid';
+            }
+        } catch (error) {
+            if (loading) {
+                loading.style.display = 'none';
+            }
+            this.handleError(error);
+        }
+    }
+
+    setupModules() {
+        const dreamSelector = new DreamSelector({
+            state: this.state,
+            container: document.getElementById('dreamList')
+        });
+        dreamSelector.init();
+        this.modules.push(dreamSelector);
+
+        const tokenSelector = new TokenSelector({
+            state: this.state,
+            container: document.getElementById('tokenList')
+        });
+        tokenSelector.init();
+        this.modules.push(tokenSelector);
+
+        const playersList = new PlayersList({
+            state: this.state,
+            container: document.getElementById('playersList')
+        });
+        playersList.init();
+        this.modules.push(playersList);
+
+        const readyButton = new ReadyButton({
+            state: this.state,
+            button: document.getElementById('readyBtn')
+        });
+        readyButton.init();
+        this.modules.push(readyButton);
+
+        const startButton = new StartButton({
+            state: this.state,
+            button: document.getElementById('startBtn')
+        });
+        startButton.init();
+        this.modules.push(startButton);
+
+        const statusPanel = new StatusPanel({
+            state: this.state,
+            elements: {
+                roomName: document.getElementById('roomName'),
+                roomStatus: document.getElementById('roomStatus'),
+                waitingTitle: document.getElementById('waitingTitle'),
+                waitingText: document.getElementById('waitingText'),
+                playersCount: document.getElementById('playersCount'),
+                maxPlayers: document.getElementById('maxPlayers'),
+                turnTime: document.getElementById('turnTime'),
+                professionMode: document.getElementById('professionMode'),
+                creatorName: document.getElementById('creatorName')
+            }
+        });
+        statusPanel.init();
+        this.modules.push(statusPanel);
+
+        const updateIndicator = new UpdateIndicator({
+            state: this.state,
+            element: document.getElementById('updateIndicator')
+        });
+        updateIndicator.init();
+        this.modules.push(updateIndicator);
+
+        const refreshBtn = document.querySelector('.refresh-btn');
+        refreshBtn?.addEventListener('click', (event) => {
+            event.preventDefault();
+            this.state.refresh();
+        });
+
+        const backBtn = document.querySelector('.back-btn');
+        backBtn?.addEventListener('click', () => {
+            window.location.assign('/lobby');
+        });
+    }
+
+    setupListeners() {
+        this.state.on('change', (room) => this.handleRoomChange(room));
+        this.state.on('error', (error) => this.handleError(error));
+    }
+
+    handleRoomChange(room) {
+        if (room?.gameStarted && !this.redirecting) {
+            this.redirecting = true;
+            // Даем интерфейсу время показать сообщение
+            setTimeout(() => {
+                window.location.assign(`/game/${this.roomId}`);
+            }, 800);
+        }
+    }
+
+    handleError(error) {
+        const message = error?.message || 'Неизвестная ошибка';
+        this.errorDisplay.show(message);
+        console.error('[RoomModule] error:', error);
+    }
+}
