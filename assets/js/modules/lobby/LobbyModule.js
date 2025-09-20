@@ -361,13 +361,14 @@ export class LobbyModule {
             const room = await this.api.createRoom(payload);
             if (room?.id) {
                 localStorage.setItem('currentRoomId', room.id);
+                localStorage.setItem('currentRoom', JSON.stringify(room));
                 try {
                     await this.api.joinRoom(room.id, {});
                 } catch (joinError) {
                     console.warn('Auto-join after creation failed:', joinError);
                 }
                 this.hideCreateRoomModal();
-                window.location.href = `/room/${room.id}`;
+                setTimeout(() => window.location.assign(`/room/${room.id}`), 50);
                 return;
             }
             this.showError(this.dom.createRoomError, 'Комната создана, но отсутствует идентификатор');
@@ -385,7 +386,10 @@ export class LobbyModule {
         try {
             await this.api.joinRoom(roomId, {});
             localStorage.setItem('currentRoomId', roomId);
-            window.location.href = `/room/${roomId}`;
+            if (room) {
+                localStorage.setItem('currentRoom', JSON.stringify(room));
+            }
+            window.location.assign(`/room/${roomId}`);
         } catch (error) {
             if (room?.requiresPassword) {
                 this.showJoinRoomModal(roomId);
@@ -405,7 +409,11 @@ export class LobbyModule {
             const password = this.dom.joinRoomPassword?.value;
             await this.api.joinRoom(this.selectedRoomId, password ? { password } : {});
             localStorage.setItem('currentRoomId', this.selectedRoomId);
-            window.location.href = `/room/${this.selectedRoomId}`;
+            const room = this.rooms.find(r => r.id === this.selectedRoomId);
+            if (room) {
+                localStorage.setItem('currentRoom', JSON.stringify(room));
+            }
+            window.location.assign(`/room/${this.selectedRoomId}`);
         } catch (error) {
             this.showError(this.dom.joinRoomError, error.message || 'Не удалось присоединиться к комнате');
         } finally {
@@ -422,7 +430,8 @@ export class LobbyModule {
             const password = available.requiresPassword ? this.dom.joinRoomPassword?.value : null;
             await this.api.joinRoom(available.id, password ? { password } : {});
             localStorage.setItem('currentRoomId', available.id);
-            window.location.href = `/room/${available.id}`;
+            localStorage.setItem('currentRoom', JSON.stringify(available));
+            window.location.assign(`/room/${available.id}`);
         } catch (error) {
             this.showError(this.dom.createRoomError, error.message || 'Не удалось присоединиться к комнате');
         }
