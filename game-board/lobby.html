@@ -66,7 +66,7 @@
             border-radius: 48px;
             background: linear-gradient(160deg, #151d30 0%, #111527 45%, #0f1422 100%);
             box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6), inset 0 0 60px rgba(255, 255, 255, 0.04);
-            overflow: hidden;
+            overflow: visible;
         }
 
         .board-frame::before {
@@ -77,6 +77,7 @@
             background: radial-gradient(circle at 50% 42%, rgba(255, 205, 64, 0.12) 0%, transparent 60%),
                         linear-gradient(200deg, rgba(32, 48, 78, 0.7) 0%, rgba(16, 22, 34, 0.95) 62%);
             border: 1px solid rgba(255, 255, 255, 0.05);
+            pointer-events: none;
         }
 
         .outer-track,
@@ -233,6 +234,7 @@
             margin-top: clamp(24px, calc(var(--computed-board-size, var(--board-size)) * 0.04), 36px);
             display: flex;
             justify-content: center;
+            flex-wrap: wrap;
             gap: clamp(16px, calc(var(--computed-board-size, var(--board-size)) * 0.04), 24px);
         }
 
@@ -553,8 +555,17 @@
                 align-items: center;
                 gap: 32px;
             }
+            .board-wrapper {
+                order: 1;
+                width: 100%;
+            }
             .sidebar {
                 width: min(440px, 100%);
+                order: 3;
+            }
+            .deal-strip {
+                order: 2;
+                width: 100%;
             }
         }
 
@@ -615,30 +626,29 @@
                 <div class="center-wheel" id="centerWheel">
                     <div class="wheel-number" id="wheelNumber">1</div>
                 </div>
-
             </div>
-            <div class="deal-strip">
-                    <div class="special-card big-deal">
-                        <div class="special-title">💼 Большая сделка</div>
-                        <div class="special-metric">24 карты</div>
-                        <div class="special-metric">Премиум возможности</div>
-                    </div>
-                    <div class="special-card small-deal">
-                        <div class="special-title">📦 Малая сделка</div>
-                        <div class="special-metric">32 карты</div>
-                        <div class="special-metric">Стартовые инвестиции</div>
-                    </div>
-                    <div class="special-card expenses">
-                        <div class="special-title">💳 Расходы</div>
-                        <div class="special-metric">24 карты</div>
-                        <div class="special-metric">Обязательные платежи</div>
-                    </div>
-                    <div class="special-card market">
-                        <div class="special-title">🛒 Рынок</div>
-                        <div class="special-metric">24 карты</div>
-                        <div class="special-metric">Спец. предложения</div>
-                    </div>
-                </div>
+        </div>
+
+        <div class="deal-strip">
+            <div class="special-card big-deal">
+                <div class="special-title">💼 Большая сделка</div>
+                <div class="special-metric">24 карты</div>
+                <div class="special-metric">Премиум возможности</div>
+            </div>
+            <div class="special-card small-deal">
+                <div class="special-title">📦 Малая сделка</div>
+                <div class="special-metric">32 карты</div>
+                <div class="special-metric">Стартовые инвестиции</div>
+            </div>
+            <div class="special-card expenses">
+                <div class="special-title">💳 Расходы</div>
+                <div class="special-metric">24 карты</div>
+                <div class="special-metric">Обязательные платежи</div>
+            </div>
+            <div class="special-card market">
+                <div class="special-title">🛒 Рынок</div>
+                <div class="special-metric">24 карты</div>
+                <div class="special-metric">Спец. предложения</div>
             </div>
         </div>
 
