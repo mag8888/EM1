@@ -574,6 +574,69 @@
             </div>
 
             <div class="panel">
+                <h3>🧪 Тестовые страницы</h3>
+                <div style="display: grid; gap: 10px; grid-template-columns: 1fr 1fr;">
+                    <button class="btn btn-secondary" onclick="window.open('/', '_blank')" style="font-size: 12px;">
+                        🏠 Главная
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.open('/auth', '_blank')" style="font-size: 12px;">
+                        🔐 Авторизация
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.open('/lobby', '_blank')" style="font-size: 12px;">
+                        🎮 Лобби (старое)
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.open('/game', '_blank')" style="font-size: 12px;">
+                        🎯 Игра
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.open('/test', '_blank')" style="font-size: 12px;">
+                        🔬 Тест
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.open('/docs', '_blank')" style="font-size: 12px;">
+                        📚 Документы
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>🔧 API & Debug</h3>
+                <div style="display: grid; gap: 8px; grid-template-columns: 1fr;">
+                    <button class="btn btn-secondary" onclick="window.open('/api/health', '_blank')" style="font-size: 11px;">
+                        🏥 API Health
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.open('/api/rooms', '_blank')" style="font-size: 11px;">
+                        🏠 API Rooms
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.open('/api/user/profile', '_blank')" style="font-size: 11px;">
+                        👤 API Profile
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.open('/api/user/stats', '_blank')" style="font-size: 11px;">
+                        📊 API Stats
+                    </button>
+                    <button class="btn btn-secondary" onclick="testWebSocket()" style="font-size: 11px;">
+                        🔌 WebSocket Test
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>🌐 Ссылки</h3>
+                <div style="display: grid; gap: 8px; grid-template-columns: 1fr;">
+                    <button class="btn btn-secondary" onclick="window.open('https://em1-production.up.railway.app/lobby-module', '_blank')" style="font-size: 11px;">
+                        🚀 Railway (Продакшн)
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.open('http://localhost:3000/lobby-module', '_blank')" style="font-size: 11px;">
+                        💻 Localhost
+                    </button>
+                    <button class="btn btn-secondary" onclick="copyCurrentUrl()" style="font-size: 11px;">
+                        📋 Скопировать URL
+                    </button>
+                    <button class="btn btn-secondary" onclick="showSystemInfo()" style="font-size: 11px;">
+                        ℹ️ Информация о системе
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel">
                 <button class="btn btn-secondary logout-btn" style="width: 100%;">
                     🚪 Выйти
                 </button>
@@ -681,7 +744,72 @@
         </div>
     </div>
 
+    <!-- Socket.IO для тестирования -->
+    <script src="/socket.io/socket.io.js"></script>
+    
     <!-- Подключение модуля -->
     <script type="module" src="assets/js/modules/lobby/index.js"></script>
+    
+    <!-- Дополнительные функции для тестирования -->
+    <script>
+        function testWebSocket() {
+            try {
+                const socket = io({
+                    transports: ['polling', 'websocket'],
+                    timeout: 5000,
+                    forceNew: true
+                });
+                
+                socket.on('connect', () => {
+                    alert('✅ WebSocket подключен успешно! Socket ID: ' + socket.id);
+                    socket.disconnect();
+                });
+                
+                socket.on('connect_error', (error) => {
+                    alert('❌ Ошибка подключения WebSocket: ' + error.message);
+                });
+                
+                socket.on('disconnect', () => {
+                    console.log('WebSocket отключен');
+                });
+                
+            } catch (error) {
+                alert('❌ Ошибка создания WebSocket: ' + error.message);
+            }
+        }
+        
+        function copyCurrentUrl() {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert('✅ URL скопирован в буфер обмена: ' + window.location.href);
+            }).catch(() => {
+                alert('❌ Не удалось скопировать URL');
+            });
+        }
+        
+        function showSystemInfo() {
+            const info = `
+🎮 Game Board v2.5
+🌐 URL: ${window.location.href}
+🕐 Время: ${new Date().toLocaleString('ru-RU')}
+📱 User Agent: ${navigator.userAgent}
+🔌 WebSocket: ${typeof io !== 'undefined' ? 'Доступен' : 'Недоступен'}
+💾 LocalStorage: ${typeof localStorage !== 'undefined' ? 'Доступен' : 'Недоступен'}
+            `;
+            alert(info);
+        }
+        
+        // Добавляем информацию о версии в консоль
+        console.log('🎮 LobbyModule v2.5 - Тестовые страницы доступны');
+        console.log('📱 Доступные маршруты:', [
+            '/', '/auth', '/lobby', '/game', '/lobby-module', '/test', '/docs'
+        ]);
+        console.log('🔌 API эндпоинты:', [
+            '/api/health', '/api/rooms', '/api/user/profile', '/api/user/stats'
+        ]);
+        console.log('🌐 Ссылки:', {
+            railway: 'https://em1-production.up.railway.app/lobby-module',
+            localhost: 'http://localhost:3000/lobby-module'
+        });
+    </script>
 </body>
 </html>
