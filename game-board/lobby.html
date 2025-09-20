@@ -790,8 +790,17 @@
             }
         });
             
-            // Регистрируем пользователя
-            socket.emit('registerUser', currentUser);
+            // Регистрируем пользователя с ID
+            const userId = localStorage.getItem('userId') || Date.now().toString();
+            localStorage.setItem('userId', userId);
+            
+            const userData = {
+                id: userId,
+                username: currentUser.username,
+                email: currentUser.email
+            };
+            
+            socket.emit('registerUser', userData);
             
             // Обработчики WebSocket событий
             socket.on('roomsUpdate', (rooms) => {
@@ -817,8 +826,7 @@
             document.getElementById('username').textContent = username;
             document.getElementById('user-avatar').textContent = username.charAt(0).toUpperCase();
             
-            // Загружаем комнаты и обновляем отображение текущей комнаты
-            loadRooms();
+            // Обновляем отображение текущей комнаты
             updateCurrentRoomDisplay();
 
             // Если не авторизован, предлагаем войти
@@ -830,7 +838,6 @@
 
             // Инициализируем комнаты
             initRooms();
-            loadRooms();
 
             // Обработчики событий
             document.getElementById('create-room').addEventListener('click', createRoom);
@@ -1169,6 +1176,9 @@
                     </div>
                 `).join('');
             }
+            
+            // Загружаем комнаты после инициализации всех функций
+            loadRooms();
         });
     </script>
 </body>

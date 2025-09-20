@@ -514,8 +514,12 @@
                 }
             });
             
-            // Сначала регистрируем пользователя
+            // Сначала регистрируем пользователя с ID
+            const userId = localStorage.getItem('userId') || Date.now().toString();
+            localStorage.setItem('userId', userId);
+            
             const userData = {
+                id: userId,
                 username: username,
                 email: localStorage.getItem('email') || ''
             };

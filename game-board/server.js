@@ -652,12 +652,16 @@ io.on('connection', (socket) => {
     
     // Регистрация пользователя
     socket.on('registerUser', (userData) => {
-        connectedUsers.set(socket.id, {
-            ...userData,
+        const user = {
+            id: userData.id || socket.id, // Используем ID пользователя или socket.id как fallback
+            username: userData.username,
+            email: userData.email || '',
             socketId: socket.id,
             connectedAt: new Date()
-        });
-        console.log('👤 Пользователь зарегистрирован:', userData.username);
+        };
+        
+        connectedUsers.set(socket.id, user);
+        console.log('👤 Пользователь зарегистрирован:', user.username, 'ID:', user.id);
         
         // Отправляем обновленный список комнат
         socket.emit('roomsUpdate', serverRooms);
@@ -677,6 +681,7 @@ io.on('connection', (socket) => {
             maxPlayers: roomData.maxPlayers,
             turnTime: roomData.turnTime,
             players: [{
+                id: user.id,
                 name: user.username,
                 email: user.email,
                 isHost: true,
@@ -729,6 +734,7 @@ io.on('connection', (socket) => {
         
         // Добавляем игрока в комнату
         room.players.push({
+            id: user.id,
             name: user.username,
             email: user.email,
             isHost: false,
