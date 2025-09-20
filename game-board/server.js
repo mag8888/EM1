@@ -182,6 +182,48 @@ const broadcastRoomsUpdate = () => {
     io.emit('roomsUpdate', serverRooms.map(room => sanitizeRoom(room)));
 };
 
+const getRequestUserId = (req) => {
+    const id = req.headers['x-user-id'] || req.body?.user_id || req.query?.user_id;
+    return id ? id.toString() : '';
+};
+
+const requireServerRoom = (roomId) => {
+    const room = serverRooms.find(r => r.id === roomId);
+    if (!room) {
+        const error = new Error('Комната не найдена');
+        error.status = 404;
+        throw error;
+    }
+    return room;
+};
+
+const requireRoomPlayer = (room, userId) => {
+    if (!userId) {
+        const error = new Error('Не указан идентификатор пользователя');
+        error.status = 400;
+        throw error;
+    }
+    const player = room.players.find(p => getPlayerIdentifier(p) === userId);
+    if (!player) {
+        const error = new Error('Игрок не найден в комнате');
+        error.status = 404;
+        throw error;
+    }
+    return player;
+};
+
+const sendRoomError = (res, error) => {
+    const status = error.status || 400;
+    res.status(status).json({ success: false, message: error.message });
+};
+
+const respondWithRoom = (res, room, userId, { includePlayers = true } = {}) => {
+    res.json({
+        success: true,
+        room: sanitizeRoom(room, { includePlayers, requestingUserId: userId })
+    });
+};
+
 // Банковские данные (в реальном проекте это была бы база данных)
 const bankData = {
     balances: {}, // { userId: { amount: 1000, roomId: 'room123' } }
@@ -843,20 +885,120 @@ app.post('/api/rooms/:roomId/leave', (req, res) => {
 app.get('/api/rooms/:roomId', (req, res) => {
     try {
         const { roomId } = req.params;
-        const room = serverRooms.find(r => r.id === roomId);
-        
-        if (!room) {
-            return res.status(404).json({ success: false, error: 'Комната не найдена' });
-        }
-        
-        const requestingUserId = req.query.user_id || req.query.userId || req.headers['x-user-id'] || null;
+        const room = requireServerRoom(roomId);
+        const requestingUserId = getRequestUserId(req);
         res.json({
             success: true,
             room: sanitizeRoom(room, { requestingUserId })
         });
     } catch (error) {
         console.error('Ошибка получения комнаты:', error);
-        res.status(500).json({ success: false, error: error.message });
+        sendRoomError(res, error);
+    }
+});
+
+app.post('/api/rooms/:roomId/dream', (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const room = requireServerRoom(roomId);
+        const userId = getRequestUserId(req);
+        const player = requireRoomPlayer(room, userId);
+
+        const dreamId = req.body?.dream_id || req.body?.dreamId;
+        if (!dreamId) {
+            throw Object.assign(new Error('Не указана мечта'), { status: 400 });
+        }
+
+        player.selectedDream = dreamId;
+        player.isReady = false;
+        room.updatedAt = new Date().toISOString();
+
+        broadcastRoomsUpdate();
+        respondWithRoom(res, room, userId);
+    } catch (error) {
+        console.error('Ошибка выбора мечты:', error);
+        sendRoomError(res, error);
+    }
+});
+
+app.post('/api/rooms/:roomId/token', (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const room = requireServerRoom(roomId);
+        const userId = getRequestUserId(req);
+        const player = requireRoomPlayer(room, userId);
+
+        const tokenId = req.body?.token_id || req.body?.tokenId;
+        if (!tokenId) {
+            throw Object.assign(new Error('Не указана фишка'), { status: 400 });
+        }
+
+        const takenByOther = room.players.some(
+            p => p.selectedToken === tokenId && getPlayerIdentifier(p) !== userId
+        );
+        if (takenByOther) {
+            throw Object.assign(new Error('Эта фишка уже выбрана другим игроком'), { status: 409 });
+        }
+
+        player.selectedToken = tokenId;
+        player.isReady = false;
+        room.updatedAt = new Date().toISOString();
+
+        broadcastRoomsUpdate();
+        respondWithRoom(res, room, userId);
+    } catch (error) {
+        console.error('Ошибка выбора фишки:', error);
+        sendRoomError(res, error);
+    }
+});
+
+app.post('/api/rooms/:roomId/ready', (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const room = requireServerRoom(roomId);
+        const userId = getRequestUserId(req);
+        const player = requireRoomPlayer(room, userId);
+
+        if (!player.selectedDream || !player.selectedToken) {
+            throw Object.assign(new Error('Выберите мечту и фишку перед готовностью'), { status: 400 });
+        }
+
+        player.isReady = !player.isReady;
+        room.updatedAt = new Date().toISOString();
+
+        broadcastRoomsUpdate();
+        respondWithRoom(res, room, userId);
+    } catch (error) {
+        console.error('Ошибка изменения статуса готовности:', error);
+        sendRoomError(res, error);
+    }
+});
+
+app.post('/api/rooms/:roomId/start', (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const room = requireServerRoom(roomId);
+        const userId = getRequestUserId(req);
+        const player = requireRoomPlayer(room, userId);
+
+        if (!player.isHost) {
+            throw Object.assign(new Error('Только создатель комнаты может начать игру'), { status: 403 });
+        }
+
+        const readyPlayers = room.players.filter(p => p.isReady);
+        if (readyPlayers.length < 2) {
+            throw Object.assign(new Error('Для старта требуется минимум два готовых игрока'), { status: 400 });
+        }
+
+        room.status = 'playing';
+        room.startedAt = new Date().toISOString();
+        room.updatedAt = new Date().toISOString();
+
+        broadcastRoomsUpdate();
+        respondWithRoom(res, room, userId);
+    } catch (error) {
+        console.error('Ошибка запуска игры:', error);
+        sendRoomError(res, error);
     }
 });
 

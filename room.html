@@ -414,6 +414,14 @@
             border: 1px solid rgba(107, 114, 128, 0.3);
         }
 
+        .selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .selection-card,
         .dream-selection,
         .token-selection {
             background: rgba(30, 41, 59, 0.8);
@@ -422,6 +430,12 @@
             padding: 20px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             margin-bottom: 20px;
+        }
+
+        .selection-description {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 12px;
         }
 
         .dream-list,
@@ -651,18 +665,18 @@
                     </div>
                 </div>
 
-                <!-- Dream Selection -->
-                <div class="dream-selection">
-                    <div class="panel-title">Выберите мечту</div>
-                    <div class="dream-list" id="dreamList">
-                        <!-- Dreams will be loaded here -->
+                <div class="selection-grid">
+                    <div class="selection-card dream-selection">
+                        <div class="panel-title">Выберите мечту</div>
+                        <div class="selection-description">Выберите цель, к которой вы будете идти во время игры.</div>
+                        <div class="dream-list" id="dreamList"></div>
                     </div>
-                </div>
 
-                <!-- Token Selection -->
-                <div class="token-selection">
-                    <div class="panel-title">Выберите фишку</div>
-                    <div class="token-list" id="tokenList"></div>
+                    <div class="selection-card token-selection">
+                        <div class="panel-title">Выберите фишку</div>
+                        <div class="selection-description">Выберите фишку, которая будет представлять вас на поле.</div>
+                        <div class="token-list" id="tokenList"></div>
+                    </div>
                 </div>
 
                 <!-- Room Settings -->
