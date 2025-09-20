@@ -709,7 +709,7 @@
                     <div class="user-name" id="userName">Игрок</div>
                     <div class="user-balance" id="userBalance">$3,000</div>
                 </div>
-                <button class="logout-btn" onclick="logout()">Выйти</button>
+                <button class="logout-btn" type="button">Выйти</button>
             </div>
         </div>
 
@@ -719,7 +719,7 @@
             <div class="rooms-section">
                 <div class="section-header">
                     <h2 class="section-title">Доступные комнаты</h2>
-                    <button class="refresh-btn" onclick="refreshRooms()">🔄 Обновить</button>
+                    <button class="refresh-btn" type="button">🔄 Обновить</button>
                 </div>
                 <div class="rooms-list" id="roomsList">
                     <!-- Rooms will be loaded here -->
@@ -728,10 +728,10 @@
 
             <!-- Controls Section -->
             <div class="controls-section">
-                <button class="create-room-btn" onclick="showCreateRoomModal()">
+                <button class="create-room-btn" type="button">
                     ➕ Создать комнату
                 </button>
-                <button class="quick-join-btn" onclick="quickJoin()">
+                <button class="quick-join-btn" type="button">
                     ⚡ Быстрое присоединение
                 </button>
                 
@@ -763,7 +763,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Создать комнату</h3>
-                <button class="close-btn" onclick="hideCreateRoomModal()">&times;</button>
+                <button class="close-btn" type="button">&times;</button>
             </div>
             
             <div class="error-message" id="createRoomError"></div>
@@ -777,7 +777,7 @@
                 <div class="form-group">
                     <label class="form-label">Профессия</label>
                     <div class="profession-cards">
-                        <div class="profession-card selected" data-profession="entrepreneur" onclick="selectProfession(this)">
+                        <div class="profession-card selected" data-profession="entrepreneur">
                             <div class="profession-icon">🚀</div>
                             <div class="profession-name">Предприниматель</div>
                             <div class="profession-description">Владелец успешного бизнеса</div>
@@ -839,7 +839,7 @@
                 </div>
                 
                 <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="hideCreateRoomModal()">Отмена</button>
+                    <button type="button" class="btn btn-secondary">Отмена</button>
                     <button type="submit" class="btn btn-primary">Создать комнату</button>
                 </div>
             </form>
@@ -851,7 +851,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Присоединиться к комнате</h3>
-                <button class="close-btn" onclick="hideJoinRoomModal()">&times;</button>
+                <button class="close-btn" type="button">&times;</button>
             </div>
             
             <div class="error-message" id="joinRoomError"></div>
@@ -868,603 +868,14 @@
                 </div>
                 
                 <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="hideJoinRoomModal()">Отмена</button>
-                    <button type="button" class="btn btn-primary" onclick="confirmJoinRoom()">Присоединиться</button>
+                    <button type="button" class="btn btn-secondary">Отмена</button>
+                    <button type="button" class="btn btn-primary">Присоединиться</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        // Global variables
-        let currentUser = null;
-        let selectedProfession = null;
-        let selectedRoomId = null;
-        let rooms = [];
+    <script type="module" src="assets/js/modules/lobby/index.js"></script>
 
-        // Initialize lobby
-        document.addEventListener('DOMContentLoaded', async function() {
-            checkAuthStatus();
-            
-            // Проверяем и обновляем данные пользователя
-            const userValid = await validateAndUpdateUser();
-            if (!userValid) {
-                return;
-            }
-            
-            loadUserStats();
-            
-            // Принудительно обновляем комнаты при загрузке
-            loadRooms();
-            
-            // Refresh rooms every 10 seconds
-            setInterval(loadRooms, 10000);
-        });
-
-        // Check authentication status
-        function checkAuthStatus() {
-            const token = localStorage.getItem('authToken');
-            const user = localStorage.getItem('user');
-            
-            if (!token || !user) {
-                window.location.href = '/auth';
-                return;
-            }
-            
-            try {
-                currentUser = JSON.parse(user);
-                
-                // Проверяем, что у пользователя есть ID
-                if (!currentUser.id && currentUser._id) {
-                    // Нормализуем и сохраняем обратно, чтобы избежать будущих сбоев
-                    currentUser.id = currentUser._id;
-                    localStorage.setItem('user', JSON.stringify(currentUser));
-                }
-                if (!currentUser.id) {
-                    console.error('User ID not found, redirecting to auth');
-                    logout();
-                    return;
-                }
-                
-                // Логируем данные пользователя для отладки
-                console.log('Current user data:', currentUser);
-                console.log('User ID:', currentUser.id);
-                
-                document.getElementById('userName').textContent = currentUser.first_name;
-                document.getElementById('userBalance').textContent = `$${currentUser.balance.toLocaleString()}`;
-            } catch (error) {
-                console.error('Error parsing user data:', error);
-                logout();
-            }
-        }
-
-        // Load user statistics
-        async function loadUserStats() {
-            try {
-                const token = localStorage.getItem('authToken');
-                const response = await fetch('/api/user/stats', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                
-                if (response.ok) {
-                    const stats = await response.json();
-                    document.getElementById('totalGames').textContent = stats.games_played;
-                    document.getElementById('totalWins').textContent = stats.wins_count;
-                    document.getElementById('userLevel').textContent = stats.level;
-                }
-            } catch (error) {
-                console.error('Error loading user stats:', error);
-            }
-        }
-
-        // Проверка и обновление данных пользователя
-        async function validateAndUpdateUser() {
-            try {
-                const token = localStorage.getItem('authToken');
-                if (!token) {
-                    logout();
-                    return false;
-                }
-
-                const response = await fetch('/api/user/profile', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (response.ok) {
-                    const userData = await response.json();
-                    console.log('Updated user data from server:', userData);
-                    
-                    // Нормализуем объект пользователя (гарантируем наличие id)
-                    const normalizedUser = { ...userData };
-                    if (!normalizedUser.id && normalizedUser._id) {
-                        normalizedUser.id = normalizedUser._id;
-                    }
-                    
-                    if (!normalizedUser.id) {
-                        console.error('Normalized user has no id, forcing logout');
-                        logout();
-                        return false;
-                    }
-                    
-                    // Обновляем данные пользователя в localStorage
-                    localStorage.setItem('user', JSON.stringify(normalizedUser));
-                    currentUser = normalizedUser;
-                    
-                    // Обновляем отображение
-                    document.getElementById('userName').textContent = currentUser.first_name;
-                    document.getElementById('userBalance').textContent = `$${currentUser.balance.toLocaleString()}`;
-                    
-                    return true;
-                } else {
-                    console.error('Failed to validate user, redirecting to auth');
-                    logout();
-                    return false;
-                }
-            } catch (error) {
-                console.error('Error validating user:', error);
-                logout();
-                return false;
-            }
-        }
-
-        // Load rooms from server
-        async function loadRooms(retryCount = 0) {
-            try {
-                if (!currentUser || !currentUser.id) {
-                    console.log('No user data found, redirecting to auth');
-                    window.location.href = '/auth';
-                    return;
-                }
-                
-                console.log('Loading rooms for user:', currentUser.id);
-                console.log('Making request to:', `/api/rooms?user_id=${currentUser.id}`);
-                console.log('Retry count:', retryCount);
-                
-                const response = await fetch(`/api/rooms?user_id=${currentUser.id}&t=${Date.now()}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    mode: 'cors',
-                    credentials: 'same-origin',
-                    cache: 'no-cache'
-                });
-                
-                console.log('Load rooms response status:', response.status);
-                console.log('Response headers:', [...response.headers.entries()]);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('Rooms data received:', data);
-                    console.log('Number of rooms:', data.length);
-                    rooms = data;
-                    renderRooms();
-                } else {
-                    const errorText = await response.text();
-                    console.error('Error loading rooms:', response.status, errorText);
-                    
-                    // Retry logic for 502/503 errors
-                    if ((response.status === 502 || response.status === 503) && retryCount < 3) {
-                        console.log(`Retrying in ${(retryCount + 1) * 2} seconds...`);
-                        setTimeout(() => {
-                            loadRooms(retryCount + 1);
-                        }, (retryCount + 1) * 2000);
-                        return;
-                    }
-                    
-                    showError('errorMessage', `Ошибка загрузки комнат: ${response.status} - ${errorText}`);
-                }
-            } catch (error) {
-                console.error('Error loading rooms:', error);
-                
-                // Retry logic for network errors
-                if (retryCount < 3) {
-                    console.log(`Network error, retrying in ${(retryCount + 1) * 2} seconds...`);
-                    setTimeout(() => {
-                        loadRooms(retryCount + 1);
-                    }, (retryCount + 1) * 2000);
-                    return;
-                }
-                
-                showError('errorMessage', `Ошибка соединения: ${error.message}`);
-            }
-        }
-
-        // Render rooms list
-        function renderRooms() {
-            const roomsList = document.getElementById('roomsList');
-            
-            console.log('Rendering rooms:', rooms.length, 'rooms');
-            console.log('Rooms data:', rooms);
-            console.log('Current user:', currentUser);
-            console.log('rooms.length === 0:', rooms.length === 0);
-            console.log('rooms type:', typeof rooms);
-            console.log('rooms is array:', Array.isArray(rooms));
-            
-            if (rooms.length === 0) {
-                console.log('No rooms found, showing empty state');
-                roomsList.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: #94a3b8;">
-                        <div style="font-size: 48px; margin-bottom: 20px;">🏠</div>
-                        <div>Нет доступных комнат</div>
-                        <div style="font-size: 14px; margin-top: 10px;">Создайте свою комнату или подождите</div>
-                    </div>
-                `;
-                return;
-            }
-            
-            console.log('Starting to render', rooms.length, 'rooms');
-            roomsList.innerHTML = rooms.map((room, index) => {
-                const isUserInRoom = currentUser && room.players.some(player => player.user_id.toString() === currentUser.id);
-                
-                console.log(`Rendering room ${index + 1}:`, room.name, 'isUserInRoom:', isUserInRoom);
-                
-                return `
-                <div class="room-card ${isUserInRoom ? 'user-in-room' : ''}" onclick="selectRoom('${room.id}')">
-                    <div class="room-header">
-                        <div class="room-name">${room.name}</div>
-                        <div class="room-status ${getRoomStatusClass(room)}">${getRoomStatusText(room)}</div>
-                        ${isUserInRoom ? '<div class="user-in-room-badge">Вы в комнате</div>' : ''}
-                    </div>
-                    <div class="room-info">
-                        <div class="info-item">
-                            <span>👑</span>
-                            <span>${room.creator_name}</span>
-                        </div>
-                        <div class="info-item">
-                            <span>👥</span>
-                            <span>${room.players.length}/${room.max_players}</span>
-                        </div>
-                        <div class="info-item">
-                            <span>⏱️</span>
-                            <span>${room.turn_time} мин</span>
-                        </div>
-                        <div class="info-item">
-                            <span>${room.password ? '🔒' : '🔓'}</span>
-                            <span>${room.password ? 'Приватная' : 'Публичная'}</span>
-                        </div>
-                        <div class="info-item">
-                            <span>🕐</span>
-                            <span>Создана: ${new Date(room.created_at).toLocaleString('ru-RU')}</span>
-                        </div>
-                    </div>
-                    <div class="room-expiry">
-                        Удаление через: ${getTimeUntilDeletion(room.created_at)}
-                    </div>
-                    <div class="room-players">
-                        ${room.players.map(player => `
-                            <div class="player-avatar ${player.user_id.toString() === currentUser?.id ? 'current-user' : ''}" title="${player.name}">${player.name.charAt(0)}</div>
-                        `).join('')}
-                        ${Array(room.max_players - room.players.length).fill('<div class="empty-slot"></div>').join('')}
-                    </div>
-                    <div class="room-actions">
-                        <button class="join-btn ${isUserInRoom ? 'in-room' : ''}" onclick="event.stopPropagation(); joinRoom('${room.id}')" 
-                                ${room.players.length >= room.max_players && !isUserInRoom ? 'disabled' : ''}>
-                            ${isUserInRoom ? 'Войти в комнату' : (room.players.length >= room.max_players ? 'Комната заполнена' : 'Присоединиться')}
-                        </button>
-                    </div>
-                </div>
-                `;
-            }).join('');
-            
-            console.log('Finished rendering', rooms.length, 'rooms');
-            console.log('roomsList.innerHTML length:', roomsList.innerHTML.length);
-        }
-
-        // Get room status class
-        function getRoomStatusClass(room) {
-            if (room.players.length >= room.max_players) return 'status-full';
-            if (room.game_started) return 'status-playing';
-            return 'status-waiting';
-        }
-
-        // Get room status text
-        function getRoomStatusText(room) {
-            if (room.players.length >= room.max_players) return 'Заполнена';
-            if (room.game_started) return 'Игра идет';
-            return 'Ожидание';
-        }
-
-        // Get time until room deletion
-        function getTimeUntilDeletion(createdAt) {
-            const now = new Date();
-            const created = new Date(createdAt);
-            const sixHours = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
-            const timeLeft = sixHours - (now - created);
-            
-            if (timeLeft <= 0) {
-                return 'Скоро будет удалена';
-            }
-            
-            const hours = Math.floor(timeLeft / (60 * 60 * 1000));
-            const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
-            
-            if (hours > 0) {
-                return `${hours}ч ${minutes}м`;
-            } else {
-                return `${minutes}м`;
-            }
-        }
-
-        // Select room
-        function selectRoom(roomId) {
-            selectedRoomId = roomId;
-            // Highlight selected room
-            document.querySelectorAll('.room-card').forEach(card => {
-                card.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-            });
-            event.currentTarget.style.borderColor = '#10b981';
-        }
-
-        // Show create room modal
-        function showCreateRoomModal() {
-            document.getElementById('createRoomModal').style.display = 'flex';
-            document.getElementById('createRoomForm').reset();
-            selectedProfession = 'entrepreneur'; // Set default profession
-            document.querySelectorAll('.profession-card').forEach(card => {
-                card.classList.remove('selected');
-            });
-            document.querySelector('.profession-card').classList.add('selected');
-            
-            // Автоматически фокусируемся на поле ввода названия комнаты
-            setTimeout(() => {
-                document.getElementById('roomName').focus();
-            }, 100); // Небольшая задержка для корректного отображения модального окна
-        }
-
-        // Hide create room modal
-        function hideCreateRoomModal() {
-            document.getElementById('createRoomModal').style.display = 'none';
-        }
-
-        // Select profession
-        function selectProfession(element) {
-            document.querySelectorAll('.profession-card').forEach(card => {
-                card.classList.remove('selected');
-            });
-            element.classList.add('selected');
-            selectedProfession = element.dataset.profession;
-        }
-
-        // Create room form submission
-        document.getElementById('createRoomForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            if (!selectedProfession) {
-                showError('createRoomError', 'Пожалуйста, выберите профессию');
-                return;
-            }
-            
-            // Проверяем и обновляем данные пользователя перед созданием комнаты
-            const userValid = await validateAndUpdateUser();
-            if (!userValid) {
-                showError('createRoomError', 'Ошибка аутентификации. Пожалуйста, войдите заново.');
-                return;
-            }
-            
-            // Дополнительная проверка ID пользователя
-            console.log('Creating room with user ID:', currentUser.id);
-            console.log('User data:', currentUser);
-            
-            const formData = {
-                name: document.getElementById('roomName').value,
-                creator_id: currentUser.id,
-                creator_profession: selectedProfession,
-                max_players: parseInt(document.getElementById('maxPlayers').value),
-                turn_time: parseInt(document.getElementById('turnTime').value),
-                assign_professions: document.getElementById('assignProfessions').checked,
-                password: document.getElementById('roomPassword').value || null
-            };
-            
-            try {
-                showLoading('createRoomLoading', true);
-                hideError('createRoomError');
-                
-                console.log('Creating room with data:', formData);
-                
-                const response = await fetch('/api/rooms/create', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
-                
-                console.log('Create room response status:', response.status);
-                const data = await response.json();
-                console.log('Create room response data:', data);
-                
-                if (response.ok) {
-                    console.log('Room created successfully, redirecting to:', `/room/${data.room_id}`);
-                    hideCreateRoomModal();
-                    // Redirect to game room
-                    window.location.href = `/room/${data.room_id}`;
-                } else {
-                    console.error('Room creation failed:', data.message);
-                    showError('createRoomError', data.message || 'Ошибка создания комнаты');
-                }
-            } catch (error) {
-                console.error('Create room error:', error);
-                showError('createRoomError', 'Ошибка соединения с сервером');
-            } finally {
-                showLoading('createRoomLoading', false);
-            }
-        });
-
-        // Join room
-        function joinRoom(roomId) {
-            const room = rooms.find(r => r.id === roomId);
-            if (!room) return;
-            
-            selectedRoomId = roomId;
-            
-            if (room.password) {
-                showJoinRoomModal();
-            } else {
-                confirmJoinRoom();
-            }
-        }
-
-        // Show join room modal
-        function showJoinRoomModal() {
-            document.getElementById('joinRoomModal').style.display = 'flex';
-            document.getElementById('joinRoomPassword').value = '';
-        }
-
-        // Hide join room modal
-        function hideJoinRoomModal() {
-            document.getElementById('joinRoomModal').style.display = 'none';
-        }
-
-        // Confirm join room
-        async function confirmJoinRoom() {
-            if (!selectedRoomId) return;
-            
-            const room = rooms.find(r => r.id === selectedRoomId);
-            if (!room) return;
-            
-            try {
-                showLoading('joinRoomLoading', true);
-                hideError('joinRoomError');
-                
-                // Проверяем и обновляем данные пользователя перед присоединением
-                const userValid = await validateAndUpdateUser();
-                if (!userValid) {
-                    showError('joinRoomError', 'Ошибка аутентификации. Пожалуйста, войдите заново.');
-                    return;
-                }
-                
-                // Дополнительная проверка ID пользователя
-                console.log('Joining room:', selectedRoomId);
-                console.log('User ID:', currentUser.id);
-                console.log('User data:', currentUser);
-                
-                const response = await fetch('/api/rooms/join', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        room_id: selectedRoomId,
-                        user_id: currentUser.id,
-                        password: document.getElementById('joinRoomPassword').value || null
-                    })
-                });
-                
-                console.log('Response status:', response.status);
-                const data = await response.json();
-                console.log('Response data:', data);
-                
-                if (response.ok) {
-                    hideJoinRoomModal();
-                    // Check if user was already in room
-                    if (data.redirect) {
-                        console.log('User already in room, redirecting...');
-                    }
-                    // Redirect to game room
-                    window.location.href = `/room/${selectedRoomId}`;
-                } else {
-                    showError('joinRoomError', data.message || 'Ошибка присоединения к комнате');
-                }
-            } catch (error) {
-                showError('joinRoomError', 'Ошибка соединения с сервером');
-                console.error('Join room error:', error);
-            } finally {
-                showLoading('joinRoomLoading', false);
-            }
-        }
-
-        // Quick join
-        async function quickJoin() {
-            try {
-                // Проверяем и обновляем данные пользователя перед быстрым присоединением
-                const userValid = await validateAndUpdateUser();
-                if (!userValid) {
-                    showError('createRoomError', 'Ошибка аутентификации. Пожалуйста, войдите заново.');
-                    return;
-                }
-                
-                // Дополнительная проверка ID пользователя
-                console.log('Quick join with user ID:', currentUser.id);
-                console.log('User data:', currentUser);
-                
-                const response = await fetch('/api/rooms/quick-join', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_id: currentUser.id
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    window.location.href = `/room/${data.room_id}`;
-                } else {
-                    showError('createRoomError', data.message || 'Нет доступных комнат для быстрого присоединения');
-                }
-            } catch (error) {
-                showError('createRoomError', 'Ошибка соединения с сервером');
-                console.error('Quick join error:', error);
-            }
-        }
-
-        // Refresh rooms
-        function refreshRooms() {
-            loadRooms();
-        }
-
-        // Logout
-        function logout() {
-            if (confirm('Вы уверены, что хотите выйти?')) {
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('user');
-                window.location.href = '/auth';
-            }
-        }
-
-        // Utility functions
-        function showError(elementId, message) {
-            const errorElement = document.getElementById(elementId);
-            errorElement.textContent = message;
-            errorElement.style.display = 'block';
-        }
-
-        function hideError(elementId) {
-            document.getElementById(elementId).style.display = 'none';
-        }
-
-        function showLoading(elementId, show) {
-            document.getElementById(elementId).style.display = show ? 'block' : 'none';
-        }
-
-        function showSuccess(message) {
-            // Simple success notification
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: rgba(16, 185, 129, 0.9);
-                color: white;
-                padding: 15px 20px;
-                border-radius: 10px;
-                z-index: 2000;
-                font-weight: 600;
-            `;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
-        }
-    </script>
 </body>
 </html>
