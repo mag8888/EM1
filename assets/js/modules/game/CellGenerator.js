@@ -25,9 +25,11 @@ export class CellGenerator {
     async init() {
         console.log('🎯 CellGenerator инициализирован');
         
-        // Подписка на события
-        this.gameCore.eventBus.on('gameStarted', this.onGameStarted.bind(this));
-        this.gameCore.eventBus.on('playerMoved', this.onPlayerMoved.bind(this));
+        // Подписка на события только если gameCore и eventBus доступны
+        if (this.gameCore && this.gameCore.eventBus) {
+            this.gameCore.eventBus.on('gameStarted', this.onGameStarted.bind(this));
+            this.gameCore.eventBus.on('playerMoved', this.onPlayerMoved.bind(this));
+        }
     }
 
     /**
@@ -48,7 +50,11 @@ export class CellGenerator {
         }
 
         console.log(`🎯 Сгенерировано ${this.cells.length} клеток игрового поля`);
-        this.gameCore.eventBus.emit('boardGenerated', { cells: this.cells });
+        
+        // Эмиссия события только если gameCore и eventBus доступны
+        if (this.gameCore && this.gameCore.eventBus) {
+            this.gameCore.eventBus.emit('boardGenerated', { cells: this.cells });
+        }
         
         return this.cells;
     }
@@ -465,7 +471,7 @@ export class CellGenerator {
 
     onPlayerMoved(data) {
         const cell = this.getCell(data.to);
-        if (cell) {
+        if (cell && this.gameCore && this.gameCore.eventBus) {
             this.gameCore.eventBus.emit('playerLandedOnCell', {
                 player: data.playerId,
                 cell,
