@@ -119,6 +119,67 @@ async function initializeDefaultProfession() {
 app.use(express.static(path.join(__dirname)));
 app.use(express.json());
 
+// Helpers --------------------------------------------------------------
+const getPlayerIdentifier = (player) => player?.userId || player?.id || null;
+
+const createRoomPlayer = ({ user, isHost = false, socketId = null }) => ({
+    userId: user.id,
+    id: user.id, // alias for backward compatibility
+    name: user.username,
+    email: user.email,
+    isHost,
+    isReady: false,
+    selectedToken: null,
+    selectedDream: null,
+    socketId,
+    joinedAt: new Date().toISOString()
+});
+
+const sanitizePlayer = (player = {}) => ({
+    userId: player.userId || player.id || null,
+    name: player.name || 'Игрок',
+    email: player.email || null,
+    isHost: Boolean(player.isHost),
+    isReady: Boolean(player.isReady),
+    selectedToken: player.selectedToken ?? player.token ?? null,
+    selectedDream: player.selectedDream ?? player.dream ?? null,
+    joinedAt: player.joinedAt || null
+});
+
+const sanitizeRoom = (room, { requestingUserId = null } = {}) => {
+    const players = (room?.players || []).map(sanitizePlayer);
+    const readyCount = players.filter(player => player.isReady).length;
+    const playerCount = players.length;
+    const host = players.find(player => player.isHost) || null;
+    const currentPlayer = requestingUserId
+        ? players.find(player => player.userId === requestingUserId.toString()) || null
+        : null;
+
+    return {
+        id: room.id,
+        name: room.name,
+        maxPlayers: room.maxPlayers,
+        turnTime: room.turnTime,
+        status: room.status,
+        gameStarted: room.status === 'playing',
+        assignProfessions: Boolean(room.assignProfessions),
+        defaultProfession: room.defaultProfession || null,
+        createdAt: room.createdAt,
+        updatedAt: room.updatedAt || room.createdAt,
+        creatorId: room.creatorId || host?.userId || null,
+        creatorName: room.creatorName || host?.name || null,
+        players,
+        playerCount,
+        readyCount,
+        canStart: playerCount >= 2 && readyCount >= 2,
+        currentPlayer
+    };
+};
+
+const broadcastRoomsUpdate = () => {
+    io.emit('roomsUpdate', serverRooms.map(room => sanitizeRoom(room)));
+};
+
 // Банковские данные (в реальном проекте это была бы база данных)
 const bankData = {
     balances: {}, // { userId: { amount: 1000, roomId: 'room123' } }
@@ -613,27 +674,9 @@ app.get('/docs', (req, res) => {
 // API маршруты для комнат (для LobbyModule)
 app.get('/api/rooms', (req, res) => {
     try {
-        res.json({ 
-            success: true, 
-            rooms: serverRooms.map(room => ({
-                id: room.id,
-                name: room.name,
-                maxPlayers: room.maxPlayers,
-                turnTime: room.turnTime,
-                players: room.players.map(player => ({
-                    userId: player.id,
-                    user_id: player.id,
-                    name: player.name,
-                    user_name: player.name,
-                    isHost: player.isHost
-                })),
-                creatorName: room.players.find(p => p.isHost)?.name || 'Неизвестно',
-                createdAt: room.createdAt,
-                created_at: room.createdAt,
-                gameStarted: room.status === 'playing',
-                game_started: room.status === 'playing',
-                requiresPassword: false
-            }))
+        res.json({
+            success: true,
+            rooms: serverRooms.map(room => sanitizeRoom(room))
         });
     } catch (error) {
         console.error('Ошибка получения списка комнат:', error);
@@ -658,13 +701,14 @@ app.post('/api/rooms', (req, res) => {
 
         const newRoom = {
             id: Date.now().toString(),
-            name: name,
+            name,
             maxPlayers: max_players || 4,
             turnTime: turn_time || 3,
             players: [],
             status: 'waiting',
             createdAt: new Date().toISOString(),
-            assignProfessions: assign_professions || false,
+            updatedAt: new Date().toISOString(),
+            assignProfessions: Boolean(assign_professions),
             password: password || null,
             defaultProfession: profession || 'entrepreneur',
             creatorId: user.id,
@@ -674,10 +718,10 @@ app.post('/api/rooms', (req, res) => {
         serverRooms.push(newRoom);
         
         console.log(`🏠 Комната "${name}" создана пользователем ${user.username} (${user.id})`);
-        
-        res.json({ 
-            success: true, 
-            room: newRoom 
+
+        res.json({
+            success: true,
+            room: sanitizeRoom(newRoom, { requestingUserId: user.id })
         });
     } catch (error) {
         console.error('Ошибка создания комнаты:', error);
@@ -716,26 +760,23 @@ app.post('/api/rooms/:roomId/join', (req, res) => {
         });
         
         // Проверяем, не находится ли пользователь уже в комнате
-        const existingPlayer = room.players.find(p => p.id === user.id);
+        const existingPlayer = room.players.find(p => getPlayerIdentifier(p) === user.id);
         if (existingPlayer) {
             return res.status(400).json({ success: false, error: 'Вы уже в этой комнате' });
         }
         
         // Добавляем игрока
-        const newPlayer = {
-            id: user.id,
-            name: user.username,
-            email: user.email,
-            isHost: room.players.length === 0,
-            token: null,
-            dream: null
-        };
-        
+        const newPlayer = createRoomPlayer({
+            user,
+            isHost: room.players.length === 0
+        });
+
         room.players.push(newPlayer);
-        
-        res.json({ 
-            success: true, 
-            room: room 
+        room.updatedAt = new Date().toISOString();
+
+        res.json({
+            success: true,
+            room: sanitizeRoom(room, { requestingUserId: user.id })
         });
     } catch (error) {
         console.error('Ошибка присоединения к комнате:', error);
@@ -759,24 +800,26 @@ app.post('/api/rooms/:roomId/leave', (req, res) => {
         }
         
         // Удаляем игрока из комнаты
-        const playerIndex = room.players.findIndex(p => p.id === user.id);
+        const playerIndex = room.players.findIndex(p => getPlayerIdentifier(p) === user.id);
         if (playerIndex === -1) {
             return res.status(400).json({ success: false, error: 'Вы не находитесь в этой комнате' });
         }
         
         const player = room.players[playerIndex];
         room.players.splice(playerIndex, 1);
-        
+
         // Если это был хост и в комнате остались игроки, назначаем нового хоста
         if (player.isHost && room.players.length > 0) {
             room.players[0].isHost = true;
         }
-        
+
         // Если комната пустая, удаляем её
         if (room.players.length === 0) {
             serverRooms.splice(serverRooms.indexOf(room), 1);
         }
         
+        room.updatedAt = new Date().toISOString();
+
         res.json({ success: true });
     } catch (error) {
         console.error('Ошибка выхода из комнаты:', error);
@@ -793,9 +836,10 @@ app.get('/api/rooms/:roomId', (req, res) => {
             return res.status(404).json({ success: false, error: 'Комната не найдена' });
         }
         
-        res.json({ 
-            success: true, 
-            room: room 
+        const requestingUserId = req.query.user_id || req.query.userId || req.headers['x-user-id'] || null;
+        res.json({
+            success: true,
+            room: sanitizeRoom(room, { requestingUserId })
         });
     } catch (error) {
         console.error('Ошибка получения комнаты:', error);
@@ -841,12 +885,12 @@ app.get('/api/user/stats', (req, res) => {
         const userHash = user ? parseInt(user.id.replace('user_', ''), 36) : Math.random() * 1000000;
         
         const stats = {
-            games_played: Math.floor((userHash % 100) + 1),
-            wins_count: Math.floor((userHash % 50) + 1),
+            gamesPlayed: Math.floor((userHash % 100) + 1),
+            wins: Math.floor((userHash % 50) + 1),
             level: Math.floor((userHash % 20) + 1),
-            total_users: userManager.getUserCount(),
-            online_users: userManager.getOnlineUserCount(),
-            user_id: user ? user.id : 'guest'
+            totalUsers: userManager.getUserCount(),
+            onlineUsers: userManager.getOnlineUserCount(),
+            userId: user ? user.id : 'guest'
         };
         
         res.json(stats);
@@ -933,7 +977,7 @@ io.on('connection', (socket) => {
                         console.log('📊 Статистика:', userManager.getStats());
                         
                         // Отправляем обновленный список комнат
-                        socket.emit('roomsUpdate', serverRooms);
+                        socket.emit('roomsUpdate', serverRooms.map(room => sanitizeRoom(room, { requestingUserId: user.id })));
                         
                     } catch (error) {
                         console.error('❌ Ошибка регистрации пользователя:', error.message);
@@ -954,28 +998,25 @@ io.on('connection', (socket) => {
             name: roomData.name,
             maxPlayers: roomData.maxPlayers,
             turnTime: roomData.turnTime,
-            players: [{
-                id: user.id,
-                name: user.username,
-                email: user.email,
-                isHost: true,
-                socketId: socket.id,
-                token: null, // Фишка будет выбрана позже
-                dream: null  // Мечта будет выбрана позже
-            }],
+            players: [createRoomPlayer({ user, isHost: true, socketId: socket.id })],
             status: 'waiting',
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            assignProfessions: Boolean(roomData.assignProfessions),
+            defaultProfession: roomData.defaultProfession || roomData.profession || 'entrepreneur',
+            creatorId: user.id,
+            creatorEmail: user.email
         };
-        
+
         serverRooms.push(newRoom);
-        
+
         // Отправляем обновленный список всем пользователям
-        io.emit('roomsUpdate', serverRooms);
-        
+        broadcastRoomsUpdate();
+
         // Присоединяем создателя к комнате
         socket.join(newRoom.id);
-        socket.emit('roomCreated', newRoom);
-        
+        socket.emit('roomCreated', sanitizeRoom(newRoom, { requestingUserId: user.id }));
+
         console.log(`🏠 Создана комната ${newRoom.id} пользователем ${user.username}`);
     });
     
@@ -1007,26 +1048,19 @@ io.on('connection', (socket) => {
         }
         
         // Добавляем игрока в комнату
-        room.players.push({
-            id: user.id,
-            name: user.username,
-            email: user.email,
-            isHost: false,
-            socketId: socket.id,
-            token: null,
-            dream: null
-        });
-        
+        room.players.push(createRoomPlayer({ user, isHost: false, socketId: socket.id }));
+        room.updatedAt = new Date().toISOString();
+
         socket.join(roomId);
-        
+
         // Отправляем обновленный список всем пользователям
-        io.emit('roomsUpdate', serverRooms);
-        
+        broadcastRoomsUpdate();
+
         // Отправляем обновление комнаты всем участникам
-        io.to(roomId).emit('roomUpdate', room);
-        
+        io.to(roomId).emit('roomUpdate', sanitizeRoom(room));
+
         // Уведомляем пользователя об успешном присоединении
-        socket.emit('roomJoined');
+        socket.emit('roomJoined', sanitizeRoom(room, { requestingUserId: user.id }));
         
         console.log(`🏠 Пользователь ${user.username} присоединился к комнате ${roomId}`);
     });
@@ -1041,25 +1075,27 @@ io.on('connection', (socket) => {
         
         // Удаляем игрока из комнаты
         room.players = room.players.filter(p => p.socketId !== socket.id);
-        
+
         // Если это был хост и в комнате остались игроки, назначаем нового хоста
         if (room.players.length > 0) {
             room.players[0].isHost = true;
         }
-        
+
         // Если комната пустая, удаляем её
         if (room.players.length === 0) {
             serverRooms = serverRooms.filter(r => r.id !== roomId);
         }
         
+        room.updatedAt = new Date().toISOString();
+
         socket.leave(roomId);
-        
+
         // Отправляем обновления
-        io.emit('roomsUpdate', serverRooms);
+        broadcastRoomsUpdate();
         if (room.players.length > 0) {
-            io.to(roomId).emit('roomUpdate', room);
+            io.to(roomId).emit('roomUpdate', sanitizeRoom(room));
         }
-        
+
         console.log(`🚪 Пользователь ${user.username} покинул комнату ${roomId}`);
     });
     
@@ -1076,18 +1112,19 @@ io.on('connection', (socket) => {
         if (!player) return;
         
         // Проверяем, не выбрана ли уже эта фишка другим игроком
-        const tokenInUse = room.players.some(p => p.token === tokenId && p.socketId !== socket.id);
+        const tokenInUse = room.players.some(p => p.selectedToken === tokenId && p.socketId !== socket.id);
         if (tokenInUse) {
             socket.emit('error', { message: 'Эта фишка уже выбрана другим игроком' });
             return;
         }
         
         // Присваиваем фишку игроку
-        player.token = tokenId;
-        
+        player.selectedToken = tokenId;
+        room.updatedAt = new Date().toISOString();
+
         // Отправляем обновление комнаты всем участникам
-        io.to(roomId).emit('roomUpdate', room);
-        
+        io.to(roomId).emit('roomUpdate', sanitizeRoom(room));
+
         console.log(`🎯 Игрок ${user.username} выбрал фишку ${tokenId} в комнате ${roomId}`);
     });
     
@@ -1104,11 +1141,12 @@ io.on('connection', (socket) => {
         if (!player) return;
         
         // Присваиваем мечту игроку
-        player.dream = dreamId;
-        
+        player.selectedDream = dreamId;
+        room.updatedAt = new Date().toISOString();
+
         // Отправляем обновление комнаты всем участникам
-        io.to(roomId).emit('roomUpdate', room);
-        
+        io.to(roomId).emit('roomUpdate', sanitizeRoom(room));
+
         console.log(`🌟 Игрок ${user.username} выбрал мечту ${dreamId} в комнате ${roomId}`);
     });
     
@@ -1129,7 +1167,7 @@ io.on('connection', (socket) => {
             
             // Удаляем пользователя из всех комнат
             serverRooms.forEach(room => {
-                const playerIndex = room.players.findIndex(p => p.id === user.id);
+                const playerIndex = room.players.findIndex(p => getPlayerIdentifier(p) === user.id);
                 if (playerIndex !== -1) {
                     const player = room.players[playerIndex];
                     room.players.splice(playerIndex, 1);
@@ -1143,14 +1181,15 @@ io.on('connection', (socket) => {
                     if (room.players.length === 0) {
                         serverRooms = serverRooms.filter(r => r.id !== room.id);
                     } else {
+                        room.updatedAt = new Date().toISOString();
                         // Отправляем обновление комнаты оставшимся участникам
-                        io.to(room.id).emit('roomUpdate', room);
+                        io.to(room.id).emit('roomUpdate', sanitizeRoom(room));
                     }
                 }
             });
             
             // Отправляем обновленный список комнат всем пользователям
-            io.emit('roomsUpdate', serverRooms);
+            broadcastRoomsUpdate();
             
             // Удаляем пользователя из списка подключенных
             connectedUsers.delete(socket.id);
