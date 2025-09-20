@@ -329,6 +329,10 @@ app.get('/deals-module', (req, res) => {
     res.sendFile(path.join(__dirname, 'deals-module.html'));
 });
 
+app.get('/lobby-module', (req, res) => {
+    res.sendFile(path.join(__dirname, 'lobby-module.html'));
+});
+
 // API маршруты для Game Board
 app.get('/api/health', (req, res) => {
     res.json({
@@ -605,6 +609,213 @@ app.get('/docs', (req, res) => {
     res.sendFile(path.join(__dirname, 'README.md'));
 });
 
+// API маршруты для комнат (для LobbyModule)
+app.get('/api/rooms', (req, res) => {
+    try {
+        res.json({ 
+            success: true, 
+            rooms: serverRooms.map(room => ({
+                id: room.id,
+                name: room.name,
+                maxPlayers: room.maxPlayers,
+                turnTime: room.turnTime,
+                players: room.players.map(player => ({
+                    userId: player.id,
+                    user_id: player.id,
+                    name: player.name,
+                    user_name: player.name,
+                    isHost: player.isHost
+                })),
+                creatorName: room.players.find(p => p.isHost)?.name || 'Неизвестно',
+                createdAt: room.createdAt,
+                created_at: room.createdAt,
+                gameStarted: room.status === 'playing',
+                game_started: room.status === 'playing',
+                requiresPassword: false
+            }))
+        });
+    } catch (error) {
+        console.error('Ошибка получения списка комнат:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/rooms', (req, res) => {
+    try {
+        const { name, max_players, turn_time, assign_professions, password, profession } = req.body;
+        
+        if (!name) {
+            return res.status(400).json({ success: false, error: 'Название комнаты обязательно' });
+        }
+
+        const newRoom = {
+            id: Date.now().toString(),
+            name: name,
+            maxPlayers: max_players || 4,
+            turnTime: turn_time || 3,
+            players: [],
+            status: 'waiting',
+            createdAt: new Date().toISOString(),
+            assignProfessions: assign_professions || false,
+            password: password || null,
+            defaultProfession: profession || 'entrepreneur'
+        };
+        
+        serverRooms.push(newRoom);
+        
+        res.json({ 
+            success: true, 
+            room: newRoom 
+        });
+    } catch (error) {
+        console.error('Ошибка создания комнаты:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/rooms/:roomId/join', (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const { password } = req.body;
+        
+        const room = serverRooms.find(r => r.id === roomId);
+        if (!room) {
+            return res.status(404).json({ success: false, error: 'Комната не найдена' });
+        }
+        
+        if (room.players.length >= room.maxPlayers) {
+            return res.status(400).json({ success: false, error: 'Комната заполнена' });
+        }
+        
+        if (room.status === 'playing') {
+            return res.status(400).json({ success: false, error: 'Игра уже началась' });
+        }
+        
+        // Проверка пароля (если требуется)
+        if (room.password && room.password !== password) {
+            return res.status(401).json({ success: false, error: 'Неверный пароль' });
+        }
+        
+        // Получаем пользователя из заголовков
+        const userId = req.headers['x-user-id'] || Date.now().toString();
+        const userName = req.headers['x-user-name'] || 'Игрок';
+        
+        // Проверяем, не находится ли пользователь уже в комнате
+        const existingPlayer = room.players.find(p => p.id === userId);
+        if (existingPlayer) {
+            return res.status(400).json({ success: false, error: 'Вы уже в этой комнате' });
+        }
+        
+        // Добавляем игрока
+        const newPlayer = {
+            id: userId,
+            name: userName,
+            isHost: room.players.length === 0,
+            token: null,
+            dream: null
+        };
+        
+        room.players.push(newPlayer);
+        
+        res.json({ 
+            success: true, 
+            room: room 
+        });
+    } catch (error) {
+        console.error('Ошибка присоединения к комнате:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/rooms/:roomId/leave', (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const userId = req.headers['x-user-id'] || '';
+        
+        const room = serverRooms.find(r => r.id === roomId);
+        if (!room) {
+            return res.status(404).json({ success: false, error: 'Комната не найдена' });
+        }
+        
+        // Удаляем игрока из комнаты
+        const playerIndex = room.players.findIndex(p => p.id === userId);
+        if (playerIndex === -1) {
+            return res.status(400).json({ success: false, error: 'Вы не находитесь в этой комнате' });
+        }
+        
+        const player = room.players[playerIndex];
+        room.players.splice(playerIndex, 1);
+        
+        // Если это был хост и в комнате остались игроки, назначаем нового хоста
+        if (player.isHost && room.players.length > 0) {
+            room.players[0].isHost = true;
+        }
+        
+        // Если комната пустая, удаляем её
+        if (room.players.length === 0) {
+            serverRooms.splice(serverRooms.indexOf(room), 1);
+        }
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Ошибка выхода из комнаты:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.get('/api/rooms/:roomId', (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const room = serverRooms.find(r => r.id === roomId);
+        
+        if (!room) {
+            return res.status(404).json({ success: false, error: 'Комната не найдена' });
+        }
+        
+        res.json({ 
+            success: true, 
+            room: room 
+        });
+    } catch (error) {
+        console.error('Ошибка получения комнаты:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// API маршруты для пользователя
+app.get('/api/user/profile', (req, res) => {
+    try {
+        // Имитируем данные пользователя
+        const user = {
+            id: req.headers['x-user-id'] || Date.now().toString(),
+            username: req.headers['x-user-name'] || 'Игрок',
+            first_name: req.headers['x-user-name'] || 'Игрок',
+            email: 'player@example.com',
+            balance: 10000
+        };
+        
+        res.json(user);
+    } catch (error) {
+        console.error('Ошибка получения профиля пользователя:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.get('/api/user/stats', (req, res) => {
+    try {
+        const stats = {
+            games_played: Math.floor(Math.random() * 50),
+            wins_count: Math.floor(Math.random() * 20),
+            level: Math.floor(Math.random() * 10) + 1
+        };
+        
+        res.json(stats);
+    } catch (error) {
+        console.error('Ошибка получения статистики пользователя:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Обработка 404
 app.use((req, res) => {
     res.status(404).json({
@@ -615,9 +826,12 @@ app.use((req, res) => {
             '/auth',
             '/lobby', 
             '/game',
+            '/lobby-module',
             '/test',
             '/docs',
-            '/api/health'
+            '/api/health',
+            '/api/rooms',
+            '/api/user/profile'
         ]
     });
 });
