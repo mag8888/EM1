@@ -8,6 +8,13 @@ const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
 
+// Database imports
+const { connectToDatabase, getConnectionStatus } = require('./config/database');
+const Room = require('./models/Room');
+const User = require('./models/User');
+const Profession = require('./models/Profession');
+const BankAccount = require('./models/BankAccount');
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -17,6 +24,72 @@ const io = socketIo(server, {
     }
 });
 const PORT = process.env.PORT || 8080;
+
+// Initialize Database Connection
+async function initializeDatabase() {
+    try {
+        await connectToDatabase();
+        console.log('✅ Database connection established');
+        
+        // Initialize default profession if not exists
+        await initializeDefaultProfession();
+        
+    } catch (error) {
+        console.error('❌ Database connection failed:', error.message);
+        console.log('🔄 Continuing with in-memory storage...');
+    }
+}
+
+// Initialize default profession
+async function initializeDefaultProfession() {
+    try {
+        const existingProfession = await Profession.findOne({ name: 'Предприниматель' });
+        if (!existingProfession) {
+            const defaultProfession = new Profession({
+                name: 'Предприниматель',
+                description: 'Владелец успешного бизнеса',
+                category: 'entrepreneur',
+                difficulty: 'medium',
+                startingFinancials: {
+                    income: 10000,
+                    expenses: 6200,
+                    cashflow: 3800,
+                    startingBalance: 1000
+                },
+                liabilities: [
+                    { name: 'Налоги', type: 'tax', payment: 1300, principal: 0 },
+                    { name: 'Прочие расходы', type: 'expense', payment: 1500, principal: 0 },
+                    { name: 'Кредит на авто', type: 'loan', payment: 700, principal: 14000 },
+                    { name: 'Образовательный кредит', type: 'loan', payment: 500, principal: 10000 },
+                    { name: 'Ипотека', type: 'mortgage', payment: 1200, principal: 240000 },
+                    { name: 'Кредитные карты', type: 'credit_card', payment: 1000, principal: 20000 }
+                ],
+                totalLiabilities: 284000,
+                paths: [
+                    {
+                        name: 'Business',
+                        description: 'Развитие бизнеса',
+                        difficulty: 'business',
+                        requirements: { minIncome: 8000, minCashflow: 2000, maxLiabilities: 300000 },
+                        benefits: { incomeMultiplier: 1.2, expenseReduction: 500 }
+                    },
+                    {
+                        name: 'Сложный',
+                        description: 'Сложный путь развития',
+                        difficulty: 'hard',
+                        requirements: { minIncome: 12000, minCashflow: 4000, maxLiabilities: 200000 },
+                        benefits: { incomeMultiplier: 1.5, expenseReduction: 1000 }
+                    }
+                ]
+            });
+            
+            await defaultProfession.save();
+            console.log('✅ Default profession created');
+        }
+    } catch (error) {
+        console.error('❌ Failed to create default profession:', error.message);
+    }
+}
 
 // Middleware
 app.use(express.static(path.join(__dirname)));
@@ -335,14 +408,36 @@ io.on('connection', (socket) => {
 });
 
 // Запуск сервера
-server.listen(PORT, () => {
-    console.log('🎮 Game Board v2.0 Server запущен!');
-    console.log(`🚀 Сервер работает на порту ${PORT}`);
-    console.log(`📱 Локальный адрес: http://localhost:${PORT}`);
-    console.log(`🌐 Railway адрес: https://your-app.railway.app`);
-    console.log('✅ Готов к обслуживанию файлов');
-    console.log('🔌 WebSocket сервер активен');
-});
+async function startServer() {
+    try {
+        // Initialize database first
+        await initializeDatabase();
+        
+        // Start server
+        server.listen(PORT, () => {
+            console.log('🎮 Game Board v2.0 Server запущен!');
+            console.log(`🚀 Сервер работает на порту ${PORT}`);
+            console.log(`📱 Локальный адрес: http://localhost:${PORT}`);
+            console.log(`🌐 Railway адрес: https://your-app.railway.app`);
+            console.log('✅ Готов к обслуживанию файлов');
+            console.log('🔌 WebSocket сервер активен');
+            
+            // Display database status
+            const dbStatus = getConnectionStatus();
+            if (dbStatus.isConnected) {
+                console.log(`📊 База данных подключена: ${dbStatus.name}@${dbStatus.host}`);
+            } else {
+                console.log('⚠️  База данных недоступна - используется локальное хранилище');
+            }
+        });
+    } catch (error) {
+        console.error('❌ Failed to start server:', error);
+        process.exit(1);
+    }
+}
+
+// Start the server
+startServer();
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
