@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Лобби - Game Board v2.0</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="alternate icon" href="/favicon.ico">
     <style>
         * {
             margin: 0;
@@ -15,718 +14,743 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0c1445 100%);
+            color: white;
             min-height: 100vh;
-            background: radial-gradient(circle at 15% 20%, rgba(0, 234, 255, 0.18) 0%, transparent 55%),
-                        radial-gradient(circle at 78% 82%, rgba(255, 0, 128, 0.18) 0%, transparent 55%),
-                        linear-gradient(150deg, #0c1424 0%, #181f32 50%, #0a101f 100%);
-            color: #f3f4f6;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 56px 48px 96px;
             position: relative;
             overflow-x: hidden;
         }
 
-        .page-shell {
-            width: 100%;
-            max-width: 1600px;
-            display: flex;
-            align-items: flex-start;
-            gap: 56px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .header h1 {
-            font-size: 32px;
-            font-weight: 900;
-            color: #ffffff;
-            margin-bottom: 12px;
-            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .header p {
-            font-size: 16px;
-            color: #a0a0a0;
-            font-weight: 500;
-        }
-
-        .content-column {
-            flex: 1 1 auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: clamp(24px, calc(var(--computed-board-size, 700px) * 0.04), 36px);
-        }
-
-        .lobby-board {
-            position: relative;
-            width: 700px;
-            height: 700px;
-            border-radius: 48px;
-            background: linear-gradient(160deg, #151d30 0%, #111527 45%, #0f1422 100%);
-            box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6), inset 0 0 60px rgba(255, 255, 255, 0.04);
-            overflow: visible;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 40px;
-        }
-
-        .lobby-board::before {
+        body::before {
             content: '';
             position: absolute;
-            inset: 16px;
-            border-radius: 40px;
-            background: radial-gradient(circle at 50% 42%, rgba(255, 205, 64, 0.12) 0%, transparent 60%),
-                        linear-gradient(200deg, rgba(32, 48, 78, 0.7) 0%, rgba(16, 22, 34, 0.95) 62%);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
             pointer-events: none;
         }
 
-        .lobby-title {
-            font-size: 32px;
-            font-weight: 900;
-            color: #ffd15a;
-            text-shadow: 0 0 20px rgba(255, 196, 0, 0.55);
-            z-index: 2;
-            text-align: center;
+        .container {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding: 20px;
         }
 
-        .lobby-subtitle {
-            font-size: 16px;
-            color: rgba(255, 255, 255, 0.8);
-            text-align: center;
-            z-index: 2;
-        }
-
-        .btn {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            white-space: nowrap;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #16f79e 0%, #06b973 100%);
-            color: #03110a;
-            box-shadow: 0 14px 26px rgba(6, 185, 115, 0.35);
-            font-weight: 700;
-            font-size: 16px;
-            padding: 16px 32px;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 20px 40px rgba(6, 185, 115, 0.5);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-secondary:hover {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
-            border: 1px solid rgba(0, 255, 150, 0.3);
-            color: #1a1d24;
-            font-weight: 700;
-            box-shadow: 0 8px 24px rgba(0, 255, 150, 0.3);
-        }
-
-        .btn-success:hover {
-            background: linear-gradient(135deg, #00e085 0%, #00b894 100%);
-            transform: translateY(-3px);
-            box-shadow: 0 12px 32px rgba(0, 255, 150, 0.4);
-        }
-
-        .btn-success:disabled {
-            background: linear-gradient(135deg, rgba(0, 255, 150, 0.3) 0%, rgba(0, 255, 150, 0.2) 100%);
-            color: rgba(26, 29, 36, 0.5);
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .room-details {
-            padding: 16px 0;
-        }
-
-        .room-name {
-            font-size: 18px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 12px;
-            text-align: center;
-        }
-
-        .players-count {
-            font-size: 14px;
-            color: #a0a0a0;
-            margin-bottom: 12px;
-            text-align: center;
-        }
-
-        .players-list {
+        .header {
             display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 16px;
-            justify-content: center;
-        }
-
-        .player-chip {
-            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
             border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
+            padding: 20px 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .player-avatar-small {
-            width: 20px;
-            height: 20px;
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
-            font-weight: 700;
-            color: #1a1d24;
+            font-size: 20px;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
         }
 
-        .room-actions {
-            margin-top: 16px;
+        .header-info h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 5px;
         }
 
-        .profile-actions {
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        .header-info p {
+            font-size: 14px;
+            color: #94a3b8;
         }
 
-        .btn-exit {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #ffffff;
-            font-weight: 700;
-            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
-            width: 100%;
+        .user-section {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px 16px;
-            border-radius: 12px;
+            gap: 15px;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .user-balance {
             font-size: 14px;
+            color: #10b981;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
             cursor: pointer;
+            font-weight: 600;
             transition: all 0.3s ease;
         }
 
-        .btn-exit:hover {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        .logout-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 32px rgba(239, 68, 68, 0.4);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
         }
 
-        .create-room-form {
-            background: linear-gradient(135deg, rgba(26, 29, 36, 0.95) 0%, rgba(36, 40, 48, 0.9) 100%);
-            backdrop-filter: blur(30px);
+        .lobby-content {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 30px;
+        }
+
+        .rooms-section {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 24px;
+            min-height: 480px;
+            display: flex;
+            flex-direction: column;
         }
 
-        .form-group {
-            margin-bottom: 16px;
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
             font-size: 14px;
             font-weight: 600;
-            color: #ffffff;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            font-size: 14px;
-            color: #ffffff;
             transition: all 0.3s ease;
         }
 
-        .form-group input::placeholder {
-            color: #a0a0a0;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #00ff96;
-            box-shadow: 0 0 0 3px rgba(0, 255, 150, 0.2);
+        .refresh-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
         }
 
         .rooms-list {
-            max-height: 400px;
+            flex: 1;
             overflow-y: auto;
+            padding-right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
 
-        .room-item {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 14px;
-            padding: 18px;
-            margin-bottom: 12px;
-            transition: all 0.3s ease;
+        .room-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
             cursor: pointer;
-            box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45);
+            transition: all 0.3s ease;
+            position: relative;
         }
 
-        .room-item:hover {
-            background: linear-gradient(135deg, rgba(0, 255, 150, 0.1) 0%, rgba(0, 255, 150, 0.05) 100%);
-            border-color: rgba(0, 255, 150, 0.3);
-            transform: translateY(-6px);
-            box-shadow: 0 22px 46px rgba(0, 0, 0, 0.55);
+        .room-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border-color: #10b981;
+        }
+
+        .room-card.user-in-room {
+            border-color: #10b981;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .room-card.selected {
+            border-color: #3b82f6;
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.3);
         }
 
         .room-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 15px;
         }
 
-        .room-name {
-            font-size: 16px;
+        .room-title {
+            font-size: 18px;
             font-weight: 700;
-            color: #ffffff;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .room-meta {
+            font-size: 13px;
+            color: #94a3b8;
         }
 
         .room-status {
-            padding: 4px 8px;
-            border-radius: 6px;
+            padding: 6px 12px;
+            border-radius: 12px;
             font-size: 12px;
             font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .room-status.waiting {
-            background: linear-gradient(135deg, #ffd65a 0%, #ffb700 100%);
-            color: #2f2600;
+        .status-waiting {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.4);
         }
 
-        .room-status.full {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff3b3b 100%);
-            color: #ffffff;
+        .status-playing {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
-        .room-status.playing {
-            background: linear-gradient(135deg, #16f79e 0%, #06b973 100%);
-            color: #03110a;
+        .status-full {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
-        .room-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 14px;
-            color: #a0a0a0;
+        .room-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #94a3b8;
         }
 
         .room-players {
             display: flex;
-            gap: 4px;
+            gap: 10px;
+            margin-bottom: 15px;
         }
 
         .player-avatar {
-            width: 24px;
-            height: 24px;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             border-radius: 50%;
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
-            font-weight: 700;
-            color: #1a1d24;
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.2);
         }
 
-        .sidebar {
-            width: 320px;
-            flex-shrink: 0;
+        .player-avatar.current-user {
+            border-color: rgba(16, 185, 129, 0.6);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .empty-slot {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px dashed rgba(148, 163, 184, 0.4);
+        }
+
+        .room-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .join-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .join-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .join-btn:disabled {
+            background: rgba(55, 65, 81, 0.6);
+            color: #9ca3af;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .join-btn.in-room {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 5px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .controls-section {
             display: flex;
             flex-direction: column;
-            gap: 22px;
+            gap: 20px;
         }
 
-        .panel {
-            background: rgba(21, 27, 42, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            padding: 26px;
-            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
-        }
-
-        .sidebar-section {
-            margin-bottom: 24px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar-section:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-
-        .panel h3 {
+        .create-room-btn,
+        .quick-join-btn {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            padding: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
             font-size: 16px;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.82);
-            margin-bottom: 18px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
         }
 
-        .sidebar-title .icon {
+        .create-room-btn:hover,
+        .quick-join-btn:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.3);
+        }
+
+        .stats-section {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stats-title {
             font-size: 18px;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: linear-gradient(135deg, rgba(0, 255, 150, 0.1) 0%, rgba(0, 255, 150, 0.05) 100%);
-            border: 1px solid rgba(0, 255, 150, 0.2);
-            border-radius: 12px;
-            margin-bottom: 16px;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
             font-weight: 700;
-            color: #1a1d24;
-        }
-
-        .user-details h3 {
-            font-size: 14px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 2px;
-        }
-
-        .user-details p {
-            font-size: 12px;
-            color: #a0a0a0;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            margin-bottom: 15px;
         }
 
         .stat-item {
-            text-align: center;
-            padding: 12px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-        }
-
-        .stat-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: #00ff96;
-            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
         }
 
         .stat-label {
-            font-size: 12px;
-            color: #a0a0a0;
+            color: #94a3b8;
         }
 
-        .mobile-nav {
+        .stat-value {
+            font-weight: 600;
+        }
+
+        .modal {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(135deg, rgba(26, 29, 36, 0.95) 0%, rgba(36, 40, 48, 0.95) 100%);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 12px 16px;
-            z-index: 1000;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 100;
         }
 
-        .mobile-nav-buttons {
+        .modal-content {
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            width: min(480px, 100%);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header {
             display: flex;
-            justify-content: space-around;
-            gap: 8px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
 
-        .mobile-nav-btn {
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            background: rgba(15, 23, 42, 0.8);
+            color: white;
+            font-size: 14px;
+            transition: border 0.3s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: rgba(59, 130, 246, 0.6);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
             flex: 1;
-            padding: 12px 8px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            color: #ffffff;
-            text-decoration: none;
-            text-align: center;
-            font-size: 10px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
             font-weight: 600;
             transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(0, 0, 0, 0.3);
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .profession-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .profession-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .profession-card.selected {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .form-checkbox {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 10px;
+            font-size: 14px;
+            color: #94a3b8;
         }
 
-        .mobile-nav-btn.active {
-            background: linear-gradient(135deg, #00ff96 0%, #00d4aa 100%);
-            color: #1a1d24;
+        .checkbox {
+            width: 18px;
+            height: 18px;
         }
 
-        @media (max-width: 768px) {
-            .page-shell {
-                flex-direction: column;
-                align-items: center;
-                gap: 32px;
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #10b981;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        @media (max-width: 900px) {
+            .lobby-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
             }
 
-            .lobby-board {
-                width: 100%;
-                max-width: 500px;
-                height: auto;
-                min-height: 500px;
+            .controls-section {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 15px;
             }
 
-            .sidebar {
-                width: 100%;
-                max-width: 500px;
-                position: static;
-                order: -1;
-            }
-
-            .btn {
-                width: 100%;
+            .create-room-btn,
+            .quick-join-btn {
+                flex: 1 1 45%;
                 justify-content: center;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .user-section {
+                flex-direction: column;
+            }
+
+            .controls-section {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
-    <div class="page-shell">
-        <div class="content-column">
-            <div class="lobby-board">
-                <div class="lobby-title">🎮 ЛОББИ</div>
-                <div class="lobby-subtitle">Выберите комнату или создайте новую игру</div>
-                
-                <div style="display: flex; flex-direction: column; gap: 20px; width: 80%; z-index: 2;">
-                    <div style="text-align: center; padding: 40px; color: #ffffff;">
-                        <div style="font-size: 48px; margin-bottom: 16px;">🎮</div>
-                        <div style="font-size: 24px; margin-bottom: 8px; font-weight: bold;">Добро пожаловать в лобби!</div>
-                        <div style="font-size: 16px; opacity: 0.8;">Функции создания комнат временно отключены</div>
-                    </div>
+    <div class="container">
+        <div class="header">
+            <div class="logo-section">
+                <div class="logo">🎲</div>
+                <div class="header-info">
+                    <h1>Game Board v2.0</h1>
+                    <p>Онлайн-лобби</p>
                 </div>
             </div>
-        </div>
-
-        <aside class="sidebar">
-
-            <div class="panel">
-                <h3>👤 Профиль</h3>
+            <div class="user-section">
                 <div class="user-info">
-                    <div class="user-avatar" id="user-avatar">U</div>
-                    <div class="user-details">
-                        <h3 id="username">Пользователь</h3>
-                        <p>Онлайн</p>
-                    </div>
+                    <div class="user-name" id="userName">Игрок</div>
+                    <div class="user-balance" id="userBalance">$10,000</div>
                 </div>
-                <div class="profile-actions">
-                    <button class="btn btn-exit" id="logout-btn" onclick="logout()">
-                        <span>🚪</span>
-                        <span>Выход</span>
-                    </button>
+                <button class="logout-btn" type="button">Выйти</button>
+            </div>
+        </div>
+
+        <div class="lobby-content">
+            <div class="rooms-section">
+                <div class="section-header">
+                    <h2 class="section-title">Доступные комнаты</h2>
+                    <button class="refresh-btn" type="button">🔄 Обновить</button>
                 </div>
+                <div class="rooms-list" id="roomsList"></div>
             </div>
 
-            <div class="panel">
-                <h3>📊 Статистика</h3>
-                <div class="stats-grid">
+            <div class="controls-section">
+                <button class="create-room-btn" type="button">➕ Создать комнату</button>
+                <button class="quick-join-btn" type="button">⚡ Быстрое присоединение</button>
+
+                <div class="stats-section">
+                    <div class="stats-title">Статистика</div>
                     <div class="stat-item">
-                        <div class="stat-value" id="games-played">0</div>
-                        <div class="stat-label">Игр сыграно</div>
+                        <span class="stat-label">Всего игр:</span>
+                        <span class="stat-value" id="totalGames">0</span>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" id="games-won">0</div>
-                        <div class="stat-label">Побед</div>
+                        <span class="stat-label">Побед:</span>
+                        <span class="stat-value" id="totalWins">0</span>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" id="win-rate">0%</div>
-                        <div class="stat-label">Процент побед</div>
+                        <span class="stat-label">Уровень:</span>
+                        <span class="stat-value" id="userLevel">1</span>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" id="total-players">1</div>
-                        <div class="stat-label">Игроков онлайн</div>
+                        <span class="stat-label">Онлайн игроков:</span>
+                        <span class="stat-value" id="onlinePlayers">0</span>
                     </div>
                 </div>
             </div>
-
-            <div class="panel">
-                <h3>⚙️ Настройки</h3>
-                <button class="btn btn-secondary" style="width: 100%; margin-bottom: 8px;">🔧 Настройки</button>
-                <button class="btn btn-secondary" style="width: 100%; margin-bottom: 8px;">📖 Правила</button>
-                <button class="btn btn-secondary" style="width: 100%;" id="logout-btn">🚪 Выйти</button>
-            </div>
-        </aside>
-    </div>
-
-    <div class="mobile-nav">
-        <div class="mobile-nav-buttons">
-            <a href="index.html" class="mobile-nav-btn">
-                <span>🏠</span>
-                <span>Главная</span>
-            </a>
-            <a href="lobby.html" class="mobile-nav-btn active">
-                <span>🎮</span>
-                <span>Лобби</span>
-            </a>
-            <a href="game.html" class="mobile-nav-btn">
-                <span>🎯</span>
-                <span>Игра</span>
-            </a>
-            <a href="auth.html" class="mobile-nav-btn">
-                <span>👤</span>
-                <span>Профиль</span>
-            </a>
         </div>
     </div>
 
-    <!-- Socket.IO клиент -->
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        // Глобальные функции для кнопок (доступны до загрузки DOM)
+    <div class="modal" id="createRoomModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Создать комнату</h3>
+                <button class="close-btn" type="button">&times;</button>
+            </div>
 
-        // WebSocket подключение
-        let socket = null;
-        let currentUser = null;
+            <div class="error-message" id="createRoomError"></div>
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Проверяем авторизацию
-            const username = localStorage.getItem('username') || 'Гость';
-            const email = localStorage.getItem('email') || '';
-            const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-            
-            currentUser = { username, email };
-            
-        // Подключаемся к WebSocket
-        socket = io({
-            transports: ['polling', 'websocket'],
-            timeout: 20000,
-            forceNew: true
-        });
-        
-        // Обработка ошибок подключения
-        socket.on('connect_error', (error) => {
-            console.error('❌ WebSocket connection error:', error);
-            alert('Ошибка подключения к серверу. Попробуйте обновить страницу.');
-        });
-        
-        socket.on('disconnect', (reason) => {
-            console.log('👋 WebSocket disconnected:', reason);
-            if (reason === 'io server disconnect') {
-                alert('Сервер отключил соединение. Обновите страницу.');
-            }
-        });
-            
-            // Регистрируем пользователя с ID
-            const userId = localStorage.getItem('userId') || Date.now().toString();
-            localStorage.setItem('userId', userId);
-            
-            const userData = {
-                id: userId,
-                username: currentUser.username,
-                email: currentUser.email
-            };
-            
-            socket.emit('registerUser', userData);
-            
-            // Обновляем информацию пользователя
-            document.getElementById('username').textContent = username;
-            document.getElementById('user-avatar').textContent = username.charAt(0).toUpperCase();
+            <form id="createRoomForm">
+                <div class="form-group">
+                    <label class="form-label">Название комнаты</label>
+                    <input type="text" class="form-input" id="roomName" placeholder="Введите название комнаты" required>
+                </div>
 
-            // Если не авторизован, предлагаем войти
-            if (!isAuthenticated) {
-                if (confirm('Для игры рекомендуется войти в систему. Перейти к авторизации?')) {
-                    window.location.href = 'auth.html';
-                }
-            }
+                <div class="form-group">
+                    <label class="form-label">Профессия</label>
+                    <div class="profession-cards">
+                        <div class="profession-card selected" data-profession="entrepreneur">
+                            <div class="profession-icon">🚀</div>
+                            <div class="profession-name">Предприниматель</div>
+                            <div class="profession-description">Владелец успешного бизнеса</div>
+                        </div>
+                    </div>
+                </div>
 
-            // Обработчики событий
-            document.getElementById('logout-btn').addEventListener('click', logout);
+                <div class="form-group">
+                    <label class="form-label">Максимальное количество игроков</label>
+                    <select class="form-select" id="maxPlayers" required>
+                        <option value="2">2 игрока</option>
+                        <option value="3">3 игрока</option>
+                        <option value="4" selected>4 игрока</option>
+                        <option value="5">5 игроков</option>
+                        <option value="6">6 игроков</option>
+                    </select>
+                </div>
 
+                <div class="form-group">
+                    <label class="form-label">Время на ход (минуты)</label>
+                    <select class="form-select" id="turnTime" required>
+                        <option value="1">1 минута</option>
+                        <option value="2" selected>2 минуты</option>
+                        <option value="3">3 минуты</option>
+                        <option value="4">4 минуты</option>
+                        <option value="5">5 минут</option>
+                    </select>
+                </div>
 
+                <div class="form-checkbox">
+                    <input type="checkbox" class="checkbox" id="assignProfessions" checked>
+                    <label class="checkbox-label" for="assignProfessions">Назначить профессии всем игрокам</label>
+                </div>
 
+                <div class="form-group">
+                    <label class="form-label">Пароль комнаты (необязательно)</label>
+                    <input type="password" class="form-input" id="roomPassword" placeholder="Введите пароль для закрытой комнаты">
+                </div>
 
+                <div class="loading" id="createRoomLoading">
+                    <div class="spinner"></div>
+                    <div>Создание комнаты...</div>
+                </div>
 
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Создать комнату</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
+    <div class="modal" id="joinRoomModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Присоединиться к комнате</h3>
+                <button class="close-btn" type="button">&times;</button>
+            </div>
 
+            <div class="error-message" id="joinRoomError"></div>
 
+            <div id="joinRoomContent">
+                <div class="form-group">
+                    <label class="form-label">Введите пароль комнаты (если требуется)</label>
+                    <input type="password" class="form-input" id="joinRoomPassword" placeholder="Пароль комнаты">
+                </div>
 
+                <div class="loading" id="joinRoomLoading">
+                    <div class="spinner"></div>
+                    <div>Присоединение к комнате...</div>
+                </div>
 
-            function logout() {
-                if (confirm('Вы уверены, что хотите выйти?')) {
-                    localStorage.removeItem('username');
-                    localStorage.removeItem('isAuthenticated');
-                    localStorage.removeItem('currentRoom');
-                    localStorage.removeItem('selectedDream');
-                    localStorage.removeItem('selectedToken');
-                    localStorage.removeItem('userId');
-                    window.location.href = 'auth.html';
-                }
-            }
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary">Отмена</button>
+                    <button type="button" class="btn btn-primary">Присоединиться</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        });
-    </script>
+    <script type="module" src="assets/js/modules/lobby/index.js"></script>
 </body>
 </html>
