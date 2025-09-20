@@ -844,7 +844,8 @@
                 }
             }
 
-            function loadRooms() {
+            // Глобальная функция для загрузки комнат
+            window.loadRooms = function() {
                 const roomsContainer = document.getElementById('rooms-list');
                 const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
                 
@@ -888,7 +889,7 @@
                 
                 // Обновляем кнопку старт после загрузки комнат
                 updateStartButton();
-            }
+            };
 
             function generatePlayerAvatars(players) {
                 return players.map((player, index) => `
@@ -905,7 +906,8 @@
                 }
             }
 
-            function createRoom() {
+            // Глобальная функция для создания комнаты
+            window.createRoom = function() {
                 const roomName = document.getElementById('room-name').value.trim();
                 const maxPlayers = parseInt(document.getElementById('max-players').value);
                 const turnTime = parseInt(document.getElementById('turn-time').value);
@@ -936,9 +938,10 @@
                 document.getElementById('room-name').value = '';
                 document.getElementById('max-players').value = '4';
                 document.getElementById('turn-time').value = '3';
-            }
+            };
 
-            function joinRoom(roomId) {
+            // Глобальная функция для входа в комнату
+            window.joinRoom = function(roomId) {
                 // Проверяем, что пользователь зарегистрирован
                 if (!socket) {
                     alert('Подключение к серверу не установлено');
@@ -947,7 +950,7 @@
                 
                 // Отправляем запрос на присоединение через WebSocket
                 socket.emit('joinRoom', roomId);
-            }
+            };
 
             function updateStartButton() {
                 const currentRoom = localStorage.getItem('currentRoom');
