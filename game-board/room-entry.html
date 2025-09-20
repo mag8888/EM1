@@ -263,6 +263,53 @@
             box-shadow: 0 12px 32px rgba(16, 185, 129, 0.4);
         }
 
+        .tokens-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .token-item {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            font-size: 24px;
+        }
+
+        .token-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .token-item.selected {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+        }
+
+        .token-item.selected::after {
+            content: '✓';
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #8b5cf6;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
         .actions {
             display: flex;
             gap: 16px;
@@ -354,8 +401,17 @@
             </div>
 
             <div class="panel">
-                <h3>🌟 Выбор мечты</h3>
+                <h3>🎯 Настройки игрока</h3>
+                
+                <div class="token-selection" style="margin-bottom: 24px;">
+                    <h4 style="color: #ffffff; margin-bottom: 16px; font-size: 1.1rem;">Выберите фишку</h4>
+                    <div class="tokens-grid" id="tokensGrid">
+                        <!-- Фишки будут загружены через JavaScript -->
+                    </div>
+                </div>
+
                 <div class="dream-selection">
+                    <h4 style="color: #ffffff; margin-bottom: 16px; font-size: 1.1rem;">Выберите мечту</h4>
                     <div class="dream-preview" id="dreamPreview">
                         <div class="dream-name" id="selectedDreamName">Мечта не выбрана</div>
                         <div class="dream-description" id="selectedDreamDescription">Выберите мечту для участия в игре</div>
@@ -385,7 +441,20 @@
     <script>
         let currentRoom = null;
         let selectedDream = null;
+        let selectedToken = null;
         let username = localStorage.getItem('username') || 'Гость';
+
+        // Фишки игроков
+        const playerTokens = [
+            { id: 1, emoji: '🚗', name: 'Автомобиль', color: '#3B82F6' },
+            { id: 2, emoji: '🏠', name: 'Дом', color: '#EF4444' },
+            { id: 3, emoji: '💎', name: 'Алмаз', color: '#10B981' },
+            { id: 4, emoji: '⚡', name: 'Молния', color: '#8B5CF6' },
+            { id: 5, emoji: '🔥', name: 'Огонь', color: '#F59E0B' },
+            { id: 6, emoji: '💍', name: 'Кольцо', color: '#EC4899' },
+            { id: 7, emoji: '🎯', name: 'Мишень', color: '#06B6D4' },
+            { id: 8, emoji: '👑', name: 'Корона', color: '#EAB308' }
+        ];
 
         // Загружаем данные комнаты
         function loadRoomData() {
@@ -401,6 +470,52 @@
             updateParticipants();
             updateStartButton();
             loadSelectedDream();
+            loadTokens();
+            loadSelectedToken();
+        }
+
+        // Загружаем фишки
+        function loadTokens() {
+            const tokensGrid = document.getElementById('tokensGrid');
+            
+            tokensGrid.innerHTML = playerTokens.map(token => `
+                <div class="token-item" onclick="selectToken(${token.id})" style="background: linear-gradient(135deg, ${token.color}20 0%, ${token.color}10 100%);">
+                    ${token.emoji}
+                </div>
+            `).join('');
+        }
+
+        // Выбираем фишку
+        function selectToken(tokenId) {
+            selectedToken = playerTokens.find(token => token.id === tokenId);
+            
+            // Убираем выделение со всех фишек
+            document.querySelectorAll('.token-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Выделяем выбранную фишку
+            event.target.classList.add('selected');
+            
+            // Сохраняем выбранную фишку
+            localStorage.setItem('selectedToken', JSON.stringify(selectedToken));
+            
+            console.log('Выбрана фишка:', selectedToken.name);
+        }
+
+        // Загружаем выбранную фишку
+        function loadSelectedToken() {
+            const tokenData = localStorage.getItem('selectedToken');
+            if (tokenData) {
+                selectedToken = JSON.parse(tokenData);
+                
+                // Выделяем выбранную фишку
+                const tokens = document.querySelectorAll('.token-item');
+                const tokenIndex = playerTokens.findIndex(token => token.id === selectedToken.id);
+                if (tokenIndex !== -1 && tokens[tokenIndex]) {
+                    tokens[tokenIndex].classList.add('selected');
+                }
+            }
         }
 
         // Обновляем информацию о комнате

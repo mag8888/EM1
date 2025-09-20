@@ -581,8 +581,6 @@
                     
                     <div style="text-align: center;">
                         <button class="btn btn-secondary" id="refresh-rooms">🔄 Обновить комнаты</button>
-                        <button class="btn btn-primary" id="select-profession" onclick="openProfessionCard()" style="margin-top: 12px;">👤 Выбрать профессию</button>
-                        <button class="btn btn-primary" id="select-dream" onclick="openDreamSelection()" style="margin-top: 12px;">🌟 Выбрать мечту</button>
                         
                         <!-- Кнопка Старт - показывается только хостом комнаты -->
                         <button class="btn btn-success" id="start-game" onclick="startGame()" style="margin-top: 12px; display: none;">
@@ -727,6 +725,9 @@
             function loadRooms() {
                 const roomsContainer = document.getElementById('rooms-list');
                 const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
+                
+                // Сортируем комнаты по дате создания (новые сверху)
+                rooms.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 
                 if (rooms.length === 0) {
                     roomsContainer.innerHTML = `
@@ -982,7 +983,7 @@
                 }
                 
                 // Открываем выбор мечты в новом окне
-                const dreamWindow = window.open('dream-selection.html', 'dreamSelection', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+                const dreamWindow = window.open('room-dream-selection.html', 'dreamSelection', 'width=1200,height=800,scrollbars=yes,resizable=yes');
                 
                 if (!dreamWindow) {
                     alert('Пожалуйста, разрешите всплывающие окна для выбора мечты');

@@ -294,6 +294,10 @@ app.get('/room-entry', (req, res) => {
     res.sendFile(path.join(__dirname, 'room-entry.html'));
 });
 
+app.get('/room-dream-selection', (req, res) => {
+    res.sendFile(path.join(__dirname, 'room-dream-selection.html'));
+});
+
 // API маршруты для Game Board
 app.get('/api/health', (req, res) => {
     res.json({
