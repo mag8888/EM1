@@ -725,6 +725,10 @@
         const room = JSON.parse(currentRoom);
         const username = localStorage.getItem('username') || 'Гость';
         
+        // Загрузка конфигурации игровых клеток
+        let gameCells = [];
+        let selectedDream = null;
+        
         // Проверяем, что пользователь в списке игроков комнаты
         const player = room.players.find(p => p.name === username);
         if (!player) {
@@ -1043,6 +1047,10 @@
             // Проверяем выбор профессии
             checkProfessionSelected();
             
+            // Загружаем игровые клетки и мечту
+            loadGameCells();
+            loadSelectedDream();
+            
             // Проверяем готовность игроков
             if (checkPlayersReady()) {
                 showStartButton();
@@ -1125,6 +1133,68 @@
                     professionBtn.addEventListener('click', openProfessionCard);
                     statusPanel.appendChild(professionBtn);
                 }
+            }
+        }
+
+        async function loadGameCells() {
+            try {
+                const response = await fetch('/api/game-cells');
+                if (response.ok) {
+                    gameCells = await response.json();
+                    console.log('Игровые клетки загружены:', gameCells.length);
+                    renderGameBoard();
+                } else {
+                    console.error('Ошибка загрузки игровых клеток');
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки игровых клеток:', error);
+            }
+        }
+
+        async function loadSelectedDream() {
+            try {
+                const dreamData = localStorage.getItem('selectedDream');
+                if (dreamData) {
+                    selectedDream = JSON.parse(dreamData);
+                    console.log('Выбранная мечта:', selectedDream);
+                    updateDreamDisplay();
+                }
+                
+                // Также загружаем с сервера для синхронизации
+                const response = await fetch(`/api/room/${room.id}/dreams`);
+                if (response.ok) {
+                    const roomDreams = await response.json();
+                    console.log('Мечты комнаты:', roomDreams);
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки мечты:', error);
+            }
+        }
+
+        function renderGameBoard() {
+            // Здесь будет логика рендеринга игрового поля с клетками
+            console.log('Рендеринг игрового поля с', gameCells.length, 'клетками');
+            
+            // Пример: обновление информации о клетках в UI
+            updateCellsInfo();
+        }
+
+        function updateCellsInfo() {
+            const stats = {
+                dreams: gameCells.filter(cell => cell.type === 'dream').length,
+                businesses: gameCells.filter(cell => cell.type === 'business').length,
+                money: gameCells.filter(cell => cell.type === 'money').length,
+                losses: gameCells.filter(cell => cell.type === 'loss').length,
+                charity: gameCells.filter(cell => cell.type === 'charity').length
+            };
+            
+            console.log('Статистика клеток:', stats);
+        }
+
+        function updateDreamDisplay() {
+            if (selectedDream) {
+                console.log('Обновление отображения мечты:', selectedDream.name);
+                // Здесь будет логика обновления UI с информацией о мечте
             }
         }
 

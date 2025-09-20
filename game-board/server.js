@@ -14,6 +14,7 @@ const Room = require('./models/Room');
 const User = require('./models/User');
 const Profession = require('./models/Profession');
 const BankAccount = require('./models/BankAccount');
+const { GAME_CELLS, GameCellsUtils } = require('./config/game-cells');
 
 const app = express();
 const server = http.createServer(app);
@@ -154,6 +155,139 @@ app.get('/bank-module', (req, res) => {
 
 app.get('/profession-card', (req, res) => {
     res.sendFile(path.join(__dirname, 'profession-card.html'));
+});
+
+// API для мечт
+app.get('/api/dreams', (req, res) => {
+    try {
+        const dreams = GameCellsUtils.getDreams();
+        res.json(dreams);
+    } catch (error) {
+        console.error('Ошибка получения мечт:', error);
+        res.status(500).json({ error: 'Ошибка получения мечт' });
+    }
+});
+
+app.get('/api/dreams/random', (req, res) => {
+    try {
+        const randomDream = GameCellsUtils.getRandomCellByType('dream');
+        res.json(randomDream);
+    } catch (error) {
+        console.error('Ошибка получения случайной мечты:', error);
+        res.status(500).json({ error: 'Ошибка получения случайной мечты' });
+    }
+});
+
+app.post('/api/room/select-dream', (req, res) => {
+    try {
+        const { userId, roomId, dream } = req.body;
+        
+        if (!userId || !roomId || !dream) {
+            return res.status(400).json({ error: 'Недостаточно данных для выбора мечты' });
+        }
+        
+        // Сохраняем выбранную мечту (в реальном проекте это будет в БД)
+        const key = `dream_${userId}_${roomId}`;
+        if (!bankData.selectedDreams) {
+            bankData.selectedDreams = {};
+        }
+        
+        bankData.selectedDreams[key] = {
+            userId,
+            roomId,
+            dream,
+            selectedAt: new Date()
+        };
+        
+        // Отправляем push-событие всем участникам комнаты
+        io.to(roomId).emit('dreamSelected', {
+            type: 'dreamSelected',
+            userId,
+            roomId,
+            dream,
+            timestamp: new Date()
+        });
+        
+        res.json({ 
+            success: true, 
+            message: 'Мечта успешно выбрана',
+            dream: dream
+        });
+        
+    } catch (error) {
+        console.error('Ошибка выбора мечты:', error);
+        res.status(500).json({ error: 'Ошибка выбора мечты' });
+    }
+});
+
+app.get('/api/room/:roomId/dreams', (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const selectedDreams = {};
+        
+        // Получаем все выбранные мечты для комнаты
+        if (bankData.selectedDreams) {
+            Object.keys(bankData.selectedDreams).forEach(key => {
+                const dreamData = bankData.selectedDreams[key];
+                if (dreamData.roomId === roomId) {
+                    selectedDreams[dreamData.userId] = dreamData.dream;
+                }
+            });
+        }
+        
+        res.json(selectedDreams);
+        
+    } catch (error) {
+        console.error('Ошибка получения мечт комнаты:', error);
+        res.status(500).json({ error: 'Ошибка получения мечт комнаты' });
+    }
+});
+
+// API для игровых клеток
+app.get('/api/game-cells', (req, res) => {
+    try {
+        const { type, category } = req.query;
+        let cells = GAME_CELLS;
+        
+        if (type) {
+            cells = cells.filter(cell => cell.type === type);
+        }
+        
+        res.json(cells);
+    } catch (error) {
+        console.error('Ошибка получения игровых клеток:', error);
+        res.status(500).json({ error: 'Ошибка получения игровых клеток' });
+    }
+});
+
+app.get('/api/game-cells/stats', (req, res) => {
+    try {
+        const stats = GameCellsUtils.getCellsStatistics();
+        res.json(stats);
+    } catch (error) {
+        console.error('Ошибка получения статистики клеток:', error);
+        res.status(500).json({ error: 'Ошибка получения статистики клеток' });
+    }
+});
+
+app.get('/api/game-cells/:id', (req, res) => {
+    try {
+        const { id } = req.params;
+        const cell = GameCellsUtils.getCellById(parseInt(id));
+        
+        if (!cell) {
+            return res.status(404).json({ error: 'Клетка не найдена' });
+        }
+        
+        res.json(cell);
+    } catch (error) {
+        console.error('Ошибка получения клетки:', error);
+        res.status(500).json({ error: 'Ошибка получения клетки' });
+    }
+});
+
+app.get('/dream-selection', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dream-selection.html'));
 });
 
 // API маршруты для Game Board

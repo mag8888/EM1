@@ -146,7 +146,6 @@ const professionSchema = new mongoose.Schema({
 });
 
 // Indexes
-professionSchema.index({ name: 1 });
 professionSchema.index({ category: 1 });
 professionSchema.index({ difficulty: 1 });
 professionSchema.index({ isActive: 1 });
