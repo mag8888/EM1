@@ -40,16 +40,6 @@
             overflow-x: hidden;
         }
 
-        body::before {
-            content: '';
-            position: fixed;
-            inset: -40%;
-            background: radial-gradient(circle, rgba(255, 199, 0, 0.08) 0%, transparent 60%);
-            filter: blur(40px);
-            opacity: 0.7;
-            pointer-events: none;
-        }
-
         .page-shell {
             width: 100%;
             max-width: 1600px;
@@ -238,15 +228,10 @@
         }
 
         .deal-strip {
-            position: absolute;
-            left: 50%;
-            bottom: calc(var(--computed-board-size, var(--board-size)) * 0.07);
-            transform: translateX(-50%);
+            margin-top: clamp(24px, calc(var(--computed-board-size, var(--board-size)) * 0.04), 36px);
             display: flex;
-            gap: clamp(16px, calc(var(--computed-board-size, var(--board-size)) * 0.04), 28px);
-            align-items: flex-end;
-            pointer-events: none;
-            padding: 0 24px;
+            justify-content: center;
+            gap: clamp(16px, calc(var(--computed-board-size, var(--board-size)) * 0.04), 24px);
         }
 
         .special-card {
@@ -629,7 +614,10 @@
                     <div class="wheel-number" id="wheelNumber">1</div>
                 </div>
 
-                <div class="deal-strip">
+            </div>
+        </div>
+
+        <div class="deal-strip">
                     <div class="special-card big-deal">
                         <div class="special-title">💼 Большая сделка</div>
                         <div class="special-metric">24 карты</div>
