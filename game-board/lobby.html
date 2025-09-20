@@ -10,9 +10,9 @@
     <style>
         :root {
             --board-size: 700px;
-            --outer-cell-size: 56px;
+            --outer-cell-size: 54px;
             --outer-cell-gap: 4px;
-            --inner-cell-size: 52px;
+            --inner-cell-size: 50px;
             --sidebar-width: 320px;
             --panel-bg: rgba(21, 27, 42, 0.9);
             --panel-border: rgba(255, 255, 255, 0.08);
@@ -54,7 +54,9 @@
         .board-wrapper {
             flex: 1 1 auto;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+            gap: clamp(24px, calc(var(--computed-board-size, var(--board-size)) * 0.04), 36px);
         }
 
         .board-frame {
@@ -615,9 +617,7 @@
                 </div>
 
             </div>
-        </div>
-
-        <div class="deal-strip">
+            <div class="deal-strip">
                     <div class="special-card big-deal">
                         <div class="special-title">💼 Большая сделка</div>
                         <div class="special-metric">24 карты</div>

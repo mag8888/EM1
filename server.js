@@ -1,17 +1,67 @@
 const express = require('express');
 const path = require('path');
 
+const CreditService = require('./credit-module/CreditService');
+
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Middleware
-app.use(express.json());
-app.use(express.static('.'));
+// --- Shared services -----------------------------------------------------
+const creditService = new CreditService();
+const rooms = new Map();
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
-});
+// --- Helpers -------------------------------------------------------------
+const resolvePath = (relativePath) => path.join(__dirname, relativePath);
+
+const registerPage = (route, file) => {
+    app.get(route, (req, res) => {
+        res.sendFile(resolvePath(file));
+    });
+};
+
+const ensureRoom = (roomId, playerIndex = 0, playerName) => {
+    let room = rooms.get(roomId);
+    if (!room) {
+        room = {
+            id: roomId,
+            createdAt: new Date().toISOString(),
+            players: [],
+            game_data: {
+                player_balances: [],
+                credit_data: {
+                    player_credits: [],
+                    credit_history: []
+                },
+                transfers_history: []
+            }
+        };
+        rooms.set(roomId, room);
+    }
+
+    // Дополним список игроков до нужного индекса
+    while (room.players.length <= playerIndex) {
+        const index = room.players.length;
+        room.players.push({
+            name: playerName || `Player ${index + 1}`
+        });
+    }
+
+    const balances = room.game_data.player_balances;
+    while (balances.length <= playerIndex) {
+        balances.push(0);
+    }
+
+    const credits = room.game_data.credit_data.player_credits;
+    while (credits.length <= playerIndex) {
+        credits.push(0);
+    }
+
+    return room;
+};
+
+// --- Middleware ----------------------------------------------------------
+app.use(express.json());
+app.use(express.static(resolvePath('.')));
 
 // CORS
 app.use((req, res, next) => {
@@ -25,34 +75,134 @@ app.use((req, res, next) => {
     }
 });
 
-// Маршруты
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+// Статические директории для отдельных модулей
+app.use('/assets', express.static(resolvePath('assets')));
+app.use('/game-board', express.static(resolvePath('game-board')));
+app.use('/bank', express.static(resolvePath('bank-module-v4')));
+app.use('/telegram-bot', express.static(resolvePath('telegram-bot')));
 
+// Служебные эндпоинты
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.get('/simple', (req, res) => {
-    res.sendFile(path.join(__dirname, 'simple.html'));
-});
+// Основные страницы приложения
+[
+    ['/', 'index.html'],
+    ['/index-old', 'index_old.html'],
+    ['/lobby', 'lobby.html'],
+    ['/auth', 'auth.html'],
+    ['/room', 'room.html'],
+    ['/profile', 'profile.html'],
+    ['/cashflow', 'cashflow.html'],
+    ['/perfect', 'perfect.html'],
+    ['/debug', 'debug.html'],
+    ['/simple', 'simple.html'],
+    ['/status', 'status.html'],
+    ['/test', 'test-server.html'],
+    ['/test-integration', 'test-integration.html'],
+    ['/test-cells', 'test-cells.html'],
+    ['/test-html', 'test.html'],
+    ['/working', 'working.html']
+].forEach(([route, file]) => registerPage(route, file));
 
-app.get('/status', (req, res) => {
-    res.sendFile(path.join(__dirname, 'status.html'));
-});
+// Страницы Game Board модуля
+[
+    ['/game-board', 'game-board/index.html'],
+    ['/game-board/index', 'game-board/index.html'],
+    ['/game-board/auth', 'game-board/auth.html'],
+    ['/game-board/lobby', 'game-board/lobby.html'],
+    ['/game-board/game', 'game-board/game.html'],
+    ['/game-board/test-board', 'game-board/test-board.html']
+].forEach(([route, file]) => registerPage(route, file));
 
-app.get('/test', (req, res) => {
-    res.sendFile(path.join(__dirname, 'test-server.html'));
-});
+// Страница банковского модуля
+registerPage('/bank/modal', 'bank-module-v4/bank-modal-v4.html');
 
-app.get('/working', (req, res) => {
-    res.sendFile(path.join(__dirname, 'working.html'));
-});
-
-// API маршруты для Telegram бота
+// API маршруты для устройств / ботов
 app.get('/api/rooms', (req, res) => {
-    res.json([]);
+    const list = Array.from(rooms.values()).map((room) => ({
+        id: room.id,
+        players: room.players.map((player, index) => ({
+            name: player.name,
+            balance: room.game_data.player_balances[index] || 0,
+            credit: room.game_data.credit_data.player_credits[index] || 0
+        })),
+        createdAt: room.createdAt || null
+    }));
+
+    res.json(list);
+});
+
+app.get('/api/rooms/:roomId/credit', (req, res) => {
+    const { roomId } = req.params;
+    const playerIndex = Number(req.query.playerIndex || 0);
+
+    try {
+        const room = ensureRoom(roomId, playerIndex);
+        const info = creditService.getPlayerCredit(room, playerIndex);
+        res.json({ success: true, roomId, playerIndex, ...info });
+    } catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+});
+
+app.post('/api/rooms/:roomId/credit/take', async (req, res) => {
+    const { roomId } = req.params;
+    const { playerIndex = 0, amount, playerName } = req.body;
+
+    const numericPlayerIndex = Number(playerIndex);
+    const numericAmount = Number(amount);
+
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+        return res.status(400).json({ success: false, message: 'Amount must be a positive number' });
+    }
+    if (!Number.isInteger(numericPlayerIndex) || numericPlayerIndex < 0) {
+        return res.status(400).json({ success: false, message: 'playerIndex must be a non-negative integer' });
+    }
+
+    try {
+        const room = ensureRoom(roomId, numericPlayerIndex, playerName);
+        const result = await creditService.takeCredit(room, numericPlayerIndex, numericAmount);
+        res.json({ success: true, roomId, playerIndex: numericPlayerIndex, ...result });
+    } catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+});
+
+app.post('/api/rooms/:roomId/credit/payoff', async (req, res) => {
+    const { roomId } = req.params;
+    const { playerIndex = 0, amount } = req.body;
+
+    const numericPlayerIndex = Number(playerIndex);
+    const numericAmount = amount !== undefined ? Number(amount) : undefined;
+
+    if (!Number.isInteger(numericPlayerIndex) || numericPlayerIndex < 0) {
+        return res.status(400).json({ success: false, message: 'playerIndex must be a non-negative integer' });
+    }
+    if (numericAmount !== undefined && (!Number.isFinite(numericAmount) || numericAmount <= 0)) {
+        return res.status(400).json({ success: false, message: 'amount must be a positive number when provided' });
+    }
+
+    try {
+        const room = ensureRoom(roomId, numericPlayerIndex);
+        const result = await creditService.payoffCredit(room, numericPlayerIndex, numericAmount);
+        res.json({ success: true, roomId, playerIndex: numericPlayerIndex, ...result });
+    } catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+});
+
+app.get('/api/rooms/:roomId/credit/history', (req, res) => {
+    const { roomId } = req.params;
+
+    const room = rooms.get(roomId);
+    if (!room) {
+        return res.json({ success: true, roomId, history: [] });
+    }
+
+    const history = room.game_data.credit_data?.credit_history || [];
+    res.json({ success: true, roomId, history });
 });
 
 // API для Telegram бота
