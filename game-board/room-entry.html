@@ -502,11 +502,25 @@
                 username: username,
                 email: localStorage.getItem('email') || ''
             };
+            console.log('Регистрируем пользователя:', userData);
+            console.log('Текущая комната из localStorage:', currentRoom);
             socket.emit('registerUser', userData);
             
             // После регистрации присоединяемся к комнате
-            socket.on('roomsUpdate', () => {
-                socket.emit('joinRoom', currentRoom.id);
+            socket.on('roomsUpdate', (rooms) => {
+                console.log('Получен список комнат:', rooms);
+                console.log('Ищем комнату с ID:', currentRoom.id);
+                
+                // Проверяем, что комната все еще существует
+                const roomExists = rooms.find(room => room.id === currentRoom.id);
+                if (roomExists) {
+                    console.log('Комната найдена, присоединяемся:', roomExists);
+                    socket.emit('joinRoom', currentRoom.id);
+                } else {
+                    console.log('Комната не найдена среди доступных:', rooms.map(r => r.id));
+                    alert('Комната больше не существует. Возвращаемся в лобби.');
+                    goBack();
+                }
             });
             
             // Обработчик успешного присоединения к комнате

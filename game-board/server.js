@@ -673,6 +673,7 @@ io.on('connection', (socket) => {
         
         const room = serverRooms.find(r => r.id === roomId);
         if (!room) {
+            console.log(`❌ Комната ${roomId} не найдена. Доступные комнаты:`, serverRooms.map(r => r.id));
             socket.emit('error', { message: 'Комната не найдена' });
             return;
         }
