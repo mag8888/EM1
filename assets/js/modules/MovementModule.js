@@ -142,6 +142,63 @@ export class MovementModule {
     }
 
     /**
+     * Движение игрока по доске
+     * @param {number} startPosition - Начальная позиция
+     * @param {number} steps - Количество шагов
+     * @param {number} totalCells - Общее количество клеток
+     * @param {string} track - Трек (inner/outer)
+     */
+    move(startPosition, steps, totalCells = 44, track = 'inner') {
+        if (this.isDestroyed) {
+            console.warn('MovementModule уничтожен, движение невозможно');
+            return startPosition;
+        }
+
+        try {
+            // Вычисляем новую позицию
+            let newPosition = (startPosition + steps) % totalCells;
+            
+            // Если прошли полный круг, добавляем бонус
+            if (startPosition + steps >= totalCells) {
+                this.gameCore?.eventBus?.emit('playerCompletedLap', {
+                    playerId: 'current',
+                    startPosition,
+                    newPosition,
+                    steps,
+                    track,
+                    timestamp: Date.now()
+                });
+            }
+
+            // Эмиссия события движения
+            this.gameCore?.eventBus?.emit('playerMoved', {
+                playerId: 'current',
+                startPosition,
+                newPosition,
+                steps,
+                track,
+                timestamp: Date.now()
+            });
+
+            // Добавляем в историю
+            this.addToHistory({
+                startPosition,
+                newPosition,
+                steps,
+                track,
+                timestamp: Date.now()
+            });
+
+            console.log(`🚶 Игрок переместился с ${startPosition} на ${newPosition} (${steps} шагов)`);
+            return newPosition;
+
+        } catch (error) {
+            console.error('Ошибка движения:', error);
+            return startPosition;
+        }
+    }
+
+    /**
      * Получение описания клетки
      * @param {number} position - Позиция
      * @param {string} track - Трек (inner/outer)

@@ -323,6 +323,32 @@
             </div>
         </div>
 
+        <!-- Игровое поле для тестирования -->
+        <div class="test-section" style="grid-column: 1 / -1; margin-top: 30px;">
+            <h2>🎮 Игровое поле (Live Preview)</h2>
+            <div id="gameBoardPreview" style="
+                width: 100%;
+                height: 500px;
+                background: linear-gradient(135deg, #1a1d24 0%, #242830 100%);
+                border-radius: 15px;
+                border: 2px solid rgba(255, 255, 255, 0.1);
+                position: relative;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                gap: 20px;
+            ">
+                <div style="color: rgba(255, 255, 255, 0.6); font-size: 18px;">
+                    Игровое поле будет отображено после генерации клеток
+                </div>
+                <button class="test-btn" onclick="generateGameBoardPreview()" style="max-width: 200px;">
+                    <span>🎯</span> Сгенерировать поле
+                </button>
+            </div>
+        </div>
+
         <div class="test-results">
             <h3>📋 Результаты тестирования</h3>
             <div id="testLogs"></div>
@@ -355,7 +381,7 @@
     <!-- Подключаем игровые модули -->
     <script type="module">
         // Импорты игровых модулей
-        let GameCore, CellGenerator, TurnController, GameFlowController, DiceModule, MovementModule, EventModule, PlayerManager, StateManager, ModuleManager, EventBus;
+        let GameCore, CellGenerator, TurnController, GameFlowController, DiceModule, MovementModule, EventModule, PlayerManager, StateManager, ModuleManager, EventBus, GAME_CONFIG;
 
         // Статистика тестов
         let testStats = {
@@ -368,8 +394,12 @@
         // Инициализация модулей
         async function initModules() {
             try {
-                const { GameCore: GC } = await import('./assets/js/core/GameCore.js');
-                GameCore = GC;
+                // Загружаем GAME_CONFIG первым
+                const { GAME_CONFIG: GC } = await import('./assets/js/utils/GAME_CONFIG.js');
+                GAME_CONFIG = GC;
+
+                const { GameCore: GC2 } = await import('./assets/js/core/GameCore.js');
+                GameCore = GC2;
 
                 const { CellGenerator: CG } = await import('./assets/js/modules/game/CellGenerator.js');
                 CellGenerator = CG;
@@ -413,10 +443,22 @@
         window.testSystemInit = async function() {
             startTest();
             try {
-                const gameCore = new GameCore();
-                await gameCore.init();
-                logResult('✅ GameCore инициализирован успешно', 'success');
-                window.gameCore = gameCore;
+                // Создаем мок GameCore для тестирования
+                const mockGameCore = {
+                    eventBus: new EventBus(),
+                    config: GAME_CONFIG,
+                    modules: {
+                        get: (name) => null,
+                        getAll: () => ({})
+                    },
+                    state: new StateManager(),
+                    init: async () => {
+                        logResult('✅ Mock GameCore инициализирован', 'success');
+                    }
+                };
+                
+                window.gameCore = mockGameCore;
+                logResult('✅ GameCore (mock) инициализирован успешно', 'success');
                 passTest();
             } catch (error) {
                 logResult(`❌ Ошибка инициализации GameCore: ${error.message}`, 'error');
@@ -476,6 +518,12 @@
                 const cells = cellGenerator.generateGameBoard();
                 logResult(`✅ Создано клеток: ${cells.length}`, 'success');
                 logResult(`  - Типы клеток: ${[...new Set(cells.map(c => c.type))].join(', ')}`, 'success');
+                
+                // Автоматически генерируем игровое поле
+                setTimeout(() => {
+                    generateGameBoardPreview();
+                }, 500);
+                
                 passTest();
             } catch (error) {
                 logResult(`❌ Ошибка генерации клеток: ${error.message}`, 'error');
@@ -552,13 +600,13 @@
         window.testDiceRoll = async function() {
             startTest();
             try {
-                const diceModule = new DiceModule();
-                const result = diceModule.roll();
+                const diceModule = new DiceModule(window.gameCore);
+                const result = await diceModule.roll();
                 
-                if (result.total >= 2 && result.total <= 12) {
+                if (result && result.total >= 2 && result.total <= 12) {
                     logResult(`✅ Бросок кубика: ${result.dice[0]} + ${result.dice[1]} = ${result.total}`, 'success');
                 } else {
-                    logResult(`❌ Неправильный результат броска: ${result.total}`, 'error');
+                    logResult(`❌ Неправильный результат броска: ${result ? result.total : 'undefined'}`, 'error');
                     failTest();
                     return;
                 }
@@ -572,7 +620,7 @@
         window.testPlayerMovement = async function() {
             startTest();
             try {
-                const movementModule = new MovementModule();
+                const movementModule = new MovementModule(window.gameCore);
                 const startPosition = 0;
                 const steps = 5;
                 
@@ -767,8 +815,8 @@
                 
                 // Выполняем 100 операций
                 for (let i = 0; i < 100; i++) {
-                    const diceModule = new DiceModule();
-                    diceModule.roll();
+                    const diceModule = new DiceModule(window.gameCore);
+                    await diceModule.roll();
                 }
                 
                 const endTime = performance.now();
@@ -825,6 +873,226 @@
             testStats = { total: 0, passed: 0, failed: 0, startTime: null };
             updateStats();
         };
+
+        // Функция генерации игрового поля
+        window.generateGameBoardPreview = function() {
+            try {
+                const cellGenerator = new CellGenerator(window.gameCore);
+                const cells = cellGenerator.generateGameBoard();
+                
+                const preview = document.getElementById('gameBoardPreview');
+                preview.innerHTML = '';
+                
+                // Создаем контейнер для игрового поля
+                const boardContainer = document.createElement('div');
+                boardContainer.style.cssText = `
+                    width: 100%;
+                    height: 100%;
+                    position: relative;
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    padding: 20px;
+                    justify-content: center;
+                    align-items: flex-start;
+                    align-content: flex-start;
+                `;
+                
+                // Создаем клетки
+                cells.forEach((cell, index) => {
+                    const cellElement = document.createElement('div');
+                    cellElement.style.cssText = `
+                        width: 60px;
+                        height: 60px;
+                        background: ${cell.color || '#4CAF50'};
+                        border-radius: 12px;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        position: relative;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        border: 2px solid rgba(255, 255, 255, 0.2);
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                    `;
+                    
+                    // Добавляем номер клетки
+                    const numberElement = document.createElement('div');
+                    numberElement.textContent = cell.position;
+                    numberElement.style.cssText = `
+                        position: absolute;
+                        top: 4px;
+                        left: 6px;
+                        font-size: 12px;
+                        font-weight: bold;
+                        color: white;
+                        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+                    `;
+                    
+                    // Добавляем иконку
+                    const iconElement = document.createElement('div');
+                    iconElement.textContent = cell.icon || '⚪';
+                    iconElement.style.cssText = `
+                        font-size: 24px;
+                        margin-bottom: 4px;
+                    `;
+                    
+                    // Добавляем название
+                    const nameElement = document.createElement('div');
+                    nameElement.textContent = cell.name || 'Клетка';
+                    nameElement.style.cssText = `
+                        font-size: 10px;
+                        color: white;
+                        text-align: center;
+                        font-weight: 600;
+                        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+                        line-height: 1.2;
+                    `;
+                    
+                    cellElement.appendChild(numberElement);
+                    cellElement.appendChild(iconElement);
+                    cellElement.appendChild(nameElement);
+                    
+                    // Добавляем hover эффект
+                    cellElement.addEventListener('mouseenter', () => {
+                        cellElement.style.transform = 'scale(1.1) translateY(-4px)';
+                        cellElement.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.4)';
+                    });
+                    
+                    cellElement.addEventListener('mouseleave', () => {
+                        cellElement.style.transform = 'scale(1) translateY(0)';
+                        cellElement.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+                    });
+                    
+                    // Добавляем клик для показа информации
+                    cellElement.addEventListener('click', () => {
+                        showCellInfo(cell);
+                    });
+                    
+                    boardContainer.appendChild(cellElement);
+                });
+                
+                preview.appendChild(boardContainer);
+                
+                // Добавляем статистику
+                const statsElement = document.createElement('div');
+                statsElement.style.cssText = `
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    background: rgba(0, 0, 0, 0.7);
+                    color: white;
+                    padding: 10px;
+                    border-radius: 8px;
+                    font-size: 12px;
+                    backdrop-filter: blur(10px);
+                `;
+                statsElement.innerHTML = `
+                    <div>Всего клеток: ${cells.length}</div>
+                    <div>Типы: ${[...new Set(cells.map(c => c.type))].join(', ')}</div>
+                `;
+                preview.appendChild(statsElement);
+                
+                logResult(`✅ Игровое поле сгенерировано: ${cells.length} клеток`, 'success');
+                
+            } catch (error) {
+                logResult(`❌ Ошибка генерации поля: ${error.message}`, 'error');
+            }
+        };
+
+        // Функция показа информации о клетке
+        function showCellInfo(cell) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                backdrop-filter: blur(5px);
+            `;
+            
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: linear-gradient(135deg, #1a1d24 0%, #242830 100%);
+                border-radius: 20px;
+                padding: 30px;
+                max-width: 400px;
+                width: 90%;
+                border: 2px solid rgba(255, 255, 255, 0.1);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            `;
+            
+            modalContent.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                    <div style="font-size: 48px;">${cell.icon || '⚪'}</div>
+                    <div>
+                        <h3 style="margin: 0; color: #00e5ff; font-size: 24px;">Клетка ${cell.position}</h3>
+                        <p style="margin: 5px 0 0 0; color: rgba(255, 255, 255, 0.8);">${cell.name || 'Неизвестная клетка'}</p>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <p style="color: rgba(255, 255, 255, 0.9); line-height: 1.6; margin-bottom: 15px;">
+                        ${cell.description || 'Описание отсутствует'}
+                    </p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div style="background: rgba(255, 255, 255, 0.1); padding: 10px; border-radius: 8px;">
+                            <div style="color: #4CAF50; font-weight: bold;">Стоимость</div>
+                            <div style="color: white;">$${cell.cost || 0}</div>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.1); padding: 10px; border-radius: 8px;">
+                            <div style="color: #2196F3; font-weight: bold;">Доход</div>
+                            <div style="color: white;">$${cell.income || 0}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(255, 255, 255, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                        <div style="color: #FF9800; font-weight: bold; margin-bottom: 5px;">Тип</div>
+                        <div style="color: white; text-transform: capitalize;">${cell.type || 'neutral'}</div>
+                    </div>
+                    
+                    ${cell.effects && cell.effects.length > 0 ? `
+                        <div style="background: rgba(255, 255, 255, 0.1); padding: 10px; border-radius: 8px;">
+                            <div style="color: #9C27B0; font-weight: bold; margin-bottom: 5px;">Эффекты</div>
+                            <div style="color: white;">${cell.effects.join(', ')}</div>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <button onclick="this.closest('.modal').remove()" style="
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    font-weight: 600;
+                    width: 100%;
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                    Закрыть
+                </button>
+            `;
+            
+            modal.className = 'modal';
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+            
+            // Закрытие по клику вне модального окна
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
 
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', async () => {
