@@ -173,6 +173,60 @@
             box-shadow: none;
         }
 
+        .room-details {
+            padding: 16px 0;
+        }
+
+        .room-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .players-count {
+            font-size: 14px;
+            color: #a0a0a0;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .players-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+            justify-content: center;
+        }
+
+        .player-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .player-avatar-small {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: #1a1d24;
+        }
+
+        .room-actions {
+            margin-top: 16px;
+        }
+
         .create-room-form {
             background: linear-gradient(135deg, rgba(26, 29, 36, 0.95) 0%, rgba(36, 40, 48, 0.9) 100%);
             backdrop-filter: blur(30px);
@@ -510,6 +564,26 @@
         </div>
 
         <aside class="sidebar">
+            <!-- Информация о текущей комнате -->
+            <div class="panel" id="current-room-panel" style="display: none;">
+                <h3>🏠 Текущая комната</h3>
+                <div class="room-details">
+                    <div class="room-name" id="current-room-name">Название комнаты</div>
+                    <div class="room-players" id="current-room-players">
+                        <div class="players-count" id="players-count">0/4 игроков</div>
+                        <div class="players-list" id="players-list"></div>
+                    </div>
+                    <div class="room-actions">
+                        <button class="btn btn-primary" id="enter-room-btn" onclick="enterRoom()" style="width: 100%; margin-bottom: 8px;">
+                            🚪 Войти в комнату
+                        </button>
+                        <button class="btn btn-secondary" id="leave-room-btn" onclick="leaveRoom()" style="width: 100%;">
+                            🚪 Покинуть комнату
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div class="panel">
                 <h3>👤 Профиль</h3>
                 <div class="user-info">
@@ -582,6 +656,10 @@
             // Обновляем информацию пользователя
             document.getElementById('username').textContent = username;
             document.getElementById('user-avatar').textContent = username.charAt(0).toUpperCase();
+            
+            // Загружаем комнаты и обновляем отображение текущей комнаты
+            loadRooms();
+            updateCurrentRoomDisplay();
 
             // Если не авторизован, предлагаем войти
             if (!isAuthenticated) {
@@ -755,6 +833,9 @@
                 // Обновляем кнопку старт
                 updateStartButton();
 
+                // Обновляем отображение текущей комнаты
+                updateCurrentRoomDisplay();
+
                 // Показываем сообщение о присоединении
                 alert(`Вы присоединились к комнате "${room.name}"`);
             }
@@ -855,6 +936,142 @@
                 if (!dreamWindow) {
                     alert('Пожалуйста, разрешите всплывающие окна для выбора мечты');
                 }
+            }
+
+            function enterRoom() {
+                const currentRoom = localStorage.getItem('currentRoom');
+                if (!currentRoom) {
+                    alert('Вы не находитесь в комнате');
+                    return;
+                }
+                
+                const room = JSON.parse(currentRoom);
+                
+                // Проверяем, что игра не началась
+                if (room.status === 'playing') {
+                    alert('Игра уже началась! Переход к игровой доске...');
+                    window.location.href = 'game.html';
+                    return;
+                }
+                
+                // Переходим к игровой доске
+                window.location.href = 'game.html';
+            }
+
+            function leaveRoom() {
+                const currentRoom = localStorage.getItem('currentRoom');
+                if (!currentRoom) {
+                    alert('Вы не находитесь в комнате');
+                    return;
+                }
+                
+                if (confirm('Вы уверены, что хотите покинуть комнату?')) {
+                    const room = JSON.parse(currentRoom);
+                    
+                    // Обновляем список комнат
+                    const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
+                    const roomIndex = rooms.findIndex(r => r.id === room.id);
+                    
+                    if (roomIndex !== -1) {
+                        // Удаляем игрока из комнаты
+                        rooms[roomIndex].players = rooms[roomIndex].players.filter(p => p.name !== username);
+                        
+                        // Если это был хост и в комнате остались игроки, назначаем нового хоста
+                        const isHost = room.players.find(p => p.name === username && p.isHost);
+                        if (isHost && rooms[roomIndex].players.length > 0) {
+                            rooms[roomIndex].players[0].isHost = true;
+                        }
+                        
+                        // Если комната пустая, удаляем её
+                        if (rooms[roomIndex].players.length === 0) {
+                            rooms.splice(roomIndex, 1);
+                        }
+                        
+                        localStorage.setItem('rooms', JSON.stringify(rooms));
+                    }
+                    
+                    // Очищаем текущую комнату
+                    localStorage.removeItem('currentRoom');
+                    localStorage.removeItem('selectedDream');
+                    
+                    // Обновляем UI
+                    updateCurrentRoomDisplay();
+                    loadRooms();
+                    
+                    alert('Вы покинули комнату');
+                }
+            }
+
+            function updateCurrentRoomDisplay() {
+                const currentRoom = localStorage.getItem('currentRoom');
+                const currentRoomPanel = document.getElementById('current-room-panel');
+                
+                if (currentRoom) {
+                    const room = JSON.parse(currentRoom);
+                    
+                    // Показываем панель комнаты
+                    currentRoomPanel.style.display = 'block';
+                    
+                    // Обновляем информацию о комнате
+                    document.getElementById('current-room-name').textContent = room.name;
+                    document.getElementById('players-count').textContent = `${room.players.length}/${room.maxPlayers} игроков`;
+                    
+                    // Обновляем список игроков
+                    const playersList = document.getElementById('players-list');
+                    playersList.innerHTML = '';
+                    
+                    room.players.forEach((player, index) => {
+                        const playerChip = document.createElement('div');
+                        playerChip.className = 'player-chip';
+                        
+                        const avatar = document.createElement('div');
+                        avatar.className = 'player-avatar-small';
+                        avatar.style.background = getPlayerColor(index).gradient;
+                        avatar.textContent = player.name.charAt(0).toUpperCase();
+                        
+                        const name = document.createElement('span');
+                        name.textContent = player.name;
+                        
+                        if (player.isHost) {
+                            name.innerHTML += ' 👑';
+                        }
+                        
+                        playerChip.appendChild(avatar);
+                        playerChip.appendChild(name);
+                        playersList.appendChild(playerChip);
+                    });
+                    
+                    // Обновляем кнопки в зависимости от статуса комнаты
+                    const enterBtn = document.getElementById('enter-room-btn');
+                    const leaveBtn = document.getElementById('leave-room-btn');
+                    
+                    if (room.status === 'playing') {
+                        enterBtn.textContent = '🎮 Игра началась!';
+                        enterBtn.disabled = false;
+                    } else {
+                        enterBtn.textContent = '🚪 Войти в комнату';
+                        enterBtn.disabled = false;
+                    }
+                    
+                } else {
+                    // Скрываем панель комнаты
+                    currentRoomPanel.style.display = 'none';
+                }
+            }
+
+            function getPlayerColor(index) {
+                const colors = [
+                    { name: 'Синий', gradient: 'linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%)' },
+                    { name: 'Красный', gradient: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)' },
+                    { name: 'Зеленый', gradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)' },
+                    { name: 'Фиолетовый', gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' },
+                    { name: 'Оранжевый', gradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)' },
+                    { name: 'Розовый', gradient: 'linear-gradient(135deg, #EC4899 0%, #DB2777 100%)' },
+                    { name: 'Бирюзовый', gradient: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)' },
+                    { name: 'Желтый', gradient: 'linear-gradient(135deg, #EAB308 0%, #CA8A04 100%)' }
+                ];
+                
+                return colors[index % colors.length];
             }
 
             function logout() {

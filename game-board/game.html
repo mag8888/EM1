@@ -626,15 +626,15 @@
                     <div class="center-wheel" id="centerWheel">
                         <div class="wheel-number" id="wheelNumber">1</div>
                     </div>
-                </div>
-            </div>
-
+                    </div>
+                    </div>
+                    
             <div class="deal-strip">
                 <div class="special-card big-deal">
                     <div class="special-title">💼 Большая сделка</div>
                     <div class="special-metric">24 карты</div>
                     <div class="special-metric">Премиум возможности</div>
-                </div>
+                    </div>
                 <div class="special-card small-deal">
                     <div class="special-title">📦 Малая сделка</div>
                     <div class="special-metric">32 карты</div>
@@ -644,14 +644,14 @@
                     <div class="special-title">💳 Расходы</div>
                     <div class="special-metric">24 карты</div>
                     <div class="special-metric">Обязательные платежи</div>
-                </div>
+            </div>
                 <div class="special-card market">
                     <div class="special-title">🛒 Рынок</div>
                     <div class="special-metric">24 карты</div>
                     <div class="special-metric">Спец. предложения</div>
                 </div>
-            </div>
-        </div>
+                </div>
+                </div>
 
         <aside class="sidebar">
             <div class="panel status-panel">
@@ -661,14 +661,14 @@
                         <div>
                             <div class="status-label">Текущее состояние</div>
                             <div class="status-value" id="turnState">Ожидание хода</div>
-                        </div>
+                </div>
                         <div class="status-icon">🕒</div>
-                    </div>
+            </div>
                     <div class="timer-readout">
                         <span class="timer-value" id="timerValue">00:45</span>
                         <span class="timer-caption">секунд осталось</span>
-                    </div>
-                </div>
+        </div>
+            </div>
             </div>
 
             <div class="panel">
@@ -685,8 +685,8 @@
                     <div class="finance-row">
                         <span>PAYDAY:</span>
                         <span class="finance-value" id="paydayValue">$0/мес</span>
-                    </div>
                 </div>
+            </div>
 
                 <div class="loan-status">
                     <span>Кредит:</span>
@@ -700,7 +700,7 @@
                 <div class="assets-total" id="assetsTotal">$0</div>
                 <div class="assets-caption">Доход: $0 / мес</div>
                 <button class="btn btn-primary" style="margin-top: 20px;">Портфель активов</button>
-            </div>
+                </div>
         </aside>
     </div>
 
@@ -861,7 +861,7 @@
             const outerIcons = ['💵', '🏠', '🚗', '💡', '🎯', '💰', '🛍️', '💼'];
 
             positions.forEach((pos, index) => {
-                const cell = document.createElement('div');
+                    const cell = document.createElement('div');
                 const colorClass = outerColors[index % outerColors.length];
                 cell.className = `track-cell outer ${colorClass}`;
                 cell.style.width = `${cellSize}px`;
@@ -869,7 +869,7 @@
                 cell.style.left = `${pos.x}px`;
                 cell.style.top = `${pos.y}px`;
 
-                cell.innerHTML = `
+                            cell.innerHTML = `
                     <span class="cell-number">${index + 1}</span>
                     <span class="cell-icon">${outerIcons[index % outerIcons.length]}</span>
                 `;
@@ -940,7 +940,7 @@
                 cell.style.top = `${y}px`;
                 cell.style.transform = 'translate(-50%, -50%)';
 
-                cell.innerHTML = `
+                            cell.innerHTML = `
                     <span class="cell-number">${i + 1}</span>
                     <span class="cell-icon">${icon}</span>
                 `;
@@ -1194,8 +1194,189 @@
         function updateDreamDisplay() {
             if (selectedDream) {
                 console.log('Обновление отображения мечты:', selectedDream.name);
-                // Здесь будет логика обновления UI с информацией о мечте
+                
+                // Получаем цвет игрока
+                const playerIndex = room.players.findIndex(p => p.name === username);
+                const playerColor = getPlayerColor(playerIndex);
+                
+                // Создаем или обновляем элемент мечты на игровом поле
+                createDreamHeart(selectedDream, playerColor);
+                
+                // Обновляем информацию в UI
+                updateDreamInfo(selectedDream, playerColor);
             }
+        }
+
+        function getPlayerColor(index) {
+            const colors = [
+                { name: 'Синий', primary: '#3B82F6', secondary: '#1E40AF' },
+                { name: 'Красный', primary: '#EF4444', secondary: '#DC2626' },
+                { name: 'Зеленый', primary: '#10B981', secondary: '#059669' },
+                { name: 'Фиолетовый', primary: '#8B5CF6', secondary: '#7C3AED' },
+                { name: 'Оранжевый', primary: '#F59E0B', secondary: '#D97706' },
+                { name: 'Розовый', primary: '#EC4899', secondary: '#DB2777' },
+                { name: 'Бирюзовый', primary: '#06B6D4', secondary: '#0891B2' },
+                { name: 'Желтый', primary: '#EAB308', secondary: '#CA8A04' }
+            ];
+            
+            return colors[index % colors.length];
+        }
+
+        function createDreamHeart(dream, playerColor) {
+            // Удаляем старый элемент мечты, если есть
+            const existingHeart = document.getElementById('dream-heart');
+            if (existingHeart) {
+                existingHeart.remove();
+            }
+            
+            // Создаем новый элемент сердечка
+            const heart = document.createElement('div');
+            heart.id = 'dream-heart';
+            heart.innerHTML = '❤️';
+            heart.style.cssText = `
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                font-size: 32px;
+                cursor: pointer;
+                z-index: 1000;
+                filter: drop-shadow(0 0 10px ${playerColor.primary});
+                transition: all 0.3s ease;
+                animation: heartbeat 2s infinite;
+            `;
+            
+            // Добавляем анимацию сердцебиения
+            if (!document.getElementById('heartbeat-animation')) {
+                const style = document.createElement('style');
+                style.id = 'heartbeat-animation';
+                style.textContent = `
+                    @keyframes heartbeat {
+                        0%, 100% { transform: scale(1); }
+                        50% { transform: scale(1.1); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            // Добавляем tooltip с информацией о мечте
+            heart.title = `${dream.name}\n${dream.description}\nСтоимость: $${dream.cost.toLocaleString()}`;
+            
+            // Добавляем обработчик клика
+            heart.addEventListener('click', () => {
+                showDreamModal(dream, playerColor);
+            });
+            
+            heart.addEventListener('mouseenter', () => {
+                heart.style.transform = 'scale(1.2)';
+                heart.style.filter = `drop-shadow(0 0 20px ${playerColor.primary})`;
+            });
+            
+            heart.addEventListener('mouseleave', () => {
+                heart.style.transform = 'scale(1)';
+                heart.style.filter = `drop-shadow(0 0 10px ${playerColor.primary})`;
+            });
+            
+            // Добавляем сердечко на страницу
+            document.body.appendChild(heart);
+        }
+
+        function updateDreamInfo(dream, playerColor) {
+            // Обновляем информацию о мечте в боковой панели
+            const dreamInfoElement = document.getElementById('dream-info');
+            if (!dreamInfoElement) {
+                // Создаем элемент, если его нет
+                const statusPanel = document.querySelector('.status-panel .panel-body');
+                const dreamInfo = document.createElement('div');
+                dreamInfo.id = 'dream-info';
+                dreamInfo.className = 'dream-info-section';
+                dreamInfo.innerHTML = `
+                    <h4 style="color: ${playerColor.primary}; margin-bottom: 8px;">🌟 Ваша мечта</h4>
+                    <div style="font-size: 14px; color: #ffffff; font-weight: 600;">${dream.name}</div>
+                    <div style="font-size: 12px; color: #a0a0a0; margin-top: 4px;">${dream.description}</div>
+                    <div style="font-size: 12px; color: #ffd15a; margin-top: 4px;">Стоимость: $${dream.cost.toLocaleString()}</div>
+                `;
+                statusPanel.appendChild(dreamInfo);
+            } else {
+                // Обновляем существующий элемент
+                dreamInfoElement.innerHTML = `
+                    <h4 style="color: ${playerColor.primary}; margin-bottom: 8px;">🌟 Ваша мечта</h4>
+                    <div style="font-size: 14px; color: #ffffff; font-weight: 600;">${dream.name}</div>
+                    <div style="font-size: 12px; color: #a0a0a0; margin-top: 4px;">${dream.description}</div>
+                    <div style="font-size: 12px; color: #ffd15a; margin-top: 4px;">Стоимость: $${dream.cost.toLocaleString()}</div>
+                `;
+            }
+        }
+
+        function showDreamModal(dream, playerColor) {
+            // Создаем модальное окно с информацией о мечте
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                backdrop-filter: blur(10px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: linear-gradient(160deg, #151d30 0%, #111527 45%, #0f1422 100%);
+                    border-radius: 24px;
+                    padding: 32px;
+                    max-width: 500px;
+                    width: 90%;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6);
+                    text-align: center;
+                ">
+                    <div style="font-size: 48px; margin-bottom: 16px;">❤️</div>
+                    <h2 style="color: ${playerColor.primary}; font-size: 24px; font-weight: 700; margin-bottom: 16px;">
+                        ${dream.name}
+                    </h2>
+                    <p style="color: #a0a0a0; font-size: 16px; margin-bottom: 20px; line-height: 1.5;">
+                        ${dream.description}
+                    </p>
+                    <div style="
+                        background: rgba(255, 255, 255, 0.05);
+                        border-radius: 12px;
+                        padding: 16px;
+                        margin-bottom: 24px;
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                    ">
+                        <div style="color: #ffd15a; font-size: 20px; font-weight: 700;">
+                            Стоимость: $${dream.cost.toLocaleString()}
+                        </div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" style="
+                        background: linear-gradient(135deg, #06b973 0%, #00d4aa 100%);
+                        color: #1a1d24;
+                        border: none;
+                        border-radius: 12px;
+                        padding: 12px 24px;
+                        font-size: 16px;
+                        font-weight: 700;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    ">
+                        Закрыть
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Закрытие по клику вне модального окна
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
         }
 
         function openProfessionCard() {
