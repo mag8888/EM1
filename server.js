@@ -846,6 +846,22 @@ app.get('/game/:roomId', (req, res) => {
     res.sendFile(resolvePath('game-board/game.html'));
 });
 
+// ---------------------------- Health Check ----------------------------------
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        service: 'EM1 Game Board v2.0',
+        version: '2.0.0',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        gameLogic: {
+            cellsAvailable: GAME_CELLS.length,
+            roomsActive: rooms.size,
+            creditRoomsActive: creditRooms.size
+        }
+    });
+});
+
 // ---------------------------- Rooms API ----------------------------------
 app.get('/api/rooms', (req, res) => {
     const list = Array.from(rooms.values())
@@ -1289,9 +1305,11 @@ app.post('/api/notifications/mass', (req, res) => {
 });
 
 // Запуск сервера
-const server = app.listen(PORT, () => {
-    console.log(`🚀 Minimal server running on port ${PORT}`);
+const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 EM1 Game Board v2.0 Server running on port ${PORT}`);
+    console.log(`🌐 Server accessible at http://0.0.0.0:${PORT}`);
     console.log('✅ Ready to serve files');
+    console.log('🎮 Updated game logic active');
 });
 
 // Graceful shutdown
