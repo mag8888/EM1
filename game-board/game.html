@@ -757,6 +757,7 @@
                     <span class="finance-value">$0</span>
                 </div>
                 <button class="btn btn-primary" id="bankButton" onclick="openBankModule()">🏦 Банк</button>
+                <button class="btn btn-primary" id="dealsButton" onclick="openDealsModule()">🃏 Сделки</button>
                 </div>
 
             <div class="panel">
@@ -1504,6 +1505,15 @@
             
             if (!bankWindow) {
                 alert('Пожалуйста, разрешите всплывающие окна для работы банковского модуля');
+            }
+        }
+
+        function openDealsModule() {
+            // Открываем модуль карточек сделок в новом окне
+            const dealsWindow = window.open('deals-module.html', 'dealsModule', 'width=1400,height=900,scrollbars=yes,resizable=yes');
+            
+            if (!dealsWindow) {
+                alert('Пожалуйста, разрешите всплывающие окна для модуля карточек сделок');
             }
         }
 

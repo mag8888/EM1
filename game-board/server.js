@@ -15,6 +15,7 @@ const User = require('./models/User');
 const Profession = require('./models/Profession');
 const BankAccount = require('./models/BankAccount');
 const { GAME_CELLS, GameCellsUtils } = require('./config/game-cells');
+const { MARKET_CARDS, EXPENSE_CARDS, SMALL_DEALS, BIG_DEALS, CardsUtils } = require('./config/cards-config');
 
 const app = express();
 const server = http.createServer(app);
@@ -298,6 +299,10 @@ app.get('/room-dream-selection', (req, res) => {
     res.sendFile(path.join(__dirname, 'room-dream-selection.html'));
 });
 
+app.get('/deals-module', (req, res) => {
+    res.sendFile(path.join(__dirname, 'deals-module.html'));
+});
+
 // API маршруты для Game Board
 app.get('/api/health', (req, res) => {
     res.json({
@@ -474,6 +479,94 @@ app.post('/api/profession/update', (req, res) => {
         message: 'Данные профессии обновлены',
         professionData: updatedData
     });
+});
+
+// API для получения карточек сделок
+app.get('/api/cards', (req, res) => {
+    try {
+        res.json({
+            success: true,
+            marketCards: MARKET_CARDS,
+            expenseCards: EXPENSE_CARDS,
+            smallDeals: SMALL_DEALS,
+            bigDeals: BIG_DEALS,
+            stats: CardsUtils.getCardsStatistics()
+        });
+    } catch (error) {
+        console.error('Ошибка получения карточек:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Ошибка получения карточек сделок'
+        });
+    }
+});
+
+// API для получения карт рынка
+app.get('/api/cards/market', (req, res) => {
+    try {
+        res.json({
+            success: true,
+            cards: MARKET_CARDS,
+            count: MARKET_CARDS.length
+        });
+    } catch (error) {
+        console.error('Ошибка получения карт рынка:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Ошибка получения карт рынка'
+        });
+    }
+});
+
+// API для получения карт расходов
+app.get('/api/cards/expense', (req, res) => {
+    try {
+        res.json({
+            success: true,
+            cards: EXPENSE_CARDS,
+            count: EXPENSE_CARDS.length
+        });
+    } catch (error) {
+        console.error('Ошибка получения карт расходов:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Ошибка получения карт расходов'
+        });
+    }
+});
+
+// API для получения малых сделок
+app.get('/api/cards/small-deals', (req, res) => {
+    try {
+        res.json({
+            success: true,
+            cards: SMALL_DEALS,
+            count: SMALL_DEALS.length
+        });
+    } catch (error) {
+        console.error('Ошибка получения малых сделок:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Ошибка получения малых сделок'
+        });
+    }
+});
+
+// API для получения больших сделок
+app.get('/api/cards/big-deals', (req, res) => {
+    try {
+        res.json({
+            success: true,
+            cards: BIG_DEALS,
+            count: BIG_DEALS.length
+        });
+    } catch (error) {
+        console.error('Ошибка получения больших сделок:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Ошибка получения больших сделок'
+        });
+    }
 });
 
 // Маршрут для тестовой страницы
