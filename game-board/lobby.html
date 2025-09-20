@@ -840,8 +840,8 @@
             initRooms();
 
             // Обработчики событий
-            document.getElementById('create-room').addEventListener('click', createRoom);
-            document.getElementById('refresh-rooms').addEventListener('click', loadRooms);
+            document.getElementById('create-room').addEventListener('click', window.createRoom);
+            document.getElementById('refresh-rooms').addEventListener('click', window.loadRooms);
             document.getElementById('logout-btn').addEventListener('click', logout);
 
             function initRooms() {
