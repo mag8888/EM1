@@ -685,11 +685,116 @@
         </div>
     </div>
 
+    <!-- Socket.IO клиент -->
+    <script src="/socket.io/socket.io.js"></script>
     <script>
+        // Глобальные функции для кнопок (доступны до загрузки DOM)
+        function enterRoom() {
+            const currentRoom = localStorage.getItem('currentRoom');
+            if (!currentRoom) {
+                alert('Вы не находитесь в комнате');
+                return;
+            }
+            
+            const room = JSON.parse(currentRoom);
+            
+            // Проверяем, что игра не началась
+            if (room.status === 'playing') {
+                alert('Игра уже началась! Переход к игровой доске...');
+                window.location.href = 'game.html';
+                return;
+            }
+            
+            // Переходим на страницу входа в комнату
+            window.location.href = 'room-entry.html';
+        }
+
+        function leaveRoom() {
+            const currentRoom = localStorage.getItem('currentRoom');
+            if (!currentRoom) {
+                alert('Вы не находитесь в комнате');
+                return;
+            }
+            
+            if (confirm('Вы уверены, что хотите покинуть комнату?')) {
+                const room = JSON.parse(currentRoom);
+                const username = localStorage.getItem('username') || 'Гость';
+                
+                // Обновляем список комнат
+                const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
+                const roomIndex = rooms.findIndex(r => r.id === room.id);
+                
+                if (roomIndex !== -1) {
+                    // Удаляем игрока из комнаты
+                    rooms[roomIndex].players = rooms[roomIndex].players.filter(p => p.name !== username);
+                    
+                    // Если это был хост и в комнате остались игроки, назначаем нового хоста
+                    const isHost = room.players.find(p => p.name === username && p.isHost);
+                    if (isHost && rooms[roomIndex].players.length > 0) {
+                        rooms[roomIndex].players[0].isHost = true;
+                    }
+                    
+                    // Если комната пустая, удаляем её
+                    if (rooms[roomIndex].players.length === 0) {
+                        rooms.splice(roomIndex, 1);
+                    }
+                    
+                    localStorage.setItem('rooms', JSON.stringify(rooms));
+                }
+                
+                // Очищаем текущую комнату
+                localStorage.removeItem('currentRoom');
+                localStorage.removeItem('selectedDream');
+                
+                // Обновляем UI
+                if (typeof updateCurrentRoomDisplay === 'function') {
+                    updateCurrentRoomDisplay();
+                }
+                if (typeof loadRooms === 'function') {
+                    loadRooms();
+                }
+                
+                alert('Вы покинули комнату');
+            }
+        }
+
+        // WebSocket подключение
+        let socket = null;
+        let currentUser = null;
+
         document.addEventListener('DOMContentLoaded', function() {
             // Проверяем авторизацию
             const username = localStorage.getItem('username') || 'Гость';
+            const email = localStorage.getItem('email') || '';
             const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+            
+            currentUser = { username, email };
+            
+            // Подключаемся к WebSocket
+            socket = io();
+            
+            // Регистрируем пользователя
+            socket.emit('registerUser', currentUser);
+            
+            // Обработчики WebSocket событий
+            socket.on('roomsUpdate', (rooms) => {
+                updateRoomsDisplay(rooms);
+            });
+            
+            socket.on('roomCreated', (room) => {
+                localStorage.setItem('currentRoom', JSON.stringify(room));
+                updateCurrentRoomDisplay();
+                alert(`Комната "${room.name}" создана!`);
+            });
+            
+            socket.on('roomUpdate', (room) => {
+                localStorage.setItem('currentRoom', JSON.stringify(room));
+                updateCurrentRoomDisplay();
+            });
+            
+            socket.on('error', (error) => {
+                alert('Ошибка: ' + error.message);
+            });
 
             // Обновляем информацию пользователя
             document.getElementById('username').textContent = username;
@@ -803,93 +908,28 @@
                     return;
                 }
 
-                const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
-                const roomId = Date.now().toString();
-                
-                const newRoom = {
-                    id: roomId,
+                // Отправляем данные на сервер через WebSocket
+                socket.emit('createRoom', {
                     name: roomName,
                     maxPlayers: maxPlayers,
-                    turnTime: turnTime, // Время на ход в минутах
-                    players: [{ name: username, isHost: true }],
-                    status: 'waiting',
-                    createdAt: new Date().toISOString()
-                };
-
-                rooms.push(newRoom);
-                localStorage.setItem('rooms', JSON.stringify(rooms));
-                
-                // Автоматически входим создателя в комнату
-                localStorage.setItem('currentRoom', JSON.stringify(newRoom));
+                    turnTime: turnTime
+                });
                 
                 // Очищаем форму
                 document.getElementById('room-name').value = '';
                 document.getElementById('max-players').value = '4';
                 document.getElementById('turn-time').value = '3';
-                
-                // Перезагружаем список комнат
-                loadRooms();
-                
-                // Обновляем кнопку старт и отображение текущей комнаты
-                updateStartButton();
-                updateCurrentRoomDisplay();
-
-                alert(`Комната "${roomName}" создана! Вы автоматически присоединились к ней.`);
             }
 
             function joinRoom(roomId) {
-                const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
-                const room = rooms.find(r => r.id === roomId);
+                // Проверяем, что пользователь зарегистрирован
+                if (!socket) {
+                    alert('Подключение к серверу не установлено');
+                    return;
+                }
                 
-                if (!room) {
-                    alert('Комната не найдена');
-                    return;
-                }
-
-                if (room.status === 'playing') {
-                    alert('Игра уже началась');
-                    return;
-                }
-
-                if (room.players.length >= room.maxPlayers) {
-                    alert('Комната заполнена');
-                    return;
-                }
-
-                // Проверяем, не находится ли пользователь уже в этой комнате
-                const existingPlayer = room.players.find(p => p.name === username);
-                if (existingPlayer) {
-                    // Пользователь уже в комнате, остаемся в лобби и показываем кнопку старт если хост
-                    localStorage.setItem('currentRoom', JSON.stringify(room));
-                    updateStartButton();
-                    return;
-                }
-
-                // Добавляем игрока в комнату
-                room.players.push({ name: username, isHost: false });
-                
-                // Обновляем статус комнаты
-                if (room.players.length >= room.maxPlayers) {
-                    room.status = 'full';
-                }
-
-                // Сохраняем обновленную комнату
-                const roomIndex = rooms.findIndex(r => r.id === roomId);
-                rooms[roomIndex] = room;
-                localStorage.setItem('rooms', JSON.stringify(rooms));
-                localStorage.setItem('currentRoom', JSON.stringify(room));
-
-                // Перезагружаем список комнат
-                loadRooms();
-
-                // Обновляем кнопку старт
-                updateStartButton();
-
-                // Обновляем отображение текущей комнаты
-                updateCurrentRoomDisplay();
-
-                // Показываем сообщение о присоединении
-                alert(`Вы присоединились к комнате "${room.name}"`);
+                // Отправляем запрос на присоединение через WebSocket
+                socket.emit('joinRoom', roomId);
             }
 
             function updateStartButton() {
@@ -990,69 +1030,7 @@
                 }
             }
 
-            function enterRoom() {
-                const currentRoom = localStorage.getItem('currentRoom');
-                if (!currentRoom) {
-                    alert('Вы не находитесь в комнате');
-                    return;
-                }
-                
-                const room = JSON.parse(currentRoom);
-                
-                // Проверяем, что игра не началась
-                if (room.status === 'playing') {
-                    alert('Игра уже началась! Переход к игровой доске...');
-                    window.location.href = 'game.html';
-                    return;
-                }
-                
-                // Переходим на страницу входа в комнату
-                window.location.href = 'room-entry.html';
-            }
-
-            function leaveRoom() {
-                const currentRoom = localStorage.getItem('currentRoom');
-                if (!currentRoom) {
-                    alert('Вы не находитесь в комнате');
-                    return;
-                }
-                
-                if (confirm('Вы уверены, что хотите покинуть комнату?')) {
-                    const room = JSON.parse(currentRoom);
-                    
-                    // Обновляем список комнат
-                    const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
-                    const roomIndex = rooms.findIndex(r => r.id === room.id);
-                    
-                    if (roomIndex !== -1) {
-                        // Удаляем игрока из комнаты
-                        rooms[roomIndex].players = rooms[roomIndex].players.filter(p => p.name !== username);
-                        
-                        // Если это был хост и в комнате остались игроки, назначаем нового хоста
-                        const isHost = room.players.find(p => p.name === username && p.isHost);
-                        if (isHost && rooms[roomIndex].players.length > 0) {
-                            rooms[roomIndex].players[0].isHost = true;
-                        }
-                        
-                        // Если комната пустая, удаляем её
-                        if (rooms[roomIndex].players.length === 0) {
-                            rooms.splice(roomIndex, 1);
-                        }
-                        
-                        localStorage.setItem('rooms', JSON.stringify(rooms));
-                    }
-                    
-                    // Очищаем текущую комнату
-                    localStorage.removeItem('currentRoom');
-                    localStorage.removeItem('selectedDream');
-                    
-                    // Обновляем UI
-                    updateCurrentRoomDisplay();
-                    loadRooms();
-                    
-                    alert('Вы покинули комнату');
-                }
-            }
+            // Функции enterRoom и leaveRoom уже определены глобально выше
 
             function updateCurrentRoomDisplay() {
                 const currentRoom = localStorage.getItem('currentRoom');
@@ -1137,8 +1115,40 @@
                 }
             }
 
-            // Автообновление списка комнат каждые 5 секунд
-            setInterval(loadRooms, 5000);
+            // Функция для обновления отображения комнат с сервера
+            function updateRoomsDisplay(rooms) {
+                const roomsContainer = document.getElementById('rooms-list');
+                
+                // Сортируем комнаты по дате создания (новые сверху)
+                rooms.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                
+                if (rooms.length === 0) {
+                    roomsContainer.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #a0a0a0;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">🏠</div>
+                            <div style="font-size: 16px; margin-bottom: 8px;">Нет доступных комнат</div>
+                            <div style="font-size: 14px;">Создайте новую комнату для начала игры</div>
+                        </div>
+                    `;
+                    updateStartButton();
+                    return;
+                }
+
+                roomsContainer.innerHTML = rooms.map(room => `
+                    <div class="room-item" data-room-id="${room.id}" onclick="joinRoom('${room.id}')">
+                        <div class="room-header">
+                            <div class="room-name">${room.name}</div>
+                            <div class="room-status ${room.status}">${getStatusText(room.status)}</div>
+                        </div>
+                        <div class="room-info">
+                            <div class="room-players">
+                                ${generatePlayerAvatars(room.players)}
+                            </div>
+                            <div>${room.players.length}/${room.maxPlayers} игроков${room.turnTime ? ` • ${room.turnTime} мин/ход` : ''}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
         });
     </script>
 </body>

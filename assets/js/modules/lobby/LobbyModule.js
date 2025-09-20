@@ -21,10 +21,39 @@ export class LobbyModule {
     async init() {
         this.cacheDom();
         this.bindEvents();
+        this.exposeLegacyBridges();
         await this.initializeUser();
         await this.loadUserStats();
         await this.loadRooms();
         this.scheduleRoomRefresh();
+    }
+
+    exposeLegacyBridges() {
+        window.enterRoom = () => {
+            const roomId = localStorage.getItem('currentRoomId');
+            if (!roomId) {
+                alert('Комната не найдена. Выберите или создайте комнату.');
+                return;
+            }
+            window.location.assign(`/room/${roomId}`);
+        };
+
+        window.leaveRoom = async () => {
+            const roomId = localStorage.getItem('currentRoomId');
+            if (!roomId) {
+                alert('Вы не находитесь в комнате');
+                return;
+            }
+            try {
+                await this.api.leaveRoom(roomId, {});
+                localStorage.removeItem('currentRoomId');
+                localStorage.removeItem('currentRoom');
+                await this.loadRooms();
+                alert('Вы покинули комнату');
+            } catch (error) {
+                alert(error.message || 'Не удалось покинуть комнату');
+            }
+        };
     }
 
     cacheDom() {
@@ -363,12 +392,15 @@ export class LobbyModule {
                 localStorage.setItem('currentRoomId', room.id);
                 localStorage.setItem('currentRoom', JSON.stringify(room));
                 try {
-                    await this.api.joinRoom(room.id, {});
+                    const joinResult = await this.api.joinRoom(room.id, {});
+                    if (joinResult?.room) {
+                        localStorage.setItem('currentRoom', JSON.stringify(joinResult.room));
+                    }
                 } catch (joinError) {
                     console.warn('Auto-join after creation failed:', joinError);
                 }
                 this.hideCreateRoomModal();
-                setTimeout(() => window.location.assign(`/room/${room.id}`), 50);
+                window.location.assign(`/room/${room.id}`);
                 return;
             }
             this.showError(this.dom.createRoomError, 'Комната создана, но отсутствует идентификатор');
@@ -384,10 +416,11 @@ export class LobbyModule {
         if (!roomId) return;
         const room = this.rooms.find(r => r.id === roomId);
         try {
-            await this.api.joinRoom(roomId, {});
+            const result = await this.api.joinRoom(roomId, {});
             localStorage.setItem('currentRoomId', roomId);
-            if (room) {
-                localStorage.setItem('currentRoom', JSON.stringify(room));
+            const roomData = result?.room || room || null;
+            if (roomData) {
+                localStorage.setItem('currentRoom', JSON.stringify(roomData));
             }
             window.location.assign(`/room/${roomId}`);
         } catch (error) {
@@ -407,9 +440,9 @@ export class LobbyModule {
         try {
             this.showLoader(this.dom.joinRoomLoading, true);
             const password = this.dom.joinRoomPassword?.value;
-            await this.api.joinRoom(this.selectedRoomId, password ? { password } : {});
+            const result = await this.api.joinRoom(this.selectedRoomId, password ? { password } : {});
             localStorage.setItem('currentRoomId', this.selectedRoomId);
-            const room = this.rooms.find(r => r.id === this.selectedRoomId);
+            const room = result?.room || this.rooms.find(r => r.id === this.selectedRoomId);
             if (room) {
                 localStorage.setItem('currentRoom', JSON.stringify(room));
             }
@@ -428,9 +461,12 @@ export class LobbyModule {
         }
         try {
             const password = available.requiresPassword ? this.dom.joinRoomPassword?.value : null;
-            await this.api.joinRoom(available.id, password ? { password } : {});
+            const result = await this.api.joinRoom(available.id, password ? { password } : {});
             localStorage.setItem('currentRoomId', available.id);
-            localStorage.setItem('currentRoom', JSON.stringify(available));
+            const room = result?.room || available;
+            if (room) {
+                localStorage.setItem('currentRoom', JSON.stringify(room));
+            }
             window.location.assign(`/room/${available.id}`);
         } catch (error) {
             this.showError(this.dom.createRoomError, error.message || 'Не удалось присоединиться к комнате');

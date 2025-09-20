@@ -293,22 +293,43 @@
             box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
         }
 
-        .token-item.selected::after {
-            content: '✓';
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #8b5cf6;
-            color: white;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-        }
+            .token-item.selected::after {
+                content: '✓';
+                position: absolute;
+                top: -8px;
+                right: -8px;
+                background: #8b5cf6;
+                color: white;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                font-weight: bold;
+            }
+
+            .token-item.disabled {
+                opacity: 0.3;
+                cursor: not-allowed;
+            }
+
+            .token-taken {
+                position: absolute;
+                top: -8px;
+                right: -8px;
+                background: #ef4444;
+                color: white;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                font-weight: bold;
+            }
 
         .actions {
             display: flex;
@@ -438,6 +459,8 @@
         </div>
     </div>
 
+    <!-- Socket.IO клиент -->
+    <script src="/socket.io/socket.io.js"></script>
     <script>
         let currentRoom = null;
         let selectedDream = null;
@@ -456,6 +479,9 @@
             { id: 8, emoji: '👑', name: 'Корона', color: '#EAB308' }
         ];
 
+        // WebSocket подключение
+        let socket = null;
+
         // Загружаем данные комнаты
         function loadRoomData() {
             const roomData = localStorage.getItem('currentRoom');
@@ -466,6 +492,42 @@
             }
 
             currentRoom = JSON.parse(roomData);
+            
+            // Подключаемся к WebSocket
+            socket = io();
+            window.socket = socket;
+            
+            // Сначала регистрируем пользователя
+            const userData = {
+                username: username,
+                email: localStorage.getItem('email') || ''
+            };
+            socket.emit('registerUser', userData);
+            
+            // После регистрации присоединяемся к комнате
+            socket.on('roomsUpdate', () => {
+                socket.emit('joinRoom', currentRoom.id);
+            });
+            
+            // Обработчик успешного присоединения к комнате
+            socket.on('roomJoined', () => {
+                console.log('Успешно присоединились к комнате');
+            });
+            
+            // Обработчики событий
+            socket.on('roomUpdate', (room) => {
+                currentRoom = room;
+                localStorage.setItem('currentRoom', JSON.stringify(room));
+                updateRoomInfo();
+                updateParticipants();
+                updateStartButton();
+                loadTokens();
+            });
+            
+            socket.on('error', (error) => {
+                alert('Ошибка: ' + error.message);
+            });
+            
             updateRoomInfo();
             updateParticipants();
             updateStartButton();
@@ -478,16 +540,33 @@
         function loadTokens() {
             const tokensGrid = document.getElementById('tokensGrid');
             
-            tokensGrid.innerHTML = playerTokens.map(token => `
-                <div class="token-item" onclick="selectToken(${token.id})" style="background: linear-gradient(135deg, ${token.color}20 0%, ${token.color}10 100%);">
-                    ${token.emoji}
-                </div>
-            `).join('');
+            tokensGrid.innerHTML = playerTokens.map(token => {
+                // Проверяем, занята ли фишка другим игроком
+                const tokenInUse = currentRoom && currentRoom.players.some(p => p.token === token.id && p.name !== username);
+                const isSelected = selectedToken && selectedToken.id === token.id;
+                const isDisabled = tokenInUse && !isSelected;
+                
+                return `
+                    <div class="token-item ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}" 
+                         onclick="${isDisabled ? '' : `selectToken(${token.id})`}" 
+                         style="background: linear-gradient(135deg, ${token.color}20 0%, ${token.color}10 100%); ${isDisabled ? 'opacity: 0.3;' : ''}">
+                        ${token.emoji}
+                        ${isDisabled ? '<div class="token-taken">✗</div>' : ''}
+                    </div>
+                `;
+            }).join('');
         }
 
         // Выбираем фишку
         function selectToken(tokenId) {
             selectedToken = playerTokens.find(token => token.id === tokenId);
+            
+            // Проверяем, не выбрана ли уже эта фишка другим игроком
+            const tokenInUse = currentRoom.players.some(p => p.token === tokenId && p.name !== username);
+            if (tokenInUse) {
+                alert('Эта фишка уже выбрана другим игроком');
+                return;
+            }
             
             // Убираем выделение со всех фишек
             document.querySelectorAll('.token-item').forEach(item => {
@@ -499,6 +578,14 @@
             
             // Сохраняем выбранную фишку
             localStorage.setItem('selectedToken', JSON.stringify(selectedToken));
+            
+            // Отправляем выбор фишки на сервер
+            if (window.socket) {
+                window.socket.emit('selectToken', {
+                    roomId: currentRoom.id,
+                    tokenId: tokenId
+                });
+            }
             
             console.log('Выбрана фишка:', selectedToken.name);
         }

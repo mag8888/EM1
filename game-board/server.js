@@ -605,29 +605,193 @@ app.use((err, req, res, next) => {
     });
 });
 
+// Серверное хранилище комнат и пользователей
+let serverRooms = [];
+let connectedUsers = new Map();
+
 // WebSocket подключения
 io.on('connection', (socket) => {
     console.log('👤 Пользователь подключился:', socket.id);
     
+    // Регистрация пользователя
+    socket.on('registerUser', (userData) => {
+        connectedUsers.set(socket.id, {
+            ...userData,
+            socketId: socket.id,
+            connectedAt: new Date()
+        });
+        console.log('👤 Пользователь зарегистрирован:', userData.username);
+        
+        // Отправляем обновленный список комнат
+        socket.emit('roomsUpdate', serverRooms);
+    });
+    
+    // Создание комнаты
+    socket.on('createRoom', (roomData) => {
+        const user = connectedUsers.get(socket.id);
+        if (!user) {
+            socket.emit('error', { message: 'Пользователь не зарегистрирован' });
+            return;
+        }
+        
+        const newRoom = {
+            id: Date.now().toString(),
+            name: roomData.name,
+            maxPlayers: roomData.maxPlayers,
+            turnTime: roomData.turnTime,
+            players: [{
+                name: user.username,
+                email: user.email,
+                isHost: true,
+                socketId: socket.id,
+                token: null, // Фишка будет выбрана позже
+                dream: null  // Мечта будет выбрана позже
+            }],
+            status: 'waiting',
+            createdAt: new Date().toISOString()
+        };
+        
+        serverRooms.push(newRoom);
+        
+        // Отправляем обновленный список всем пользователям
+        io.emit('roomsUpdate', serverRooms);
+        
+        // Присоединяем создателя к комнате
+        socket.join(newRoom.id);
+        socket.emit('roomCreated', newRoom);
+        
+        console.log(`🏠 Создана комната ${newRoom.id} пользователем ${user.username}`);
+    });
+    
     // Присоединение к комнате
     socket.on('joinRoom', (roomId) => {
+        const user = connectedUsers.get(socket.id);
+        if (!user) {
+            socket.emit('error', { message: 'Пользователь не зарегистрирован' });
+            return;
+        }
+        
+        const room = serverRooms.find(r => r.id === roomId);
+        if (!room) {
+            socket.emit('error', { message: 'Комната не найдена' });
+            return;
+        }
+        
+        if (room.players.length >= room.maxPlayers) {
+            socket.emit('error', { message: 'Комната заполнена' });
+            return;
+        }
+        
+        // Проверяем, не находится ли пользователь уже в этой комнате
+        const existingPlayer = room.players.find(p => p.socketId === socket.id);
+        if (existingPlayer) {
+            socket.emit('error', { message: 'Вы уже в этой комнате' });
+            return;
+        }
+        
+        // Добавляем игрока в комнату
+        room.players.push({
+            name: user.username,
+            email: user.email,
+            isHost: false,
+            socketId: socket.id,
+            token: null,
+            dream: null
+        });
+        
         socket.join(roomId);
-        console.log(`🏠 Пользователь ${socket.id} присоединился к комнате ${roomId}`);
         
-        // Отправляем обновленные балансы всем в комнате
-        const balances = {};
-        Object.keys(bankData.balances).forEach(key => {
-            const [userId, userRoomId] = key.split('_');
-            if (userRoomId === roomId) {
-                balances[userId] = bankData.balances[key];
-            }
-        });
+        // Отправляем обновленный список всем пользователям
+        io.emit('roomsUpdate', serverRooms);
         
-        socket.to(roomId).emit('roomUpdate', {
-            type: 'userJoined',
-            userId: socket.id,
-            balances
-        });
+        // Отправляем обновление комнаты всем участникам
+        io.to(roomId).emit('roomUpdate', room);
+        
+        // Уведомляем пользователя об успешном присоединении
+        socket.emit('roomJoined');
+        
+        console.log(`🏠 Пользователь ${user.username} присоединился к комнате ${roomId}`);
+    });
+    
+    // Покидание комнаты
+    socket.on('leaveRoom', (roomId) => {
+        const user = connectedUsers.get(socket.id);
+        if (!user) return;
+        
+        const room = serverRooms.find(r => r.id === roomId);
+        if (!room) return;
+        
+        // Удаляем игрока из комнаты
+        room.players = room.players.filter(p => p.socketId !== socket.id);
+        
+        // Если это был хост и в комнате остались игроки, назначаем нового хоста
+        if (room.players.length > 0) {
+            room.players[0].isHost = true;
+        }
+        
+        // Если комната пустая, удаляем её
+        if (room.players.length === 0) {
+            serverRooms = serverRooms.filter(r => r.id !== roomId);
+        }
+        
+        socket.leave(roomId);
+        
+        // Отправляем обновления
+        io.emit('roomsUpdate', serverRooms);
+        if (room.players.length > 0) {
+            io.to(roomId).emit('roomUpdate', room);
+        }
+        
+        console.log(`🚪 Пользователь ${user.username} покинул комнату ${roomId}`);
+    });
+    
+    // Выбор фишки
+    socket.on('selectToken', (data) => {
+        const { roomId, tokenId } = data;
+        const user = connectedUsers.get(socket.id);
+        if (!user) return;
+        
+        const room = serverRooms.find(r => r.id === roomId);
+        if (!room) return;
+        
+        const player = room.players.find(p => p.socketId === socket.id);
+        if (!player) return;
+        
+        // Проверяем, не выбрана ли уже эта фишка другим игроком
+        const tokenInUse = room.players.some(p => p.token === tokenId && p.socketId !== socket.id);
+        if (tokenInUse) {
+            socket.emit('error', { message: 'Эта фишка уже выбрана другим игроком' });
+            return;
+        }
+        
+        // Присваиваем фишку игроку
+        player.token = tokenId;
+        
+        // Отправляем обновление комнаты всем участникам
+        io.to(roomId).emit('roomUpdate', room);
+        
+        console.log(`🎯 Игрок ${user.username} выбрал фишку ${tokenId} в комнате ${roomId}`);
+    });
+    
+    // Выбор мечты
+    socket.on('selectDream', (data) => {
+        const { roomId, dreamId } = data;
+        const user = connectedUsers.get(socket.id);
+        if (!user) return;
+        
+        const room = serverRooms.find(r => r.id === roomId);
+        if (!room) return;
+        
+        const player = room.players.find(p => p.socketId === socket.id);
+        if (!player) return;
+        
+        // Присваиваем мечту игроку
+        player.dream = dreamId;
+        
+        // Отправляем обновление комнаты всем участникам
+        io.to(roomId).emit('roomUpdate', room);
+        
+        console.log(`🌟 Игрок ${user.username} выбрал мечту ${dreamId} в комнате ${roomId}`);
     });
     
     // Отключение от комнаты
@@ -638,7 +802,40 @@ io.on('connection', (socket) => {
     
     // Отключение
     socket.on('disconnect', () => {
-        console.log('👋 Пользователь отключился:', socket.id);
+        const user = connectedUsers.get(socket.id);
+        if (user) {
+            console.log('👋 Пользователь отключился:', user.username);
+            
+            // Удаляем пользователя из всех комнат
+            serverRooms.forEach(room => {
+                const playerIndex = room.players.findIndex(p => p.socketId === socket.id);
+                if (playerIndex !== -1) {
+                    const player = room.players[playerIndex];
+                    room.players.splice(playerIndex, 1);
+                    
+                    // Если это был хост и в комнате остались игроки, назначаем нового хоста
+                    if (player.isHost && room.players.length > 0) {
+                        room.players[0].isHost = true;
+                    }
+                    
+                    // Если комната пустая, удаляем её
+                    if (room.players.length === 0) {
+                        serverRooms = serverRooms.filter(r => r.id !== room.id);
+                    } else {
+                        // Отправляем обновление комнаты оставшимся участникам
+                        io.to(room.id).emit('roomUpdate', room);
+                    }
+                }
+            });
+            
+            // Отправляем обновленный список комнат всем пользователям
+            io.emit('roomsUpdate', serverRooms);
+            
+            // Удаляем пользователя из списка подключенных
+            connectedUsers.delete(socket.id);
+        } else {
+            console.log('👋 Неизвестный пользователь отключился:', socket.id);
+        }
     });
 });
 
