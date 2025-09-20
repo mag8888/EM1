@@ -275,9 +275,64 @@
             box-shadow: 0 14px 26px rgba(255, 59, 59, 0.35);
         }
 
-        .btn-complex:hover {
+        .btn-pay-all {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #ffffff;
+            font-weight: 700;
+            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-pay-all:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
             transform: translateY(-2px);
-            box-shadow: 0 20px 40px rgba(255, 59, 59, 0.5);
+            box-shadow: 0 20px 40px rgba(245, 158, 11, 0.5);
+        }
+
+        .liability-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .liability-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .liability-info {
+            flex: 1;
+        }
+
+        .btn-pay-off {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-left: 12px;
+        }
+
+        .btn-pay-off:hover:not(:disabled) {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-1px);
+        }
+
+        .btn-pay-off:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            cursor: not-allowed;
+            transform: none;
         }
 
         .close-btn {
@@ -368,26 +423,44 @@
             
             <div class="liabilities-grid" id="liabilitiesList">
                 <div class="liability-item">
-                    <span class="liability-name">Налоги: <span id="taxesAmount">$1,300</span> (<span id="taxesPercent">13%</span>)</span>
+                    <div class="liability-info">
+                        <span class="liability-name">Налоги: <span id="taxesAmount">$1,300</span> (<span id="taxesPercent">13%</span>)</span>
+                    </div>
+                    <button class="btn-pay-off" onclick="payOffLiability('taxes', 0)" disabled>Погасить</button>
                 </div>
                 <div class="liability-item">
-                    <span class="liability-name">Прочие расходы: <span id="otherExpenses">$1,500</span></span>
+                    <div class="liability-info">
+                        <span class="liability-name">Прочие расходы: <span id="otherExpenses">$1,500</span></span>
+                    </div>
+                    <button class="btn-pay-off" onclick="payOffLiability('other', 0)" disabled>Погасить</button>
                 </div>
                 <div class="liability-item">
-                    <span class="liability-name">Кредит на авто: <span id="carLoanPayment">$700</span></span>
-                    <span class="liability-amount principal"><span id="carLoanPrincipal">$14,000</span> (тело)</span>
+                    <div class="liability-info">
+                        <span class="liability-name">Кредит на авто: <span id="carLoanPayment">$700</span></span>
+                        <span class="liability-amount principal"><span id="carLoanPrincipal">$14,000</span> (тело)</span>
+                    </div>
+                    <button class="btn-pay-off" onclick="payOffLiability('carLoan', 14000)">Погасить</button>
                 </div>
                 <div class="liability-item">
-                    <span class="liability-name">Образовательный кредит: <span id="educationLoanPayment">$500</span></span>
-                    <span class="liability-amount principal"><span id="educationLoanPrincipal">$10,000</span> (тело)</span>
+                    <div class="liability-info">
+                        <span class="liability-name">Образовательный кредит: <span id="educationLoanPayment">$500</span></span>
+                        <span class="liability-amount principal"><span id="educationLoanPrincipal">$10,000</span> (тело)</span>
+                    </div>
+                    <button class="btn-pay-off" onclick="payOffLiability('educationLoan', 10000)">Погасить</button>
                 </div>
                 <div class="liability-item">
-                    <span class="liability-name">Ипотека: <span id="mortgagePayment">$1,200</span></span>
-                    <span class="liability-amount principal"><span id="mortgagePrincipal">$240,000</span> (тело)</span>
+                    <div class="liability-info">
+                        <span class="liability-name">Ипотека: <span id="mortgagePayment">$1,200</span></span>
+                        <span class="liability-amount principal"><span id="mortgagePrincipal">$240,000</span> (тело)</span>
+                    </div>
+                    <button class="btn-pay-off" onclick="payOffLiability('mortgage', 240000)">Погасить</button>
                 </div>
                 <div class="liability-item">
-                    <span class="liability-name">Кредитные карты: <span id="creditCardsPayment">$1,000</span></span>
-                    <span class="liability-amount principal"><span id="creditCardsPrincipal">$20,000</span> (тело)</span>
+                    <div class="liability-info">
+                        <span class="liability-name">Кредитные карты: <span id="creditCardsPayment">$1,000</span></span>
+                        <span class="liability-amount principal"><span id="creditCardsPrincipal">$20,000</span> (тело)</span>
+                    </div>
+                    <button class="btn-pay-off" onclick="payOffLiability('creditCards', 20000)">Погасить</button>
                 </div>
             </div>
             
@@ -402,9 +475,9 @@
                 <span>💼</span>
                 <span>Business</span>
             </button>
-            <button class="btn btn-complex" onclick="selectComplex()">
-                <span>⚡</span>
-                <span>Сложный</span>
+            <button class="btn btn-pay-all" onclick="payOffAllLiabilities()">
+                <span>💰</span>
+                <span>Погасить все</span>
             </button>
         </div>
     </div>

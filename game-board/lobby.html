@@ -542,6 +542,16 @@
                             <label for="max-players">Максимум игроков</label>
                             <input type="number" id="max-players" value="4" min="2" max="8">
                         </div>
+                        <div class="form-group">
+                            <label for="turn-time">Время на ход (минуты)</label>
+                            <select id="turn-time" class="form-control">
+                                <option value="1">1 минута</option>
+                                <option value="2">2 минуты</option>
+                                <option value="3" selected>3 минуты</option>
+                                <option value="4">4 минуты</option>
+                                <option value="5">5 минут</option>
+                            </select>
+                        </div>
                         <button class="btn btn-primary" id="create-room" style="width: 100%;">🏠 Создать комнату</button>
                     </div>
                     
@@ -710,7 +720,7 @@
                             <div class="room-players">
                                 ${generatePlayerAvatars(room.players)}
                             </div>
-                            <div>${room.players.length}/${room.maxPlayers} игроков</div>
+                            <div>${room.players.length}/${room.maxPlayers} игроков${room.turnTime ? ` • ${room.turnTime} мин/ход` : ''}</div>
                         </div>
                     </div>
                 `).join('');
@@ -745,6 +755,7 @@
             function createRoom() {
                 const roomName = document.getElementById('room-name').value.trim();
                 const maxPlayers = parseInt(document.getElementById('max-players').value);
+                const turnTime = parseInt(document.getElementById('turn-time').value);
 
                 if (!roomName) {
                     alert('Введите название комнаты');
@@ -756,6 +767,11 @@
                     return;
                 }
 
+                if (turnTime < 1 || turnTime > 5) {
+                    alert('Время на ход должно быть от 1 до 5 минут');
+                    return;
+                }
+
                 const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
                 const roomId = Date.now().toString();
                 
@@ -763,6 +779,7 @@
                     id: roomId,
                     name: roomName,
                     maxPlayers: maxPlayers,
+                    turnTime: turnTime, // Время на ход в минутах
                     players: [{ name: username, isHost: true }],
                     status: 'waiting',
                     createdAt: new Date().toISOString()
@@ -771,18 +788,22 @@
                 rooms.push(newRoom);
                 localStorage.setItem('rooms', JSON.stringify(rooms));
                 
+                // Автоматически входим создателя в комнату
+                localStorage.setItem('currentRoom', JSON.stringify(newRoom));
+                
                 // Очищаем форму
                 document.getElementById('room-name').value = '';
                 document.getElementById('max-players').value = '4';
+                document.getElementById('turn-time').value = '3';
                 
                 // Перезагружаем список комнат
                 loadRooms();
                 
-                // Присоединяемся к созданной комнате
-                joinRoom(roomId);
-                
-                // Обновляем кнопку старт
+                // Обновляем кнопку старт и отображение текущей комнаты
                 updateStartButton();
+                updateCurrentRoomDisplay();
+
+                alert(`Комната "${roomName}" создана! Вы автоматически присоединились к ней.`);
             }
 
             function joinRoom(roomId) {
@@ -1014,7 +1035,8 @@
                     
                     // Обновляем информацию о комнате
                     document.getElementById('current-room-name').textContent = room.name;
-                    document.getElementById('players-count').textContent = `${room.players.length}/${room.maxPlayers} игроков`;
+                    const turnTimeText = room.turnTime ? ` (${room.turnTime} мин/ход)` : '';
+                    document.getElementById('players-count').textContent = `${room.players.length}/${room.maxPlayers} игроков${turnTimeText}`;
                     
                     // Обновляем список игроков
                     const playersList = document.getElementById('players-list');
