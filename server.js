@@ -829,6 +829,7 @@ app.get('/health', (req, res) => {
     ['/test-integration', 'test-integration.html'],
     ['/test-cells', 'test-cells.html'],
     ['/test-html', 'test.html'],
+    ['/test-all', 'test-all-scenarios.html'],
     ['/working', 'working.html']
 ].forEach(([route, file]) => registerPage(route, file));
 

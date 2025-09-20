@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EM1 Game Board v2.0 - Тест всех сценариев</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a1d24 25%, #242830 50%, #1a1d24 75%, #0f1419 100%);
+            color: #ffffff;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .test-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .test-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .test-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00e5ff 0%, #ff00ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .test-header p {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .test-sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .test-section {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .test-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .test-section h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #00e5ff;
+        }
+
+        .test-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .test-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .test-btn.success {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+
+        .test-btn.error {
+            background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
+        }
+
+        .test-btn.warning {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        }
+
+        .test-results {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .test-results h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #ff00ff;
+        }
+
+        .log-entry {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid #00e5ff;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .log-entry.success {
+            border-left-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .log-entry.error {
+            border-left-color: #f44336;
+            background: rgba(244, 67, 54, 0.1);
+        }
+
+        .log-entry.warning {
+            border-left-color: #ff9800;
+            background: rgba(255, 152, 0, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #00e5ff;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .clear-btn {
+            background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .test-sections {
+                grid-template-columns: 1fr;
+            }
+            
+            .test-header h1 {
+                font-size: 2rem;
+            }
+            
+            .test-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🎮 EM1 Game Board v2.0</h1>
+            <p>Комплексное тестирование всех игровых сценариев</p>
+        </div>
+
+        <div class="test-sections">
+            <!-- Инициализация системы -->
+            <div class="test-section">
+                <h2>🚀 Инициализация системы</h2>
+                <div class="test-buttons">
+                    <button class="test-btn" onclick="testSystemInit()">
+                        <span>⚙️</span> Инициализировать GameCore
+                    </button>
+                    <button class="test-btn" onclick="testModulesLoad()">
+                        <span>📦</span> Загрузить модули
+                    </button>
+                    <button class="test-btn" onclick="testEventBus()">
+                        <span>📡</span> Тест EventBus
+                    </button>
+                </div>
+            </div>
+
+            <!-- Генерация игрового поля -->
+            <div class="test-section">
+                <h2>🎯 Генерация игрового поля</h2>
+                <div class="test-buttons">
+                    <button class="test-btn" onclick="testCellGenerator()">
+                        <span>🏗️</span> Создать игровые клетки
+                    </button>
+                    <button class="test-btn" onclick="testBoardLayout()">
+                        <span>🗺️</span> Проверить макет поля
+                    </button>
+                    <button class="test-btn" onclick="testCellTypes()">
+                        <span>🎨</span> Тест типов клеток
+                    </button>
+                </div>
+            </div>
+
+            <!-- Система ходов -->
+            <div class="test-section">
+                <h2>🎲 Система ходов</h2>
+                <div class="test-buttons">
+                    <button class="test-btn" onclick="testTurnController()">
+                        <span>🔄</span> Инициализировать TurnController
+                    </button>
+                    <button class="test-btn" onclick="testDiceRoll()">
+                        <span>🎲</span> Бросок кубика
+                    </button>
+                    <button class="test-btn" onclick="testPlayerMovement()">
+                        <span>👤</span> Движение игрока
+                    </button>
+                </div>
+            </div>
+
+            <!-- Игровой процесс -->
+            <div class="test-section">
+                <h2>🎮 Игровой процесс</h2>
+                <div class="test-buttons">
+                    <button class="test-btn" onclick="testGameFlow()">
+                        <span>🎯</span> Запустить GameFlowController
+                    </button>
+                    <button class="test-btn" onclick="testFullTurn()">
+                        <span>⚡</span> Полный игровой ход
+                    </button>
+                    <button class="test-btn" onclick="testEventProcessing()">
+                        <span>📋</span> Обработка событий
+                    </button>
+                </div>
+            </div>
+
+            <!-- Игроки и состояние -->
+            <div class="test-section">
+                <h2>👥 Игроки и состояние</h2>
+                <div class="test-buttons">
+                    <button class="test-btn" onclick="testPlayerManager()">
+                        <span>👤</span> Управление игроками
+                    </button>
+                    <button class="test-btn" onclick="testStateManager()">
+                        <span>💾</span> Управление состоянием
+                    </button>
+                    <button class="test-btn" onclick="testPlayerStats()">
+                        <span>📊</span> Статистика игроков
+                    </button>
+                </div>
+            </div>
+
+            <!-- Интеграционные тесты -->
+            <div class="test-section">
+                <h2>🔗 Интеграционные тесты</h2>
+                <div class="test-buttons">
+                    <button class="test-btn" onclick="testFullGame()">
+                        <span>🎪</span> Полная игра (3 хода)
+                    </button>
+                    <button class="test-btn" onclick="testMultiplePlayers()">
+                        <span>👥</span> Мультиплеер (4 игрока)
+                    </button>
+                    <button class="test-btn" onclick="testPerformance()">
+                        <span>⚡</span> Тест производительности
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-results">
+            <h3>📋 Результаты тестирования</h3>
+            <div id="testLogs"></div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalTests">0</div>
+                    <div class="stat-label">Всего тестов</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="passedTests">0</div>
+                    <div class="stat-label">Успешных</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="failedTests">0</div>
+                    <div class="stat-label">Неудачных</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="testTime">0ms</div>
+                    <div class="stat-label">Время выполнения</div>
+                </div>
+            </div>
+
+            <button class="clear-btn" onclick="clearResults()">
+                🗑️ Очистить результаты
+            </button>
+        </div>
+    </div>
+
+    <!-- Подключаем игровые модули -->
+    <script type="module">
+        // Импорты игровых модулей
+        let GameCore, CellGenerator, TurnController, GameFlowController, DiceModule, MovementModule, EventModule, PlayerManager, StateManager, ModuleManager, EventBus;
+
+        // Статистика тестов
+        let testStats = {
+            total: 0,
+            passed: 0,
+            failed: 0,
+            startTime: null
+        };
+
+        // Инициализация модулей
+        async function initModules() {
+            try {
+                const { GameCore: GC } = await import('./assets/js/core/GameCore.js');
+                GameCore = GC;
+
+                const { CellGenerator: CG } = await import('./assets/js/modules/game/CellGenerator.js');
+                CellGenerator = CG;
+
+                const { TurnController: TC } = await import('./assets/js/modules/game/TurnController.js');
+                TurnController = TC;
+
+                const { GameFlowController: GFC } = await import('./assets/js/modules/game/GameFlowController.js');
+                GameFlowController = GFC;
+
+                const { DiceModule: DM } = await import('./assets/js/modules/DiceModule.js');
+                DiceModule = DM;
+
+                const { MovementModule: MM } = await import('./assets/js/modules/MovementModule.js');
+                MovementModule = MM;
+
+                const { EventModule: EM } = await import('./assets/js/modules/EventModule.js');
+                EventModule = EM;
+
+                const { PlayerManager: PM } = await import('./assets/js/core/PlayerManager.js');
+                PlayerManager = PM;
+
+                const { StateManager: SM } = await import('./assets/js/core/StateManager.js');
+                StateManager = SM;
+
+                const { ModuleManager: MM2 } = await import('./assets/js/core/ModuleManager.js');
+                ModuleManager = MM2;
+
+                const { EventBus: EB } = await import('./assets/js/services/EventBus.js');
+                EventBus = EB;
+
+                logResult('✅ Все модули успешно загружены', 'success');
+                return true;
+            } catch (error) {
+                logResult(`❌ Ошибка загрузки модулей: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        // Функции тестирования
+        window.testSystemInit = async function() {
+            startTest();
+            try {
+                const gameCore = new GameCore();
+                await gameCore.init();
+                logResult('✅ GameCore инициализирован успешно', 'success');
+                window.gameCore = gameCore;
+                passTest();
+            } catch (error) {
+                logResult(`❌ Ошибка инициализации GameCore: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        window.testModulesLoad = async function() {
+            startTest();
+            try {
+                if (!window.gameCore) {
+                    throw new Error('GameCore не инициализирован');
+                }
+                const modules = window.gameCore.modules.getAll();
+                logResult(`✅ Загружено модулей: ${Object.keys(modules).length}`, 'success');
+                Object.keys(modules).forEach(moduleName => {
+                    logResult(`  - ${moduleName}`, 'success');
+                });
+                passTest();
+            } catch (error) {
+                logResult(`❌ Ошибка загрузки модулей: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        window.testEventBus = async function() {
+            startTest();
+            try {
+                const eventBus = new EventBus();
+                let eventReceived = false;
+                
+                eventBus.on('testEvent', () => {
+                    eventReceived = true;
+                });
+                
+                eventBus.emit('testEvent');
+                
+                setTimeout(() => {
+                    if (eventReceived) {
+                        logResult('✅ EventBus работает корректно', 'success');
+                        passTest();
+                    } else {
+                        logResult('❌ EventBus не получил событие', 'error');
+                        failTest();
+                    }
+                }, 100);
+            } catch (error) {
+                logResult(`❌ Ошибка EventBus: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        window.testCellGenerator = async function() {
+            startTest();
+            try {
+                const cellGenerator = new CellGenerator(window.gameCore || {});
+                const cells = cellGenerator.generateGameBoard();
+                logResult(`✅ Создано клеток: ${cells.length}`, 'success');
+                logResult(`  - Типы клеток: ${[...new Set(cells.map(c => c.type))].join(', ')}`, 'success');
+                passTest();
+            } catch (error) {
+                logResult(`❌ Ошибка генерации клеток: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        window.testBoardLayout = async function() {
+            startTest();
+            try {
+                const cellGenerator = new CellGenerator(window.gameCore || {});
+                const cells = cellGenerator.generateGameBoard();
+                
+                if (cells.length === 44) {
+                    logResult('✅ Правильное количество клеток: 44', 'success');
+                } else {
+                    logResult(`⚠️ Неправильное количество клеток: ${cells.length} (ожидается 44)`, 'warning');
+                }
+                
+                const cellTypes = [...new Set(cells.map(c => c.type))];
+                logResult(`✅ Типы клеток: ${cellTypes.join(', ')}`, 'success');
+                passTest();
+            } catch (error) {
+                logResult(`❌ Ошибка проверки макета: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        window.testCellTypes = async function() {
+            startTest();
+            try {
+                const cellGenerator = new CellGenerator(window.gameCore || {});
+                const cells = cellGenerator.generateGameBoard();
+                
+                const expectedTypes = ['money', 'property', 'vehicle', 'idea', 'goal', 'shopping', 'business'];
+                const foundTypes = [...new Set(cells.map(c => c.type))];
+                
+                expectedTypes.forEach(type => {
+                    if (foundTypes.includes(type)) {
+                        logResult(`✅ Тип клетки найден: ${type}`, 'success');
+                    } else {
+                        logResult(`⚠️ Тип клетки не найден: ${type}`, 'warning');
+                    }
+                });
+                
+                passTest();
+            } catch (error) {
+                logResult(`❌ Ошибка проверки типов: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        window.testTurnController = async function() {
+            startTest();
+            try {
+                const turnController = new TurnController(window.gameCore || {});
+                logResult('✅ TurnController создан успешно', 'success');
+                
+                // Тест инициализации ходов
+                const mockPlayers = [
+                    { id: '1', name: 'Игрок 1' },
+                    { id: '2', name: 'Игрок 2' }
+                ];
+                
+                const turnOrder = turnController.initializeTurns(mockPlayers);
+                logResult(`✅ Порядок ходов инициализирован для ${turnOrder.length} игроков`, 'success');
+                passTest();
+            } catch (error) {
+                logResult(`❌ Ошибка TurnController: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        window.testDiceRoll = async function() {
+            startTest();
+            try {
+                const diceModule = new DiceModule();
+                const result = diceModule.roll();
+                
+                if (result.total >= 2 && result.total <= 12) {
+                    logResult(`✅ Бросок кубика: ${result.dice[0]} + ${result.dice[1]} = ${result.total}`, 'success');
+                } else {
+                    logResult(`❌ Неправильный результат броска: ${result.total}`, 'error');
+                    failTest();
+                    return;
+                }
+                passTest();
+            } catch (error) {
+                logResult(`❌ Ошибка броска кубика: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        window.testPlayerMovement = async function() {
+            startTest();
+            try {
+                const movementModule = new MovementModule();
+                const startPosition = 0;
+                const steps = 5;
+                
+                const newPosition = movementModule.move(startPosition, steps, 44);
+                
+                if (newPosition === 5) {
+                    logResult(`✅ Движение игрока: ${startPosition} + ${steps} = ${newPosition}`, 'success');
+                } else {
+                    logResult(`❌ Неправильное движение: ${startPosition} + ${steps} = ${newPosition}`, 'error');
+                    failTest();
+                    return;
+                }
+                passTest();
+            } catch (error) {
+                logResult(`❌ Ошибка движения: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        window.testGameFlow = async function() {
+            startTest();
+            try {
+                const gameFlowController = new GameFlowController(window.gameCore || {});
+                logResult('✅ GameFlowController создан успешно', 'success');
+                passTest();
+            } catch (error) {
+                logResult(`❌ Ошибка GameFlowController: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        window.testFullTurn = async function() {
+            startTest();
+            try {
+                if (!window.gameCore) {
+                    throw new Error('GameCore не инициализирован');
+                }
+                
+                // Создаем тестового игрока
+                const testPlayer = { id: 'test1', name: 'Тестовый игрок' };
+                
+                // Выполняем полный ход
+                const result = await window.gameCore.executeTurn(testPlayer.id);
+                
+                logResult('✅ Полный игровой ход выполнен успешно', 'success');
+                logResult(`  - Результат: ${JSON.stringify(result)}`, 'success');
+                passTest();
+            } catch (error) {
+                logResult(`❌ Ошибка полного хода: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        window.testEventProcessing = async function() {
+            startTest();
+            try {
+                const eventModule = new EventModule();
+                const testEvent = {
+                    type: 'payday',
+                    amount: 1000,
+                    player: 'test1'
+                };
+                
+                const result = eventModule.processEvent(testEvent);
+                logResult('✅ Обработка события выполнена', 'success');
+                logResult(`  - Результат: ${JSON.stringify(result)}`, 'success');
+                passTest();
+            } catch (error) {
+                logResult(`❌ Ошибка обработки события: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        window.testPlayerManager = async function() {
+            startTest();
+            try {
+                const playerManager = new PlayerManager();
+                const player = playerManager.addPlayer('test1', 'Тестовый игрок');
+                
+                if (player && player.id === 'test1') {
+                    logResult('✅ PlayerManager работает корректно', 'success');
+                    logResult(`  - Игрок добавлен: ${player.name}`, 'success');
+                } else {
+                    logResult('❌ Ошибка добавления игрока', 'error');
+                    failTest();
+                    return;
+                }
+                passTest();
+            } catch (error) {
+                logResult(`❌ Ошибка PlayerManager: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        window.testStateManager = async function() {
+            startTest();
+            try {
+                const stateManager = new StateManager();
+                stateManager.setState({ test: 'value' });
+                const state = stateManager.getState();
+                
+                if (state.test === 'value') {
+                    logResult('✅ StateManager работает корректно', 'success');
+                } else {
+                    logResult('❌ Ошибка StateManager', 'error');
+                    failTest();
+                    return;
+                }
+                passTest();
+            } catch (error) {
+                logResult(`❌ Ошибка StateManager: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        window.testPlayerStats = async function() {
+            startTest();
+            try {
+                if (!window.gameCore) {
+                    throw new Error('GameCore не инициализирован');
+                }
+                
+                const stats = window.gameCore.getGameStats();
+                logResult('✅ Статистика игры получена', 'success');
+                logResult(`  - Состояние игры: ${JSON.stringify(stats)}`, 'success');
+                passTest();
+            } catch (error) {
+                logResult(`❌ Ошибка получения статистики: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        window.testFullGame = async function() {
+            startTest();
+            try {
+                if (!window.gameCore) {
+                    throw new Error('GameCore не инициализирован');
+                }
+                
+                // Создаем игроков
+                const players = [
+                    { id: '1', name: 'Игрок 1' },
+                    { id: '2', name: 'Игрок 2' }
+                ];
+                
+                // Выполняем 3 хода
+                for (let i = 0; i < 3; i++) {
+                    const player = players[i % players.length];
+                    const result = await window.gameCore.executeTurn(player.id);
+                    logResult(`✅ Ход ${i + 1} выполнен игроком ${player.name}`, 'success');
+                }
+                
+                passTest();
+            } catch (error) {
+                logResult(`❌ Ошибка полной игры: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        window.testMultiplePlayers = async function() {
+            startTest();
+            try {
+                if (!window.gameCore) {
+                    throw new Error('GameCore не инициализирован');
+                }
+                
+                // Создаем 4 игроков
+                const players = [
+                    { id: '1', name: 'Игрок 1' },
+                    { id: '2', name: 'Игрок 2' },
+                    { id: '3', name: 'Игрок 3' },
+                    { id: '4', name: 'Игрок 4' }
+                ];
+                
+                // Выполняем по одному ходу каждым игроком
+                for (const player of players) {
+                    const result = await window.gameCore.executeTurn(player.id);
+                    logResult(`✅ Ход выполнен игроком ${player.name}`, 'success');
+                }
+                
+                passTest();
+            } catch (error) {
+                logResult(`❌ Ошибка мультиплеера: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        window.testPerformance = async function() {
+            startTest();
+            try {
+                const startTime = performance.now();
+                
+                // Выполняем 100 операций
+                for (let i = 0; i < 100; i++) {
+                    const diceModule = new DiceModule();
+                    diceModule.roll();
+                }
+                
+                const endTime = performance.now();
+                const duration = endTime - startTime;
+                
+                logResult(`✅ Производительность: 100 операций за ${duration.toFixed(2)}ms`, 'success');
+                logResult(`  - Среднее время: ${(duration / 100).toFixed(2)}ms на операцию`, 'success');
+                passTest();
+            } catch (error) {
+                logResult(`❌ Ошибка теста производительности: ${error.message}`, 'error');
+                failTest();
+            }
+        };
+
+        // Вспомогательные функции
+        function startTest() {
+            testStats.startTime = performance.now();
+        }
+
+        function passTest() {
+            testStats.total++;
+            testStats.passed++;
+            updateStats();
+        }
+
+        function failTest() {
+            testStats.total++;
+            testStats.failed++;
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('totalTests').textContent = testStats.total;
+            document.getElementById('passedTests').textContent = testStats.passed;
+            document.getElementById('failedTests').textContent = testStats.failed;
+            
+            if (testStats.startTime) {
+                const duration = performance.now() - testStats.startTime;
+                document.getElementById('testTime').textContent = `${duration.toFixed(0)}ms`;
+            }
+        }
+
+        function logResult(message, type = 'info') {
+            const logContainer = document.getElementById('testLogs');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        window.clearResults = function() {
+            document.getElementById('testLogs').innerHTML = '';
+            testStats = { total: 0, passed: 0, failed: 0, startTime: null };
+            updateStats();
+        };
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', async () => {
+            logResult('🚀 Инициализация тестовой среды...', 'info');
+            const success = await initModules();
+            if (success) {
+                logResult('✅ Тестовая среда готова к работе!', 'success');
+            } else {
+                logResult('❌ Ошибка инициализации тестовой среды', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
