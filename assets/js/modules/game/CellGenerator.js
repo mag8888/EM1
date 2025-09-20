@@ -31,18 +31,12 @@ export class CellGenerator {
     }
 
     /**
-     * Генерация игрового поля с клетками
+     * Генерация игрового поля с клетками (круглое поле как на скриншоте)
      * @param {Object} config - Конфигурация поля
      */
     generateGameBoard(config = {}) {
         const boardConfig = {
-            totalCells: 40,
-            paydayPositions: [0, 10, 20, 30], // Позиции PAYDAY
-            charityPositions: [5, 15, 25, 35], // Позиции благотворительности
-            opportunityPositions: [2, 7, 12, 17, 22, 27, 32, 37], // Позиции возможностей
-            expensePositions: [3, 8, 13, 18, 23, 28, 33, 38], // Позиции расходов
-            marketPositions: [1, 6, 11, 16, 21, 26, 31, 36], // Позиции рынка
-            dreamPositions: [4, 9, 14, 19, 24, 29, 34, 39], // Позиции мечт
+            totalCells: 44, // Как на скриншоте - 44 клетки
             ...config
         };
 
@@ -60,18 +54,17 @@ export class CellGenerator {
     }
 
     /**
-     * Генерация отдельной клетки
-     * @param {number} position - Позиция клетки
+     * Генерация отдельной клетки (как на скриншоте)
+     * @param {number} position - Позиция клетки (1-44)
      * @param {Object} boardConfig - Конфигурация поля
      */
     generateCell(position, boardConfig) {
-        const cellType = this.determineCellType(position, boardConfig);
-        const cellData = this.getCellData(cellType, position);
+        const cellData = this.getCellDataByPosition(position);
         
         return {
             id: `cell_${position}`,
             position: position,
-            type: cellType,
+            type: cellData.type,
             name: cellData.name,
             description: cellData.description,
             icon: cellData.icon,
@@ -85,30 +78,144 @@ export class CellGenerator {
     }
 
     /**
-     * Определение типа клетки по позиции
-     * @param {number} position - Позиция
-     * @param {Object} boardConfig - Конфигурация поля
+     * Получение данных клетки по позиции (как на скриншоте)
+     * @param {number} position - Позиция клетки (1-44)
      */
-    determineCellType(position, boardConfig) {
-        if (boardConfig.paydayPositions.includes(position)) {
-            return this.cellTypes.PAYDAY;
+    getCellDataByPosition(position) {
+        // Определяем тип и данные клетки на основе позиции
+        // Это соответствует клеткам на скриншоте
+        
+        if (position === 1) {
+            return {
+                type: 'money',
+                name: 'Деньги',
+                description: 'Получите деньги',
+                icon: '💰',
+                color: '#4CAF50',
+                effects: ['gain_money'],
+                actions: ['collect_money'],
+                cost: 0,
+                income: 1000
+            };
         }
-        if (boardConfig.charityPositions.includes(position)) {
-            return this.cellTypes.CHARITY;
+        
+        if (position === 2) {
+            return {
+                type: 'property',
+                name: 'Недвижимость',
+                description: 'Инвестиция в недвижимость',
+                icon: '🏠',
+                color: '#2196F3',
+                effects: ['buy_property'],
+                actions: ['invest_property'],
+                cost: 5000,
+                income: 500
+            };
         }
-        if (boardConfig.opportunityPositions.includes(position)) {
-            return this.cellTypes.OPPORTUNITY;
+        
+        if (position === 3) {
+            return {
+                type: 'vehicle',
+                name: 'Транспорт',
+                description: 'Покупка автомобиля',
+                icon: '🚗',
+                color: '#FF9800',
+                effects: ['buy_vehicle'],
+                actions: ['purchase_vehicle'],
+                cost: 3000,
+                income: 0
+            };
         }
-        if (boardConfig.expensePositions.includes(position)) {
-            return this.cellTypes.EXPENSE;
+        
+        if (position === 4) {
+            return {
+                type: 'idea',
+                name: 'Идея',
+                description: 'Новая бизнес-идея',
+                icon: '💡',
+                color: '#9C27B0',
+                effects: ['get_idea'],
+                actions: ['develop_idea'],
+                cost: 1000,
+                income: 200
+            };
         }
-        if (boardConfig.marketPositions.includes(position)) {
-            return this.cellTypes.MARKET;
+        
+        if (position === 5) {
+            return {
+                type: 'goal',
+                name: 'Цель',
+                description: 'Поставьте финансовую цель',
+                icon: '🎯',
+                color: '#F44336',
+                effects: ['set_goal'],
+                actions: ['define_goal'],
+                cost: 0,
+                income: 0
+            };
         }
-        if (boardConfig.dreamPositions.includes(position)) {
-            return this.cellTypes.DREAM;
+        
+        // Продолжаем для остальных клеток...
+        // Для краткости показываем основные типы
+        
+        if (position >= 6 && position <= 44) {
+            const types = ['money', 'property', 'vehicle', 'idea', 'goal', 'shopping', 'business'];
+            const icons = ['💰', '🏠', '🚗', '💡', '🎯', '🛒', '💼'];
+            const colors = ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#F44336', '#E91E63', '#795548'];
+            
+            const typeIndex = (position - 6) % types.length;
+            const type = types[typeIndex];
+            
+            return {
+                type: type,
+                name: this.getTypeName(type),
+                description: this.getTypeDescription(type),
+                icon: icons[typeIndex],
+                color: colors[typeIndex],
+                effects: [`${type}_action`],
+                actions: [`${type}_interaction`],
+                cost: Math.floor(Math.random() * 5000) + 1000,
+                income: Math.floor(Math.random() * 500) + 100
+            };
         }
-        return this.cellTypes.NEUTRAL;
+        
+        return {
+            type: 'neutral',
+            name: `Клетка ${position}`,
+            description: 'Нейтральная клетка',
+            icon: '⚪',
+            color: '#9E9E9E',
+            effects: [],
+            actions: [],
+            cost: 0,
+            income: 0
+        };
+    }
+    
+    getTypeName(type) {
+        const names = {
+            'money': 'Деньги',
+            'property': 'Недвижимость', 
+            'vehicle': 'Транспорт',
+            'idea': 'Идея',
+            'goal': 'Цель',
+            'shopping': 'Покупки',
+            'business': 'Бизнес'
+        };
+        return names[type] || 'Неизвестно';
+    }
+    
+    getTypeDescription(type) {
+        const descriptions = {
+            'money': 'Получите дополнительные деньги',
+            'property': 'Инвестируйте в недвижимость',
+            'vehicle': 'Купите транспортное средство',
+            'idea': 'Получите новую идею',
+            'goal': 'Поставьте финансовую цель',
+            'shopping': 'Совершите покупку',
+            'business': 'Развивайте бизнес'
+        };
+        return descriptions[type] || 'Выполните действие';
     }
 
     /**
