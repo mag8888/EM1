@@ -21,21 +21,16 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
-        origin: [
-            "http://localhost:3000",
-            "http://localhost:8080", 
-            "https://em1-production.up.railway.app",
-            "https://*.up.railway.app",
-            "*"
-        ],
+        origin: "*", // Разрешаем все источники для Railway
         methods: ["GET", "POST", "PUT", "DELETE"],
-        credentials: true,
+        credentials: false, // Отключаем credentials для Railway
         allowedHeaders: ["*"]
     },
     transports: ['polling', 'websocket'],
     allowEIO3: true,
     pingTimeout: 60000,
-    pingInterval: 25000
+    pingInterval: 25000,
+    connectTimeout: 45000
 });
 const PORT = process.env.PORT || 8080;
 
@@ -1105,7 +1100,7 @@ async function startServer() {
         
         // Start server
         server.listen(PORT, () => {
-            console.log('🎮 Game Board v2.1 Server запущен!');
+            console.log('🎮 Game Board v2.2 Server запущен!');
             console.log(`🚀 Сервер работает на порту ${PORT}`);
             console.log(`📱 Локальный адрес: http://localhost:${PORT}`);
             console.log(`🌐 Railway адрес: https://your-app.railway.app`);
