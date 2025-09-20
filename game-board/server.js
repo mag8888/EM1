@@ -22,8 +22,11 @@ const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
         origin: "*",
-        methods: ["GET", "POST"]
-    }
+        methods: ["GET", "POST"],
+        credentials: true
+    },
+    transports: ['polling', 'websocket'],
+    allowEIO3: true
 });
 const PORT = process.env.PORT || 8080;
 
@@ -612,6 +615,17 @@ let connectedUsers = new Map();
 // WebSocket подключения
 io.on('connection', (socket) => {
     console.log('👤 Пользователь подключился:', socket.id);
+    console.log('🔌 Transport:', socket.conn.transport.name);
+    console.log('🌐 Origin:', socket.handshake.headers.origin);
+    
+    // Обработка ошибок подключения
+    socket.on('connect_error', (error) => {
+        console.error('❌ WebSocket connection error:', error);
+    });
+    
+    socket.on('disconnect', (reason) => {
+        console.log('👋 Пользователь отключился:', socket.id, 'Причина:', reason);
+    });
     
     // Регистрация пользователя
     socket.on('registerUser', (userData) => {
