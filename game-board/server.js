@@ -117,6 +117,8 @@ async function initializeDefaultProfession() {
 
 // Middleware
 app.use(express.static(path.join(__dirname)));
+app.use('/assets', express.static(path.join(__dirname, '..', 'assets')));
+app.use('/favicon.svg', express.static(path.join(__dirname, '..', 'favicon.svg')));
 app.use(express.json());
 
 // Helpers --------------------------------------------------------------
@@ -214,6 +216,17 @@ function getTransferHistory(roomId) {
 // Основной маршрут
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Страницы комнаты (используем общий room.html из корня)
+const rootRoomPath = path.join(__dirname, '..', 'room.html');
+
+app.get('/room', (req, res) => {
+    res.sendFile(rootRoomPath);
+});
+
+app.get('/room/:roomId', (req, res) => {
+    res.sendFile(rootRoomPath);
 });
 
 // Маршруты для страниц
