@@ -1,3 +1,14 @@
+const DEFAULT_TOKENS = [
+    { id: 'lion', icon: '🦁', name: 'Лев' },
+    { id: 'tiger', icon: '🐯', name: 'Тигр' },
+    { id: 'fox', icon: '🦊', name: 'Лиса' },
+    { id: 'panda', icon: '🐼', name: 'Панда' },
+    { id: 'frog', icon: '🐸', name: 'Лягушка' },
+    { id: 'owl', icon: '🦉', name: 'Сова' },
+    { id: 'octopus', icon: '🐙', name: 'Осьминог' },
+    { id: 'whale', icon: '🐳', name: 'Кит' }
+];
+
 export default class TokenSelector {
     constructor({ state, container }) {
         this.state = state;
@@ -14,14 +25,17 @@ export default class TokenSelector {
     }
 
     render(room) {
-        if (!room || !Array.isArray(room.availableTokens)) {
+        if (!room) {
             return;
         }
+        const tokens = Array.isArray(room.availableTokens) && room.availableTokens.length
+            ? room.availableTokens
+            : DEFAULT_TOKENS;
         const player = room.currentPlayer;
         this.currentTokenId = player?.selectedToken ?? null;
         this.container.innerHTML = '';
 
-        room.availableTokens.forEach((token) => {
+        tokens.forEach((token) => {
             const button = document.createElement('button');
             button.type = 'button';
             button.className = 'token-item';
