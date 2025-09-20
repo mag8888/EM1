@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "build": "echo 'No build step required for static HTML'",
     "test": "echo 'Run test-game-integration.html in browser'",
-    "deploy": "echo 'Deploying to Railway...'"
+    "deploy": "echo 'Deploying to Railway...'",
+    "railway:start": "npm start"
   },
   "keywords": [
     "html",
