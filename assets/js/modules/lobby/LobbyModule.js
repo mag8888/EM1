@@ -21,6 +21,10 @@ class LobbyModule {
         this.bindEvents();
         this.exposeLegacyBridges();
         await this.initializeUser();
+        
+        // Небольшая задержка для стабилизации localStorage
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         await this.loadUserStats();
         await this.loadRooms();
         this.scheduleRoomRefresh();
@@ -234,29 +238,22 @@ class LobbyModule {
                     Authorization: `Bearer ${token}`
                 }
             });
-            if (!response.ok) return;
+            if (!response.ok) {
+                console.log('User stats not available');
+                return;
+            }
             const stats = await response.json();
             if (this.dom.totalGames) this.dom.totalGames.textContent = stats.games_played ?? stats.gamesPlayed ?? 0;
             if (this.dom.totalWins) this.dom.totalWins.textContent = stats.wins_count ?? stats.totalWins ?? 0;
             if (this.dom.userLevel) this.dom.userLevel.textContent = stats.level ?? 1;
         } catch (error) {
             console.error('Failed to load user stats', error);
+            // Не блокируем загрузку страницы из-за ошибки статистики
         }
     }
 
     async loadRooms(showLoading = true) {
         try {
-            // Проверяем, есть ли токен авторизации
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                console.log('No auth token found, redirecting to login');
-                this.showError(this.dom.createRoomError, 'Необходимо войти в систему');
-                setTimeout(() => {
-                    window.location.href = '/auth.html';
-                }, 2000);
-                return;
-            }
-            
             if (showLoading) {
                 this.setRoomsLoading(true);
             }
@@ -265,7 +262,16 @@ class LobbyModule {
             this.renderRooms();
         } catch (error) {
             console.error('Failed to load rooms', error);
-            this.showError(this.dom.createRoomError, error.message || 'Не удалось загрузить комнаты');
+            // Проверяем, если это ошибка авторизации, то перенаправляем
+            if (error.message && error.message.includes('401')) {
+                console.log('Authorization error, redirecting to login');
+                this.showError(this.dom.createRoomError, 'Сессия истекла. Необходимо войти в систему');
+                setTimeout(() => {
+                    window.location.href = '/auth.html';
+                }, 2000);
+            } else {
+                this.showError(this.dom.createRoomError, error.message || 'Не удалось загрузить комнаты');
+            }
         } finally {
             if (showLoading) {
                 this.setRoomsLoading(false);
