@@ -8,17 +8,17 @@ const cors = require('cors');
 // Используем Memory Database для Railway deployment
 const Database = require('./database-memory');
 
-const CreditService = require('./credit-module/CreditService');
+// const CreditService = require('./credit-module/CreditService');
 const { GAME_CELLS, GameCellsUtils } = require('./game-board/config/game-cells.js');
 const { SMALL_DEAL_CARDS, BIG_DEAL_CARDS, EXPENSE_CARDS, createDeck, shuffleDeck, drawCard } = require('./assets/js/utils/cards-config.js');
-const userManager = require('./game-board/utils/userManager');
+// const userManager = require('./game-board/utils/userManager');
 // const LegacyUser = require('./models/LegacyUser'); // Отключено для SQLite
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
 // --- Shared services -----------------------------------------------------
-const creditService = new CreditService();
+// const creditService = new CreditService();
 const rooms = new Map(); // actual game rooms
 const creditRooms = new Map(); // legacy credit rooms
 
