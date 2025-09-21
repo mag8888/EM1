@@ -62,7 +62,8 @@ class RoomApi {
     async request(endpoint, options = {}) {
         const url = `${this.baseUrl}${endpoint}`;
         
-        console.log('RoomApi request:', { url, method: options.method || 'GET' });
+        console.log('RoomApi request (OLD METHOD):', { url, method: options.method || 'GET' });
+        console.trace('Call stack for old request method:');
 
         // Получаем токен и данные пользователя
         const token = localStorage.getItem('authToken');
