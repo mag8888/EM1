@@ -53,7 +53,17 @@ class LobbyModule {
         }
         
         try {
-            await this.initializeUser();
+            const userInitialized = await this.initializeUser();
+            
+            // Проверяем, что пользователь успешно инициализирован
+            if (!userInitialized) {
+                console.log('❌ User initialization failed, redirecting to login');
+                this.showError(null, 'Ошибка авторизации. Необходимо войти в систему');
+                setTimeout(() => {
+                    window.location.href = '/auth.html';
+                }, 2000);
+                return;
+            }
             
             // Небольшая задержка для стабилизации localStorage
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -217,7 +227,7 @@ class LobbyModule {
         if (!authToken) {
             console.log('No auth token found, skipping validation');
             console.log('This might be the cause of the logout issue');
-            return;
+            return false;
         }
         
         console.log('Validating user with token...');
@@ -225,10 +235,11 @@ class LobbyModule {
         if (!userValid) {
             console.log('User validation failed, logging out');
             this.logout();
-            return;
+            return false;
         }
         console.log('User validation successful');
         this.updateUserDisplay();
+        return true;
     }
 
     updateUserDisplay() {
@@ -300,12 +311,17 @@ class LobbyModule {
                 status: error.status || 'unknown'
             });
             
-            // Не удаляем токен сразу, возможно это временная ошибка сети
-            if (error.message.includes('401') || error.message.includes('403')) {
+            // Удаляем токен только при явных ошибках авторизации
+            if (error.message.includes('401') || error.message.includes('403') || 
+                error.message.includes('Unauthorized') || error.message.includes('Forbidden')) {
                 console.log('Authentication error, clearing tokens');
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('user');
+                return false;
             }
+            
+            // Для других ошибок (сеть, сервер) не удаляем токен
+            console.log('Network or server error, keeping tokens for retry');
             return false;
         }
     }
