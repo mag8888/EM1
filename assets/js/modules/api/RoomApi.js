@@ -198,16 +198,10 @@ class RoomApi {
                 throw new Error(`HTTP ${response.status}`);
             }
         } catch (error) {
-            console.warn('Simple rooms endpoint failed, trying full endpoint:', error);
-            // Fallback на полный endpoint
-            try {
-                const data = await this.request('/api/rooms');
-                console.log('Full endpoint result:', data);
-                return data.rooms || [];
-            } catch (fullError) {
-                console.error('Full endpoint also failed:', fullError);
-                return []; // Возвращаем пустой массив как fallback
-            }
+            console.warn('Simple rooms endpoint failed:', error);
+            // Не используем fallback на старый метод, просто возвращаем пустой массив
+            console.log('Returning empty array as fallback');
+            return []; // Возвращаем пустой массив как fallback
         }
     }
 
