@@ -10,6 +10,7 @@ class LobbyModule {
         }
         
         this.api = api;
+        this.roomApi = api; // Дублируем для совместимости
         this.pollInterval = pollInterval;
         this.currentUser = null;
         this.rooms = [];
@@ -268,8 +269,14 @@ class LobbyModule {
                 return false;
             }
             
+            console.log('Validating user with token:', token.substring(0, 20) + '...');
+            console.log('RoomApi available:', !!this.roomApi);
+            console.log('RoomApi baseUrl:', this.roomApi?.baseUrl);
+            
             // Используем RoomApi для консистентности
             const data = await this.roomApi.request('/api/user/profile');
+            console.log('Profile data received:', data);
+            
             if (!data.id && data._id) {
                 data.id = data._id;
             }
@@ -282,6 +289,11 @@ class LobbyModule {
             return true;
         } catch (error) {
             console.error('Failed to validate user', error);
+            console.log('Error details:', {
+                message: error.message,
+                name: error.name,
+                stack: error.stack
+            });
             localStorage.removeItem('authToken');
             localStorage.removeItem('user');
             return false;
@@ -326,6 +338,8 @@ class LobbyModule {
     async loadRooms(showLoading = true) {
         console.log('=== Загрузка комнат ===');
         console.log('Auth token present:', !!localStorage.getItem('authToken'));
+        console.log('API available:', !!this.api);
+        console.log('API baseUrl:', this.api?.baseUrl);
         
         // Дополнительная проверка токена перед загрузкой
         const authToken = localStorage.getItem('authToken');
@@ -342,6 +356,7 @@ class LobbyModule {
             if (showLoading) {
                 this.setRoomsLoading(true);
             }
+            console.log('Calling api.listRooms()...');
             const result = await this.api.listRooms();
             console.log('Rooms loaded successfully:', result);
             this.rooms = Array.isArray(result) ? result : [];
