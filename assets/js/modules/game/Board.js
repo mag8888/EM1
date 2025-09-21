@@ -39,21 +39,46 @@ class Board {
      * Инициализация ячеек доски
      */
     initializeCells() {
-        this.cells = Array.from({ length: 44 }, (_, index) => ({
-            id: index + 1,
-            type: this.getCellType(index + 1),
-            color: this.getCellColor(index + 1),
-            icon: this.getCellIcon(index + 1),
-            name: this.getCellName(index + 1),
-            description: this.getCellDescription(index + 1),
-            position: index + 1,
-            isSpecial: this.isSpecialCell(index + 1),
-            isStart: index === 0,
-            isEnd: index === 43,
-            players: []
-        }));
+        // Создаем 76 ячеек: 52 внешние + 24 внутренние
+        this.cells = [];
         
-        console.log(`🎯 Initialized ${this.cells.length} board cells`);
+        // Внешний круг (52 ячейки)
+        for (let i = 1; i <= 52; i++) {
+            this.cells.push({
+                id: i,
+                type: this.getCellType(i),
+                color: this.getCellColor(i),
+                icon: this.getCellIcon(i),
+                name: this.getCellName(i),
+                description: this.getCellDescription(i),
+                position: i,
+                isSpecial: this.isSpecialCell(i),
+                isStart: i === 1,
+                isEnd: i === 52,
+                isOuter: true,
+                players: []
+            });
+        }
+        
+        // Внутренний круг (24 ячейки)
+        for (let i = 53; i <= 76; i++) {
+            this.cells.push({
+                id: i,
+                type: this.getCellType(i),
+                color: this.getCellColor(i),
+                icon: this.getCellIcon(i),
+                name: this.getCellName(i),
+                description: this.getCellDescription(i),
+                position: i,
+                isSpecial: this.isSpecialCell(i),
+                isStart: false,
+                isEnd: false,
+                isOuter: false,
+                players: []
+            });
+        }
+        
+        console.log(`🎯 Initialized ${this.cells.length} board cells (52 outer + 24 inner)`);
     }
 
     /**
@@ -79,14 +104,22 @@ class Board {
     }
 
     /**
-     * Создание спирального расположения ячеек
+     * Создание двухкругового расположения ячеек
      */
     createSpiralLayout(container) {
-        // Создаем контейнер для спирали
-        const spiralContainer = document.createElement('div');
-        spiralContainer.className = 'spiral-container';
+        // Создаем контейнер для доски
+        const boardContainer = document.createElement('div');
+        boardContainer.className = 'board-container';
         
-        // Создаем ячейки с позиционированием
+        // Создаем внешний круг (52 ячейки)
+        const outerCircle = document.createElement('div');
+        outerCircle.className = 'outer-circle';
+        
+        // Создаем внутренний круг (24 ячейки)
+        const innerCircle = document.createElement('div');
+        innerCircle.className = 'inner-circle';
+        
+        // Добавляем ячейки в соответствующие круги
         this.cells.forEach(cell => {
             const cellElement = document.createElement('div');
             cellElement.className = `board-cell ${cell.type} ${cell.color}`;
@@ -98,12 +131,11 @@ class Board {
                 <div class="cell-players"></div>
             `;
             
-            // Позиционируем ячейку в спирали
-            const position = this.getSpiralPosition(cell.id);
-            cellElement.style.left = position.x + 'px';
-            cellElement.style.top = position.y + 'px';
-            
-            spiralContainer.appendChild(cellElement);
+            if (cell.isOuter) {
+                outerCircle.appendChild(cellElement);
+            } else {
+                innerCircle.appendChild(cellElement);
+            }
         });
         
         // Добавляем центральный элемент
@@ -112,9 +144,13 @@ class Board {
         centerElement.innerHTML = `
             <div class="center-number">1</div>
         `;
-        spiralContainer.appendChild(centerElement);
         
-        container.appendChild(spiralContainer);
+        // Собираем доску
+        boardContainer.appendChild(outerCircle);
+        boardContainer.appendChild(innerCircle);
+        boardContainer.appendChild(centerElement);
+        
+        container.appendChild(boardContainer);
     }
 
     /**
@@ -215,30 +251,66 @@ class Board {
         const style = document.createElement('style');
         style.id = 'board-styles';
         style.textContent = `
-            .spiral-container {
+            .board-container {
                 position: relative;
-                width: 700px;
-                height: 700px;
+                width: 800px;
+                height: 800px;
                 margin: 0 auto;
                 background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
                 border-radius: 50%;
             }
 
-            .board-cell {
+            .outer-circle {
                 position: absolute;
-                width: 60px;
-                height: 60px;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                display: grid;
+                grid-template-columns: repeat(8, 1fr);
+                grid-template-rows: repeat(8, 1fr);
+                gap: 8px;
+                padding: 20px;
+            }
+
+            .inner-circle {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 400px;
+                height: 400px;
+                border-radius: 50%;
+                display: grid;
+                grid-template-columns: repeat(6, 1fr);
+                grid-template-rows: repeat(6, 1fr);
+                gap: 6px;
+                padding: 15px;
+            }
+
+            .board-cell {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 border: 2px solid rgba(255, 255, 255, 0.2);
-                border-radius: 8px;
+                border-radius: 20px;
                 background: rgba(255, 255, 255, 0.05);
                 backdrop-filter: blur(10px);
                 transition: all 0.3s ease;
                 cursor: pointer;
                 z-index: 1;
+            }
+
+            .outer-circle .board-cell {
+                width: 100px;
+                height: 100px;
+            }
+
+            .inner-circle .board-cell {
+                width: 80px;
+                height: 80px;
             }
 
             .board-cell:hover {
@@ -305,16 +377,15 @@ class Board {
                 border: 2px solid rgba(255, 255, 255, 0.8);
             }
 
-            /* Цвета ячеек */
-            .board-cell.gold { background: linear-gradient(135deg, #ffd700, #ffed4e); color: #000; }
-            .board-cell.pink { background: linear-gradient(135deg, #ff6b9d, #c44569); }
-            .board-cell.teal { background: linear-gradient(135deg, #20bf6b, #26de81); }
-            .board-cell.purple { background: linear-gradient(135deg, #a55eea, #8b5fbf); }
-            .board-cell.orange { background: linear-gradient(135deg, #ff9f43, #ff6348); }
-            .board-cell.yellow { background: linear-gradient(135deg, #f9ca24, #f0932b); }
-            .board-cell.blue { background: linear-gradient(135deg, #3742fa, #2f3542); }
-            .board-cell.red { background: linear-gradient(135deg, #ff3838, #ff6b6b); }
-            .board-cell.green { background: linear-gradient(135deg, #2ed573, #7bed9f); }
+            /* Цвета ячеек согласно ТЗ */
+            .board-cell.green { background: #31D281; color: #fff; }
+            .board-cell.blue { background: #4B7CFF; color: #fff; }
+            .board-cell.pink { background: #F23E77; color: #fff; }
+            .board-cell.purple { background: #A259FF; color: #fff; }
+            .board-cell.yellow { background: #FFD966; color: #000; }
+            .board-cell.orange { background: #FF9F43; color: #fff; }
+            .board-cell.red { background: #FF3838; color: #fff; }
+            .board-cell.teal { background: #20BF6B; color: #fff; }
 
             .center-element {
                 position: absolute;
@@ -335,9 +406,6 @@ class Board {
             .center-number {
                 font-size: 32px;
                 font-weight: bold;
-                color: #000;
-                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-            }
                 color: #000;
                 text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
             }
@@ -515,42 +583,35 @@ class Board {
      * Получение цвета ячейки
      */
     getCellColor(cellId) {
-        const colors = {
-            1: 'gold', 2: 'pink', 6: 'teal', 14: 'purple', 16: 'orange', 20: 'yellow',
-            22: 'blue', 26: 'red', 27: 'green', 28: 'purple', 30: 'blue',
-            32: 'orange', 36: 'red', 38: 'green', 40: 'purple', 42: 'blue', 44: 'gold'
-        };
-        return colors[cellId] || '';
+        // Циклическое распределение цветов для 76 ячеек
+        const colorCycle = ['green', 'blue', 'pink', 'purple', 'yellow', 'orange', 'red', 'teal'];
+        const colorIndex = (cellId - 1) % colorCycle.length;
+        return colorCycle[colorIndex];
     }
 
     /**
      * Получение иконки ячейки
      */
     getCellIcon(cellId) {
-        const icons = {
-            1: '🏁', 2: '💭', 6: '💭', 14: '💭', 16: '💭', 20: '💭',
-            22: '💭', 26: '💭', 27: '💭', 28: '💭', 30: '💭',
-            32: '💭', 36: '💭', 38: '💭', 40: '💭', 42: '💭', 44: '🏆',
-            // Добавляем разнообразные иконки для обычных ячеек
-            3: '💰', 4: '📈', 5: '🏠', 7: '🚗', 8: '💡', 9: '💼', 10: '🛍️',
-            11: '🎯', 12: '❤️', 13: '🐼', 15: '🐸', 17: '🦉', 18: '🐱', 19: '🌟',
-            21: '⚡', 23: '🎲', 24: '🎪', 25: '🎨', 29: '🔮', 31: '🎭', 33: '🎵',
-            34: '🎬', 35: '🎮', 37: '📚', 39: '🌍', 41: '🚀', 43: '⭐'
-        };
-        return icons[cellId] || '●';
+        // Циклическое распределение иконок для 76 ячеек
+        const iconCycle = [
+            '🏠', '🚗', '💡', '📈', '💼', '🛍️', '🎯', '❤️',
+            '🐼', '🐸', '🦉', '🐱', '🌟', '⚡', '🎲', '🎪',
+            '🎨', '🔮', '🎭', '🎵', '🎬', '🎮', '📚', '🌍',
+            '🚀', '⭐', '💰', '🏆', '💎', '🎁', '🔑', '⚙️'
+        ];
+        const iconIndex = (cellId - 1) % iconCycle.length;
+        return iconCycle[iconIndex];
     }
 
     /**
      * Получение названия ячейки
      */
     getCellName(cellId) {
-        const names = {
-            1: 'СТАРТ',
-            2: 'Мечта 1', 6: 'Мечта 2', 14: 'Мечта 3', 16: 'Мечта 4', 20: 'Мечта 5',
-            22: 'Мечта 6', 26: 'Мечта 7', 27: 'Мечта 8', 28: 'Мечта 9', 30: 'Мечта 10',
-            32: 'Мечта 11', 36: 'Мечта 12', 38: 'Мечта 13', 40: 'Мечта 14', 42: 'Мечта 15', 44: 'ФИНИШ'
-        };
-        return names[cellId] || `Клетка ${cellId}`;
+        if (cellId === 1) return 'СТАРТ';
+        if (cellId === 52) return 'ФИНИШ';
+        if (cellId <= 52) return `Клетка ${cellId}`;
+        return `Внутр. ${cellId - 52}`;
     }
 
     /**
