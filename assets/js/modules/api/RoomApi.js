@@ -211,11 +211,61 @@ class RoomApi {
     }
 
     async createRoom(payload) {
-        const data = await this.request('/api/rooms', {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
-        return data.room;
+        console.log('=== createRoom called ===');
+        console.log('Payload:', payload);
+        
+        try {
+            // Получаем токен и данные пользователя
+            const token = localStorage.getItem('authToken');
+            const user = localStorage.getItem('user');
+            let userData = null;
+            
+            if (user) {
+                try {
+                    userData = JSON.parse(user);
+                } catch (e) {
+                    console.warn('Failed to parse user data:', e);
+                }
+            }
+            
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+                console.log('Using auth token for createRoom');
+            }
+            if (userData && userData.id) {
+                headers['X-User-ID'] = userData.id;
+                console.log('Added X-User-ID header:', userData.id);
+            }
+            
+            console.log('Create room headers:', headers);
+            
+            const response = await fetch(`${this.baseUrl}/api/rooms`, {
+                method: 'POST',
+                mode: 'cors',
+                credentials: 'omit',
+                headers,
+                body: JSON.stringify(payload)
+            });
+            
+            console.log('Create room response:', { status: response.status, ok: response.ok });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Room created successfully:', data);
+                return data.room;
+            } else {
+                const errorText = await response.text();
+                console.error('Create room error response:', errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+        } catch (error) {
+            console.error('Create room failed:', error);
+            throw error;
+        }
     }
 
     async getRoom(roomId, params = {}) {
