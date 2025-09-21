@@ -4,15 +4,17 @@ const path = require('path');
 class SQLiteDatabase {
     constructor() {
         this.db = null;
-        // На Railway используем /tmp для постоянного хранения
+        // На Railway используем /app для постоянного хранения
         this.dbPath = process.env.RAILWAY_ENVIRONMENT 
-            ? '/tmp/game_data.sqlite' 
+            ? '/app/game_data.sqlite' 
             : path.join(__dirname, 'game_data.sqlite');
         this.initialized = false;
     }
 
     async init() {
         return new Promise((resolve, reject) => {
+            console.log('🔍 Подключение к SQLite по пути:', this.dbPath);
+            console.log('🔍 Railway environment:', process.env.RAILWAY_ENVIRONMENT);
             this.db = new sqlite3.Database(this.dbPath, (err) => {
                 if (err) {
                     console.error('❌ Ошибка подключения к SQLite:', err.message);
