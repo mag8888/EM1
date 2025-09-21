@@ -80,6 +80,20 @@ class RoomApi {
         if (token) {
             basicHeaders['Authorization'] = `Bearer ${token}`;
             console.log('Using auth token for request:', token.substring(0, 20) + '...');
+            
+            // Добавляем X-User-ID заголовок из токена или localStorage
+            try {
+                const user = localStorage.getItem('user');
+                if (user) {
+                    const userData = JSON.parse(user);
+                    if (userData.id) {
+                        basicHeaders['X-User-ID'] = userData.id;
+                        console.log('Added X-User-ID header:', userData.id);
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to parse user data for X-User-ID header:', e);
+            }
         } else {
             console.warn('No auth token found, request may fail');
             console.log('Available localStorage keys:', Object.keys(localStorage));
@@ -121,7 +135,7 @@ class RoomApi {
                     xhr.open(config.method, url, true);
                     
                     // Устанавливаем только безопасные заголовки
-                    const safeHeaders = ['Accept', 'Content-Type', 'Authorization'];
+                    const safeHeaders = ['Accept', 'Content-Type', 'Authorization', 'X-User-ID'];
                     Object.keys(config.headers || {}).forEach(key => {
                         if (safeHeaders.includes(key)) {
                             try {
