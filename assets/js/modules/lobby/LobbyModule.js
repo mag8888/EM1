@@ -3,6 +3,12 @@
  */
 class LobbyModule {
     constructor({ api = new window.RoomApi(), pollInterval = 10000 } = {}) {
+        // Защита от множественной инициализации
+        if (window.lobbyModuleInstance) {
+            console.warn('LobbyModule already initialized, returning existing instance');
+            return window.lobbyModuleInstance;
+        }
+        
         this.api = api;
         this.pollInterval = pollInterval;
         this.currentUser = null;
@@ -11,12 +17,21 @@ class LobbyModule {
         this.selectedRoomId = null;
         this.timers = [];
         this.dom = {};
+        
+        // Сохраняем экземпляр глобально
+        window.lobbyModuleInstance = this;
     }
 
     /**
      * Инициализация модуля
      */
     async init() {
+        // Защита от множественной инициализации
+        if (this.initialized) {
+            console.warn('LobbyModule already initialized, skipping');
+            return;
+        }
+        
         console.log('=== Инициализация LobbyModule ===');
         console.log('Current URL:', window.location.href);
         console.log('Current domain:', window.location.hostname);
@@ -44,6 +59,7 @@ class LobbyModule {
         await this.loadRooms();
         this.scheduleRoomRefresh();
         
+        this.initialized = true;
         console.log('=== LobbyModule инициализирован ===');
     }
 

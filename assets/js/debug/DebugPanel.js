@@ -425,5 +425,7 @@ class DebugPanel {
 
 // Автоматическая инициализация
 document.addEventListener('DOMContentLoaded', () => {
-    new DebugPanel();
+    if (!window.debugPanelInstance) {
+        window.debugPanelInstance = new DebugPanel();
+    }
 });
