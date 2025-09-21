@@ -2,11 +2,12 @@
  * Player - модуль игроков
  */
 class Player {
-    constructor() {
+    constructor(gameCore = null) {
+        this.gameCore = gameCore;
         this.players = new Map();
         this.currentPlayer = null;
-        this.eventBus = null;
-        this.state = null;
+        this.eventBus = gameCore?.eventBus || null;
+        this.state = gameCore?.state || null;
     }
 
     /**

@@ -1123,17 +1123,15 @@
     <!-- Загружаем конфигурацию игры -->
     <script src="config/game-config.js"></script>
     
-    <!-- Загружаем основные модули -->
+    <!-- Загружаем основные модули в правильном порядке -->
     <script src="assets/js/core/EventBus.js"></script>
     <script src="assets/js/core/StateManager.js"></script>
     <script src="assets/js/core/ModuleManager.js"></script>
-    <script src="assets/js/core/GameCore.js"></script>
-    
-    <!-- Загружаем API клиент -->
     <script src="assets/js/modules/api/ApiClient.js"></script>
-    
-    <!-- Загружаем игровые модули -->
     <script src="assets/js/modules/game/Board.js"></script>
+    <script src="assets/js/modules/game/Dice.js"></script>
+    <script src="assets/js/modules/game/Player.js"></script>
+    <script src="assets/js/core/GameCore.js"></script>
     
     <!-- Инициализируем рабочую версию -->
     <script src="assets/js/working-version.js"></script>

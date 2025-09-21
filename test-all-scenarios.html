@@ -578,8 +578,8 @@
                 }
 
                 logResult('📦 Загрузка GameCore...', 'info');
-                const { GameCore: GC2 } = await import('./assets/js/core/GameCore.js');
-                GameCore = GC2;
+                // GameCore уже загружен как обычный скрипт
+                GameCore = window.GameCore;
                 logResult('✅ GameCore загружен', 'success');
 
                 logResult('📦 Загрузка CellGenerator...', 'info');
@@ -1440,6 +1440,19 @@
     </script>
     
     <!-- Отладочная панель -->
+    <!-- Загружаем конфигурацию игры -->
+    <script src="config/game-config.js"></script>
+    
+    <!-- Загружаем основные модули в правильном порядке -->
+    <script src="assets/js/core/EventBus.js"></script>
+    <script src="assets/js/core/StateManager.js"></script>
+    <script src="assets/js/core/ModuleManager.js"></script>
+    <script src="assets/js/modules/api/ApiClient.js"></script>
+    <script src="assets/js/modules/game/Board.js"></script>
+    <script src="assets/js/modules/game/Dice.js"></script>
+    <script src="assets/js/modules/game/Player.js"></script>
+    <script src="assets/js/core/GameCore.js"></script>
+    
     <script src="/assets/js/debug/DebugPanel.js"></script>
 </body>
 </html>

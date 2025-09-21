@@ -2,12 +2,14 @@
  * Board - модуль игровой доски
  */
 class Board {
-    constructor() {
+    constructor(gameCore = null, containerId = 'gameBoardContainer') {
+        this.gameCore = gameCore;
+        this.containerId = containerId;
         this.cells = [];
         this.players = [];
         this.currentPlayer = null;
-        this.eventBus = null;
-        this.state = null;
+        this.eventBus = gameCore?.eventBus || null;
+        this.state = gameCore?.state || null;
     }
 
     /**

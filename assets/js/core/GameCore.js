@@ -3,9 +3,9 @@
  */
 class GameCore {
     constructor() {
-        this.modules = new ModuleManager();
-        this.state = new StateManager();
-        this.eventBus = new EventBus();
+        this.modules = new window.ModuleManager();
+        this.state = new window.StateManager();
+        this.eventBus = new window.EventBus();
         this.isInitialized = false;
         this.isRunning = false;
         this.config = this.getDefaultConfig();
@@ -86,45 +86,54 @@ class GameCore {
      */
     async registerModules() {
         // Регистрируем модули в порядке зависимостей
-        this.modules.register('apiClient', window.ApiClient, {
+        // Создаем экземпляры модулей
+        const apiClient = new window.ApiClient();
+        const board = new window.Board(this, 'gameBoardContainer');
+        const dice = new window.Dice(this);
+        const player = new window.Player(this);
+
+        this.modules.register('apiClient', apiClient, {
             dependencies: [],
             priority: 100
         });
 
-        this.modules.register('board', window.Board, {
+        this.modules.register('board', board, {
             dependencies: ['apiClient'],
             priority: 90
         });
 
-        this.modules.register('dice', window.Dice, {
+        this.modules.register('dice', dice, {
             dependencies: ['apiClient'],
             priority: 90
         });
 
-        this.modules.register('player', window.Player, {
+        this.modules.register('player', player, {
             dependencies: ['apiClient'],
             priority: 90
         });
 
-        this.modules.register('gameState', window.GameState, {
-            dependencies: ['board', 'dice', 'player'],
-            priority: 80
-        });
+        // gameState и lobby пока не реализованы, пропускаем
+        // this.modules.register('gameState', gameState, {
+        //     dependencies: ['board', 'dice', 'player'],
+        //     priority: 80
+        // });
 
-        this.modules.register('lobby', window.Lobby, {
-            dependencies: ['apiClient'],
-            priority: 70
-        });
+        // this.modules.register('lobby', lobby, {
+        //     dependencies: ['apiClient'],
+        //     priority: 70
+        // });
 
-        this.modules.register('room', window.Room, {
-            dependencies: ['apiClient'],
-            priority: 70
-        });
+        // room пока не реализован, пропускаем
+        // this.modules.register('room', room, {
+        //     dependencies: ['apiClient'],
+        //     priority: 70
+        // });
 
-        this.modules.register('auth', window.Auth, {
-            dependencies: ['apiClient'],
-            priority: 70
-        });
+        // auth пока не реализован, пропускаем
+        // this.modules.register('auth', auth, {
+        //     dependencies: ['apiClient'],
+        //     priority: 70
+        // });
     }
 
     /**

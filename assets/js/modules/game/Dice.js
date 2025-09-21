@@ -2,11 +2,12 @@
  * Dice - модуль кубиков
  */
 class Dice {
-    constructor() {
+    constructor(gameCore = null) {
+        this.gameCore = gameCore;
         this.currentRoll = null;
         this.rollHistory = [];
-        this.eventBus = null;
-        this.state = null;
+        this.eventBus = gameCore?.eventBus || null;
+        this.state = gameCore?.state || null;
     }
 
     /**

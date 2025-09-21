@@ -17,8 +17,11 @@ class WorkingVersion {
         try {
             console.log('🚀 Initializing working version...');
             
+            // Ждем загрузки всех модулей
+            await this.waitForModules();
+            
             // Создаем экземпляр GameCore
-            this.gameCore = new GameCore();
+            this.gameCore = new window.GameCore();
             
             // Инициализируем
             await this.gameCore.init();
@@ -42,6 +45,46 @@ class WorkingVersion {
             console.error('❌ Failed to initialize working version:', error);
             this.showError('Ошибка инициализации: ' + error.message);
         }
+    }
+
+    async waitForModules() {
+        const requiredModules = [
+            'EventBus',
+            'StateManager', 
+            'ModuleManager',
+            'ApiClient',
+            'Board',
+            'Dice',
+            'Player',
+            'GameCore'
+        ];
+
+        for (const moduleName of requiredModules) {
+            await this.waitForModule(moduleName);
+        }
+    }
+
+    async waitForModule(moduleName) {
+        return new Promise((resolve) => {
+            if (window[moduleName]) {
+                resolve();
+                return;
+            }
+
+            const checkInterval = setInterval(() => {
+                if (window[moduleName]) {
+                    clearInterval(checkInterval);
+                    resolve();
+                }
+            }, 100);
+
+            // Таймаут через 5 секунд
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                console.warn(`Module ${moduleName} not loaded after 5 seconds`);
+                resolve();
+            }, 5000);
+        });
     }
 
     setupUI() {
