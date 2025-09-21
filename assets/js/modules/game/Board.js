@@ -104,62 +104,115 @@ class Board {
     }
 
     /**
-     * Создание двухкругового расположения ячеек
+     * Создание доски по образцу game-board/game.html
      */
     createSpiralLayout(container) {
-        // Создаем контейнер для доски
-        const boardContainer = document.createElement('div');
-        boardContainer.className = 'board-container';
+        // Очищаем контейнер
+        container.innerHTML = '';
         
-        // Создаем внешний круг (52 ячейки)
-        const outerCircle = document.createElement('div');
-        outerCircle.className = 'outer-circle';
+        // Создаем frame для доски
+        const boardFrame = document.createElement('div');
+        boardFrame.className = 'board-frame';
         
-        // Создаем внутренний круг (24 ячейки)
-        const innerCircle = document.createElement('div');
-        innerCircle.className = 'inner-circle';
+        // Создаем внешний трек (52 ячейки)
+        const outerTrack = document.createElement('div');
+        outerTrack.className = 'outer-track';
+        outerTrack.id = 'outerTrack';
         
-        // Добавляем ячейки в соответствующие круги
+        // Создаем внутренний трек (24 ячейки)
+        const innerTrack = document.createElement('div');
+        innerTrack.className = 'inner-track';
+        innerTrack.id = 'innerTrack';
+        
+        // Создаем контейнер для токенов игроков
+        const playerTokens = document.createElement('div');
+        playerTokens.className = 'player-tokens';
+        playerTokens.id = 'playerTokens';
+        
+        // Создаем центральное колесо
+        const centerWheel = document.createElement('div');
+        centerWheel.className = 'center-wheel';
+        centerWheel.id = 'centerWheel';
+        centerWheel.innerHTML = `
+            <div class="wheel-number" id="wheelNumber">1</div>
+        `;
+        
+        // Добавляем ячейки в соответствующие треки с позиционированием
         this.cells.forEach(cell => {
             const cellElement = document.createElement('div');
-            cellElement.className = `board-cell ${cell.type} ${cell.color}`;
+            cellElement.className = `track-cell cell-${cell.color}`;
             cellElement.dataset.cellId = cell.id;
             cellElement.innerHTML = `
                 <div class="cell-number">${cell.id}</div>
                 <div class="cell-icon">${cell.icon}</div>
-                <div class="cell-name">${cell.name}</div>
-                <div class="cell-players"></div>
             `;
             
+            // Позиционируем ячейку
+            const position = this.getCellPosition(cell.id, cell.isOuter);
+            cellElement.style.left = position.x + 'px';
+            cellElement.style.top = position.y + 'px';
+            
             if (cell.isOuter) {
-                outerCircle.appendChild(cellElement);
+                outerTrack.appendChild(cellElement);
             } else {
-                innerCircle.appendChild(cellElement);
+                innerTrack.appendChild(cellElement);
             }
         });
         
-        // Добавляем центральный элемент
-        const centerElement = document.createElement('div');
-        centerElement.className = 'center-element';
-        centerElement.innerHTML = `
-            <div class="center-number">1</div>
-        `;
-        
         // Собираем доску
-        boardContainer.appendChild(outerCircle);
-        boardContainer.appendChild(innerCircle);
-        boardContainer.appendChild(centerElement);
+        boardFrame.appendChild(outerTrack);
+        boardFrame.appendChild(innerTrack);
+        boardFrame.appendChild(playerTokens);
+        boardFrame.appendChild(centerWheel);
         
-        container.appendChild(boardContainer);
+        container.appendChild(boardFrame);
     }
 
     /**
-     * Получение позиции ячейки в спирали
+     * Получение позиции ячейки на доске
      */
-    getSpiralPosition(cellId) {
-        // Спиральное расположение: начинаем с внешнего кольца и идем внутрь
-        const positions = this.generateSpiralPositions();
-        return positions[cellId - 1] || { x: 0, y: 0 };
+    getCellPosition(cellId, isOuter) {
+        if (isOuter) {
+            return this.getOuterTrackPosition(cellId);
+        } else {
+            return this.getInnerTrackPosition(cellId - 52);
+        }
+    }
+
+    /**
+     * Позиционирование ячеек внешнего трека (52 ячейки)
+     */
+    getOuterTrackPosition(cellId) {
+        const boardSize = 700;
+        const cellSize = 54;
+        const radius = (boardSize - cellSize) / 2;
+        const centerX = boardSize / 2;
+        const centerY = boardSize / 2;
+        
+        // Располагаем ячейки по кругу
+        const angle = (cellId - 1) * (2 * Math.PI / 52);
+        const x = centerX + radius * Math.cos(angle) - cellSize / 2;
+        const y = centerY + radius * Math.sin(angle) - cellSize / 2;
+        
+        return { x: Math.round(x), y: Math.round(y) };
+    }
+
+    /**
+     * Позиционирование ячеек внутреннего трека (24 ячейки)
+     */
+    getInnerTrackPosition(cellIndex) {
+        const boardSize = 700;
+        const cellSize = 50;
+        const radius = (boardSize - cellSize) / 4; // Меньший радиус для внутреннего трека
+        const centerX = boardSize / 2;
+        const centerY = boardSize / 2;
+        
+        // Располагаем ячейки по кругу
+        const angle = cellIndex * (2 * Math.PI / 24);
+        const x = centerX + radius * Math.cos(angle) - cellSize / 2;
+        const y = centerY + radius * Math.sin(angle) - cellSize / 2;
+        
+        return { x: Math.round(x), y: Math.round(y) };
     }
 
     /**
@@ -251,163 +304,182 @@ class Board {
         const style = document.createElement('style');
         style.id = 'board-styles';
         style.textContent = `
-            .board-container {
+            :root {
+                --board-size: 700px;
+                --outer-cell-size: 54px;
+                --outer-cell-gap: 4px;
+                --inner-cell-size: 50px;
+            }
+
+            .board-frame {
                 position: relative;
-                width: 800px;
-                height: 800px;
-                margin: 0 auto;
-                background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-                border-radius: 50%;
+                width: var(--board-size);
+                height: var(--board-size);
+                border-radius: 48px;
+                background: linear-gradient(160deg, #151d30 0%, #111527 45%, #0f1422 100%);
+                box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6), inset 0 0 60px rgba(255, 255, 255, 0.04);
+                overflow: visible;
             }
 
-            .outer-circle {
+            .board-frame::before {
+                content: '';
                 position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                border-radius: 50%;
-                display: grid;
-                grid-template-columns: repeat(8, 1fr);
-                grid-template-rows: repeat(8, 1fr);
-                gap: 8px;
-                padding: 20px;
+                inset: 16px;
+                border-radius: 40px;
+                background: radial-gradient(circle at 50% 42%, rgba(255, 205, 64, 0.12) 0%, transparent 60%),
+                            linear-gradient(200deg, rgba(32, 48, 78, 0.7) 0%, rgba(16, 22, 34, 0.95) 62%);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                pointer-events: none;
             }
 
-            .inner-circle {
+            .outer-track,
+            .inner-track {
                 position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                width: 400px;
-                height: 400px;
-                border-radius: 50%;
-                display: grid;
-                grid-template-columns: repeat(6, 1fr);
-                grid-template-rows: repeat(6, 1fr);
-                gap: 6px;
-                padding: 15px;
+                inset: 0;
+                pointer-events: none;
             }
 
-            .board-cell {
+            .track-cell {
+                position: absolute;
+                width: var(--outer-cell-size);
+                height: var(--outer-cell-size);
+                border-radius: 14px;
                 display: flex;
-                flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                border: 2px solid rgba(255, 255, 255, 0.2);
-                border-radius: 20px;
-                background: rgba(255, 255, 255, 0.05);
-                backdrop-filter: blur(10px);
-                transition: all 0.3s ease;
-                cursor: pointer;
-                z-index: 1;
-            }
-
-            .outer-circle .board-cell {
-                width: 100px;
-                height: 100px;
-            }
-
-            .inner-circle .board-cell {
-                width: 80px;
-                height: 80px;
-            }
-
-            .board-cell:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-                border-color: rgba(255, 255, 255, 0.4);
-            }
-
-            .board-cell.start {
-                background: linear-gradient(135deg, #ffd700, #ffed4e);
-                color: #000;
-                font-weight: bold;
-            }
-
-            .board-cell.dream {
-                background: linear-gradient(135deg, #667eea, #764ba2);
+                flex-direction: column;
+                gap: 4px;
+                font-size: 20px;
+                font-weight: 700;
                 color: #fff;
+                box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45);
+                border: 2px solid rgba(255, 255, 255, 0.14);
+                pointer-events: auto;
+                transition: transform 0.25s ease, box-shadow 0.25s ease;
             }
 
-            .board-cell.regular {
-                background: rgba(255, 255, 255, 0.1);
-                color: #fff;
+            .track-cell:hover {
+                transform: translateY(-6px);
+                box-shadow: 0 22px 46px rgba(0, 0, 0, 0.55);
             }
 
             .cell-number {
+                position: absolute;
+                top: 6px;
+                left: 8px;
                 font-size: 12px;
-                font-weight: bold;
-                margin-bottom: 2px;
+                font-weight: 800;
+                color: rgba(255, 255, 255, 0.92);
+                text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
             }
 
             .cell-icon {
+                font-size: 22px;
+                filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.35));
+            }
+
+            .cell-pink { background: linear-gradient(145deg, #ff4f93 0%, #ff2780 100%); }
+            .cell-green { background: linear-gradient(145deg, #32df8d 0%, #19b86a 100%); }
+            .cell-teal { background: linear-gradient(145deg, #25d0ff 0%, #0090f5 100%); }
+            .cell-purple { background: linear-gradient(145deg, #a769ff 0%, #7351ff 100%); }
+            .cell-orange { background: linear-gradient(145deg, #ffb347 0%, #ff8c42 100%); }
+            .cell-yellow { background: linear-gradient(145deg, #ffd65a 0%, #ffb700 100%); color: #2f2600; }
+            .cell-blue { background: linear-gradient(145deg, #4e95ff 0%, #2563eb 100%); }
+            .cell-red { background: linear-gradient(145deg, #ff6b6b 0%, #ff3b3b 100%); }
+            .cell-slate { background: linear-gradient(145deg, #34435a 0%, #1e2838 100%); }
+
+            .inner-track .track-cell {
+                width: var(--inner-cell-size);
+                height: var(--inner-cell-size);
                 font-size: 18px;
-                margin-bottom: 2px;
+                border-width: 1.5px;
             }
 
-            .cell-name {
-                font-size: 10px;
-                text-align: center;
-                line-height: 1.2;
-                max-width: 100%;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
+            .inner-track .cell-number {
+                right: 8px;
+                left: auto;
+                font-size: 12px;
             }
 
-            .cell-players {
-                position: absolute;
-                top: 2px;
-                right: 2px;
-                display: flex;
-                gap: 2px;
-            }
-
-            .player-token {
-                width: 16px;
-                height: 16px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 10px;
-                font-weight: bold;
-                color: white;
-                border: 2px solid rgba(255, 255, 255, 0.8);
-            }
-
-            /* Цвета ячеек согласно ТЗ */
-            .board-cell.green { background: #31D281; color: #fff; }
-            .board-cell.blue { background: #4B7CFF; color: #fff; }
-            .board-cell.pink { background: #F23E77; color: #fff; }
-            .board-cell.purple { background: #A259FF; color: #fff; }
-            .board-cell.yellow { background: #FFD966; color: #000; }
-            .board-cell.orange { background: #FF9F43; color: #fff; }
-            .board-cell.red { background: #FF3838; color: #fff; }
-            .board-cell.teal { background: #20BF6B; color: #fff; }
-
-            .center-element {
+            .center-wheel {
                 position: absolute;
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                width: 80px;
-                height: 80px;
-                background: linear-gradient(135deg, #ffd700, #ffed4e);
+                width: calc(var(--computed-board-size, var(--board-size)) * 0.32);
+                height: calc(var(--computed-board-size, var(--board-size)) * 0.32);
+                max-width: 230px;
+                max-height: 230px;
+                min-width: 170px;
+                min-height: 170px;
+                border-radius: 50%;
+                background: radial-gradient(circle at 50% 40%, rgba(255, 209, 64, 0.78) 0%, rgba(255, 166, 0, 0.82) 34%, rgba(25, 25, 25, 0.96) 64%);
+                box-shadow: 0 0 50px rgba(255, 196, 0, 0.5), inset 0 0 40px rgba(0, 0, 0, 0.55);
+                border: 4px solid rgba(255, 205, 92, 0.55);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: transform 0.4s ease, box-shadow 0.4s ease;
+            }
+
+            .center-wheel::before {
+                content: '';
+                position: absolute;
+                inset: 18px;
+                border-radius: 50%;
+                background: radial-gradient(circle at 50% 45%, rgba(0, 0, 0, 0.92) 0%, rgba(40, 40, 40, 1) 65%, rgba(0, 0, 0, 0.94) 100%);
+                border: 2px solid rgba(255, 205, 92, 0.45);
+            }
+
+            .center-wheel::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                border-radius: 50%;
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.35);
+                opacity: 0;
+                transition: opacity 0.4s ease;
+            }
+
+            .center-wheel:hover {
+                transform: translate(-50%, -50%) scale(1.03);
+                box-shadow: 0 0 70px rgba(255, 196, 0, 0.65), inset 0 0 44px rgba(0, 0, 0, 0.6);
+            }
+
+            .center-wheel.spin::after {
+                opacity: 1;
+            }
+
+            .wheel-number {
+                position: relative;
+                font-size: clamp(48px, calc(var(--computed-board-size, var(--board-size)) * 0.12), 82px);
+                font-weight: 800;
+                color: #ffd15a;
+                text-shadow: 0 0 20px rgba(255, 196, 0, 0.55);
+                z-index: 2;
+            }
+
+            .player-tokens {
+                position: absolute;
+                inset: 0;
+                pointer-events: none;
+            }
+
+            .player-token {
+                position: absolute;
+                width: 44px;
+                height: 44px;
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-                z-index: 10;
-            }
-
-            .center-number {
-                font-size: 32px;
-                font-weight: bold;
-                color: #000;
-                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+                font-size: 20px;
+                font-weight: 700;
+                color: #fff;
+                box-shadow: 0 12px 20px rgba(0, 0, 0, 0.35);
+                border: 2px solid rgba(255, 255, 255, 0.22);
+                transform: translate(-50%, -50%);
             }
         `;
 
