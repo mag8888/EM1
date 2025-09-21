@@ -55,8 +55,8 @@ export class PlayerManager {
             name: playerData.name || 'Игрок',
             avatar: playerData.avatar || null,
             color: playerData.color || this.generatePlayerColor(),
-            balance: playerData.balance || this.gameCore.config.players.startingBalance,
-            position: playerData.position || this.gameCore.config.players.startingPosition,
+            balance: playerData.balance || (this.gameCore?.config?.players?.startingBalance || 1000),
+            position: playerData.position || (this.gameCore?.config?.players?.startingPosition || 0),
             track: playerData.track || 'inner', // inner или outer
             isActive: playerData.isActive !== false,
             isBankrupt: false,
@@ -297,7 +297,7 @@ export class PlayerManager {
         player.creditAmount = 0;
         player.assets = [];
         player.passiveIncome = 0;
-        player.position = this.gameCore.config.players.startingPosition;
+        player.position = this.gameCore?.config?.players?.startingPosition || 0;
         player.track = 'inner';
         player.updatedAt = Date.now();
 
@@ -325,8 +325,8 @@ export class PlayerManager {
         }
 
         player.isBankrupt = false;
-        player.balance = this.gameCore.config.players.startingBalance;
-        player.position = this.gameCore.config.players.startingPosition;
+        player.balance = this.gameCore?.config?.players?.startingBalance || 1000;
+        player.position = this.gameCore?.config?.players?.startingPosition || 0;
         player.track = 'inner';
         player.updatedAt = Date.now();
 

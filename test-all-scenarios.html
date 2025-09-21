@@ -446,12 +446,52 @@
                 // Создаем мок GameCore для тестирования
                 const mockGameCore = {
                     eventBus: new EventBus(),
-                    config: GAME_CONFIG,
+                    config: {
+                        ...GAME_CONFIG,
+                        players: {
+                            startingBalance: 1000,
+                            startingPosition: 0,
+                            ...GAME_CONFIG.players
+                        }
+                    },
                     modules: {
                         get: (name) => null,
                         getAll: () => ({})
                     },
                     state: new StateManager(),
+                    getModule: function(name) {
+                        return this.modules.get(name);
+                    },
+                    getState: function(key) {
+                        return this.state.getState(key);
+                    },
+                    setState: function(newState) {
+                        return this.state.setState(newState);
+                    },
+                    executeTurn: async function(playerId) {
+                        logResult(`✅ Выполнен ход игрока ${playerId}`, 'success');
+                        return { success: true, playerId, timestamp: Date.now() };
+                    },
+                    getGameStats: function() {
+                        return {
+                            gameState: { isRunning: true, isInitialized: true },
+                            turns: { totalTurns: 0, currentPlayer: null },
+                            gameFlow: { status: 'active' },
+                            gameBoard: { cellsCount: 44 },
+                            dice: { rolls: 0 }
+                        };
+                    },
+                    startPlayerTurn: function(playerId) {
+                        logResult(`✅ Начат ход игрока ${playerId}`, 'success');
+                        return true;
+                    },
+                    endPlayerTurn: function(playerId, turnResult) {
+                        logResult(`✅ Завершен ход игрока ${playerId}`, 'success');
+                        return true;
+                    },
+                    getCurrentPlayer: function() {
+                        return { id: 'test1', name: 'Тестовый игрок' };
+                    },
                     init: async () => {
                         logResult('✅ Mock GameCore инициализирован', 'success');
                     }
@@ -514,7 +554,10 @@
         window.testCellGenerator = async function() {
             startTest();
             try {
-                const cellGenerator = new CellGenerator(window.gameCore || {});
+                if (!window.gameCore) {
+                    throw new Error('GameCore не инициализирован');
+                }
+                const cellGenerator = new CellGenerator(window.gameCore);
                 const cells = cellGenerator.generateGameBoard();
                 logResult(`✅ Создано клеток: ${cells.length}`, 'success');
                 logResult(`  - Типы клеток: ${[...new Set(cells.map(c => c.type))].join(', ')}`, 'success');
@@ -534,7 +577,10 @@
         window.testBoardLayout = async function() {
             startTest();
             try {
-                const cellGenerator = new CellGenerator(window.gameCore || {});
+                if (!window.gameCore) {
+                    throw new Error('GameCore не инициализирован');
+                }
+                const cellGenerator = new CellGenerator(window.gameCore);
                 const cells = cellGenerator.generateGameBoard();
                 
                 if (cells.length === 44) {
@@ -555,7 +601,10 @@
         window.testCellTypes = async function() {
             startTest();
             try {
-                const cellGenerator = new CellGenerator(window.gameCore || {});
+                if (!window.gameCore) {
+                    throw new Error('GameCore не инициализирован');
+                }
+                const cellGenerator = new CellGenerator(window.gameCore);
                 const cells = cellGenerator.generateGameBoard();
                 
                 const expectedTypes = ['money', 'property', 'vehicle', 'idea', 'goal', 'shopping', 'business'];
@@ -579,7 +628,10 @@
         window.testTurnController = async function() {
             startTest();
             try {
-                const turnController = new TurnController(window.gameCore || {});
+                if (!window.gameCore) {
+                    throw new Error('GameCore не инициализирован');
+                }
+                const turnController = new TurnController(window.gameCore);
                 logResult('✅ TurnController создан успешно', 'success');
                 
                 // Тест инициализации ходов
@@ -600,6 +652,9 @@
         window.testDiceRoll = async function() {
             startTest();
             try {
+                if (!window.gameCore) {
+                    throw new Error('GameCore не инициализирован');
+                }
                 const diceModule = new DiceModule(window.gameCore);
                 const result = await diceModule.roll();
                 
@@ -620,6 +675,9 @@
         window.testPlayerMovement = async function() {
             startTest();
             try {
+                if (!window.gameCore) {
+                    throw new Error('GameCore не инициализирован');
+                }
                 const movementModule = new MovementModule(window.gameCore);
                 const startPosition = 0;
                 const steps = 5;
@@ -643,7 +701,10 @@
         window.testGameFlow = async function() {
             startTest();
             try {
-                const gameFlowController = new GameFlowController(window.gameCore || {});
+                if (!window.gameCore) {
+                    throw new Error('GameCore не инициализирован');
+                }
+                const gameFlowController = new GameFlowController(window.gameCore);
                 logResult('✅ GameFlowController создан успешно', 'success');
                 passTest();
             } catch (error) {
@@ -815,6 +876,9 @@
                 
                 // Выполняем 100 операций
                 for (let i = 0; i < 100; i++) {
+                    if (!window.gameCore) {
+                        throw new Error('GameCore не инициализирован');
+                    }
                     const diceModule = new DiceModule(window.gameCore);
                     await diceModule.roll();
                 }
@@ -877,6 +941,9 @@
         // Функция генерации игрового поля
         window.generateGameBoardPreview = function() {
             try {
+                if (!window.gameCore) {
+                    throw new Error('GameCore не инициализирован');
+                }
                 const cellGenerator = new CellGenerator(window.gameCore);
                 const cells = cellGenerator.generateGameBoard();
                 
