@@ -513,10 +513,42 @@
         </div>
     </div>
 
+    <!-- Глобальные функции -->
+    <script>
+        // Глобальные функции для кнопок
+        function openGameBoard() {
+            console.log('⚡ Прямой доступ к игровой доске...');
+            window.open('/index.html', '_blank');
+        }
+
+        function generateGameBoardPreview() {
+            if (window.generateGameBoardPreviewModule) {
+                window.generateGameBoardPreviewModule();
+            } else {
+                console.error('❌ Модуль генерации поля не загружен');
+            }
+        }
+
+        function clearGameBoard() {
+            if (window.clearGameBoardModule) {
+                window.clearGameBoardModule();
+            } else {
+                console.error('❌ Модуль очистки поля не загружен');
+            }
+        }
+
+        function randomizeBoard() {
+            if (window.randomizeBoardModule) {
+                window.randomizeBoardModule();
+            } else {
+                console.error('❌ Модуль случайного поля не загружен');
+            }
+        }
+    </script>
+
     <!-- Подключаем игровые модули -->
     <script type="module">
-        // Импорты игровых модулей
-        let GameCore, CellGenerator, TurnController, GameFlowController, DiceModule, MovementModule, EventModule, PlayerManager, StateManager, ModuleManager, EventBus, GAME_CONFIG;
+        // Импорты игровых модулей (удалено - теперь объявляется ниже)
 
         // Статистика тестов
         let testStats = {
@@ -1113,7 +1145,7 @@
         };
 
         // Функция генерации игрового поля
-        window.generateGameBoardPreview = function() {
+        window.generateGameBoardPreviewModule = function() {
             try {
                 if (!window.gameCore) {
                     throw new Error('GameCore не инициализирован');
@@ -1340,7 +1372,7 @@
         }
 
         // Функция очистки игрового поля
-        window.clearGameBoard = function() {
+        window.clearGameBoardModule = function() {
             const preview = document.getElementById('gameBoardPreview');
             preview.innerHTML = `
                 <div class="board-info">
@@ -1363,7 +1395,7 @@
         };
 
         // Функция создания случайного поля
-        window.randomizeBoard = function() {
+        window.randomizeBoardModule = function() {
             try {
                 if (!window.gameCore) {
                     throw new Error('GameCore не инициализирован');

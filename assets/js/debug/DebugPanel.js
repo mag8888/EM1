@@ -3,7 +3,7 @@
  * Добавляется внизу всех страниц для удобства тестирования
  */
 
-export class DebugPanel {
+class DebugPanel {
     constructor() {
         this.isVisible = false;
         this.panel = null;
@@ -374,5 +374,3 @@ export class DebugPanel {
 document.addEventListener('DOMContentLoaded', () => {
     new DebugPanel();
 });
-
-export default DebugPanel;
