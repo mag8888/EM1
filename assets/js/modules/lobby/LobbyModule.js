@@ -181,12 +181,16 @@ class LobbyModule {
         try {
             const token = localStorage.getItem('authToken');
             if (!token) {
+                console.log('No auth token found');
                 return false;
             }
             const response = await fetch('/api/user/profile', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!response.ok) {
+                console.log('User validation failed, clearing auth data');
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
                 return false;
             }
             const data = await response.json();
@@ -194,6 +198,7 @@ class LobbyModule {
                 data.id = data._id;
             }
             if (!data.id) {
+                console.log('Invalid user data received');
                 return false;
             }
             localStorage.setItem('user', JSON.stringify(data));
@@ -201,6 +206,8 @@ class LobbyModule {
             return true;
         } catch (error) {
             console.error('Failed to validate user', error);
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
             return false;
         }
     }

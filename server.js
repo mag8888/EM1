@@ -49,7 +49,7 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 // JWT Configuration
-const JWT_SECRET = process.env.JWT_SECRET || 'em1-dev-secret-key-2024';
+const JWT_SECRET = process.env.JWT_SECRET || 'em1-production-secret-key-2024-railway';
 
 // --- Shared services -----------------------------------------------------
 // const creditService = new CreditService();
@@ -117,8 +117,14 @@ const authenticateToken = (req, res, next) => {
         req.user = payload;
         return next();
     } catch (error) {
-        console.error('JWT verification failed:', error.message);
-        return res.status(403).json({ message: 'Недействительный или истекший токен' });
+        console.error('JWT verification failed:', error.message, 'Token:', token.substring(0, 20) + '...');
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(403).json({ message: 'Недействительный токен' });
+        } else if (error.name === 'TokenExpiredError') {
+            return res.status(403).json({ message: 'Токен истек' });
+        } else {
+            return res.status(403).json({ message: 'Ошибка проверки токена' });
+        }
     }
 };
 
