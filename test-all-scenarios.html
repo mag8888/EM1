@@ -116,6 +116,20 @@
             box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
         }
 
+        .direct-access-btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            font-size: 1.1rem;
+            font-weight: 700;
+            padding: 15px 25px;
+        }
+
+        .direct-access-btn:hover {
+            background: linear-gradient(135deg, #43A047 0%, #7CB342 100%);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+            transform: translateY(-3px) scale(1.02);
+        }
+
         .test-btn.success {
             background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
         }
@@ -250,6 +264,16 @@
                 </button>
                 <button class="test-btn navigation-btn" onclick="navigateToGameBoard()">
                     <span>🎮</span> Игровая доска
+                </button>
+            </div>
+        </div>
+
+        <!-- Прямой доступ к игровой доске -->
+        <div class="test-section">
+            <h2>⚡ Прямой доступ</h2>
+            <div class="test-buttons">
+                <button class="test-btn direct-access-btn" onclick="openGameBoard()">
+                    <span>🎮</span> Открыть Игровую Доску
                 </button>
             </div>
         </div>
@@ -1209,6 +1233,12 @@
         function navigateToGameBoard() {
             logResult('🎮 Переход на игровую доску...', 'info');
             window.location.href = '/index.html';
+        }
+
+        function openGameBoard() {
+            logResult('⚡ Прямой доступ к игровой доске...', 'info');
+            logResult('🎯 Открытие главной игровой доски с полным интерфейсом', 'success');
+            window.open('/index.html', '_blank');
         }
 
         // Инициализация при загрузке страницы
