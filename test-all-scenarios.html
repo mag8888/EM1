@@ -526,45 +526,79 @@
             startTime: null
         };
 
+        // Глобальные переменные для модулей
+        let GAME_CONFIG, GameCore, CellGenerator, TurnController, GameFlowController;
+        let DiceModule, MovementModule, EventModule, PlayerManager, StateManager;
+        let ModuleManager, EventBus;
+
         // Инициализация модулей
         async function initModules() {
             try {
+                logResult('📦 Загрузка GAME_CONFIG...', 'info');
                 // Загружаем GAME_CONFIG первым
-                const { GAME_CONFIG: GC } = await import('./assets/js/utils/GAME_CONFIG.js');
-                GAME_CONFIG = GC;
+                try {
+                    const { GAME_CONFIG: GC } = await import('./assets/js/utils/GAME_CONFIG.js');
+                    GAME_CONFIG = GC;
+                    logResult('✅ GAME_CONFIG загружен', 'success');
+                } catch (error) {
+                    logResult(`❌ Ошибка загрузки GAME_CONFIG: ${error.message}`, 'error');
+                    throw error;
+                }
 
+                logResult('📦 Загрузка GameCore...', 'info');
                 const { GameCore: GC2 } = await import('./assets/js/core/GameCore.js');
                 GameCore = GC2;
+                logResult('✅ GameCore загружен', 'success');
 
+                logResult('📦 Загрузка CellGenerator...', 'info');
                 const { CellGenerator: CG } = await import('./assets/js/modules/game/CellGenerator.js');
                 CellGenerator = CG;
+                logResult('✅ CellGenerator загружен', 'success');
 
+                logResult('📦 Загрузка TurnController...', 'info');
                 const { TurnController: TC } = await import('./assets/js/modules/game/TurnController.js');
                 TurnController = TC;
+                logResult('✅ TurnController загружен', 'success');
 
+                logResult('📦 Загрузка GameFlowController...', 'info');
                 const { GameFlowController: GFC } = await import('./assets/js/modules/game/GameFlowController.js');
                 GameFlowController = GFC;
+                logResult('✅ GameFlowController загружен', 'success');
 
+                logResult('📦 Загрузка DiceModule...', 'info');
                 const { DiceModule: DM } = await import('./assets/js/modules/DiceModule.js');
                 DiceModule = DM;
+                logResult('✅ DiceModule загружен', 'success');
 
+                logResult('📦 Загрузка MovementModule...', 'info');
                 const { MovementModule: MM } = await import('./assets/js/modules/MovementModule.js');
                 MovementModule = MM;
+                logResult('✅ MovementModule загружен', 'success');
 
+                logResult('📦 Загрузка EventModule...', 'info');
                 const { EventModule: EM } = await import('./assets/js/modules/EventModule.js');
                 EventModule = EM;
+                logResult('✅ EventModule загружен', 'success');
 
+                logResult('📦 Загрузка PlayerManager...', 'info');
                 const { PlayerManager: PM } = await import('./assets/js/core/PlayerManager.js');
                 PlayerManager = PM;
+                logResult('✅ PlayerManager загружен', 'success');
 
+                logResult('📦 Загрузка StateManager...', 'info');
                 const { StateManager: SM } = await import('./assets/js/core/StateManager.js');
                 StateManager = SM;
+                logResult('✅ StateManager загружен', 'success');
 
+                logResult('📦 Загрузка ModuleManager...', 'info');
                 const { ModuleManager: MM2 } = await import('./assets/js/core/ModuleManager.js');
                 ModuleManager = MM2;
+                logResult('✅ ModuleManager загружен', 'success');
 
+                logResult('📦 Загрузка EventBus...', 'info');
                 const { EventBus: EB } = await import('./assets/js/services/EventBus.js');
                 EventBus = EB;
+                logResult('✅ EventBus загружен', 'success');
 
                 // Создаем экземпляр GameCore для тестирования
                 window.gameCore = new GameCore();
