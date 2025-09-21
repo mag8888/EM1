@@ -12,6 +12,12 @@ class RoomApi {
 
     withUserHeaders(headers = {}) {
         const user = this.getCurrentUser();
+        const token = localStorage.getItem('authToken');
+        
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
         if (user?.id) {
             headers['X-User-ID'] = user.id;
             headers['X-User-Name'] = user.first_name || user.username || user.email || 'Игрок';
@@ -42,12 +48,25 @@ class RoomApi {
             headers: this.withUserHeaders({ ...this.defaultHeaders, ...(options.headers || {}) })
         };
 
-        const response = await fetch(url, config);
-        if (!response.ok) {
-            const message = await this.extractError(response);
-            throw new Error(message || `Ошибка запроса ${response.status}`);
+        try {
+            const response = await fetch(url, config);
+            if (!response.ok) {
+                if (response.status === 401) {
+                    // Очищаем токен при 401 ошибке
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                    throw new Error('Сессия истекла. Пожалуйста, войдите снова.');
+                }
+                const message = await this.extractError(response);
+                throw new Error(message || `Ошибка запроса ${response.status}`);
+            }
+            return response.json();
+        } catch (error) {
+            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                throw new Error('Ошибка сети. Проверьте подключение к интернету.');
+            }
+            throw error;
         }
-        return response.json();
     }
 
     async extractError(response) {

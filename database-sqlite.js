@@ -4,7 +4,10 @@ const path = require('path');
 class SQLiteDatabase {
     constructor() {
         this.db = null;
-        this.dbPath = path.join(__dirname, 'game_data.sqlite');
+        // На Railway используем /tmp для постоянного хранения
+        this.dbPath = process.env.RAILWAY_ENVIRONMENT 
+            ? '/tmp/game_data.sqlite' 
+            : path.join(__dirname, 'game_data.sqlite');
         this.initialized = false;
     }
 
