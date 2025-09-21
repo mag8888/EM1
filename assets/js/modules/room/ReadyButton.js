@@ -59,14 +59,17 @@ export default class ReadyButton {
 
     async handleClick() {
         if (this.isProcessing || this.button.disabled) {
+            console.log('⚠️ ReadyButton.handleClick: кнопка заблокирована или обрабатывается');
             return;
         }
+        console.log('🔄 ReadyButton.handleClick: начало обработки клика');
         this.isProcessing = true;
         this.button.dataset.loading = 'true';
         try {
             await this.state.toggleReady();
+            console.log('✅ ReadyButton.handleClick: статус готовности изменен');
         } catch (error) {
-            console.error('Не удалось изменить статус готовности:', error);
+            console.error('❌ ReadyButton.handleClick: ошибка изменения статуса:', error);
         } finally {
             this.button.dataset.loading = 'false';
             this.isProcessing = false;

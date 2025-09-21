@@ -62,6 +62,11 @@ export default class PlayersList {
 
             const status = document.createElement('div');
             status.className = 'player-status';
+            // Добавляем инлайн стили для тестирования
+            status.style.padding = '4px 8px';
+            status.style.borderRadius = '4px';
+            status.style.fontSize = '12px';
+            status.style.fontWeight = '600';
             
             console.log('🔍 PlayersList render:', {
                 playerName: player.name,
@@ -74,12 +79,31 @@ export default class PlayersList {
             if (room.gameStarted) {
                 status.textContent = 'В игре';
                 status.classList.add('status-ready');
+                console.log('🎮 PlayersList: игрок в игре, статус установлен');
             } else if (player.isReady) {
                 status.textContent = 'Готов';
                 status.classList.add('status-ready');
+                status.classList.remove('status-waiting');
+                // Добавляем инлайн стили для статуса "готов"
+                status.style.background = 'rgba(16, 185, 129, 0.2)';
+                status.style.color = '#10b981';
+                status.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                console.log('✅ PlayersList: игрок готов, статус установлен:', {
+                    playerName: player.name,
+                    statusText: status.textContent,
+                    hasStatusReady: status.classList.contains('status-ready'),
+                    hasStatusWaiting: status.classList.contains('status-waiting')
+                });
             } else {
                 status.textContent = player.userId === currentUserId ? 'Выберите мечту и фишку' : 'Ожидает';
                 status.classList.add('status-waiting');
+                status.classList.remove('status-ready');
+                console.log('⏳ PlayersList: игрок не готов, статус установлен:', {
+                    playerName: player.name,
+                    statusText: status.textContent,
+                    hasStatusReady: status.classList.contains('status-ready'),
+                    hasStatusWaiting: status.classList.contains('status-waiting')
+                });
             }
 
             item.appendChild(avatar);

@@ -102,9 +102,19 @@ export default class RoomState extends EventEmitter {
 
     async toggleReady() {
         try {
+            console.log('🔄 RoomState.toggleReady: отправка запроса...');
             const room = await this.api.toggleReady(this.roomId);
+            console.log('✅ RoomState.toggleReady: получен ответ:', {
+                roomId: room?.id,
+                players: room?.players?.map(p => ({
+                    name: p.name,
+                    isReady: p.isReady,
+                    userId: p.userId
+                }))
+            });
             this.handleUpdate(room);
         } catch (error) {
+            console.error('❌ RoomState.toggleReady: ошибка:', error);
             this.emit('error', error);
             throw error;
         }
@@ -123,11 +133,21 @@ export default class RoomState extends EventEmitter {
 
     handleUpdate(room) {
         if (!room) {
+            console.log('⚠️ RoomState.handleUpdate: пустая комната');
             return;
         }
+        console.log('🔄 RoomState.handleUpdate: обновление состояния комнаты:', {
+            roomId: room.id,
+            players: room.players?.map(p => ({
+                name: p.name,
+                isReady: p.isReady,
+                userId: p.userId
+            }))
+        });
         this.room = room;
         localStorage.setItem('currentRoomId', this.roomId);
         localStorage.setItem('currentRoom', JSON.stringify(room));
         this.emit('change', this.getSnapshot());
+        console.log('✅ RoomState.handleUpdate: событие change отправлено');
     }
 }
