@@ -231,6 +231,20 @@ class RoomApi {
                         console.warn('Full endpoint also failed:', fullError);
                     }
                     
+                    // Если все не работает, пробуем простой GET без CORS
+                    console.log('Trying simple GET without CORS...');
+                    try {
+                        const response = await fetch(`${this.baseUrl}/api/rooms/simple`, {
+                            method: 'GET',
+                            mode: 'no-cors'
+                        });
+                        console.log('No-cors request completed (response not readable)');
+                        // no-cors не позволяет читать ответ, но может обойти CORS
+                        return []; // Возвращаем пустой массив
+                    } catch (noCorsError) {
+                        console.warn('No-cors request also failed:', noCorsError);
+                    }
+                    
                     console.log('All attempts failed, returning empty array as fallback');
                     return [];
                 } else {
