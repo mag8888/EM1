@@ -931,6 +931,18 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Тестовый endpoint для создания комнаты
+app.post('/api/test/create-room', (req, res) => {
+    try {
+        const room = createRoom('test-room', 'Тестовая комната');
+        console.log(`🧪 Создана тестовая комната: ${room.id}`);
+        res.json({ success: true, roomId: room.id, room });
+    } catch (error) {
+        console.error('❌ Ошибка создания тестовой комнаты:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // ---------------------------- Auth & Profile API --------------------------
 const normalizeEmail = (value = '') => (typeof value === 'string' ? value.trim().toLowerCase() : '');
 
@@ -1254,13 +1266,17 @@ app.post('/api/rooms/:roomId/start', (req, res) => {
 
 app.get('/api/rooms/:roomId/game-state', (req, res) => {
     try {
+        console.log(`🔍 Запрос game-state для комнаты: ${req.params.roomId}`);
         const room = requireRoom(req.params.roomId);
+        console.log(`📊 Комната найдена: ${room ? 'да' : 'нет'}, игра началась: ${room?.gameStarted}, состояние: ${room?.gameState ? 'есть' : 'нет'}`);
+        
         if (!room.gameStarted || !room.gameState) {
             throw new Error('Игра еще не началась');
         }
         const userId = getRequestUserId(req);
         res.json({ success: true, state: serializeGameState(room, userId) });
     } catch (error) {
+        console.error(`❌ Ошибка game-state для комнаты ${req.params.roomId}:`, error.message);
         buildErrorResponse(res, error);
     }
 });

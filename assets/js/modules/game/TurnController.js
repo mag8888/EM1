@@ -23,8 +23,12 @@ export class TurnController {
     async init() {
         console.log('🎮 TurnController инициализирован');
         
-        this.gameCore.eventBus.on('gameStarted', this.onGameStarted.bind(this));
-        this.gameCore.eventBus.on('diceRolled', this.onDiceRolled.bind(this));
+        if (this.gameCore && this.gameCore.eventBus) {
+            this.gameCore.eventBus.on('gameStarted', this.onGameStarted.bind(this));
+            this.gameCore.eventBus.on('diceRolled', this.onDiceRolled.bind(this));
+        } else {
+            console.warn('⚠️ TurnController: gameCore или eventBus недоступны');
+        }
     }
 
     initializeTurns(players) {
