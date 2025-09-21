@@ -1,7 +1,6 @@
 // EM1 Game Board v2.0 - Main Server with Updated Game Logic
 const express = require('express');
 const path = require('path');
-const crypto = require('crypto');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
@@ -10,10 +9,9 @@ const Database = require('./database-sqlite');
 const registerAuthModule = require('./modules/auth');
 const registerRoomsModule = require('./modules/rooms');
 const roomState = require('./services/room-state');
+const { GAME_CELLS } = require('./game-board/config/game-cells');
 
 // const CreditService = require('./credit-module/CreditService');
-// const { GAME_CELLS, GameCellsUtils } = require('./game-board/config/game-cells.js');
-const GAME_CELLS = [];
 // const { SMALL_DEAL_CARDS, BIG_DEAL_CARDS, EXPENSE_CARDS, createDeck, shuffleDeck, drawCard } = require('./assets/js/utils/cards-config.js');
 // const userManager = require('./game-board/utils/userManager');
 // const LegacyUser = require('./models/LegacyUser'); // Отключено для SQLite
@@ -67,9 +65,6 @@ const connectToDatabase = async () => {
         console.error('❌ Database connection error:', error.message);
     }
 };
-
-
-const getRoomById = (roomId) => rooms.get(roomId);
 
 
 const getActivePlayer = (room) => {
@@ -153,10 +148,6 @@ const requireRoom = (roomId) => {
 
 const getRequestUserId = (req) => {
     return (req.body?.user_id || req.headers['x-user-id'] || req.query.user_id || '').toString();
-};
-
-const getRequestUserName = (req) => {
-    return req.body?.user_name || req.body?.name || req.headers['x-user-name'] || 'Игрок';
 };
 
 const buildErrorResponse = (res, error) => {

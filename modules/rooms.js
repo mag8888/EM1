@@ -74,38 +74,64 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
 
     const buildRoomResponse = (room, userId) => sanitizeRoom(room, { includePlayers: true, userId });
 
-    app.get('/api/rooms', async (req, res) => {
-        try {
-            let result = [];
-            if (isDbReady?.()) {
-                const dbRooms = await db.getAllRooms();
-                result = await Promise.all(dbRooms.map(async (row) => {
-                    let room = getRoomById(row.id);
-                    if (!room) {
-                        room = await ensureRoomLoaded(row.id);
-                    }
-                    return sanitizeRoom(room || {
-                        id: row.id,
-                        name: row.name,
-                        creatorId: row.creator_id,
-                        creatorName: row.creator_name,
-                        maxPlayers: row.max_players,
-                        turnTime: row.turn_time,
-                        assignProfessions: Boolean(row.assign_professions),
-                        status: row.status,
-                        gameStarted: Boolean(row.game_started),
-                        createdAt: row.created_at,
-                        updatedAt: row.updated_at,
-                        players: []
-                    });
-                }));
-            } else {
-                result = listRooms().map((room) => sanitizeRoom(room));
+    const loadRooms = async ({ userId = null, includePlayers = true } = {}) => {
+        if (isDbReady?.()) {
+            const dbRooms = await db.getAllRooms();
+            const result = [];
+            for (const row of dbRooms) {
+                const loaded = await ensureRoomLoaded(row.id);
+                if (loaded) {
+                    result.push(sanitizeRoom(loaded, { includePlayers, userId }));
+                }
             }
+            return result;
+        }
+
+        return listRooms().map((room) => sanitizeRoom(room, { includePlayers, userId }));
+    };
+
+    app.get('/api/rooms', ensureAuth, async (req, res) => {
+        try {
+            const userId = req.user?.userId || null;
+            const result = await loadRooms({ userId, includePlayers: true });
             res.json({ success: true, rooms: result });
         } catch (error) {
             console.error('Ошибка получения списка комнат:', error);
             res.status(500).json({ success: false, message: 'Ошибка сервера' });
+        }
+    });
+
+    app.get('/api/rooms/simple', async (req, res) => {
+        try {
+            const rooms = await loadRooms({ includePlayers: false });
+            const simplified = rooms.map(room => ({
+                id: room.id,
+                name: room.name,
+                creatorName: room.creatorName,
+                maxPlayers: room.maxPlayers,
+                playersCount: room.players?.length || 0,
+                status: room.status,
+                gameStarted: room.gameStarted,
+                canStart: room.canStart
+            }));
+            res.json({ success: true, rooms: simplified });
+        } catch (error) {
+            console.error('Ошибка получения простого списка комнат:', error);
+            res.status(500).json({ success: false, message: 'Ошибка сервера' });
+        }
+    });
+
+    app.get('/api/rooms/:roomId', ensureAuth, async (req, res) => {
+        try {
+            const userId = req.user?.userId || null;
+            const room = await ensureRoomLoaded(req.params.roomId);
+            if (!room) {
+                return res.status(404).json({ success: false, message: 'Комната не найдена' });
+            }
+            res.json({ success: true, room: sanitizeRoom(room, { includePlayers: true, userId }) });
+        } catch (error) {
+            console.error('Ошибка получения комнаты:', error);
+            res.status(400).json({ success: false, message: error.message || 'Ошибка получения комнаты' });
         }
     });
 
