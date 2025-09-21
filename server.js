@@ -5,7 +5,13 @@ const crypto = require('crypto');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
-const Database = require('./database');
+let Database;
+try {
+    Database = require('./database');
+} catch (error) {
+    console.warn('⚠️ SQLite недоступен, используем Memory Database');
+    Database = require('./database-memory');
+}
 
 const CreditService = require('./credit-module/CreditService');
 const { GAME_CELLS, GameCellsUtils } = require('./game-board/config/game-cells.js');
