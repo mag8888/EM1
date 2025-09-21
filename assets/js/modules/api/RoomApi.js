@@ -67,6 +67,9 @@ class RoomApi {
         const token = localStorage.getItem('authToken');
         if (token) {
             basicHeaders['Authorization'] = `Bearer ${token}`;
+            console.log('Using auth token for request');
+        } else {
+            console.warn('No auth token found, request may fail');
         }
         
         config.headers = { ...basicHeaders, ...(options.headers || {}) };

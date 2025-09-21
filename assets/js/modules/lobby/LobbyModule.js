@@ -200,16 +200,9 @@ class LobbyModule {
                 console.log('No auth token found');
                 return false;
             }
-            const response = await fetch('/api/user/profile', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (!response.ok) {
-                console.log('User validation failed, clearing auth data');
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('user');
-                return false;
-            }
-            const data = await response.json();
+            
+            // Используем RoomApi для консистентности
+            const data = await this.roomApi.request('/api/user/profile');
             if (!data.id && data._id) {
                 data.id = data._id;
             }
