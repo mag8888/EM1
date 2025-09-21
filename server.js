@@ -24,7 +24,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'em1-production-secret-key-2024-rai
 
 // --- Shared services -----------------------------------------------------
 // const creditService = new CreditService();
-const { rooms, creditRooms, drawFromDeck, returnCardToDeck } = roomState;
+const { rooms, creditRooms, drawFromDeck, returnCardToDeck, createRoomInstance, addPlayerToRoom } = roomState;
 
 // Инициализация базы данных
 const db = new Database();
@@ -60,9 +60,86 @@ const connectToDatabase = async () => {
             });
             console.log('✅ Создан тестовый пользователь: test@example.com / test123');
         }
+        
+        // Загружаем существующие комнаты из SQLite в память
+        await loadRoomsFromDatabase();
     } catch (error) {
         dbConnected = false;
         console.error('❌ Database connection error:', error.message);
+    }
+};
+
+const loadRoomsFromDatabase = async () => {
+    try {
+        console.log('🔄 Загружаем комнаты из SQLite...');
+        const dbRooms = await db.getAllRooms();
+        console.log(`📋 Найдено комнат в SQLite: ${dbRooms.length}`);
+        
+        for (const row of dbRooms) {
+            // Загружаем комнату с игроками
+            const roomWithPlayers = await db.getRoomWithPlayers(row.id);
+            if (roomWithPlayers?.room) {
+                // Создаем экземпляр комнаты в памяти
+                const room = createRoomInstance({
+                    id: roomWithPlayers.room.id,
+                    name: roomWithPlayers.room.name,
+                    creatorId: roomWithPlayers.room.creator_id,
+                    creatorName: roomWithPlayers.room.creator_name,
+                    maxPlayers: roomWithPlayers.room.max_players,
+                    turnTime: roomWithPlayers.room.turn_time,
+                    assignProfessions: roomWithPlayers.room.assign_professions
+                });
+                
+                // Добавляем игроков
+                for (const playerRow of roomWithPlayers.players || []) {
+                    addPlayerToRoom(room, {
+                        userId: playerRow.user_id,
+                        name: playerRow.name,
+                        avatar: playerRow.avatar,
+                        isHost: playerRow.is_host === 1,
+                        isReady: playerRow.is_ready === 1,
+                        selectedDream: playerRow.selected_dream,
+                        selectedToken: playerRow.selected_token
+                    });
+                }
+                
+                console.log(`✅ Загружена комната: ${room.name} (${room.players.length} игроков)`);
+            }
+        }
+        
+        console.log(`✅ Загружено комнат в память: ${rooms.size}`);
+        
+        // Запускаем периодическое сохранение комнат
+        setInterval(saveRoomsToDatabase, 30000); // каждые 30 секунд
+    } catch (error) {
+        console.error('❌ Ошибка загрузки комнат из SQLite:', error);
+    }
+};
+
+const saveRoomsToDatabase = async () => {
+    if (!dbConnected) return;
+    
+    try {
+        for (const [roomId, room] of rooms) {
+            // Обновляем данные комнаты в SQLite
+            await db.updateRoom(roomId, {
+                name: room.name,
+                status: room.gameStarted ? 'playing' : 'waiting',
+                gameStarted: room.gameStarted,
+                updated_at: new Date().toISOString()
+            });
+            
+            // Обновляем данные игроков
+            for (const player of room.players) {
+                await db.updatePlayerSelection(roomId, player.userId, {
+                    dreamId: player.selectedDream,
+                    tokenId: player.selectedToken
+                });
+                await db.updatePlayerReady(roomId, player.userId, player.isReady);
+            }
+        }
+    } catch (error) {
+        console.error('❌ Ошибка сохранения комнат в SQLite:', error);
     }
 };
 

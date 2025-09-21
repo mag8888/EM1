@@ -336,6 +336,35 @@ class SQLiteDatabase {
         await this.run(sql, [status, gameStarted ? 1 : 0, roomId]);
     }
 
+    async updateRoom(roomId, data) {
+        const fields = [];
+        const values = [];
+        
+        if (data.name !== undefined) {
+            fields.push('name = ?');
+            values.push(data.name);
+        }
+        if (data.status !== undefined) {
+            fields.push('status = ?');
+            values.push(data.status);
+        }
+        if (data.gameStarted !== undefined) {
+            fields.push('game_started = ?');
+            values.push(data.gameStarted ? 1 : 0);
+        }
+        if (data.updated_at !== undefined) {
+            fields.push('updated_at = ?');
+            values.push(data.updated_at);
+        }
+        
+        if (fields.length === 0) return;
+        
+        values.push(roomId);
+        const sql = `UPDATE rooms SET ${fields.join(', ')} WHERE id = ?`;
+        await this.run(sql, values);
+        console.log('✅ Комната обновлена в SQLite:', { roomId, data });
+    }
+
     async setRoomHost(roomId, userId) {
         const sql = `UPDATE room_players SET is_host = CASE WHEN user_id = ? THEN 1 ELSE 0 END WHERE room_id = ?`;
         await this.run(sql, [userId, roomId]);
