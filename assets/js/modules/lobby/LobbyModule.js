@@ -311,17 +311,23 @@ class LobbyModule {
             return true;
         } catch (error) {
             console.error('Failed to validate user', error);
+            
+            // Безопасная обработка свойств ошибки
+            const errorMessage = error?.message || 'Unknown error';
+            const errorName = error?.name || 'Unknown';
+            const errorStatus = error?.status || 'unknown';
+            
             console.log('Error details:', {
-                message: error.message,
-                name: error.name,
-                status: error.status || 'unknown'
+                message: errorMessage,
+                name: errorName,
+                status: errorStatus
             });
             
             // Удаляем токен только при явных ошибках авторизации
-            if (error.message.includes('401') || error.message.includes('403') || 
-                error.message.includes('Unauthorized') || error.message.includes('Forbidden') ||
-                error.message.includes('Недействительный токен') || error.message.includes('Токен истек') ||
-                error.message.includes('Токен доступа отсутствует')) {
+            if (errorMessage.includes('401') || errorMessage.includes('403') || 
+                errorMessage.includes('Unauthorized') || errorMessage.includes('Forbidden') ||
+                errorMessage.includes('Недействительный токен') || errorMessage.includes('Токен истек') ||
+                errorMessage.includes('Токен доступа отсутствует')) {
                 console.log('Authentication error, clearing tokens');
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('user');
@@ -329,7 +335,7 @@ class LobbyModule {
             }
             
             // Для других ошибок (сеть, сервер) не удаляем токен
-            if (error.message.includes('Load failed') || error.message.includes('Network error')) {
+            if (errorMessage.includes('Load failed') || errorMessage.includes('Network error')) {
                 console.log('Network error detected, keeping tokens for retry');
             } else {
                 console.log('Server error, keeping tokens for retry');

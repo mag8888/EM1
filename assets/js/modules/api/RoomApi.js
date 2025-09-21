@@ -71,16 +71,21 @@ class RoomApi {
         // Специальная обработка для Safari
         const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
         if (isSafari) {
-            console.log('Safari detected, using simplified headers');
-            // Сохраняем Authorization заголовок для Safari
-            const authHeader = config.headers.Authorization;
-            config.headers = {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            };
-            if (authHeader) {
-                config.headers.Authorization = authHeader;
-                console.log('Authorization header preserved for Safari');
+            console.log('Safari detected, trying XMLHttpRequest first');
+            try {
+                return await this.xhrRequest(url, config);
+            } catch (xhrError) {
+                console.log('XMLHttpRequest failed, trying fetch with simplified headers');
+                // Сохраняем Authorization заголовок для Safari
+                const authHeader = config.headers.Authorization;
+                config.headers = {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                };
+                if (authHeader) {
+                    config.headers.Authorization = authHeader;
+                    console.log('Authorization header preserved for Safari');
+                }
             }
         }
         
@@ -90,15 +95,18 @@ class RoomApi {
             console.log('RoomApi response:', { status: response.status, ok: response.ok, url: response.url });
         } catch (error) {
             console.error('RoomApi fetch error:', error);
-            console.error('Error details:', {
-                name: error.name,
-                message: error.message,
-                stack: error.stack,
-                cause: error.cause
-            });
+            
+            // Безопасная обработка свойств ошибки
+            const errorDetails = {
+                name: error?.name || 'Unknown',
+                message: error?.message || 'Unknown error',
+                stack: error?.stack || 'No stack trace',
+                cause: error?.cause || 'No cause'
+            };
+            console.error('Error details:', errorDetails);
             
             // Специальная обработка для Safari CORS ошибок
-            if (isSafari && (error.message === 'Type error' || error.message === 'Load failed')) {
+            if (isSafari && (errorDetails.message === 'Type error' || errorDetails.message === 'Load failed')) {
                 console.log('Safari CORS error detected, trying XMLHttpRequest fallback');
                 try {
                     return await this.xhrRequest(url, config);
