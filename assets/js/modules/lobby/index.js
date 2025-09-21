@@ -1,8 +1,20 @@
-import RoomApi from '../api/RoomApi.js';
-import LobbyModule from './LobbyModule.js';
-
+// Загружаем модули как скрипты
 (async () => {
-    const lobby = new LobbyModule({ api: new RoomApi(), pollInterval: 10000 });
+    // Ждем загрузки модулей
+    await new Promise(resolve => {
+        if (window.RoomApi && window.LobbyModule) {
+            resolve();
+        } else {
+            const checkInterval = setInterval(() => {
+                if (window.RoomApi && window.LobbyModule) {
+                    clearInterval(checkInterval);
+                    resolve();
+                }
+            }, 100);
+        }
+    });
+
+    const lobby = new window.LobbyModule({ api: new window.RoomApi(), pollInterval: 10000 });
     try {
         await lobby.init();
     } catch (error) {

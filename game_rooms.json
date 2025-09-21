@@ -1,0 +1,100 @@
+{
+  "rooms": [
+    [
+      "room_2f5528f7-c056-48f9-b888-49fc524627fd",
+      {
+        "id": "room_2f5528f7-c056-48f9-b888-49fc524627fd",
+        "name": "Тестовая комната",
+        "creatorId": "test-user",
+        "creatorName": "Тестовый пользователь",
+        "maxPlayers": 4,
+        "minPlayers": 2,
+        "gameStarted": false,
+        "createdAt": "2025-09-21T06:32:14.982Z",
+        "updatedAt": "2025-09-21T06:32:14.982Z",
+        "lastActivity": 1758436334982
+      }
+    ],
+    [
+      "room_4b2af585-dbdc-466c-9249-d9eed4e91852",
+      {
+        "id": "room_4b2af585-dbdc-466c-9249-d9eed4e91852",
+        "name": "Тестовая комната",
+        "creatorId": "test-user",
+        "creatorName": "Тестовый пользователь",
+        "maxPlayers": 4,
+        "minPlayers": 2,
+        "gameStarted": false,
+        "createdAt": "2025-09-21T06:34:13.784Z",
+        "updatedAt": "2025-09-21T06:34:13.784Z",
+        "lastActivity": 1758436453784
+      }
+    ],
+    [
+      "room_76cdaa2b-3c9e-43c3-aca7-1107c18784ea",
+      {
+        "id": "room_76cdaa2b-3c9e-43c3-aca7-1107c18784ea",
+        "name": "Тестовая комната",
+        "creatorId": "test-user",
+        "creatorName": "Тестовый пользователь",
+        "maxPlayers": 4,
+        "minPlayers": 2,
+        "gameStarted": false,
+        "createdAt": "2025-09-21T06:41:49.877Z",
+        "updatedAt": "2025-09-21T06:41:49.877Z",
+        "lastActivity": 1758436909877
+      }
+    ]
+  ],
+  "players": [
+    [
+      "room_2f5528f7-c056-48f9-b888-49fc524627fd",
+      [
+        {
+          "userId": "test-user",
+          "name": "Тестовый пользователь",
+          "isHost": true,
+          "isReady": false,
+          "selectedDream": null,
+          "selectedToken": null,
+          "position": 0,
+          "balance": 1000,
+          "joinedAt": "2025-09-21T06:32:14.984Z"
+        }
+      ]
+    ],
+    [
+      "room_4b2af585-dbdc-466c-9249-d9eed4e91852",
+      [
+        {
+          "userId": "test-user",
+          "name": "Тестовый пользователь",
+          "isHost": true,
+          "isReady": false,
+          "selectedDream": null,
+          "selectedToken": null,
+          "position": 0,
+          "balance": 1000,
+          "joinedAt": "2025-09-21T06:34:13.786Z"
+        }
+      ]
+    ],
+    [
+      "room_76cdaa2b-3c9e-43c3-aca7-1107c18784ea",
+      [
+        {
+          "userId": "test-user",
+          "name": "Тестовый пользователь",
+          "isHost": true,
+          "isReady": false,
+          "selectedDream": null,
+          "selectedToken": null,
+          "position": 0,
+          "balance": 1000,
+          "joinedAt": "2025-09-21T06:41:49.879Z"
+        }
+      ]
+    ]
+  ],
+  "timestamp": "2025-09-21T06:46:25.672Z"
+}
