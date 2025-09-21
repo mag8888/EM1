@@ -290,8 +290,11 @@ class LobbyModule {
             console.log('RoomApi baseUrl:', this.roomApi?.baseUrl);
             
             // Используем RoomApi для консистентности
+            console.log('Making request to /api/user/profile...');
             const data = await this.roomApi.request('/api/user/profile');
             console.log('Profile data received:', data);
+            console.log('Profile data type:', typeof data);
+            console.log('Profile data keys:', data ? Object.keys(data) : 'null/undefined');
             
             if (!data.id && data._id) {
                 data.id = data._id;
@@ -313,7 +316,8 @@ class LobbyModule {
             
             // Удаляем токен только при явных ошибках авторизации
             if (error.message.includes('401') || error.message.includes('403') || 
-                error.message.includes('Unauthorized') || error.message.includes('Forbidden')) {
+                error.message.includes('Unauthorized') || error.message.includes('Forbidden') ||
+                error.message.includes('Недействительный токен') || error.message.includes('Токен истек')) {
                 console.log('Authentication error, clearing tokens');
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('user');

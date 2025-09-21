@@ -62,7 +62,7 @@ class RoomApi {
         const response = await fetch(url, config);
 
         if (!response.ok) {
-            if (response.status === 401) {
+            if (response.status === 401 || response.status === 403) {
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('user');
             }
@@ -80,7 +80,15 @@ class RoomApi {
             return null;
         }
 
-        return response.json();
+        try {
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Failed to parse JSON response:', error);
+            console.error('Response status:', response.status);
+            console.error('Response headers:', Object.fromEntries(response.headers.entries()));
+            throw new Error(`Invalid JSON response from server: ${error.message}`);
+        }
     }
 
     async listRooms() {
