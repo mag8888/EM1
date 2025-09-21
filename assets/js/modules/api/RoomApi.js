@@ -71,25 +71,7 @@ class RoomApi {
             // Специальная обработка для Safari
             const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
             if (isSafari) {
-                console.log('Safari detected, trying special endpoint first');
-                
-                // Для Safari используем специальный endpoint без авторизации
-                if (endpoint === '/api/rooms' && method === 'GET') {
-                    try {
-                        const safariUrl = `${this.baseUrl}/api/rooms/safari`;
-                        console.log('Trying Safari endpoint:', safariUrl);
-                        const result = await fetch(safariUrl, { method: 'GET' });
-                        if (result.ok) {
-                            const data = await result.json();
-                            console.log('Safari endpoint succeeded');
-                            return data;
-                        }
-                    } catch (safariError) {
-                        console.log('Safari endpoint failed, trying regular request:', safariError);
-                    }
-                }
-                
-                console.log('Safari detected, trying simplified fetch');
+                console.log('Safari detected, trying simplified fetch first');
                 // Сохраняем Authorization заголовок для Safari
                 const authHeader = config.headers.Authorization;
                 config.headers = {
@@ -130,7 +112,24 @@ class RoomApi {
                         throw new Error(`Invalid JSON response from server: ${error.message}`);
                     }
                 } catch (safariError) {
-                    console.log('Safari fetch failed, trying XMLHttpRequest fallback:', safariError);
+                    console.log('Safari fetch failed, trying Safari endpoint fallback:', safariError);
+                    
+                    // Для Safari используем специальный endpoint без авторизации
+                    if (endpoint === '/api/rooms' && method === 'GET') {
+                        try {
+                            const safariUrl = `${this.baseUrl}/api/rooms/safari`;
+                            console.log('Trying Safari endpoint:', safariUrl);
+                            const result = await fetch(safariUrl, { method: 'GET' });
+                            if (result.ok) {
+                                const data = await result.json();
+                                console.log('Safari endpoint succeeded');
+                                return data;
+                            }
+                        } catch (safariEndpointError) {
+                            console.log('Safari endpoint failed, trying XMLHttpRequest:', safariEndpointError);
+                        }
+                    }
+                    
                     try {
                         const result = await this.xhrRequest(url, config);
                         console.log('XMLHttpRequest succeeded, returning result');

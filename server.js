@@ -576,8 +576,30 @@ registerRoomsModule({
 app.get('/api/rooms/safari', async (req, res) => {
     try {
         console.log('Safari rooms endpoint called');
-        const result = await loadRoomsFromDatabase();
-        res.json({ success: true, rooms: result });
+        
+        // Получаем комнаты из памяти (они уже загружены при старте сервера)
+        const roomsList = Array.from(rooms.values()).map(room => ({
+            id: room.id,
+            name: room.name,
+            creatorId: room.creatorId,
+            creatorName: room.creatorName,
+            maxPlayers: room.maxPlayers,
+            turnTime: room.turnTime,
+            assignProfessions: room.assignProfessions,
+            gameStarted: room.gameStarted,
+            players: room.players.map(player => ({
+                userId: player.userId,
+                name: player.name,
+                avatar: player.avatar,
+                isHost: player.isHost,
+                isReady: player.isReady,
+                selectedDream: player.selectedDream,
+                selectedToken: player.selectedToken
+            }))
+        }));
+        
+        console.log(`Safari endpoint returning ${roomsList.length} rooms`);
+        res.json({ success: true, rooms: roomsList });
     } catch (error) {
         console.error('Ошибка получения списка комнат для Safari:', error);
         res.status(500).json({ success: false, message: 'Ошибка сервера' });
