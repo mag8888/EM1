@@ -5,9 +5,9 @@ const crypto = require('crypto');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
-const jwt = require('jsonwebtoken');
 // Используем SQLite Database для Railway deployment
 const Database = require('./database-sqlite');
+const registerAuthModule = require('./modules/auth');
 
 // const CreditService = require('./credit-module/CreditService');
 // const { GAME_CELLS, GameCellsUtils } = require('./game-board/config/game-cells.js');
@@ -77,56 +77,6 @@ const generateId = (prefix = 'id') => {
 };
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-
-const sanitizeUser = (user) => {
-    if (!user) {
-        return null;
-    }
-    const plain = typeof user.toObject === 'function' ? user.toObject() : user;
-    return {
-        id: plain._id ? plain._id.toString() : plain.id,
-        telegram_id: plain.telegram_id || null,
-        username: plain.username || '',
-        first_name: plain.first_name || '',
-        last_name: plain.last_name || '',
-        email: plain.email || '',
-        balance: plain.balance ?? 0,
-        level: plain.level ?? 1,
-        experience: plain.experience ?? 0,
-        games_played: plain.games_played ?? 0,
-        wins_count: plain.wins_count ?? 0,
-        referrals_count: plain.referrals_count ?? 0,
-        referral_code: plain.referral_code || null,
-        referral_earnings: plain.referral_earnings ?? 0,
-        is_active: plain.is_active !== false,
-        created_at: plain.created_at || plain.createdAt || null,
-        updated_at: plain.updated_at || plain.updatedAt || null
-    };
-};
-
-const authenticateToken = (req, res, next) => {
-    const authHeader = req.headers.authorization || '';
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-
-    if (!token) {
-        return res.status(401).json({ message: 'Токен доступа не найден' });
-    }
-
-    try {
-        const payload = jwt.verify(token, JWT_SECRET);
-        req.user = payload;
-        return next();
-    } catch (error) {
-        console.error('JWT verification failed:', error.message, 'Token:', token.substring(0, 20) + '...');
-        if (error.name === 'JsonWebTokenError') {
-            return res.status(403).json({ message: 'Недействительный токен' });
-        } else if (error.name === 'TokenExpiredError') {
-            return res.status(403).json({ message: 'Токен истек' });
-        } else {
-            return res.status(403).json({ message: 'Ошибка проверки токена' });
-        }
-    }
-};
 
 const connectToDatabase = async () => {
     if (dbConnected) {
@@ -938,6 +888,9 @@ app.use((req, res, next) => {
     }
 });
 
+// Регистрируем модуль авторизации после middleware
+const { sanitizeUser, authenticateToken } = registerAuthModule({ app, db, jwtSecret: JWT_SECRET });
+
 // Статические директории для отдельных модулей
 app.use('/assets', express.static(resolvePath('assets')));
 app.use('/game-board', express.static(resolvePath('game-board')));
@@ -1026,117 +979,6 @@ app.post('/api/test/create-room', async (req, res) => {
 });
 
 // ---------------------------- Auth & Profile API --------------------------
-// Временно отключено для использования SQLite
-// const normalizeEmail = (value = '') => (typeof value === 'string' ? value.trim().toLowerCase() : '');
-
-// Real authentication system
-app.post('/api/auth/login', async (req, res) => {
-    const { email, password } = req.body || {};
-    
-    if (!email || !password) {
-        return res.status(400).json({ message: 'Email и пароль обязательны' });
-    }
-    
-    try {
-        // Проверяем пользователя в базе данных
-        const user = await db.getUserByEmail(email);
-        
-        if (!user) {
-            return res.status(401).json({ message: 'Пользователь не найден' });
-        }
-        
-        // Простая проверка пароля (в реальном проекте используйте bcrypt)
-        if (user.password !== password) {
-            return res.status(401).json({ message: 'Неверный пароль' });
-        }
-        
-        if (!user.is_active) {
-            return res.status(401).json({ message: 'Аккаунт заблокирован' });
-        }
-        
-        const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
-        
-        res.json({
-            message: 'Успешный вход',
-            token,
-            expiresIn: '24h',
-            user: sanitizeUser(user)
-        });
-    } catch (error) {
-        console.error('Ошибка авторизации:', error);
-        res.status(500).json({ message: 'Ошибка сервера' });
-    }
-});
-
-app.post('/api/auth/register', async (req, res) => {
-    const { email, password, first_name, last_name } = req.body || {};
-    
-    if (!email || !password) {
-        return res.status(400).json({ message: 'Email и пароль обязательны' });
-    }
-    
-    try {
-        // Проверяем, существует ли пользователь
-        const existingUser = await db.getUserByEmail(email);
-        if (existingUser) {
-            return res.status(409).json({ message: 'Пользователь с таким email уже существует' });
-        }
-        
-        // Создаем нового пользователя
-        const newUser = await db.createUser({
-            email,
-            password, // В реальном проекте хешируйте пароль
-            first_name: first_name || '',
-            last_name: last_name || '',
-            balance: 10000,
-            level: 1,
-            experience: 0,
-            games_played: 0,
-            wins_count: 0,
-            referrals_count: 0,
-            referral_earnings: 0,
-            is_active: true
-        });
-        
-        const token = jwt.sign({ userId: newUser.id, email: newUser.email }, JWT_SECRET, { expiresIn: '24h' });
-        
-        res.status(201).json({
-            message: 'Пользователь успешно зарегистрирован',
-            token,
-            expiresIn: '24h',
-            user: sanitizeUser(newUser)
-        });
-    } catch (error) {
-        console.error('Ошибка регистрации:', error);
-        res.status(500).json({ message: 'Ошибка сервера' });
-    }
-});
-
-app.get('/api/user/profile', authenticateToken, async (req, res) => {
-    try {
-        const user = await db.getUserById(req.user.userId);
-        if (!user) {
-            return res.status(404).json({ message: 'Пользователь не найден' });
-        }
-        res.json(sanitizeUser(user));
-    } catch (error) {
-        console.error('Ошибка получения профиля:', error);
-        res.status(500).json({ message: 'Ошибка сервера' });
-    }
-});
-
-app.get('/api/user/stats', authenticateToken, (req, res) => {
-    res.json({
-        games_played: 0,
-        wins_count: 0,
-        level: 1,
-        experience: 0,
-        balance: 10000,
-        referrals_count: 0,
-        referral_earnings: 0
-    });
-});
-
 // ---------------------------- Rooms API ----------------------------------
 app.get('/api/rooms', async (req, res) => {
     try {
