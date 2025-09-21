@@ -60,6 +60,13 @@ class RoomApi {
         }
 
         console.log('RoomApi request:', { url, method, headers: config.headers });
+        console.log('Fetch available:', typeof fetch !== 'undefined');
+        console.log('User agent:', navigator.userAgent);
+        
+        // Проверяем поддержку fetch
+        if (typeof fetch === 'undefined') {
+            throw new Error('Fetch API not supported in this browser');
+        }
         
         let response;
         try {
@@ -70,7 +77,8 @@ class RoomApi {
             console.error('Error details:', {
                 name: error.name,
                 message: error.message,
-                stack: error.stack
+                stack: error.stack,
+                cause: error.cause
             });
             throw error;
         }
