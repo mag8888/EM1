@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const ServerConfig = require('../server-config');
 
-// Re-uses legacy user structure expected by the front-end (first_name, balance, etc.)
+// Схема в "старом" формате, который ожидает фронтенд (first_name, balance и т.п.)
 const serverConfig = new ServerConfig();
 
 const legacyUserSchema = new mongoose.Schema({
