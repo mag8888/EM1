@@ -6,8 +6,8 @@ const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-// Используем Memory Database для Railway deployment
-const Database = require('./database-memory');
+// Используем SQLite Database для Railway deployment
+const Database = require('./database-sqlite');
 
 // const CreditService = require('./credit-module/CreditService');
 // const { GAME_CELLS, GameCellsUtils } = require('./game-board/config/game-cells.js');
