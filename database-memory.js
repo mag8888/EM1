@@ -5,6 +5,7 @@ class MemoryDatabase {
     constructor() {
         this.rooms = new Map();
         this.players = new Map(); // roomId -> players[]
+        this.users = new Map(); // userId -> user
         this.dbPath = path.join(__dirname, 'game_rooms.json');
         this.initialized = false;
     }
@@ -16,6 +17,7 @@ class MemoryDatabase {
                 const data = JSON.parse(fs.readFileSync(this.dbPath, 'utf8'));
                 this.rooms = new Map(data.rooms || []);
                 this.players = new Map(data.players || []);
+                this.users = new Map(data.users || []);
                 console.log('✅ Данные загружены из файла');
             }
             this.initialized = true;
@@ -31,6 +33,7 @@ class MemoryDatabase {
             const data = {
                 rooms: Array.from(this.rooms.entries()),
                 players: Array.from(this.players.entries()),
+                users: Array.from(this.users.entries()),
                 timestamp: new Date().toISOString()
             };
             fs.writeFileSync(this.dbPath, JSON.stringify(data, null, 2));
@@ -168,6 +171,83 @@ class MemoryDatabase {
         this.players.delete(roomId);
         await this.saveToFile();
         console.log('✅ Комната удалена:', roomId);
+    }
+
+    // User management methods
+    async createUser(userData) {
+        const { email, password, first_name, last_name, balance = 10000, level = 1, experience = 0, games_played = 0, wins_count = 0, referrals_count = 0, referral_earnings = 0, is_active = true } = userData;
+        
+        const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+        
+        const user = {
+            id: userId,
+            email: email.toLowerCase().trim(),
+            password,
+            first_name: first_name || '',
+            last_name: last_name || '',
+            balance,
+            level,
+            experience,
+            games_played,
+            wins_count,
+            referrals_count,
+            referral_earnings,
+            is_active,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+        
+        this.users.set(userId, user);
+        await this.saveToFile();
+        
+        console.log('✅ Пользователь создан:', { userId, email });
+        return user;
+    }
+
+    async getUserByEmail(email) {
+        const normalizedEmail = email.toLowerCase().trim();
+        for (const [userId, user] of this.users) {
+            if (user.email === normalizedEmail) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    async getUserById(userId) {
+        return this.users.get(userId) || null;
+    }
+
+    async updateUser(userId, updateData) {
+        const user = this.users.get(userId);
+        if (!user) {
+            throw new Error('Пользователь не найден');
+        }
+        
+        const updatedUser = {
+            ...user,
+            ...updateData,
+            updated_at: new Date().toISOString()
+        };
+        
+        this.users.set(userId, updatedUser);
+        await this.saveToFile();
+        
+        console.log('✅ Пользователь обновлен:', { userId });
+        return updatedUser;
+    }
+
+    async deleteUser(userId) {
+        const deleted = this.users.delete(userId);
+        if (deleted) {
+            await this.saveToFile();
+            console.log('✅ Пользователь удален:', { userId });
+        }
+        return deleted;
+    }
+
+    async getAllUsers() {
+        return Array.from(this.users.values());
     }
 
     async close() {

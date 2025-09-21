@@ -131,6 +131,18 @@ const connectToDatabase = async () => {
         await db.init();
         dbConnected = true;
         console.log('✅ Connected to SQLite database');
+        
+        // Создаем тестового пользователя если его нет
+        const testUser = await db.getUserByEmail('test@example.com');
+        if (!testUser) {
+            await db.createUser({
+                email: 'test@example.com',
+                password: 'test123',
+                first_name: 'Тестовый',
+                last_name: 'Пользователь'
+            });
+            console.log('✅ Создан тестовый пользователь: test@example.com / test123');
+        }
     } catch (error) {
         dbConnected = false;
         console.error('❌ Database connection error:', error.message);
@@ -1008,57 +1020,100 @@ app.post('/api/test/create-room', async (req, res) => {
 // Временно отключено для использования SQLite
 // const normalizeEmail = (value = '') => (typeof value === 'string' ? value.trim().toLowerCase() : '');
 
-// Simple auth endpoints for testing
-app.post('/api/auth/login', (req, res) => {
+// Real authentication system
+app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body || {};
     
     if (!email || !password) {
         return res.status(400).json({ message: 'Email и пароль обязательны' });
     }
     
-    // Simple mock authentication
-    const mockUser = {
-        id: 'user_' + Date.now(),
-        email: email,
-        first_name: 'Тестовый',
-        last_name: 'Пользователь',
-        balance: 10000,
-        level: 1,
-        experience: 0,
-        games_played: 0,
-        wins_count: 0,
-        referrals_count: 0,
-        referral_earnings: 0,
-        is_active: true
-    };
-    
-    const token = jwt.sign({ userId: mockUser.id, email: mockUser.email }, JWT_SECRET, { expiresIn: '24h' });
-    
-    res.json({
-        message: 'Успешный вход',
-        token,
-        expiresIn: '24h',
-        user: mockUser
-    });
+    try {
+        // Проверяем пользователя в базе данных
+        const user = await db.getUserByEmail(email);
+        
+        if (!user) {
+            return res.status(401).json({ message: 'Пользователь не найден' });
+        }
+        
+        // Простая проверка пароля (в реальном проекте используйте bcrypt)
+        if (user.password !== password) {
+            return res.status(401).json({ message: 'Неверный пароль' });
+        }
+        
+        if (!user.is_active) {
+            return res.status(401).json({ message: 'Аккаунт заблокирован' });
+        }
+        
+        const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
+        
+        res.json({
+            message: 'Успешный вход',
+            token,
+            expiresIn: '24h',
+            user: sanitizeUser(user)
+        });
+    } catch (error) {
+        console.error('Ошибка авторизации:', error);
+        res.status(500).json({ message: 'Ошибка сервера' });
+    }
 });
 
-app.get('/api/user/profile', authenticateToken, (req, res) => {
-    const mockUser = {
-        id: req.user.userId,
-        email: req.user.email,
-        first_name: 'Тестовый',
-        last_name: 'Пользователь',
-        balance: 10000,
-        level: 1,
-        experience: 0,
-        games_played: 0,
-        wins_count: 0,
-        referrals_count: 0,
-        referral_earnings: 0,
-        is_active: true
-    };
+app.post('/api/auth/register', async (req, res) => {
+    const { email, password, first_name, last_name } = req.body || {};
     
-    res.json(mockUser);
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Email и пароль обязательны' });
+    }
+    
+    try {
+        // Проверяем, существует ли пользователь
+        const existingUser = await db.getUserByEmail(email);
+        if (existingUser) {
+            return res.status(409).json({ message: 'Пользователь с таким email уже существует' });
+        }
+        
+        // Создаем нового пользователя
+        const newUser = await db.createUser({
+            email,
+            password, // В реальном проекте хешируйте пароль
+            first_name: first_name || '',
+            last_name: last_name || '',
+            balance: 10000,
+            level: 1,
+            experience: 0,
+            games_played: 0,
+            wins_count: 0,
+            referrals_count: 0,
+            referral_earnings: 0,
+            is_active: true
+        });
+        
+        const token = jwt.sign({ userId: newUser.id, email: newUser.email }, JWT_SECRET, { expiresIn: '24h' });
+        
+        res.status(201).json({
+            message: 'Пользователь успешно зарегистрирован',
+            token,
+            expiresIn: '24h',
+            user: sanitizeUser(newUser)
+        });
+    } catch (error) {
+        console.error('Ошибка регистрации:', error);
+        res.status(500).json({ message: 'Ошибка сервера' });
+    }
+});
+
+app.get('/api/user/profile', authenticateToken, async (req, res) => {
+    try {
+        const user = await db.getUserById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'Пользователь не найден' });
+        }
+        res.json(sanitizeUser(user));
+    } catch (error) {
+        console.error('Ошибка получения профиля:', error);
+        res.status(500).json({ message: 'Ошибка сервера' });
+    }
 });
 
 app.get('/api/user/stats', authenticateToken, (req, res) => {
