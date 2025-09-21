@@ -224,6 +224,11 @@ class LobbyModule {
     async loadUserStats() {
         try {
             const token = localStorage.getItem('authToken');
+            if (!token) {
+                console.log('No auth token found, skipping user stats');
+                return;
+            }
+            
             const response = await fetch('/api/user/stats', {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -241,6 +246,17 @@ class LobbyModule {
 
     async loadRooms(showLoading = true) {
         try {
+            // Проверяем, есть ли токен авторизации
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                console.log('No auth token found, redirecting to login');
+                this.showError(this.dom.createRoomError, 'Необходимо войти в систему');
+                setTimeout(() => {
+                    window.location.href = '/auth.html';
+                }, 2000);
+                return;
+            }
+            
             if (showLoading) {
                 this.setRoomsLoading(true);
             }
