@@ -175,13 +175,19 @@ class RoomApi {
     }
 
     async listRooms() {
+        console.log('=== listRooms called ===');
+        console.log('Base URL:', this.baseUrl);
+        
         try {
             // Сначала пробуем простой endpoint без авторизации
+            console.log('Trying simple endpoint...');
             const response = await fetch(`${this.baseUrl}/api/rooms/simple`, {
                 method: 'GET',
                 mode: 'cors',
                 credentials: 'omit'
             });
+            
+            console.log('Simple endpoint response:', { status: response.status, ok: response.ok });
             
             if (response.ok) {
                 const data = await response.json();
@@ -193,8 +199,14 @@ class RoomApi {
         } catch (error) {
             console.warn('Simple rooms endpoint failed, trying full endpoint:', error);
             // Fallback на полный endpoint
-            const data = await this.request('/api/rooms');
-            return data.rooms || [];
+            try {
+                const data = await this.request('/api/rooms');
+                console.log('Full endpoint result:', data);
+                return data.rooms || [];
+            } catch (fullError) {
+                console.error('Full endpoint also failed:', fullError);
+                return []; // Возвращаем пустой массив как fallback
+            }
         }
     }
 
