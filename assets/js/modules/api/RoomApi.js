@@ -9,10 +9,12 @@ class RoomApi {
         } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             this.baseUrl = 'http://localhost:8080';
         } else {
+            // Для Railway используем полный URL
             this.baseUrl = window.location.origin;
         }
         
         console.log('RoomApi baseUrl:', this.baseUrl);
+        console.log('Current location:', window.location.href);
         
         this.defaultHeaders = {
             'Content-Type': 'application/json',
@@ -77,9 +79,15 @@ class RoomApi {
         const token = localStorage.getItem('authToken');
         if (token) {
             basicHeaders['Authorization'] = `Bearer ${token}`;
-            console.log('Using auth token for request');
+            console.log('Using auth token for request:', token.substring(0, 20) + '...');
         } else {
             console.warn('No auth token found, request may fail');
+            console.log('Available localStorage keys:', Object.keys(localStorage));
+        }
+        
+        // Убираем Content-Type для GET запросов, так как это может вызывать CORS проблемы
+        if (config.method === 'GET') {
+            delete basicHeaders['Content-Type'];
         }
         
         config.headers = { ...basicHeaders, ...(options.headers || {}) };
