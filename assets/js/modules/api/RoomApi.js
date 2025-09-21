@@ -49,31 +49,87 @@ class RoomApi {
 
     async request(endpoint, options = {}) {
         const url = `${this.baseUrl}${endpoint}`;
-        const config = {
+        
+        // Сначала попробуем простой запрос без дополнительных заголовков
+        let config = {
             method: 'GET',
             mode: 'cors',
             credentials: 'omit',
-            ...options,
-            headers: this.withUserHeaders({ ...this.defaultHeaders, ...(options.headers || {}) })
+            ...options
         };
+        
+        // Добавляем только базовые заголовки
+        const basicHeaders = {
+            'Accept': 'application/json'
+        };
+        
+        // Добавляем авторизацию если есть токен
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            basicHeaders['Authorization'] = `Bearer ${token}`;
+        }
+        
+        config.headers = { ...basicHeaders, ...(options.headers || {}) };
         
         console.log('RoomApi request:', { url, config });
 
         try {
             console.log('Making fetch request to:', url);
-            const response = await fetch(url, config);
-            console.log('Fetch response received:', { status: response.status, ok: response.ok });
-            if (!response.ok) {
-                if (response.status === 401) {
-                    // Очищаем токен при 401 ошибке
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('user');
-                    throw new Error('Сессия истекла. Пожалуйста, войдите снова.');
+            
+            // Попробуем сначала fetch
+            try {
+                const response = await fetch(url, config);
+                console.log('Fetch response received:', { status: response.status, ok: response.ok });
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        // Очищаем токен при 401 ошибке
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('user');
+                        throw new Error('Сессия истекла. Пожалуйста, войдите снова.');
+                    }
+                    const message = await this.extractError(response);
+                    throw new Error(message || `Ошибка запроса ${response.status}`);
                 }
-                const message = await this.extractError(response);
-                throw new Error(message || `Ошибка запроса ${response.status}`);
+                return response.json();
+            } catch (fetchError) {
+                console.warn('Fetch failed, trying XMLHttpRequest:', fetchError);
+                
+                // Если fetch не работает, попробуем XMLHttpRequest
+                return new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open(config.method, url, true);
+                    
+                    // Устанавливаем заголовки
+                    Object.keys(config.headers || {}).forEach(key => {
+                        xhr.setRequestHeader(key, config.headers[key]);
+                    });
+                    
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState === 4) {
+                            if (xhr.status === 200) {
+                                try {
+                                    const data = JSON.parse(xhr.responseText);
+                                    resolve(data);
+                                } catch (parseError) {
+                                    reject(new Error('Ошибка парсинга ответа сервера'));
+                                }
+                            } else if (xhr.status === 401) {
+                                localStorage.removeItem('authToken');
+                                localStorage.removeItem('user');
+                                reject(new Error('Сессия истекла. Пожалуйста, войдите снова.'));
+                            } else {
+                                reject(new Error(`Ошибка запроса ${xhr.status}`));
+                            }
+                        }
+                    };
+                    
+                    xhr.onerror = function() {
+                        reject(new Error('Ошибка сети. Проверьте подключение к интернету.'));
+                    };
+                    
+                    xhr.send();
+                });
             }
-            return response.json();
         } catch (error) {
             console.error('RoomApi request error:', error);
             if (error.name === 'TypeError') {
