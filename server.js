@@ -954,9 +954,13 @@ app.get('/api/health', (req, res) => {
 });
 
 // Тестовый endpoint для создания комнаты
-app.post('/api/test/create-room', (req, res) => {
+app.post('/api/test/create-room', async (req, res) => {
     try {
-        const room = createRoom('test-room', 'Тестовая комната');
+        const room = await createRoomInstance({
+            name: 'Тестовая комната',
+            creatorId: 'test-user',
+            creatorName: 'Тестовый пользователь'
+        });
         console.log(`🧪 Создана тестовая комната: ${room.id}`);
         res.json({ success: true, roomId: room.id, room });
     } catch (error) {
@@ -1012,7 +1016,7 @@ app.get('/api/rooms', async (req, res) => {
     }
 });
 
-app.post('/api/rooms', (req, res) => {
+app.post('/api/rooms', async (req, res) => {
     try {
         const userId = getRequestUserId(req);
         if (!userId) {
