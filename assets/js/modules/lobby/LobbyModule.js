@@ -52,28 +52,33 @@ class LobbyModule {
             return;
         }
         
-        await this.initializeUser();
-        
-        // Небольшая задержка для стабилизации localStorage
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Проверяем токен еще раз перед загрузкой данных
-        const authToken2 = localStorage.getItem('authToken');
-        if (!authToken2) {
-            console.log('❌ Auth token lost during initialization, redirecting to login');
-            this.showError(null, 'Сессия прервана. Необходимо войти в систему');
-            setTimeout(() => {
-                window.location.href = '/auth.html';
-            }, 2000);
-            return;
+        try {
+            await this.initializeUser();
+            
+            // Небольшая задержка для стабилизации localStorage
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Проверяем токен еще раз перед загрузкой данных
+            const authToken2 = localStorage.getItem('authToken');
+            if (!authToken2) {
+                console.log('❌ Auth token lost during initialization, redirecting to login');
+                this.showError(null, 'Сессия прервана. Необходимо войти в систему');
+                setTimeout(() => {
+                    window.location.href = '/auth.html';
+                }, 2000);
+                return;
+            }
+            
+            await this.loadUserStats();
+            await this.loadRooms();
+            this.scheduleRoomRefresh();
+            
+            this.initialized = true;
+            console.log('=== LobbyModule инициализирован ===');
+        } catch (error) {
+            console.error('❌ Ошибка инициализации LobbyModule:', error);
+            this.showError(null, 'Ошибка загрузки лобби. Попробуйте обновить страницу.');
         }
-        
-        await this.loadUserStats();
-        await this.loadRooms();
-        this.scheduleRoomRefresh();
-        
-        this.initialized = true;
-        console.log('=== LobbyModule инициализирован ===');
     }
 
     exposeLegacyBridges() {
@@ -292,10 +297,15 @@ class LobbyModule {
             console.log('Error details:', {
                 message: error.message,
                 name: error.name,
-                stack: error.stack
+                status: error.status || 'unknown'
             });
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user');
+            
+            // Не удаляем токен сразу, возможно это временная ошибка сети
+            if (error.message.includes('401') || error.message.includes('403')) {
+                console.log('Authentication error, clearing tokens');
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
+            }
             return false;
         }
     }
