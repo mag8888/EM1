@@ -133,6 +133,7 @@ class RoomApi {
                 return new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
                     xhr.open(config.method, url, true);
+                    xhr.timeout = 10000; // 10 секунд таймаут
                     
                     // Устанавливаем только безопасные заголовки
                     const safeHeaders = ['Accept', 'Content-Type', 'Authorization', 'X-User-ID'];
@@ -148,7 +149,10 @@ class RoomApi {
                     
                     xhr.onreadystatechange = function() {
                         if (xhr.readyState === 4) {
-                            if (xhr.status >= 200 && xhr.status < 300) {
+                            if (xhr.status === 0) {
+                                // Статус 0 обычно означает CORS ошибку или сетевую проблему
+                                reject(new Error('Ошибка сети. Проверьте подключение к интернету.'));
+                            } else if (xhr.status >= 200 && xhr.status < 300) {
                                 try {
                                     const data = JSON.parse(xhr.responseText);
                                     resolve(data);
@@ -166,7 +170,13 @@ class RoomApi {
                     };
                     
                     xhr.onerror = function() {
+                        console.error('XMLHttpRequest error:', xhr.status, xhr.statusText);
                         reject(new Error('Ошибка сети. Проверьте подключение к интернету.'));
+                    };
+                    
+                    xhr.ontimeout = function() {
+                        console.error('XMLHttpRequest timeout');
+                        reject(new Error('Превышено время ожидания запроса.'));
                     };
                     
                     xhr.send();
