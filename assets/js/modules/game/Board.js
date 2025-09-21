@@ -338,6 +338,9 @@ class Board {
                 color: #000;
                 text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
             }
+                color: #000;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            }
         `;
 
         document.head.appendChild(style);
