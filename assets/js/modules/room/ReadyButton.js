@@ -31,6 +31,15 @@ export default class ReadyButton {
         const hasToken = Boolean(player.selectedToken);
         const ready = Boolean(player.isReady);
 
+        console.log('🔍 ReadyButton update:', {
+            playerName: player.name,
+            hasDream,
+            hasToken,
+            ready,
+            selectedDream: player.selectedDream,
+            selectedToken: player.selectedToken
+        });
+
         if (!hasDream || !hasToken) {
             this.button.disabled = true;
             this.button.textContent = hasDream ? 'Выберите фишку' : 'Выберите мечту';

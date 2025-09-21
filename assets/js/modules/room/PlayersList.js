@@ -62,6 +62,15 @@ export default class PlayersList {
 
             const status = document.createElement('div');
             status.className = 'player-status';
+            
+            console.log('🔍 PlayersList render:', {
+                playerName: player.name,
+                isReady: player.isReady,
+                gameStarted: room.gameStarted,
+                currentUserId,
+                playerUserId: player.userId
+            });
+            
             if (room.gameStarted) {
                 status.textContent = 'В игре';
                 status.classList.add('status-ready');

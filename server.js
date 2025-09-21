@@ -395,6 +395,14 @@ const toggleReadyStatus = (room, userId) => {
         throw new Error('Игрок не найден в комнате');
     }
 
+    console.log('🔍 toggleReadyStatus before:', {
+        playerName: player.name,
+        userId: player.userId,
+        isReady: player.isReady,
+        selectedDream: player.selectedDream,
+        selectedToken: player.selectedToken
+    });
+
     if (!player.selectedDream) {
         throw new Error('Сначала выберите мечту');
     }
@@ -402,6 +410,13 @@ const toggleReadyStatus = (room, userId) => {
     player.isReady = !player.isReady;
     room.updatedAt = new Date().toISOString();
     room.lastActivity = Date.now();
+    
+    console.log('🔍 toggleReadyStatus after:', {
+        playerName: player.name,
+        userId: player.userId,
+        isReady: player.isReady
+    });
+    
     return player.isReady;
 };
 
