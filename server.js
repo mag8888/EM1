@@ -5,15 +5,13 @@ const crypto = require('crypto');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const Database = require('./database');
 
 const CreditService = require('./credit-module/CreditService');
 const { GAME_CELLS, GameCellsUtils } = require('./game-board/config/game-cells.js');
 const { SMALL_DEAL_CARDS, BIG_DEAL_CARDS, EXPENSE_CARDS, createDeck, shuffleDeck, drawCard } = require('./assets/js/utils/cards-config.js');
 const userManager = require('./game-board/utils/userManager');
-const LegacyUser = require('./models/LegacyUser');
+// const LegacyUser = require('./models/LegacyUser'); // Отключено для SQLite
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -23,13 +21,9 @@ const creditService = new CreditService();
 const rooms = new Map(); // actual game rooms
 const creditRooms = new Map(); // legacy credit rooms
 
-const JWT_SECRET = process.env.JWT_SECRET || 'em1-dev-secret';
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/energy_money_game';
-const TOKEN_LIFETIME = {
-    regular: '24h',
-    remember: '30d'
-};
-let mongoConnected = false;
+// Инициализация базы данных
+const db = new Database();
+let dbConnected = false;
 
 // --- Helpers -------------------------------------------------------------
 const resolvePath = (relativePath) => path.join(__dirname, relativePath);
@@ -93,37 +87,20 @@ const authenticateToken = (req, res, next) => {
     }
 };
 
-const connectToMongo = async () => {
-    if (mongoConnected || mongoose.connection.readyState === 1) {
-        mongoConnected = true;
-        return;
-    }
-
-    if (!MONGODB_URI) {
-        console.warn('MONGODB_URI is not set; auth endpoints will be unavailable');
+const connectToDatabase = async () => {
+    if (dbConnected) {
         return;
     }
 
     try {
-        await mongoose.connect(MONGODB_URI, {
-            maxPoolSize: 10,
-            serverSelectionTimeoutMS: 10000
-        });
-        mongoConnected = true;
-        console.log('✅ Connected to MongoDB');
+        await db.init();
+        dbConnected = true;
+        console.log('✅ Connected to SQLite database');
     } catch (error) {
-        mongoConnected = false;
-        console.error('❌ MongoDB connection error:', error.message);
+        dbConnected = false;
+        console.error('❌ Database connection error:', error.message);
     }
 };
-
-mongoose.connection.on('connected', () => {
-    mongoConnected = true;
-});
-
-mongoose.connection.on('disconnected', () => {
-    mongoConnected = false;
-});
 
 const DREAMS = (() => {
     const unique = new Map();
@@ -227,7 +204,7 @@ const createPlayer = ({ userId, name, avatar, isHost = false }) => ({
     stats: createPlayerStats()
 });
 
-const createRoomInstance = ({
+const createRoomInstance = async ({
     name,
     creatorId,
     creatorName,
@@ -268,12 +245,42 @@ const createRoomInstance = ({
         }
     };
 
+    // Сохраняем комнату в БД
+    if (dbConnected) {
+        try {
+            await db.createRoom({
+                id,
+                name: room.name,
+                creatorId: room.creatorId,
+                creatorName: room.creatorName,
+                maxPlayers: room.maxPlayers,
+                minPlayers: MIN_PLAYERS
+            });
+        } catch (error) {
+            console.error('❌ Ошибка сохранения комнаты в БД:', error);
+        }
+    }
+
     // Добавляем создателя комнаты
     if (creatorId) {
         const hostPlayer = createPlayer({ userId: creatorId, name: creatorName, avatar: creatorAvatar, isHost: true });
         room.players.push(hostPlayer);
         room.game_data.player_balances.push(hostPlayer.cash);
         room.game_data.credit_data.player_credits.push(0);
+        
+        // Сохраняем создателя в БД
+        if (dbConnected) {
+            try {
+                await db.addPlayerToRoom(id, {
+                    userId: creatorId,
+                    name: creatorName,
+                    avatar: creatorAvatar,
+                    isHost: true
+                });
+            } catch (error) {
+                console.error('❌ Ошибка сохранения создателя в БД:', error);
+            }
+        }
     }
 
     rooms.set(id, room);
@@ -959,209 +966,50 @@ app.post('/api/test/create-room', (req, res) => {
 });
 
 // ---------------------------- Auth & Profile API --------------------------
-const normalizeEmail = (value = '') => (typeof value === 'string' ? value.trim().toLowerCase() : '');
+// Временно отключено для использования SQLite
+// const normalizeEmail = (value = '') => (typeof value === 'string' ? value.trim().toLowerCase() : '');
 
-app.post('/api/auth/register', async (req, res) => {
-    try {
-        await connectToMongo();
-        if (!mongoConnected) {
-            return res.status(503).json({ message: 'Сервис регистрации временно недоступен' });
-        }
-
-        const { firstName, lastName, email, password, referralCode } = req.body || {};
-        if (!firstName || !lastName || !email || !password) {
-            return res.status(400).json({ message: 'Все поля обязательны для заполнения' });
-        }
-
-        if (password.length < 6) {
-            return res.status(400).json({ message: 'Пароль должен содержать минимум 6 символов' });
-        }
-
-        const normalizedEmail = normalizeEmail(email);
-        const existingUser = await LegacyUser.findOne({ email: normalizedEmail });
-        if (existingUser) {
-            return res.status(400).json({ message: 'Пользователь с таким email уже существует' });
-        }
-
-        let referredBy = null;
-        if (referralCode) {
-            referredBy = await LegacyUser.findOne({ referral_code: referralCode.trim() });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const user = new LegacyUser({
-            first_name: firstName.trim(),
-            last_name: lastName.trim(),
-            email: normalizedEmail,
-            password: hashedPassword,
-            username: normalizedEmail.split('@')[0],
-            referred_by: referredBy ? referredBy._id : null
-        });
-
-        await user.save();
-
-        if (referredBy) {
-            await LegacyUser.updateOne(
-                { _id: referredBy._id },
-                { $inc: { referrals_count: 1, referral_earnings: 100 } }
-            );
-        }
-
-        return res.status(201).json({ message: 'Пользователь успешно зарегистрирован' });
-    } catch (error) {
-        console.error('Registration error:', error);
-        if (error.code === 11000) {
-            return res.status(400).json({ message: 'Email или реферальный код уже используются' });
-        }
-        return res.status(500).json({ message: 'Ошибка сервера при регистрации' });
-    }
-});
-
-app.post('/api/auth/login', async (req, res) => {
-    try {
-        await connectToMongo();
-        if (!mongoConnected) {
-            return res.status(503).json({ message: 'Сервис авторизации временно недоступен' });
-        }
-
-        const { email, password, rememberMe } = req.body || {};
-        if (!email || !password) {
-            return res.status(400).json({ message: 'Email и пароль обязательны' });
-        }
-
-        const normalizedEmail = normalizeEmail(email);
-        const user = await LegacyUser.findOne({ email: normalizedEmail });
-        if (!user) {
-            return res.status(401).json({ message: 'Неверные учетные данные' });
-        }
-
-        if (user.is_active === false) {
-            return res.status(403).json({ message: 'Аккаунт заблокирован' });
-        }
-
-        const passwordMatches = await bcrypt.compare(password, user.password);
-        if (!passwordMatches) {
-            return res.status(401).json({ message: 'Неверные учетные данные' });
-        }
-
-        const expiresIn = rememberMe ? TOKEN_LIFETIME.remember : TOKEN_LIFETIME.regular;
-        const token = jwt.sign({ userId: user._id.toString(), email: user.email }, JWT_SECRET, { expiresIn });
-
-        user.updated_at = new Date();
-        await user.save();
-
-        return res.json({
-            message: 'Успешный вход',
-            token,
-            expiresIn,
-            user: sanitizeUser(user)
-        });
-    } catch (error) {
-        console.error('Login error:', error);
-        return res.status(500).json({ message: 'Ошибка сервера при авторизации' });
-    }
-});
-
-app.get('/api/user/profile', authenticateToken, async (req, res) => {
-    try {
-        await connectToMongo();
-        if (!mongoConnected) {
-            return res.status(503).json({ message: 'База данных недоступна' });
-        }
-
-        const user = await LegacyUser.findById(req.user.userId);
-        if (!user) {
-            return res.status(404).json({ message: 'Пользователь не найден' });
-        }
-
-        return res.json(sanitizeUser(user));
-    } catch (error) {
-        console.error('Profile fetch error:', error);
-        return res.status(500).json({ message: 'Ошибка сервера при получении профиля' });
-    }
-});
-
-app.put('/api/user/profile', authenticateToken, async (req, res) => {
-    try {
-        await connectToMongo();
-        if (!mongoConnected) {
-            return res.status(503).json({ message: 'База данных недоступна' });
-        }
-
-        const { first_name, last_name, email, username } = req.body || {};
-        const user = await LegacyUser.findById(req.user.userId);
-        if (!user) {
-            return res.status(404).json({ message: 'Пользователь не найден' });
-        }
-
-        if (email) {
-            const normalizedEmail = normalizeEmail(email);
-            if (normalizedEmail !== user.email) {
-                const emailHolder = await LegacyUser.findOne({ email: normalizedEmail });
-                if (emailHolder && emailHolder._id.toString() !== user._id.toString()) {
-                    return res.status(400).json({ message: 'Этот email уже используется' });
-                }
-                user.email = normalizedEmail;
-                user.username = username || normalizedEmail.split('@')[0];
-            }
-        }
-
-        if (typeof first_name === 'string') {
-            user.first_name = first_name.trim();
-        }
-        if (typeof last_name === 'string') {
-            user.last_name = last_name.trim();
-        }
-        if (typeof username === 'string' && username.trim()) {
-            user.username = username.trim();
-        }
-
-        await user.save();
-        return res.json(sanitizeUser(user));
-    } catch (error) {
-        console.error('Profile update error:', error);
-        if (error.code === 11000) {
-            return res.status(400).json({ message: 'Email уже используется' });
-        }
-        return res.status(500).json({ message: 'Ошибка сервера при обновлении профиля' });
-    }
-});
-
-app.get('/api/user/stats', authenticateToken, async (req, res) => {
-    try {
-        await connectToMongo();
-        if (!mongoConnected) {
-            return res.status(503).json({ message: 'База данных недоступна' });
-        }
-
-        const user = await LegacyUser.findById(req.user.userId).select(
-            'games_played wins_count level experience balance referrals_count referral_earnings'
-        );
-        if (!user) {
-            return res.status(404).json({ message: 'Пользователь не найден' });
-        }
-
-        return res.json({
-            games_played: user.games_played || 0,
-            wins_count: user.wins_count || 0,
-            level: user.level || 1,
-            experience: user.experience || 0,
-            balance: user.balance || 0,
-            referrals_count: user.referrals_count || 0,
-            referral_earnings: user.referral_earnings || 0
-        });
-    } catch (error) {
-        console.error('User stats error:', error);
-        return res.status(500).json({ message: 'Ошибка сервера при получении статистики' });
-    }
-});
+// app.post('/api/auth/register', ...);
+// app.post('/api/auth/login', ...);
+// app.get('/api/user/profile', ...);
+// app.put('/api/user/profile', ...);
+// app.get('/api/user/stats', ...);
 
 // ---------------------------- Rooms API ----------------------------------
-app.get('/api/rooms', (req, res) => {
-    const list = Array.from(rooms.values())
-        .sort((a, b) => b.lastActivity - a.lastActivity)
-        .map(room => sanitizeRoom(room));
-    res.json({ success: true, rooms: list });
+app.get('/api/rooms', async (req, res) => {
+    try {
+        let list = [];
+        
+        if (dbConnected) {
+            // Получаем комнаты из БД
+            const dbRooms = await db.getAllRooms();
+            list = dbRooms.map(room => ({
+                id: room.id,
+                name: room.name,
+                creatorId: room.creatorId,
+                creatorName: room.creatorName,
+                maxPlayers: room.maxPlayers,
+                minPlayers: room.minPlayers,
+                gameStarted: room.gameStarted,
+                createdAt: room.createdAt,
+                updatedAt: room.updatedAt,
+                lastActivity: room.lastActivity,
+                playersCount: room.playersCount,
+                readyCount: room.readyCount,
+                canStart: room.canStart
+            }));
+        } else {
+            // Fallback на память
+            list = Array.from(rooms.values())
+                .sort((a, b) => b.lastActivity - a.lastActivity)
+                .map(room => sanitizeRoom(room));
+        }
+        
+        res.json({ success: true, rooms: list });
+    } catch (error) {
+        console.error('❌ Ошибка получения списка комнат:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
 });
 
 app.post('/api/rooms', (req, res) => {
@@ -1171,7 +1019,7 @@ app.post('/api/rooms', (req, res) => {
             throw new Error('Не указан идентификатор пользователя');
         }
 
-        const room = createRoomInstance({
+        const room = await createRoomInstance({
             name: req.body?.name,
             creatorId: userId,
             creatorName: getRequestUserName(req),
@@ -1605,14 +1453,14 @@ app.post('/api/notifications/mass', (req, res) => {
 let httpServer;
 
 const startServer = async () => {
-    await connectToMongo();
+    await connectToDatabase();
     httpServer = app.listen(PORT, '0.0.0.0', () => {
         console.log(`🚀 EM1 Game Board v2.0 Server running on port ${PORT}`);
         console.log(`🌐 Server accessible at http://0.0.0.0:${PORT}`);
-        if (!mongoConnected) {
-            console.warn('⚠️  MongoDB подключение отсутствует – авторизация работать не сможет');
+        if (!dbConnected) {
+            console.warn('⚠️  База данных недоступна – комнаты не будут сохраняться');
         } else {
-            console.log('✅ MongoDB connection active');
+            console.log('✅ SQLite database connection active');
         }
         console.log('✅ Ready to serve files');
         console.log('🎮 Updated game logic active');
@@ -1624,18 +1472,16 @@ startServer().catch((error) => {
     process.exit(1);
 });
 
-const gracefulShutdown = (signal) => {
+const gracefulShutdown = async (signal) => {
     console.log(`${signal} received, shutting down...`);
     if (httpServer) {
-        httpServer.close(() => {
+        httpServer.close(async () => {
             console.log('✅ Server closed');
-            mongoose.connection.close().then(() => {
-                process.exit(0);
-            }).catch(() => {
-                process.exit(0);
-            });
+            await db.close();
+            process.exit(0);
         });
     } else {
+        await db.close();
         process.exit(0);
     }
 };
