@@ -21,6 +21,17 @@ class LobbyModule {
         console.log('Current URL:', window.location.href);
         console.log('Current domain:', window.location.hostname);
         
+        // Проверяем авторизацию в самом начале
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) {
+            console.log('❌ No auth token found, redirecting to login');
+            this.showError(null, 'Необходимо войти в систему');
+            setTimeout(() => {
+                window.location.href = '/auth.html';
+            }, 2000);
+            return;
+        }
+        
         this.cacheDom();
         this.bindEvents();
         this.exposeLegacyBridges();
@@ -570,7 +581,13 @@ class LobbyModule {
     }
 
     showError(target, message) {
-        if (!target) return;
+        if (!target) {
+            // Если target null, показываем alert
+            if (message) {
+                alert(message);
+            }
+            return;
+        }
         target.textContent = message;
         target.style.display = message ? 'block' : 'none';
     }
