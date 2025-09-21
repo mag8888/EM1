@@ -1,4 +1,4 @@
-import RoomModule from './RoomModule.js';
+// RoomModule будет доступен глобально
 
 function extractRoomId() {
     const parts = window.location.pathname.split('/').filter(Boolean);

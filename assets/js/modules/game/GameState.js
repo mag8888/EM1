@@ -1,7 +1,6 @@
-import EventEmitter from '../shared/EventEmitter.js';
-import RoomApi from '../api/RoomApi.js';
+// EventEmitter и RoomApi будут доступны глобально
 
-export default class GameState extends EventEmitter {
+class GameState extends EventEmitter {
     constructor({ roomId, pollInterval = 3500 } = {}) {
         super();
         this.roomId = roomId;
@@ -174,3 +173,6 @@ export default class GameState extends EventEmitter {
         }
     }
 }
+
+// Экспортируем в window для совместимости
+window.GameState = GameState;

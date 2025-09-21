@@ -179,29 +179,37 @@ class RoomApi {
         console.log('=== listRooms called ===');
         console.log('Base URL:', this.baseUrl);
         
-        try {
-            // Сначала пробуем простой endpoint без авторизации
-            console.log('Trying simple endpoint...');
-            const response = await fetch(`${this.baseUrl}/api/rooms/simple`, {
-                method: 'GET',
-                mode: 'cors',
-                credentials: 'omit'
-            });
-            
-            console.log('Simple endpoint response:', { status: response.status, ok: response.ok });
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Simple rooms endpoint worked:', data);
-                return data;
-            } else {
-                throw new Error(`HTTP ${response.status}`);
+        // Пробуем несколько раз с retry
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                console.log(`Trying simple endpoint (attempt ${attempt})...`);
+                const response = await fetch(`${this.baseUrl}/api/rooms/simple`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+                
+                console.log('Simple endpoint response:', { status: response.status, ok: response.ok });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Simple rooms endpoint worked:', data);
+                    return data;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.warn(`Simple rooms endpoint failed (attempt ${attempt}):`, error);
+                
+                if (attempt === 3) {
+                    // Последняя попытка не удалась, возвращаем пустой массив
+                    console.log('All attempts failed, returning empty array as fallback');
+                    return [];
+                } else {
+                    // Ждем перед следующей попыткой
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                }
             }
-        } catch (error) {
-            console.warn('Simple rooms endpoint failed:', error);
-            // Не используем fallback на старый метод, просто возвращаем пустой массив
-            console.log('Returning empty array as fallback');
-            return []; // Возвращаем пустой массив как fallback
         }
     }
 

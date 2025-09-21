@@ -1,4 +1,4 @@
-import GameModule from './GameModule.js';
+// GameModule будет доступен глобально
 
 function getRoomId() {
     const parts = window.location.pathname.split('/').filter(Boolean);
