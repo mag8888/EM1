@@ -877,7 +877,18 @@ const advanceTurn = (room) => {
 };
 
 // --- Middleware ----------------------------------------------------------
-app.use(express.json());
+// Добавляем обработку ошибок JSON парсинга
+app.use(express.json({
+    verify: (req, res, buf, encoding) => {
+        try {
+            JSON.parse(buf);
+        } catch (e) {
+            console.warn('⚠️ Invalid JSON received:', buf.toString());
+            // Не выбрасываем ошибку, просто логируем
+        }
+    }
+}));
+
 app.use(express.static(resolvePath('.')));
 
 // CORS
@@ -893,6 +904,15 @@ app.use((req, res, next) => {
     } else {
         next();
     }
+});
+
+// Обработка ошибок JSON парсинга
+app.use((error, req, res, next) => {
+    if (error instanceof SyntaxError && error.status === 400 && 'body' in error) {
+        console.warn('⚠️ JSON parse error:', error.message);
+        return res.status(400).json({ success: false, message: 'Invalid JSON format' });
+    }
+    next(error);
 });
 
 // Регистрируем модуль авторизации после middleware
