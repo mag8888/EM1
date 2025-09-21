@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 // Используем Memory Database для Railway deployment
 const Database = require('./database-memory');
 
@@ -46,6 +47,9 @@ const drawCard = (deck) => deck.cards[0] || null;
 
 const app = express();
 const PORT = process.env.PORT || 8080;
+
+// JWT Configuration
+const JWT_SECRET = process.env.JWT_SECRET || 'em1-dev-secret-key-2024';
 
 // --- Shared services -----------------------------------------------------
 // const creditService = new CreditService();
@@ -1004,11 +1008,70 @@ app.post('/api/test/create-room', async (req, res) => {
 // Временно отключено для использования SQLite
 // const normalizeEmail = (value = '') => (typeof value === 'string' ? value.trim().toLowerCase() : '');
 
-// app.post('/api/auth/register', ...);
-// app.post('/api/auth/login', ...);
-// app.get('/api/user/profile', ...);
-// app.put('/api/user/profile', ...);
-// app.get('/api/user/stats', ...);
+// Simple auth endpoints for testing
+app.post('/api/auth/login', (req, res) => {
+    const { email, password } = req.body || {};
+    
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Email и пароль обязательны' });
+    }
+    
+    // Simple mock authentication
+    const mockUser = {
+        id: 'user_' + Date.now(),
+        email: email,
+        first_name: 'Тестовый',
+        last_name: 'Пользователь',
+        balance: 10000,
+        level: 1,
+        experience: 0,
+        games_played: 0,
+        wins_count: 0,
+        referrals_count: 0,
+        referral_earnings: 0,
+        is_active: true
+    };
+    
+    const token = jwt.sign({ userId: mockUser.id, email: mockUser.email }, JWT_SECRET, { expiresIn: '24h' });
+    
+    res.json({
+        message: 'Успешный вход',
+        token,
+        expiresIn: '24h',
+        user: mockUser
+    });
+});
+
+app.get('/api/user/profile', authenticateToken, (req, res) => {
+    const mockUser = {
+        id: req.user.userId,
+        email: req.user.email,
+        first_name: 'Тестовый',
+        last_name: 'Пользователь',
+        balance: 10000,
+        level: 1,
+        experience: 0,
+        games_played: 0,
+        wins_count: 0,
+        referrals_count: 0,
+        referral_earnings: 0,
+        is_active: true
+    };
+    
+    res.json(mockUser);
+});
+
+app.get('/api/user/stats', authenticateToken, (req, res) => {
+    res.json({
+        games_played: 0,
+        wins_count: 0,
+        level: 1,
+        experience: 0,
+        balance: 10000,
+        referrals_count: 0,
+        referral_earnings: 0
+    });
+});
 
 // ---------------------------- Rooms API ----------------------------------
 app.get('/api/rooms', async (req, res) => {
@@ -1429,17 +1492,7 @@ app.post('/api/notification', (req, res) => {
     res.json({ success: true });
 });
 
-app.get('/api/user/:userId/stats', (req, res) => {
-    const { userId } = req.params;
-    
-    // Здесь должна быть логика получения статистики
-    res.json({
-        gamesPlayed: 0,
-        totalEarnings: 0,
-        referrals: 0,
-        level: 1
-    });
-});
+// Duplicate endpoint removed - using /api/user/stats instead
 
 app.post('/api/sync', (req, res) => {
     const { userId, botData } = req.body;

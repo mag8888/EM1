@@ -1,360 +1,166 @@
 /**
- * Менеджер состояния игры "Энергия денег"
- * Управляет глобальным состоянием приложения
+ * StateManager - управление состоянием приложения
  */
-
-export class StateManager {
+class StateManager {
     constructor() {
-        this.state = {};
+        this.state = new Map();
         this.subscribers = new Map();
         this.history = [];
-        this.maxHistorySize = 100;
-        this.isDestroyed = false;
-    }
-
-    /**
-     * Инициализация StateManager
-     */
-    async init() {
-        console.log('🗂️ StateManager инициализирован');
-        
-        // Загрузка состояния из localStorage
-        await this.loadFromStorage();
+        this.maxHistorySize = 50;
     }
 
     /**
      * Установка состояния
-     * @param {Object} newState - Новое состояние
-     * @param {boolean} saveToHistory - Сохранять ли в историю
      */
-    setState(newState, saveToHistory = true) {
-        if (this.isDestroyed) {
-            console.warn('StateManager уничтожен, установка состояния невозможна');
-            return;
+    setState(key, value, options = {}) {
+        const oldValue = this.state.get(key);
+        
+        // Сохраняем в историю
+        if (options.saveHistory !== false) {
+            this.history.push({
+                key,
+                oldValue,
+                newValue: value,
+                timestamp: Date.now()
+            });
+
+            // Ограничиваем размер истории
+            if (this.history.length > this.maxHistorySize) {
+                this.history.shift();
+            }
         }
 
-        const oldState = { ...this.state };
-        
-        // Объединение состояний
-        this.state = { ...this.state, ...newState };
-        
-        // Сохранение в историю
-        if (saveToHistory) {
-            this.saveToHistory(oldState, newState);
-        }
-        
-        // Уведомление подписчиков об изменениях
-        this.notifySubscribers(newState, oldState);
-        
-        // Сохранение в localStorage
-        this.saveToStorage();
-        
-        // Логирование изменений (в режиме разработки)
-        if (this.config?.debug) {
-            console.log('📝 Состояние обновлено:', newState);
-        }
+        this.state.set(key, value);
+
+        // Уведомляем подписчиков
+        this.notifySubscribers(key, value, oldValue);
+
+        return value;
     }
 
     /**
      * Получение состояния
-     * @param {string} key - Ключ состояния (опционально)
      */
-    getState(key) {
-        if (key) {
-            return this.state[key];
-        }
-        return { ...this.state };
+    getState(key, defaultValue = null) {
+        return this.state.has(key) ? this.state.get(key) : defaultValue;
+    }
+
+    /**
+     * Проверка существования ключа
+     */
+    hasState(key) {
+        return this.state.has(key);
+    }
+
+    /**
+     * Удаление состояния
+     */
+    removeState(key) {
+        const oldValue = this.state.get(key);
+        this.state.delete(key);
+        this.notifySubscribers(key, null, oldValue);
+        return oldValue;
+    }
+
+    /**
+     * Получение всего состояния
+     */
+    getAllState() {
+        return Object.fromEntries(this.state);
     }
 
     /**
      * Подписка на изменения состояния
-     * @param {string} key - Ключ состояния
-     * @param {Function} callback - Функция обратного вызова
-     * @param {Object} options - Опции подписки
      */
     subscribe(key, callback, options = {}) {
-        if (this.isDestroyed) {
-            console.warn('StateManager уничтожен, подписка невозможна');
-            return;
+        if (typeof callback !== 'function') {
+            throw new Error('Callback must be a function');
         }
 
         if (!this.subscribers.has(key)) {
             this.subscribers.set(key, []);
         }
 
-        const subscription = {
+        const subscriber = {
             callback,
             once: options.once || false,
-            priority: options.priority || 0,
-            context: options.context || null,
-            id: this.generateSubscriptionId()
+            id: Date.now() + Math.random()
         };
 
-        this.subscribers.get(key).push(subscription);
+        this.subscribers.get(key).push(subscriber);
+        return subscriber.id;
+    }
+
+    /**
+     * Отписка от изменений
+     */
+    unsubscribe(key, subscriberId) {
+        if (!this.subscribers.has(key)) return false;
+
+        const subscribers = this.subscribers.get(key);
+        const index = subscribers.findIndex(s => s.id === subscriberId);
         
-        // Сортировка по приоритету
-        this.subscribers.get(key).sort((a, b) => a.priority - b.priority);
-    }
-
-    /**
-     * Отписка от изменений состояния
-     * @param {string} key - Ключ состояния
-     * @param {Function} callback - Функция обратного вызова
-     */
-    unsubscribe(key, callback) {
-        if (!this.subscribers.has(key)) {
-            return;
-        }
-
-        const subscriptions = this.subscribers.get(key);
-        const index = subscriptions.findIndex(sub => sub.callback === callback);
+        if (index === -1) return false;
         
-        if (index > -1) {
-            subscriptions.splice(index, 1);
-        }
-
-        // Удаление ключа, если нет подписчиков
-        if (subscriptions.length === 0) {
-            this.subscribers.delete(key);
-        }
-    }
-
-    /**
-     * Уведомление подписчиков об изменениях
-     * @param {Object} newState - Новое состояние
-     * @param {Object} oldState - Старое состояние
-     */
-    notifySubscribers(newState, oldState) {
-        // Уведомление подписчиков на конкретные ключи
-        Object.keys(newState).forEach(key => {
-            if (this.subscribers.has(key)) {
-                const subscriptions = [...this.subscribers.get(key)];
-                
-                subscriptions.forEach(subscription => {
-                    try {
-                        if (subscription.once) {
-                            this.unsubscribe(key, subscription.callback);
-                        }
-
-                        const changeData = {
-                            key,
-                            newValue: newState[key],
-                            oldValue: oldState[key],
-                            timestamp: Date.now()
-                        };
-
-                        if (subscription.context) {
-                            subscription.callback.call(subscription.context, changeData);
-                        } else {
-                            subscription.callback(changeData);
-                        }
-
-                    } catch (error) {
-                        console.error(`Ошибка в подписчике состояния ${key}:`, error);
-                    }
-                });
-            }
-        });
-
-        // Уведомление глобальных подписчиков
-        if (this.subscribers.has('*')) {
-            const globalSubscriptions = [...this.subscribers.get('*')];
-            
-            globalSubscriptions.forEach(subscription => {
-                try {
-                    if (subscription.once) {
-                        this.unsubscribe('*', subscription.callback);
-                    }
-
-                    const changeData = {
-                        newState: { ...this.state },
-                        oldState,
-                        timestamp: Date.now()
-                    };
-
-                    if (subscription.context) {
-                        subscription.callback.call(subscription.context, changeData);
-                    } else {
-                        subscription.callback(changeData);
-                    }
-
-                } catch (error) {
-                    console.error('Ошибка в глобальном подписчике состояния:', error);
-                }
-            });
-        }
-    }
-
-    /**
-     * Сохранение в историю
-     * @param {Object} oldState - Старое состояние
-     * @param {Object} newState - Новое состояние
-     */
-    saveToHistory(oldState, newState) {
-        const historyEntry = {
-            timestamp: Date.now(),
-            oldState,
-            newState,
-            changes: this.getChanges(oldState, newState)
-        };
-
-        this.history.push(historyEntry);
-
-        // Ограничение размера истории
-        if (this.history.length > this.maxHistorySize) {
-            this.history.shift();
-        }
-    }
-
-    /**
-     * Получение изменений между состояниями
-     * @param {Object} oldState - Старое состояние
-     * @param {Object} newState - Новое состояние
-     */
-    getChanges(oldState, newState) {
-        const changes = {};
-
-        Object.keys(newState).forEach(key => {
-            if (oldState[key] !== newState[key]) {
-                changes[key] = {
-                    from: oldState[key],
-                    to: newState[key]
-                };
-            }
-        });
-
-        return changes;
-    }
-
-    /**
-     * Откат к предыдущему состоянию
-     * @param {number} steps - Количество шагов назад
-     */
-    undo(steps = 1) {
-        if (this.history.length < steps) {
-            console.warn('Недостаточно истории для отката');
-            return false;
-        }
-
-        const historyEntry = this.history[this.history.length - steps];
-        this.setState(historyEntry.oldState, false);
-        
-        // Удаление из истории
-        this.history.splice(-steps, steps);
-        
+        subscribers.splice(index, 1);
         return true;
     }
 
     /**
-     * Получение истории изменений
-     * @param {number} limit - Лимит записей
+     * Уведомление подписчиков
      */
-    getHistory(limit = 10) {
-        return this.history.slice(-limit);
-    }
+    notifySubscribers(key, newValue, oldValue) {
+        if (!this.subscribers.has(key)) return;
 
-    /**
-     * Очистка истории
-     */
-    clearHistory() {
-        this.history = [];
-    }
+        const subscribers = this.subscribers.get(key).slice();
+        const toRemove = [];
 
-    /**
-     * Сохранение в localStorage
-     */
-    saveToStorage() {
-        try {
-            const stateToSave = {
-                state: this.state,
-                timestamp: Date.now()
-            };
-            
-            localStorage.setItem('gameState', JSON.stringify(stateToSave));
-        } catch (error) {
-            console.warn('Ошибка сохранения состояния в localStorage:', error);
-        }
-    }
-
-    /**
-     * Загрузка из localStorage
-     */
-    async loadFromStorage() {
-        try {
-            const savedState = localStorage.getItem('gameState');
-            if (savedState) {
-                const parsed = JSON.parse(savedState);
+        for (const subscriber of subscribers) {
+            try {
+                subscriber.callback(newValue, oldValue, key);
                 
-                // Проверка актуальности сохраненного состояния
-                const isRecent = Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000; // 24 часа
-                
-                if (isRecent) {
-                    this.state = { ...this.state, ...parsed.state };
-                    console.log('📂 Состояние загружено из localStorage');
-                } else {
-                    console.log('⏰ Сохраненное состояние устарело, используется по умолчанию');
+                if (subscriber.once) {
+                    toRemove.push(subscriber.id);
                 }
+            } catch (error) {
+                console.error(`Error in state subscriber for ${key}:`, error);
             }
-        } catch (error) {
-            console.warn('Ошибка загрузки состояния из localStorage:', error);
         }
+
+        // Удаляем одноразовые подписчики
+        toRemove.forEach(id => this.unsubscribe(key, id));
     }
 
     /**
-     * Очистка состояния
-     * @param {Array} keysToKeep - Ключи, которые нужно сохранить
+     * Сброс состояния
      */
-    clearState(keysToKeep = []) {
-        const newState = {};
-        
-        keysToKeep.forEach(key => {
-            if (this.state.hasOwnProperty(key)) {
-                newState[key] = this.state[key];
-            }
-        });
-        
-        this.state = newState;
-        this.saveToStorage();
-    }
-
-    /**
-     * Генерация уникального ID для подписки
-     */
-    generateSubscriptionId() {
-        return `state_sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    }
-
-    /**
-     * Установка конфигурации
-     * @param {Object} config - Конфигурация
-     */
-    setConfig(config) {
-        this.config = { ...this.config, ...config };
-        this.maxHistorySize = config.maxHistorySize || this.maxHistorySize;
-    }
-
-    /**
-     * Получение статистики состояния
-     */
-    getStats() {
-        return {
-            stateKeys: Object.keys(this.state).length,
-            subscribers: Array.from(this.subscribers.keys()).length,
-            historySize: this.history.length,
-            lastUpdate: this.history.length > 0 ? this.history[this.history.length - 1].timestamp : null
-        };
-    }
-
-    /**
-     * Уничтожение StateManager
-     */
-    destroy() {
-        this.state = {};
+    reset() {
+        this.state.clear();
         this.subscribers.clear();
         this.history = [];
-        this.isDestroyed = true;
-        console.log('🗑️ StateManager уничтожен');
+    }
+
+    /**
+     * Получение истории изменений
+     */
+    getHistory(key = null) {
+        if (key) {
+            return this.history.filter(entry => entry.key === key);
+        }
+        return this.history.slice();
+    }
+
+    /**
+     * Откат к предыдущему состоянию
+     */
+    undo() {
+        if (this.history.length === 0) return false;
+
+        const lastChange = this.history.pop();
+        this.setState(lastChange.key, lastChange.oldValue, { saveHistory: false });
+        return true;
     }
 }
 
-export default StateManager;
+// Экспорт в window для глобального доступа
+window.StateManager = StateManager;

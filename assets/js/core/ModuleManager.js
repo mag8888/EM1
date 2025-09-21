@@ -1,313 +1,224 @@
 /**
- * Менеджер модулей для игры "Энергия денег"
- * Управляет регистрацией, инициализацией и жизненным циклом модулей
+ * ModuleManager - управление микромодулями
  */
-
-export class ModuleManager {
+class ModuleManager {
     constructor() {
         this.modules = new Map();
         this.dependencies = new Map();
-        this.initialized = new Set();
-        this.isDestroyed = false;
+        this.loading = new Set();
+        this.loaded = new Set();
     }
 
     /**
      * Регистрация модуля
-     * @param {string} name - Имя модуля
-     * @param {Object} module - Экземпляр модуля
-     * @param {Array} dependencies - Зависимости модуля
      */
-    register(name, module, dependencies = []) {
-        if (this.isDestroyed) {
-            console.warn('ModuleManager уничтожен, регистрация невозможна');
-            return false;
-        }
-
+    register(name, module, options = {}) {
         if (this.modules.has(name)) {
-            console.warn(`Модуль ${name} уже зарегистрирован`);
+            console.warn(`Module ${name} is already registered`);
             return false;
         }
 
-        // Проверка зависимостей
-        const missingDependencies = dependencies.filter(dep => !this.modules.has(dep));
-        if (missingDependencies.length > 0) {
-            console.error(`Модуль ${name} не может быть зарегистрирован. Отсутствуют зависимости: ${missingDependencies.join(', ')}`);
-            return false;
-        }
+        const moduleInfo = {
+            name,
+            module,
+            dependencies: options.dependencies || [],
+            priority: options.priority || 0,
+            autoInit: options.autoInit !== false,
+            initialized: false
+        };
 
-        this.modules.set(name, module);
-        this.dependencies.set(name, dependencies);
-        
-        console.log(`✅ Модуль ${name} зарегистрирован`);
+        this.modules.set(name, moduleInfo);
+        this.dependencies.set(name, moduleInfo.dependencies);
+
+        console.log(`📦 Module ${name} registered`);
         return true;
     }
 
     /**
-     * Получение модуля по имени
-     * @param {string} name - Имя модуля
+     * Получение модуля
      */
     get(name) {
-        return this.modules.get(name);
+        const moduleInfo = this.modules.get(name);
+        return moduleInfo ? moduleInfo.module : null;
     }
 
     /**
      * Проверка существования модуля
-     * @param {string} name - Имя модуля
      */
     has(name) {
         return this.modules.has(name);
     }
 
     /**
-     * Получение списка всех модулей
-     */
-    getAll() {
-        return Array.from(this.modules.entries());
-    }
-
-    /**
-     * Получение имен всех модулей
-     */
-    getModuleNames() {
-        return Array.from(this.modules.keys());
-    }
-
-    /**
      * Инициализация модуля
-     * @param {string} name - Имя модуля
      */
-    async initModule(name) {
-        if (this.initialized.has(name)) {
-            console.log(`Модуль ${name} уже инициализирован`);
-            return true;
+    async init(name, ...args) {
+        const moduleInfo = this.modules.get(name);
+        if (!moduleInfo) {
+            throw new Error(`Module ${name} not found`);
         }
 
-        const module = this.modules.get(name);
-        if (!module) {
-            console.error(`Модуль ${name} не найден`);
-            return false;
+        if (moduleInfo.initialized) {
+            console.log(`Module ${name} already initialized`);
+            return moduleInfo.module;
         }
+
+        // Проверяем зависимости
+        await this.ensureDependencies(name);
 
         try {
-            // Инициализация зависимостей
-            const dependencies = this.dependencies.get(name) || [];
-            for (const depName of dependencies) {
-                await this.initModule(depName);
+            console.log(`🚀 Initializing module ${name}...`);
+            
+            if (typeof moduleInfo.module.init === 'function') {
+                await moduleInfo.module.init(...args);
             }
 
-            // Инициализация модуля
-            if (typeof module.init === 'function') {
-                console.log(`🔧 Инициализация модуля: ${name}`);
-                await module.init();
-            }
-
-            this.initialized.add(name);
-            console.log(`✅ Модуль ${name} инициализирован`);
-            return true;
-
+            moduleInfo.initialized = true;
+            this.loaded.add(name);
+            
+            console.log(`✅ Module ${name} initialized`);
+            return moduleInfo.module;
         } catch (error) {
-            console.error(`❌ Ошибка инициализации модуля ${name}:`, error);
-            return false;
+            console.error(`❌ Failed to initialize module ${name}:`, error);
+            throw error;
         }
     }
 
     /**
      * Инициализация всех модулей
-     * @param {Array} order - Порядок инициализации (опционально)
      */
-    async initAll(order = null) {
-        const moduleNames = order || this.getModuleNames();
-        const results = [];
-
-        for (const name of moduleNames) {
-            const result = await this.initModule(name);
-            results.push({ name, success: result });
+    async initAll() {
+        const sortedModules = this.getSortedModules();
+        
+        for (const moduleInfo of sortedModules) {
+            if (moduleInfo.autoInit && !moduleInfo.initialized) {
+                try {
+                    await this.init(moduleInfo.name);
+                } catch (error) {
+                    console.error(`Failed to auto-init module ${moduleInfo.name}:`, error);
+                }
+            }
         }
-
-        return results;
     }
 
     /**
      * Уничтожение модуля
-     * @param {string} name - Имя модуля
      */
-    async destroyModule(name) {
-        const module = this.modules.get(name);
-        if (!module) {
-            return false;
-        }
+    async destroy(name) {
+        const moduleInfo = this.modules.get(name);
+        if (!moduleInfo) return false;
 
         try {
-            // Уничтожение модуля
-            if (typeof module.destroy === 'function') {
-                console.log(`🗑️ Уничтожение модуля: ${name}`);
-                await module.destroy();
+            if (typeof moduleInfo.module.destroy === 'function') {
+                await moduleInfo.module.destroy();
             }
 
-            this.initialized.delete(name);
-            console.log(`✅ Модуль ${name} уничтожен`);
+            moduleInfo.initialized = false;
+            this.loaded.delete(name);
+            
+            console.log(`🗑️ Module ${name} destroyed`);
             return true;
-
         } catch (error) {
-            console.error(`❌ Ошибка уничтожения модуля ${name}:`, error);
+            console.error(`Failed to destroy module ${name}:`, error);
             return false;
         }
     }
 
     /**
-     * Получение зависимостей модуля
-     * @param {string} name - Имя модуля
+     * Получение списка модулей, отсортированных по приоритету и зависимостям
      */
-    getDependencies(name) {
-        return this.dependencies.get(name) || [];
-    }
-
-    /**
-     * Получение модулей, зависящих от данного
-     * @param {string} name - Имя модуля
-     */
-    getDependents(name) {
-        const dependents = [];
-        
-        for (const [moduleName, dependencies] of this.dependencies.entries()) {
-            if (dependencies.includes(name)) {
-                dependents.push(moduleName);
-            }
-        }
-        
-        return dependents;
-    }
-
-    /**
-     * Получение топологического порядка модулей
-     */
-    getTopologicalOrder() {
+    getSortedModules() {
+        const sorted = [];
         const visited = new Set();
-        const temp = new Set();
-        const order = [];
+        const visiting = new Set();
 
         const visit = (name) => {
-            if (temp.has(name)) {
-                throw new Error(`Циклическая зависимость обнаружена: ${name}`);
+            if (visiting.has(name)) {
+                throw new Error(`Circular dependency detected: ${name}`);
             }
-            
-            if (visited.has(name)) {
-                return;
-            }
+            if (visited.has(name)) return;
 
-            temp.add(name);
+            visiting.add(name);
             
-            const dependencies = this.getDependencies(name);
-            for (const dep of dependencies) {
-                visit(dep);
+            const moduleInfo = this.modules.get(name);
+            if (moduleInfo) {
+                // Сначала посещаем зависимости
+                for (const dep of moduleInfo.dependencies) {
+                    visit(dep);
+                }
+                
+                visited.add(name);
+                visiting.delete(name);
+                sorted.push(moduleInfo);
             }
-            
-            temp.delete(name);
-            visited.add(name);
-            order.push(name);
         };
 
-        for (const name of this.getModuleNames()) {
-            if (!visited.has(name)) {
-                visit(name);
-            }
+        // Сортируем по приоритету
+        const modules = Array.from(this.modules.values())
+            .sort((a, b) => b.priority - a.priority);
+
+        for (const moduleInfo of modules) {
+            visit(moduleInfo.name);
         }
 
-        return order;
+        return sorted;
     }
 
     /**
-     * Проверка циклических зависимостей
+     * Проверка и инициализация зависимостей
      */
-    checkCircularDependencies() {
-        try {
-            this.getTopologicalOrder();
-            return false; // Нет циклических зависимостей
-        } catch (error) {
-            console.error('Обнаружены циклические зависимости:', error.message);
-            return true; // Есть циклические зависимости
-        }
-    }
+    async ensureDependencies(moduleName) {
+        const dependencies = this.dependencies.get(moduleName) || [];
+        
+        for (const dep of dependencies) {
+            if (!this.has(dep)) {
+                throw new Error(`Dependency ${dep} not found for module ${moduleName}`);
+            }
 
-    /**
-     * Получение статистики модулей
-     */
-    getStats() {
-        return {
-            totalModules: this.modules.size,
-            initializedModules: this.initialized.size,
-            uninitializedModules: this.modules.size - this.initialized.size,
-            hasCircularDependencies: this.checkCircularDependencies(),
-            modules: Array.from(this.modules.keys()).map(name => ({
-                name,
-                initialized: this.initialized.has(name),
-                dependencies: this.getDependencies(name),
-                dependents: this.getDependents(name)
-            }))
-        };
+            const depModule = this.modules.get(dep);
+            if (!depModule.initialized) {
+                await this.init(dep);
+            }
+        }
     }
 
     /**
      * Получение информации о модуле
-     * @param {string} name - Имя модуля
      */
     getModuleInfo(name) {
-        const module = this.modules.get(name);
-        if (!module) {
-            return null;
-        }
-
-        return {
-            name,
-            module,
-            dependencies: this.getDependencies(name),
-            dependents: this.getDependents(name),
-            initialized: this.initialized.has(name),
-            hasInit: typeof module.init === 'function',
-            hasDestroy: typeof module.destroy === 'function'
-        };
+        return this.modules.get(name);
     }
 
     /**
-     * Переинициализация модуля
-     * @param {string} name - Имя модуля
+     * Получение всех загруженных модулей
      */
-    async reinitModule(name) {
-        await this.destroyModule(name);
-        return await this.initModule(name);
+    getLoadedModules() {
+        return Array.from(this.loaded);
     }
 
     /**
-     * Уничтожение всех модулей
+     * Получение всех модулей
      */
-    async destroyAll() {
-        const results = [];
-        const moduleNames = this.getModuleNames();
-
-        // Уничтожение в обратном порядке инициализации
-        const reverseOrder = this.getTopologicalOrder().reverse();
-
-        for (const name of reverseOrder) {
-            const result = await this.destroyModule(name);
-            results.push({ name, success: result });
-        }
-
-        return results;
+    getAllModules() {
+        return Array.from(this.modules.keys());
     }
 
     /**
-     * Уничтожение ModuleManager
+     * Очистка всех модулей
      */
-    async destroy() {
-        await this.destroyAll();
+    async clear() {
+        const moduleNames = Array.from(this.modules.keys());
         
+        for (const name of moduleNames) {
+            await this.destroy(name);
+        }
+
         this.modules.clear();
         this.dependencies.clear();
-        this.initialized.clear();
-        this.isDestroyed = true;
-        
-        console.log('🗑️ ModuleManager уничтожен');
+        this.loading.clear();
+        this.loaded.clear();
     }
 }
 
-export default ModuleManager;
+// Экспорт в window для глобального доступа
+window.ModuleManager = ModuleManager;
