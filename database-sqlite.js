@@ -283,18 +283,25 @@ class SQLiteDatabase {
     }
 
     async addPlayerToRoom(roomId, playerData) {
-        const { userId, name, avatar, isHost = false } = playerData;
-        
-        const sql = `INSERT OR REPLACE INTO room_players (room_id, user_id, name, avatar, is_host) 
-                     VALUES (?, ?, ?, ?, ?)`;
-        
-        const params = [roomId, userId, name, avatar || null, isHost ? 1 : 0];
-        
+        const { userId, name, avatar, isHost = false, selectedDream = null, selectedToken = null, isReady = false } = playerData;
+
+        const sql = `INSERT OR REPLACE INTO room_players (room_id, user_id, name, avatar, is_host, is_ready, selected_dream, selected_token)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+
+        const params = [
+            roomId,
+            userId,
+            name,
+            avatar || null,
+            isHost ? 1 : 0,
+            isReady ? 1 : 0,
+            selectedDream ?? null,
+            selectedToken ?? null
+        ];
+
         await this.run(sql, params);
-        
-        // Обновляем активность комнаты
         await this.updateRoomActivity(roomId);
-        
+
         console.log('✅ Игрок добавлен в комнату SQLite:', { roomId, userId, name });
     }
 
@@ -308,6 +315,37 @@ class SQLiteDatabase {
         await this.run(sql, [isReady ? 1 : 0, roomId, userId]);
         await this.updateRoomActivity(roomId);
         console.log('✅ Готовность игрока обновлена в SQLite:', { roomId, userId, isReady });
+    }
+
+    async updatePlayerSelection(roomId, userId, { dreamId = null, tokenId = null }) {
+        const sql = `UPDATE room_players SET selected_dream = ?, selected_token = ? WHERE room_id = ? AND user_id = ?`;
+        await this.run(sql, [dreamId, tokenId, roomId, userId]);
+        await this.updateRoomActivity(roomId);
+        console.log('✅ Выбор игрока обновлен в SQLite:', { roomId, userId, dreamId, tokenId });
+    }
+
+    async removePlayerFromRoom(roomId, userId) {
+        const sql = `DELETE FROM room_players WHERE room_id = ? AND user_id = ?`;
+        await this.run(sql, [roomId, userId]);
+        await this.updateRoomActivity(roomId);
+        console.log('✅ Игрок удален из комнаты SQLite:', { roomId, userId });
+    }
+
+    async markRoomStatus(roomId, { status, gameStarted }) {
+        const sql = `UPDATE rooms SET status = ?, game_started = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+        await this.run(sql, [status, gameStarted ? 1 : 0, roomId]);
+    }
+
+    async setRoomHost(roomId, userId) {
+        const sql = `UPDATE room_players SET is_host = CASE WHEN user_id = ? THEN 1 ELSE 0 END WHERE room_id = ?`;
+        await this.run(sql, [userId, roomId]);
+    }
+
+    async getRoomWithPlayers(roomId) {
+        const room = await this.getRoom(roomId);
+        if (!room) return null;
+        const players = await this.getRoomPlayers(roomId);
+        return { room, players };
     }
 
     async updateRoomActivity(roomId) {

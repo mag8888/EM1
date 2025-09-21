@@ -8,42 +8,15 @@ const cors = require('cors');
 // Используем SQLite Database для Railway deployment
 const Database = require('./database-sqlite');
 const registerAuthModule = require('./modules/auth');
+const registerRoomsModule = require('./modules/rooms');
+const roomState = require('./services/room-state');
 
 // const CreditService = require('./credit-module/CreditService');
 // const { GAME_CELLS, GameCellsUtils } = require('./game-board/config/game-cells.js');
+const GAME_CELLS = [];
 // const { SMALL_DEAL_CARDS, BIG_DEAL_CARDS, EXPENSE_CARDS, createDeck, shuffleDeck, drawCard } = require('./assets/js/utils/cards-config.js');
 // const userManager = require('./game-board/utils/userManager');
 // const LegacyUser = require('./models/LegacyUser'); // Отключено для SQLite
-
-// Временные константы для работы без внешних модулей
-const GAME_CELLS = [];
-const GameCellsUtils = {
-    getDreams: () => [
-        { id: 2, name: 'Дом мечты', description: 'Построить дом мечты для семьи', cost: 100000, icon: '🏠' },
-        { id: 6, name: 'Антарктида', description: 'Посетить Антарктиду', cost: 150000, icon: '🧊' },
-        { id: 14, name: 'Высочайшие вершины', description: 'Подняться на все высочайшие вершины мира', cost: 500000, icon: '🏔️' },
-        { id: 16, name: 'Книга-бестселлер', description: 'Стать автором книги-бестселлера', cost: 300000, icon: '📚' },
-        { id: 20, name: 'Яхта в Средиземном море', description: 'Жить год на яхте в Средиземном море', cost: 300000, icon: '⛵' },
-        { id: 22, name: 'Мировой фестиваль', description: 'Организовать мировой фестиваль', cost: 200000, icon: '🎪' },
-        { id: 26, name: 'Ретрит-центр', description: 'Построить ретрит-центр', cost: 500000, icon: '🕯️' },
-        { id: 27, name: 'Фонд поддержки талантов', description: 'Создать фонд поддержки талантов', cost: 300000, icon: '🎭' },
-        { id: 28, name: 'Кругосветное плавание', description: 'Кругосветное плавание на паруснике', cost: 200000, icon: '⛵' },
-        { id: 30, name: 'Кругосветное плавание 2', description: 'Кругосветное плавание на паруснике', cost: 300000, icon: '⛵' },
-        { id: 32, name: 'Частный самолёт', description: 'Купить частный самолёт', cost: 1000000, icon: '✈️' },
-        { id: 36, name: 'Коллекция суперкаров', description: 'Купить коллекцию суперкаров', cost: 1000000, icon: '🏎️' },
-        { id: 38, name: 'Полнометражный фильм', description: 'Снять полнометражный фильм', cost: 500000, icon: '🎬' },
-        { id: 40, name: 'Мировой лидер мнений', description: 'Стать мировым лидером мнений', cost: 1000000, icon: '👑' },
-        { id: 42, name: 'Белоснежная яхта', description: 'Белоснежная Яхта', cost: 300000, icon: '⛵' },
-        { id: 44, name: 'Полёт в космос', description: 'Полёт в космос', cost: 250000, icon: '🚀' }
-    ]
-};
-
-const SMALL_DEAL_CARDS = [];
-const BIG_DEAL_CARDS = [];
-const EXPENSE_CARDS = [];
-const createDeck = (cards) => ({ cards: [...cards] });
-const shuffleDeck = (deck) => deck;
-const drawCard = (deck) => deck.cards[0] || null;
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -53,8 +26,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'em1-production-secret-key-2024-rai
 
 // --- Shared services -----------------------------------------------------
 // const creditService = new CreditService();
-const rooms = new Map(); // actual game rooms
-const creditRooms = new Map(); // legacy credit rooms
+const { rooms, creditRooms, drawFromDeck, returnCardToDeck } = roomState;
 
 // Инициализация базы данных
 const db = new Database();
@@ -68,15 +40,6 @@ const registerPage = (route, file) => {
         res.sendFile(resolvePath(file));
     });
 };
-
-const generateId = (prefix = 'id') => {
-    if (crypto.randomUUID) {
-        return `${prefix}_${crypto.randomUUID()}`;
-    }
-    return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-};
-
-const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 const connectToDatabase = async () => {
     if (dbConnected) {
@@ -105,420 +68,9 @@ const connectToDatabase = async () => {
     }
 };
 
-const DREAMS = (() => {
-    const unique = new Map();
-    try {
-        const dreams = GameCellsUtils.getDreams();
-        dreams.forEach((dream, index) => {
-            if (!unique.has(dream.id)) {
-                unique.set(dream.id, {
-                    id: dream.id ?? index + 1,
-                    name: dream.name || 'Мечта',
-                    description: dream.description || '',
-                    cost: dream.cost || 0,
-                    icon: dream.icon || '🌟'
-                });
-            }
-        });
-    } catch (error) {
-        console.warn('Не удалось загрузить список мечт из GAME_CELLS:', error);
-    }
-    if (unique.size === 0) {
-        [
-            { id: 1, name: 'Дом мечты', cost: 100000, icon: '🏠' },
-            { id: 2, name: 'Путешествие мечты', cost: 150000, icon: '✈️' },
-            { id: 3, name: 'Белоснежная яхта', cost: 300000, icon: '⛵' },
-            { id: 4, name: 'Полет в космос', cost: 250000, icon: '🚀' }
-        ].forEach(dream => unique.set(dream.id, dream));
-    }
-    return Array.from(unique.values());
-})();
-
-const TOKENS = [
-    { id: 'lion', icon: '🦁', name: 'Лев' },
-    { id: 'tiger', icon: '🐯', name: 'Тигр' },
-    { id: 'fox', icon: '🦊', name: 'Лиса' },
-    { id: 'panda', icon: '🐼', name: 'Панда' },
-    { id: 'frog', icon: '🐸', name: 'Лягушка' },
-    { id: 'owl', icon: '🦉', name: 'Сова' },
-    { id: 'octopus', icon: '🐙', name: 'Осьминог' },
-    { id: 'whale', icon: '🐳', name: 'Кит' }
-];
-
-const MARKET_CARDS = [
-    { id: 'mkt_001', name: 'Акции Apple', price: 5000, income: 500, type: 'stock' },
-    { id: 'mkt_002', name: 'Недвижимость', price: 15000, income: 1500, type: 'real_estate' },
-    { id: 'mkt_003', name: 'Бизнес-проект', price: 25000, income: 3000, type: 'business' },
-    { id: 'mkt_004', name: 'Золото', price: 3000, income: 300, type: 'commodity' }
-];
-
-// Константы карт импортированы из assets/js/utils/cards-config.js
-
-const shuffle = (array) => {
-    const result = [...array];
-    for (let i = result.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [result[i], result[j]] = [result[j], result[i]];
-    }
-    return result;
-};
-
-// createDeck импортирована из assets/js/utils/cards-config.js
-
-const drawFromDeck = (deck) => {
-    return drawCard(deck);
-};
-
-const returnCardToDeck = (deck, card) => {
-    if (!card) return;
-    deck.discard.push({ ...card });
-};
-
-const createPlayerStats = () => ({
-    turnsTaken: 0,
-    diceRolled: 0,
-    dealsBought: 0,
-    dealsSkipped: 0,
-    dealsTransferred: 0,
-    assetsSold: 0,
-    incomeReceived: 0,
-    expensesPaid: 0
-});
-
-const STARTING_BALANCE = 10000;
-const MIN_PLAYERS = 2;
-const MAX_PLAYERS = 8;
-
-const createPlayer = ({ userId, name, avatar, isHost = false }) => ({
-    userId: userId.toString(),
-    name: name || 'Игрок',
-    avatar: avatar || null,
-    joinedAt: new Date().toISOString(),
-    isHost,
-    isReady: false,
-    selectedDream: null,
-    selectedToken: null,
-    dreamAchieved: false,
-    position: 0,
-    track: 'inner',
-    cash: STARTING_BALANCE,
-    passiveIncome: 0,
-    assets: [],
-    stats: createPlayerStats()
-});
-
-const createRoomInstance = async ({
-    name,
-    creatorId,
-    creatorName,
-    creatorAvatar,
-    maxPlayers = 4,
-    turnTime = 3,
-    professionMode = false
-}) => {
-    const id = generateId('room');
-    const room = {
-        id,
-        name: name || `Комната ${id.slice(-4)}`,
-        creatorId: creatorId?.toString() || null,
-        creatorName: creatorName || 'Создатель',
-        creatorAvatar: creatorAvatar || null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        maxPlayers: clamp(Number(maxPlayers) || 4, MIN_PLAYERS, MAX_PLAYERS),
-        turnTime: clamp(Number(turnTime) || 3, 1, 20),
-        assignProfessions: Boolean(professionMode),
-        gameStarted: false,
-        status: 'waiting',
-        players: [],
-        tokens: {
-            available: TOKENS.map(token => ({ ...token })),
-            assigned: {}
-        },
-        dreams: DREAMS.map(dream => ({ ...dream })),
-        gameState: null,
-        lastActivity: Date.now(),
-        game_data: {
-            player_balances: [],
-            credit_data: {
-                player_credits: [],
-                credit_history: []
-            },
-            transfers_history: []
-        }
-    };
-
-    // Сохраняем комнату в БД
-    console.log('🔍 Сохранение комнаты в БД:', { dbConnected, id, name: room.name });
-    if (dbConnected) {
-        try {
-            const result = await db.createRoom({
-                id,
-                name: room.name,
-                creatorId: room.creatorId,
-                creatorName: room.creatorName,
-                maxPlayers: room.maxPlayers,
-                minPlayers: MIN_PLAYERS
-            });
-            console.log('✅ Комната создана в SQLite:', result);
-        } catch (error) {
-            console.error('❌ Ошибка сохранения комнаты в БД:', error);
-        }
-    } else {
-        console.warn('⚠️ База данных не подключена, комната не будет сохранена');
-    }
-
-    // Добавляем создателя комнаты
-    if (creatorId) {
-        const hostPlayer = createPlayer({ userId: creatorId, name: creatorName, avatar: creatorAvatar, isHost: true });
-        room.players.push(hostPlayer);
-        room.game_data.player_balances.push(hostPlayer.cash);
-        room.game_data.credit_data.player_credits.push(0);
-        
-        // Сохраняем создателя в БД
-        if (dbConnected) {
-            try {
-                const result = await db.addPlayerToRoom(id, {
-                    userId: creatorId,
-                    name: creatorName,
-                    avatar: creatorAvatar,
-                    isHost: true
-                });
-                console.log('✅ Игрок добавлен в комнату SQLite:', result);
-            } catch (error) {
-                console.error('❌ Ошибка сохранения создателя в БД:', error);
-            }
-        } else {
-            console.warn('⚠️ База данных не подключена, игрок не будет сохранен');
-        }
-    }
-
-    rooms.set(id, room);
-    return room;
-};
-
-const sanitizePlayer = (player) => ({
-    userId: player.userId,
-    name: player.name,
-    avatar: player.avatar,
-    isHost: player.isHost,
-    isReady: player.isReady,
-    selectedDream: player.selectedDream,
-    selectedToken: player.selectedToken,
-    dreamAchieved: player.dreamAchieved,
-    position: player.position,
-    track: player.track,
-    cash: player.cash,
-    passiveIncome: player.passiveIncome,
-    assets: player.assets,
-    stats: player.stats
-});
-
-const sanitizeRoom = (room, { includePlayers = false, userId = null } = {}) => {
-    const readyPlayers = room.players.filter(player => player.isReady).length;
-    const sanitized = {
-        id: room.id,
-        name: room.name,
-        creatorId: room.creatorId,
-        creatorName: room.creatorName,
-        maxPlayers: room.maxPlayers,
-        turnTime: room.turnTime,
-        assignProfessions: room.assignProfessions,
-        gameStarted: room.gameStarted,
-        status: room.status,
-        createdAt: room.createdAt,
-        updatedAt: room.updatedAt,
-        playersCount: room.players.length,
-        readyCount: readyPlayers,
-        canStart: room.players.length >= MIN_PLAYERS && readyPlayers >= MIN_PLAYERS,
-        availableTokens: TOKENS.map(token => ({
-            ...token,
-            taken: room.players.some(player => player.selectedToken === token.id)
-        })),
-        availableDreams: DREAMS
-    };
-
-    if (includePlayers) {
-        sanitized.players = room.players.map(player => sanitizePlayer(player));
-    }
-
-    if (userId) {
-        sanitized.currentPlayer = room.players.find(player => player.userId === userId.toString()) || null;
-    }
-
-    return sanitized;
-};
 
 const getRoomById = (roomId) => rooms.get(roomId);
 
-const addPlayerToRoom = (room, { userId, name, avatar }) => {
-    if (!room || !userId) {
-        throw new Error('room and userId are required');
-    }
-
-    const existingPlayer = room.players.find(player => player.userId === userId.toString());
-    if (existingPlayer) {
-        existingPlayer.name = name || existingPlayer.name;
-        existingPlayer.avatar = avatar || existingPlayer.avatar;
-        return existingPlayer;
-    }
-
-    if (room.players.length >= room.maxPlayers) {
-        throw new Error('Комната заполнена');
-    }
-
-    const newPlayer = createPlayer({ userId, name, avatar });
-    room.players.push(newPlayer);
-    room.game_data.player_balances.push(newPlayer.cash);
-    room.game_data.credit_data.player_credits.push(0);
-    room.updatedAt = new Date().toISOString();
-    room.lastActivity = Date.now();
-    syncCreditData(room);
-    return newPlayer;
-};
-
-const removePlayerFromRoom = (room, userId) => {
-    if (!room) return;
-    const index = room.players.findIndex(player => player.userId === userId.toString());
-    if (index === -1) return;
-
-    const [removed] = room.players.splice(index, 1);
-    room.game_data.player_balances.splice(index, 1);
-    room.game_data.credit_data.player_credits.splice(index, 1);
-
-    if (removed && removed.selectedToken) {
-        delete room.tokens.assigned[removed.selectedToken];
-    }
-
-    if (room.players.length === 0) {
-        rooms.delete(room.id);
-        return;
-    }
-
-    if (removed.isHost) {
-        room.players[0].isHost = true;
-        room.creatorId = room.players[0].userId;
-        room.creatorName = room.players[0].name;
-    }
-
-    room.updatedAt = new Date().toISOString();
-    room.lastActivity = Date.now();
-    syncCreditData(room);
-};
-
-const toggleReadyStatus = (room, userId) => {
-    const player = room.players.find(p => p.userId === userId.toString());
-    if (!player) {
-        throw new Error('Игрок не найден в комнате');
-    }
-
-    console.log('🔍 toggleReadyStatus before:', {
-        playerName: player.name,
-        userId: player.userId,
-        isReady: player.isReady,
-        selectedDream: player.selectedDream,
-        selectedToken: player.selectedToken
-    });
-
-    if (!player.selectedDream) {
-        throw new Error('Сначала выберите мечту');
-    }
-
-    player.isReady = !player.isReady;
-    room.updatedAt = new Date().toISOString();
-    room.lastActivity = Date.now();
-    
-    console.log('🔍 toggleReadyStatus after:', {
-        playerName: player.name,
-        userId: player.userId,
-        isReady: player.isReady
-    });
-    
-    return player.isReady;
-};
-
-const assignDreamToPlayer = (room, userId, dreamId) => {
-    const player = room.players.find(p => p.userId === userId.toString());
-    if (!player) {
-        throw new Error('Игрок не найден в комнате');
-    }
-
-    const dream = DREAMS.find(d => d.id == dreamId);
-    if (!dream) {
-        throw new Error('Мечта не найдена');
-    }
-
-    player.selectedDream = dream.id;
-    player.dreamAchieved = false;
-    room.updatedAt = new Date().toISOString();
-    room.lastActivity = Date.now();
-};
-
-const assignTokenToPlayer = (room, userId, tokenId) => {
-    const player = room.players.find(p => p.userId === userId.toString());
-    if (!player) {
-        throw new Error('Игрок не найден в комнате');
-    }
-
-    const token = TOKENS.find(t => t.id === tokenId);
-    if (!token) {
-        throw new Error('Фишка не найдена');
-    }
-
-    if (room.players.some(p => p.selectedToken === tokenId && p.userId !== userId.toString())) {
-        throw new Error('Эта фишка уже занята');
-    }
-
-    player.selectedToken = tokenId;
-    room.tokens.assigned[tokenId] = userId.toString();
-    room.updatedAt = new Date().toISOString();
-    room.lastActivity = Date.now();
-};
-
-const initializeGame = (room) => {
-    const readyPlayers = room.players.filter(player => player.isReady);
-    if (readyPlayers.length < MIN_PLAYERS) {
-        throw new Error('Недостаточно готовых игроков для начала игры');
-    }
-
-    if (readyPlayers.some(player => !player.selectedDream || !player.selectedToken)) {
-        throw new Error('Все готовые игроки должны выбрать мечту и фишку');
-    }
-
-    // Сбрасываем состояние игроков
-    room.players.forEach(player => {
-        player.isReady = true;
-        player.position = 0;
-        player.track = 'inner';
-        player.cash = STARTING_BALANCE;
-        player.passiveIncome = 0;
-        player.assets = [];
-        player.stats = createPlayerStats();
-        player.dreamAchieved = false;
-    });
-
-    // Создаем состояние игры
-    room.gameState = {
-        startedAt: Date.now(),
-        activePlayerIndex: 0,
-        turnOrder: shuffle(readyPlayers.map(player => player.userId.toString())),
-        phase: 'awaiting_roll',
-        lastRoll: null,
-        pendingDeal: null,
-        decks: {
-            small: createDeck(SMALL_DEAL_CARDS),
-            big: createDeck(BIG_DEAL_CARDS),
-            expense: createDeck(EXPENSE_CARDS)
-        },
-        history: []
-    };
-
-    room.gameStarted = true;
-    room.status = 'playing';
-    room.updatedAt = new Date().toISOString();
-    room.lastActivity = Date.now();
-    syncCreditData(room);
-};
 
 const getActivePlayer = (room) => {
     if (!room.gameState || !room.gameState.turnOrder.length) return null;
@@ -611,6 +163,23 @@ const buildErrorResponse = (res, error) => {
     const status = error.code === 'ROOM_NOT_FOUND' ? 404 : 400;
     res.status(status).json({ success: false, message: error.message || 'Ошибка' });
 };
+
+const sanitizePlayer = (player = {}) => ({
+    userId: player.userId,
+    name: player.name,
+    avatar: player.avatar,
+    isHost: player.isHost,
+    isReady: player.isReady,
+    selectedDream: player.selectedDream,
+    selectedToken: player.selectedToken,
+    dreamAchieved: player.dreamAchieved,
+    position: player.position,
+    track: player.track,
+    cash: player.cash,
+    passiveIncome: player.passiveIncome,
+    assets: player.assets,
+    stats: player.stats
+});
 
 const syncCreditData = (room) => {
     if (!room || !room.game_data) return;
@@ -918,6 +487,13 @@ app.use((error, req, res, next) => {
 // Регистрируем модуль авторизации после middleware
 const { sanitizeUser, authenticateToken } = registerAuthModule({ app, db, jwtSecret: JWT_SECRET });
 
+registerRoomsModule({
+    app,
+    db,
+    auth: { sanitizeUser, authenticateToken },
+    isDbReady: () => dbConnected
+});
+
 // Статические директории для отдельных модулей
 app.use('/assets', express.static(resolvePath('assets')));
 app.use('/game-board', express.static(resolvePath('game-board')));
@@ -990,194 +566,6 @@ app.get('/api/health', (req, res) => {
 });
 
 // Тестовый endpoint для создания комнаты
-app.post('/api/test/create-room', async (req, res) => {
-    try {
-        const room = await createRoomInstance({
-            name: 'Тестовая комната',
-            creatorId: 'test-user',
-            creatorName: 'Тестовый пользователь'
-        });
-        console.log(`🧪 Создана тестовая комната: ${room.id}`);
-        res.json({ success: true, roomId: room.id, room });
-    } catch (error) {
-        console.error('❌ Ошибка создания тестовой комнаты:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// ---------------------------- Auth & Profile API --------------------------
-// ---------------------------- Rooms API ----------------------------------
-app.get('/api/rooms', async (req, res) => {
-    try {
-        let list = [];
-        
-        if (dbConnected) {
-            // Получаем комнаты из БД
-            const dbRooms = await db.getAllRooms();
-            list = dbRooms.map(room => ({
-                id: room.id,
-                name: room.name,
-                creatorId: room.creatorId,
-                creatorName: room.creatorName,
-                maxPlayers: room.maxPlayers,
-                minPlayers: room.minPlayers,
-                gameStarted: room.gameStarted,
-                createdAt: room.createdAt,
-                updatedAt: room.updatedAt,
-                lastActivity: room.lastActivity,
-                playersCount: room.playersCount,
-                readyCount: room.readyCount,
-                canStart: room.canStart
-            }));
-        } else {
-            // Fallback на память
-            list = Array.from(rooms.values())
-                .sort((a, b) => b.lastActivity - a.lastActivity)
-                .map(room => sanitizeRoom(room));
-        }
-        
-        res.json({ success: true, rooms: list });
-    } catch (error) {
-        console.error('❌ Ошибка получения списка комнат:', error);
-        res.status(500).json({ success: false, message: 'Ошибка сервера' });
-    }
-});
-
-// Простой endpoint для комнат без авторизации (для обхода CORS)
-app.get('/api/rooms/simple', (req, res) => {
-    try {
-        const roomsList = Array.from(rooms.values()).map(room => ({
-            id: room.id,
-            name: room.name,
-            creatorName: room.creatorName,
-            maxPlayers: room.maxPlayers,
-            playersCount: room.players.length,
-            gameStarted: room.gameStarted,
-            status: room.status,
-            canStart: room.players.length >= MIN_PLAYERS && room.players.every(p => p.isReady)
-        }));
-        res.json(roomsList);
-    } catch (error) {
-        console.error('❌ Ошибка получения простого списка комнат:', error);
-        res.status(500).json({ success: false, message: 'Ошибка сервера' });
-    }
-});
-
-app.post('/api/rooms', async (req, res) => {
-    try {
-        const userId = getRequestUserId(req);
-        if (!userId) {
-            throw new Error('Не указан идентификатор пользователя');
-        }
-
-        const room = await createRoomInstance({
-            name: req.body?.name,
-            creatorId: userId,
-            creatorName: getRequestUserName(req),
-            creatorAvatar: req.body?.avatar,
-            maxPlayers: req.body?.max_players || req.body?.maxPlayers,
-            turnTime: req.body?.turn_time || req.body?.turnTime,
-            professionMode: req.body?.assign_professions || req.body?.profession_mode
-        });
-
-        res.status(201).json({ success: true, room: sanitizeRoom(room, { includePlayers: true, userId }) });
-    } catch (error) {
-        buildErrorResponse(res, error);
-    }
-});
-
-app.get('/api/rooms/:roomId', (req, res) => {
-    try {
-        const room = requireRoom(req.params.roomId);
-        const userId = getRequestUserId(req);
-        res.json({ success: true, room: sanitizeRoom(room, { includePlayers: true, userId }) });
-    } catch (error) {
-        buildErrorResponse(res, error);
-    }
-});
-
-app.post('/api/rooms/:roomId/join', (req, res) => {
-    try {
-        const room = requireRoom(req.params.roomId);
-        const userId = getRequestUserId(req);
-        if (!userId) {
-            throw new Error('Не указан идентификатор пользователя');
-        }
-
-        const player = addPlayerToRoom(room, {
-            userId,
-            name: getRequestUserName(req),
-            avatar: req.body?.avatar
-        });
-
-        res.json({ success: true, player: sanitizePlayer(player), room: sanitizeRoom(room, { includePlayers: true, userId }) });
-    } catch (error) {
-        buildErrorResponse(res, error);
-    }
-});
-
-app.post('/api/rooms/:roomId/leave', (req, res) => {
-    try {
-        const room = requireRoom(req.params.roomId);
-        const userId = getRequestUserId(req);
-        if (!userId) {
-            throw new Error('Не указан идентификатор пользователя');
-        }
-
-        removePlayerFromRoom(room, userId);
-        res.json({ success: true });
-    } catch (error) {
-        buildErrorResponse(res, error);
-    }
-});
-
-app.post('/api/rooms/:roomId/dream', (req, res) => {
-    try {
-        const room = requireRoom(req.params.roomId);
-        const userId = getRequestUserId(req);
-        assignDreamToPlayer(room, userId, req.body?.dream_id || req.body?.dreamId);
-        res.json({ success: true, room: sanitizeRoom(room, { includePlayers: true, userId }) });
-    } catch (error) {
-        buildErrorResponse(res, error);
-    }
-});
-
-app.post('/api/rooms/:roomId/token', (req, res) => {
-    try {
-        const room = requireRoom(req.params.roomId);
-        const userId = getRequestUserId(req);
-        assignTokenToPlayer(room, userId, req.body?.token_id || req.body?.tokenId);
-        res.json({ success: true, room: sanitizeRoom(room, { includePlayers: true, userId }) });
-    } catch (error) {
-        buildErrorResponse(res, error);
-    }
-});
-
-app.post('/api/rooms/:roomId/ready', (req, res) => {
-    try {
-        const room = requireRoom(req.params.roomId);
-        const userId = getRequestUserId(req);
-        const isReady = toggleReadyStatus(room, userId);
-        res.json({ success: true, isReady, room: sanitizeRoom(room, { includePlayers: true, userId }) });
-    } catch (error) {
-        buildErrorResponse(res, error);
-    }
-});
-
-app.post('/api/rooms/:roomId/start', (req, res) => {
-    try {
-        const room = requireRoom(req.params.roomId);
-        const userId = getRequestUserId(req);
-        if (room.creatorId && room.creatorId.toString() !== userId.toString()) {
-            throw new Error('Только создатель комнаты может начать игру');
-        }
-        initializeGame(room);
-        res.json({ success: true, room: sanitizeRoom(room, { includePlayers: true, userId }) });
-    } catch (error) {
-        buildErrorResponse(res, error);
-    }
-});
-
 app.get('/api/rooms/:roomId/game-state', (req, res) => {
     try {
         console.log(`🔍 Запрос game-state для комнаты: ${req.params.roomId}`);
