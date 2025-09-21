@@ -5,7 +5,7 @@
 
 class DebugPanel {
     constructor() {
-        this.isVisible = false;
+        this.isVisible = false; // По умолчанию закрыта
         this.panel = null;
         this.init();
     }
@@ -17,6 +17,9 @@ class DebugPanel {
     }
 
     createPanel() {
+        // Создаем плавающую кнопку для открытия
+        this.createFloatingButton();
+        
         // Создаем панель
         this.panel = document.createElement('div');
         this.panel.id = 'debug-panel';
@@ -24,7 +27,7 @@ class DebugPanel {
             <div class="debug-panel-content">
                 <div class="debug-panel-header">
                     <h3>🐛 Отладочная панель</h3>
-                    <button id="debug-toggle" class="debug-toggle-btn">Свернуть</button>
+                    <button id="debug-toggle" class="debug-toggle-btn">Развернуть</button>
                 </div>
                 <div class="debug-panel-body">
                     <div class="debug-section">
@@ -106,9 +109,51 @@ class DebugPanel {
         this.addStyles();
     }
 
+    createFloatingButton() {
+        // Создаем плавающую кнопку
+        this.floatingButton = document.createElement('div');
+        this.floatingButton.id = 'debug-floating-btn';
+        this.floatingButton.innerHTML = '🐛';
+        this.floatingButton.title = 'Открыть отладочную панель';
+    }
+
     addStyles() {
         const style = document.createElement('style');
         style.textContent = `
+            /* Плавающая кнопка */
+            #debug-floating-btn {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 50px;
+                height: 50px;
+                background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 20px;
+                cursor: pointer;
+                z-index: 10001;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                transition: all 0.3s ease;
+                user-select: none;
+            }
+
+            #debug-floating-btn:hover {
+                transform: scale(1.1);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            }
+
+            #debug-floating-btn:active {
+                transform: scale(0.95);
+            }
+
+            /* Скрываем кнопку когда панель открыта */
+            #debug-panel:not(.collapsed) ~ #debug-floating-btn {
+                display: none;
+            }
+
             #debug-panel {
                 position: fixed;
                 bottom: 0;
@@ -239,6 +284,10 @@ class DebugPanel {
             if (e.target.id === 'debug-toggle') {
                 this.toggle();
             }
+            // Обработчик плавающей кнопки
+            if (e.target.id === 'debug-floating-btn') {
+                this.toggle();
+            }
         });
 
         // Глобальные функции для кнопок
@@ -251,8 +300,12 @@ class DebugPanel {
     }
 
     addToAllPages() {
+        // Добавляем плавающую кнопку
+        document.body.appendChild(this.floatingButton);
         // Добавляем панель на все страницы
         document.body.appendChild(this.panel);
+        // Сразу сворачиваем панель при добавлении
+        this.panel.classList.add('collapsed');
     }
 
     toggle() {

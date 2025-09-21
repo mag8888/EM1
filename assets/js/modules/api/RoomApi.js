@@ -58,23 +58,15 @@ class RoomApi {
             ...options
         };
         
-        // Добавляем базовые заголовки
+        // Добавляем только базовые заголовки
         const basicHeaders = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
+            'Accept': 'application/json'
         };
         
         // Добавляем авторизацию если есть токен
         const token = localStorage.getItem('authToken');
         if (token) {
             basicHeaders['Authorization'] = `Bearer ${token}`;
-        }
-        
-        // Добавляем заголовки пользователя
-        const user = this.getCurrentUser();
-        if (user?.id) {
-            basicHeaders['X-User-ID'] = user.id;
-            basicHeaders['X-User-Name'] = user.first_name || user.username || user.email || 'Игрок';
         }
         
         config.headers = { ...basicHeaders, ...(options.headers || {}) };
@@ -107,18 +99,21 @@ class RoomApi {
                     const xhr = new XMLHttpRequest();
                     xhr.open(config.method, url, true);
                     
-                    // Устанавливаем заголовки
+                    // Устанавливаем только безопасные заголовки
+                    const safeHeaders = ['Accept', 'Content-Type', 'Authorization'];
                     Object.keys(config.headers || {}).forEach(key => {
-                        try {
-                            xhr.setRequestHeader(key, config.headers[key]);
-                        } catch (e) {
-                            console.warn('Failed to set header:', key, e);
+                        if (safeHeaders.includes(key)) {
+                            try {
+                                xhr.setRequestHeader(key, config.headers[key]);
+                            } catch (e) {
+                                console.warn('Failed to set header:', key, e);
+                            }
                         }
                     });
                     
                     xhr.onreadystatechange = function() {
                         if (xhr.readyState === 4) {
-                            if (xhr.status === 200) {
+                            if (xhr.status >= 200 && xhr.status < 300) {
                                 try {
                                     const data = JSON.parse(xhr.responseText);
                                     resolve(data);
