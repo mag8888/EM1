@@ -17,6 +17,10 @@ class LobbyModule {
      * Инициализация модуля
      */
     async init() {
+        console.log('=== Инициализация LobbyModule ===');
+        console.log('Current URL:', window.location.href);
+        console.log('Current domain:', window.location.hostname);
+        
         this.cacheDom();
         this.bindEvents();
         this.exposeLegacyBridges();
@@ -28,6 +32,8 @@ class LobbyModule {
         await this.loadUserStats();
         await this.loadRooms();
         this.scheduleRoomRefresh();
+        
+        console.log('=== LobbyModule инициализирован ===');
     }
 
     exposeLegacyBridges() {
@@ -165,15 +171,18 @@ class LobbyModule {
         // Если нет токена, не пытаемся валидировать
         if (!authToken) {
             console.log('No auth token found, skipping validation');
+            console.log('This might be the cause of the logout issue');
             return;
         }
         
+        console.log('Validating user with token...');
         const userValid = await this.validateAndUpdateUser();
         if (!userValid) {
             console.log('User validation failed, logging out');
             this.logout();
             return;
         }
+        console.log('User validation successful');
         this.updateUserDisplay();
     }
 
@@ -567,9 +576,11 @@ class LobbyModule {
     }
 
     logout() {
+        console.log('=== Logout called ===');
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
-        window.location.href = '/auth';
+        console.log('Cleared localStorage, redirecting to auth');
+        window.location.href = '/auth.html';
     }
 }
 
