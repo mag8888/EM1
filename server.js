@@ -11,7 +11,7 @@ const jwt = require('jsonwebtoken');
 
 const CreditService = require('./credit-module/CreditService');
 const { GAME_CELLS, GameCellsUtils } = require('./game-board/config/game-cells.js');
-// Карты объявляются локально ниже
+const { SMALL_DEAL_CARDS, BIG_DEAL_CARDS, EXPENSE_CARDS, createDeck } = require('./assets/js/utils/cards-config.js');
 const userManager = require('./game-board/utils/userManager');
 const LegacyUser = require('./models/LegacyUser');
 
