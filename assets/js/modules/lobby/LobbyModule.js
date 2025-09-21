@@ -142,8 +142,16 @@ class LobbyModule {
     }
 
     async initializeUser() {
+        console.log('=== Инициализация пользователя ===');
+        
         // Сначала попробуем загрузить пользователя из localStorage
         const savedUser = localStorage.getItem('user');
+        const authToken = localStorage.getItem('authToken');
+        
+        console.log('Saved user:', savedUser ? 'Found' : 'Not found');
+        console.log('Auth token:', authToken ? 'Found' : 'Not found');
+        console.log('All localStorage keys:', Object.keys(localStorage));
+        
         if (savedUser) {
             try {
                 this.currentUser = JSON.parse(savedUser);
@@ -154,8 +162,15 @@ class LobbyModule {
             }
         }
         
+        // Если нет токена, не пытаемся валидировать
+        if (!authToken) {
+            console.log('No auth token found, skipping validation');
+            return;
+        }
+        
         const userValid = await this.validateAndUpdateUser();
         if (!userValid) {
+            console.log('User validation failed, logging out');
             this.logout();
             return;
         }
@@ -253,17 +268,27 @@ class LobbyModule {
     }
 
     async loadRooms(showLoading = true) {
+        console.log('=== Загрузка комнат ===');
+        console.log('Auth token present:', !!localStorage.getItem('authToken'));
+        
         try {
             if (showLoading) {
                 this.setRoomsLoading(true);
             }
             const result = await this.api.listRooms();
+            console.log('Rooms loaded successfully:', result);
             this.rooms = Array.isArray(result) ? result : [];
             this.renderRooms();
         } catch (error) {
             console.error('Failed to load rooms', error);
+            console.log('Error details:', {
+                message: error.message,
+                name: error.name,
+                stack: error.stack
+            });
+            
             // Проверяем, если это ошибка авторизации, то перенаправляем
-            if (error.message && error.message.includes('401')) {
+            if (error.message && (error.message.includes('401') || error.message.includes('Сессия истекла'))) {
                 console.log('Authorization error, redirecting to login');
                 this.showError(this.dom.createRoomError, 'Сессия истекла. Необходимо войти в систему');
                 setTimeout(() => {
