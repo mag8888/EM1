@@ -484,7 +484,12 @@
                 const { EventBus: EB } = await import('./assets/js/services/EventBus.js');
                 EventBus = EB;
 
+                // Создаем экземпляр GameCore для тестирования
+                window.gameCore = new GameCore();
+                await window.gameCore.init();
+                
                 logResult('✅ Все модули успешно загружены', 'success');
+                logResult('✅ GameCore инициализирован для тестирования', 'success');
                 return true;
             } catch (error) {
                 logResult(`❌ Ошибка загрузки модулей: ${error.message}`, 'error');
