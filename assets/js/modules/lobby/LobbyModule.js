@@ -165,11 +165,27 @@ class LobbyModule {
         }
         
         console.log('Updating user display with data:', this.currentUser);
+        console.log('User name fields:', {
+            first_name: this.currentUser.first_name,
+            last_name: this.currentUser.last_name,
+            username: this.currentUser.username,
+            email: this.currentUser.email
+        });
         
         if (this.dom.userName) {
-            const displayName = this.currentUser.first_name && this.currentUser.last_name 
-                ? `${this.currentUser.first_name} ${this.currentUser.last_name}`.trim()
-                : this.currentUser.first_name || this.currentUser.username || 'Игрок';
+            let displayName = 'Игрок';
+            
+            if (this.currentUser.first_name && this.currentUser.last_name) {
+                displayName = `${this.currentUser.first_name} ${this.currentUser.last_name}`.trim();
+            } else if (this.currentUser.first_name) {
+                displayName = this.currentUser.first_name;
+            } else if (this.currentUser.username) {
+                displayName = this.currentUser.username;
+            } else if (this.currentUser.email) {
+                displayName = this.currentUser.email.split('@')[0];
+            }
+            
+            console.log('Setting display name to:', displayName);
             this.dom.userName.textContent = displayName;
         }
         if (this.dom.userBalance && typeof this.currentUser.balance === 'number') {
