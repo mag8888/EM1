@@ -19,11 +19,10 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
 
     const ensureAuth = (req, res, next) => {
         if (!authenticate) {
-            return next();
+            return res.status(401).json({ success: false, message: 'Авторизация недоступна' });
         }
-        const hasAuthHeader = Boolean(req.headers.authorization);
-        if (!hasAuthHeader) {
-            return next();
+        if (!req.headers.authorization) {
+            return res.status(401).json({ success: false, message: 'Требуется авторизация' });
         }
         return authenticate(req, res, next);
     };
