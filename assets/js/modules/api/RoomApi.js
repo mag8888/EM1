@@ -73,9 +73,12 @@ class RoomApi {
         if (isSafari) {
             console.log('Safari detected, trying XMLHttpRequest first');
             try {
-                return await this.xhrRequest(url, config);
+                const result = await this.xhrRequest(url, config);
+                console.log('XMLHttpRequest succeeded, returning result');
+                return result;
             } catch (xhrError) {
-                console.log('XMLHttpRequest failed, trying fetch with simplified headers');
+                console.log('XMLHttpRequest failed:', xhrError);
+                console.log('Trying fetch with simplified headers as fallback');
                 // Сохраняем Authorization заголовок для Safari
                 const authHeader = config.headers.Authorization;
                 config.headers = {
@@ -153,21 +156,39 @@ class RoomApi {
     async xhrRequest(url, config) {
         return new Promise((resolve, reject) => {
             console.log('Using XMLHttpRequest fallback for Safari');
+            console.log('XHR URL:', url);
+            console.log('XHR method:', config.method);
+            console.log('XHR headers:', config.headers);
+            
             const xhr = new XMLHttpRequest();
-            xhr.open(config.method, url, true);
+            
+            try {
+                xhr.open(config.method, url, true);
+                console.log('XHR opened successfully');
+            } catch (error) {
+                console.error('Failed to open XHR:', error);
+                reject(new Error('Failed to open XMLHttpRequest'));
+                return;
+            }
             
             // Устанавливаем заголовки
             Object.keys(config.headers).forEach(key => {
                 try {
                     xhr.setRequestHeader(key, config.headers[key]);
-                    console.log(`XHR header set: ${key}`);
+                    console.log(`XHR header set: ${key} = ${config.headers[key]}`);
                 } catch (error) {
                     console.warn(`Failed to set header ${key}:`, error);
                 }
             });
             
             xhr.onload = () => {
-                console.log('XHR response:', { status: xhr.status, statusText: xhr.statusText });
+                console.log('XHR onload triggered');
+                console.log('XHR response:', { 
+                    status: xhr.status, 
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText?.substring(0, 200) + '...'
+                });
+                
                 if (xhr.status >= 200 && xhr.status < 300) {
                     try {
                         const data = xhr.responseText ? JSON.parse(xhr.responseText) : null;
@@ -184,19 +205,30 @@ class RoomApi {
             };
             
             xhr.onerror = () => {
-                console.error('XHR network error');
+                console.error('XHR onerror triggered');
                 reject(new Error('Network error'));
             };
             
             xhr.ontimeout = () => {
-                console.error('XHR timeout');
+                console.error('XHR ontimeout triggered');
                 reject(new Error('Request timeout'));
             };
             
-            // Устанавливаем таймаут
-            xhr.timeout = 10000;
+            xhr.onabort = () => {
+                console.error('XHR onabort triggered');
+                reject(new Error('Request aborted'));
+            };
             
-            xhr.send(config.body);
+            // Устанавливаем таймаут
+            xhr.timeout = 15000;
+            
+            try {
+                xhr.send(config.body);
+                console.log('XHR send called');
+            } catch (error) {
+                console.error('Failed to send XHR:', error);
+                reject(new Error('Failed to send XMLHttpRequest'));
+            }
         });
     }
 
