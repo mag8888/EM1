@@ -321,11 +321,62 @@ class RoomApi {
     }
 
     async joinRoom(roomId, payload) {
-        const data = await this.request(`/api/rooms/${roomId}/join`, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
-        return data;
+        console.log('=== joinRoom called ===');
+        console.log('RoomId:', roomId);
+        console.log('Payload:', payload);
+        
+        try {
+            // Получаем токен и данные пользователя
+            const token = localStorage.getItem('authToken');
+            const user = localStorage.getItem('user');
+            let userData = null;
+            
+            if (user) {
+                try {
+                    userData = JSON.parse(user);
+                } catch (e) {
+                    console.warn('Failed to parse user data:', e);
+                }
+            }
+            
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+                console.log('Using auth token for joinRoom');
+            }
+            if (userData && userData.id) {
+                headers['X-User-ID'] = userData.id;
+                console.log('Added X-User-ID header:', userData.id);
+            }
+            
+            console.log('Join room headers:', headers);
+            
+            const response = await fetch(`${this.baseUrl}/api/rooms/${roomId}/join`, {
+                method: 'POST',
+                mode: 'cors',
+                credentials: 'omit',
+                headers,
+                body: JSON.stringify(payload)
+            });
+            
+            console.log('Join room response:', { status: response.status, ok: response.ok });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Room joined successfully:', data);
+                return data;
+            } else {
+                const errorText = await response.text();
+                console.error('Join room error response:', errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+        } catch (error) {
+            console.error('Join room failed:', error);
+            throw error;
+        }
     }
 
     async leaveRoom(roomId, payload = {}) {
