@@ -291,6 +291,9 @@ class LobbyModule {
             
             // Используем RoomApi для консистентности
             console.log('Making request to /api/user/profile...');
+            console.log('Current origin:', window.location.origin);
+            console.log('API base URL:', this.roomApi.baseUrl);
+            
             const data = await this.roomApi.request('/api/user/profile');
             console.log('Profile data received:', data);
             console.log('Profile data type:', typeof data);

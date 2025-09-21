@@ -59,7 +59,21 @@ class RoomApi {
             config.body = typeof body === 'string' ? body : JSON.stringify(body);
         }
 
-        const response = await fetch(url, config);
+        console.log('RoomApi request:', { url, method, headers: config.headers });
+        
+        let response;
+        try {
+            response = await fetch(url, config);
+            console.log('RoomApi response:', { status: response.status, ok: response.ok, url: response.url });
+        } catch (error) {
+            console.error('RoomApi fetch error:', error);
+            console.error('Error details:', {
+                name: error.name,
+                message: error.message,
+                stack: error.stack
+            });
+            throw error;
+        }
 
         if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
