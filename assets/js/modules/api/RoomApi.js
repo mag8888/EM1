@@ -183,10 +183,20 @@ class RoomApi {
         for (let attempt = 1; attempt <= 3; attempt++) {
             try {
                 console.log(`Trying simple endpoint (attempt ${attempt})...`);
-                const response = await fetch(`${this.baseUrl}/api/rooms/simple`, {
+                
+                // Добавляем timestamp для избежания кэширования
+                const url = `${this.baseUrl}/api/rooms/simple?t=${Date.now()}`;
+                console.log('Fetching URL:', url);
+                
+                const response = await fetch(url, {
                     method: 'GET',
                     mode: 'cors',
-                    credentials: 'omit'
+                    credentials: 'omit',
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
                 });
                 
                 console.log('Simple endpoint response:', { status: response.status, ok: response.ok });
@@ -202,7 +212,25 @@ class RoomApi {
                 console.warn(`Simple rooms endpoint failed (attempt ${attempt}):`, error);
                 
                 if (attempt === 3) {
-                    // Последняя попытка не удалась, возвращаем пустой массив
+                    // Последняя попытка не удалась, пробуем fallback на полный endpoint
+                    console.log('All simple attempts failed, trying full endpoint...');
+                    try {
+                        const response = await fetch(`${this.baseUrl}/api/rooms?t=${Date.now()}`, {
+                            method: 'GET',
+                            mode: 'cors',
+                            credentials: 'omit',
+                            cache: 'no-cache'
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            console.log('Full endpoint worked:', data);
+                            return data.rooms || data || [];
+                        }
+                    } catch (fullError) {
+                        console.warn('Full endpoint also failed:', fullError);
+                    }
+                    
                     console.log('All attempts failed, returning empty array as fallback');
                     return [];
                 } else {

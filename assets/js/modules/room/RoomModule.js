@@ -1,15 +1,6 @@
-import RoomApi from '../api/RoomApi.js';
-import RoomState from './RoomState.js';
-import DreamSelector from './DreamSelector.js';
-import TokenSelector from './TokenSelector.js';
-import PlayersList from './PlayersList.js';
-import ReadyButton from './ReadyButton.js';
-import StartButton from './StartButton.js';
-import StatusPanel from './StatusPanel.js';
-import UpdateIndicator from './UpdateIndicator.js';
-import ErrorDisplay from './ErrorDisplay.js';
+// Все модули будут доступны глобально
 
-export default class RoomModule {
+class RoomModule {
     constructor({ roomId, pollInterval = 4000 } = {}) {
         this.roomId = roomId;
         this.api = new RoomApi();
@@ -141,3 +132,6 @@ export default class RoomModule {
         console.error('[RoomModule] error:', error);
     }
 }
+
+// Экспортируем в window для совместимости
+window.RoomModule = RoomModule;
