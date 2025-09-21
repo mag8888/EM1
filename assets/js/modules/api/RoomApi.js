@@ -98,7 +98,7 @@ class RoomApi {
             });
             
             // Специальная обработка для Safari CORS ошибок
-            if (isSafari && error.message === 'Type error') {
+            if (isSafari && (error.message === 'Type error' || error.message === 'Load failed')) {
                 console.log('Safari CORS error detected, trying XMLHttpRequest fallback');
                 try {
                     return await this.xhrRequest(url, config);
@@ -144,30 +144,49 @@ class RoomApi {
     // Fallback метод для Safari с использованием XMLHttpRequest
     async xhrRequest(url, config) {
         return new Promise((resolve, reject) => {
+            console.log('Using XMLHttpRequest fallback for Safari');
             const xhr = new XMLHttpRequest();
             xhr.open(config.method, url, true);
             
             // Устанавливаем заголовки
             Object.keys(config.headers).forEach(key => {
-                xhr.setRequestHeader(key, config.headers[key]);
+                try {
+                    xhr.setRequestHeader(key, config.headers[key]);
+                    console.log(`XHR header set: ${key}`);
+                } catch (error) {
+                    console.warn(`Failed to set header ${key}:`, error);
+                }
             });
             
             xhr.onload = () => {
+                console.log('XHR response:', { status: xhr.status, statusText: xhr.statusText });
                 if (xhr.status >= 200 && xhr.status < 300) {
                     try {
                         const data = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+                        console.log('XHR success, data:', data);
                         resolve(data);
                     } catch (error) {
+                        console.error('XHR JSON parse error:', error);
                         reject(new Error('Invalid JSON response'));
                     }
                 } else {
+                    console.error('XHR error response:', xhr.status, xhr.statusText);
                     reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
                 }
             };
             
             xhr.onerror = () => {
+                console.error('XHR network error');
                 reject(new Error('Network error'));
             };
+            
+            xhr.ontimeout = () => {
+                console.error('XHR timeout');
+                reject(new Error('Request timeout'));
+            };
+            
+            // Устанавливаем таймаут
+            xhr.timeout = 10000;
             
             xhr.send(config.body);
         });

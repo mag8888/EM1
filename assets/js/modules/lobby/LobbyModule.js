@@ -329,7 +329,11 @@ class LobbyModule {
             }
             
             // Для других ошибок (сеть, сервер) не удаляем токен
-            console.log('Network or server error, keeping tokens for retry');
+            if (error.message.includes('Load failed') || error.message.includes('Network error')) {
+                console.log('Network error detected, keeping tokens for retry');
+            } else {
+                console.log('Server error, keeping tokens for retry');
+            }
             return false;
         }
     }
