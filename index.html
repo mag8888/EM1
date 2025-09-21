@@ -3,379 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Энергия денег - Игровая доска</title>
+    <title>Энергия денег - Главная</title>
     
     <!-- Основные стили -->
     <link rel="stylesheet" href="assets/css/main.css">
-    <link rel="stylesheet" href="assets/css/components/board.css">
-    <link rel="stylesheet" href="assets/css/components/notifications.css">
     
     <!-- Иконки -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a1d24 25%, #242830 50%, #1a1d24 75%, #0f1419 100%);
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-container {
+            text-align: center;
+            max-width: 800px;
+            padding: 40px 20px;
+        }
+
+        .logo {
+            font-size: 4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00e5ff 0%, #ff00ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: #a0a0a0;
+            margin-bottom: 40px;
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .nav-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 229, 255, 0.3);
+        }
+
+        .nav-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.5rem;
+            color: #00e5ff;
+        }
+
+        .nav-card p {
+            margin: 0;
+            color: #a0a0a0;
+            font-size: 0.9rem;
+        }
+
+        .nav-card .icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .status {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .status h4 {
+            color: #00ff00;
+            margin: 0 0 10px 0;
+        }
+
+        .status p {
+            margin: 0;
+            color: #a0a0a0;
+        }
+    </style>
 </head>
 <body>
-    <!-- Игровая доска -->
-    <div id="gameBoard" class="game-board">
-        <!-- Внутренний круг -->
-        <div class="board-inner-track" id="innerTrack">
-            <!-- Клетки внутреннего круга -->
-            <div class="board-cell start-cell" data-position="0">
-                <div class="cell-content">
-                    <div class="cell-icon">🏁</div>
-                    <div class="cell-name">Старт</div>
-                </div>
-            </div>
-            <div class="board-cell opportunity-cell" data-position="1">
-                <div class="cell-content">
-                    <div class="cell-icon">📈</div>
-                    <div class="cell-name">Работа</div>
-                </div>
-            </div>
-            <div class="board-cell opportunity-cell" data-position="2">
-                <div class="cell-content">
-                    <div class="cell-icon">🏢</div>
-                    <div class="cell-name">Бизнес</div>
-                </div>
-            </div>
-            <div class="board-cell expense-cell" data-position="3">
-                <div class="cell-content">
-                    <div class="cell-icon">📉</div>
-                    <div class="cell-name">Расходы</div>
-                </div>
-            </div>
-            <div class="board-cell opportunity-cell" data-position="4">
-                <div class="cell-content">
-                    <div class="cell-icon">🏠</div>
-                    <div class="cell-name">Недвижимость</div>
-                </div>
-            </div>
-            <div class="board-cell payday-cell" data-position="5">
-                <div class="cell-content">
-                    <div class="cell-icon">💰</div>
-                    <div class="cell-name">PAYDAY</div>
-                </div>
-            </div>
-            <div class="board-cell opportunity-cell" data-position="6">
-                <div class="cell-content">
-                    <div class="cell-icon">📊</div>
-                    <div class="cell-name">Акции</div>
-                </div>
-            </div>
-            <div class="board-cell expense-cell" data-position="7">
-                <div class="cell-content">
-                    <div class="cell-icon">🏥</div>
-                    <div class="cell-name">Медицина</div>
-                </div>
-            </div>
-            <div class="board-cell opportunity-cell" data-position="8">
-                <div class="cell-content">
-                    <div class="cell-icon">🥇</div>
-                    <div class="cell-name">Золото</div>
-                </div>
-            </div>
-            <div class="board-cell charity-cell" data-position="9">
-                <div class="cell-content">
-                    <div class="cell-icon">❤️</div>
-                    <div class="cell-name">Благотворительность</div>
-                </div>
-            </div>
+    <div class="main-container">
+        <div class="logo">🎮 Энергия денег</div>
+        <div class="subtitle">Выберите раздел для продолжения</div>
+        
+        <div class="nav-grid">
+            <a href="auth.html" class="nav-card">
+                <span class="icon">🔐</span>
+                <h3>Авторизация</h3>
+                <p>Вход в систему или регистрация нового пользователя</p>
+            </a>
+            
+            <a href="lobby.html" class="nav-card">
+                <span class="icon">🏠</span>
+                <h3>Лобби</h3>
+                <p>Создание и поиск игровых комнат</p>
+            </a>
+            
+            <a href="room.html" class="nav-card">
+                <span class="icon">🚪</span>
+                <h3>Комната</h3>
+                <p>Настройка игры и ожидание игроков</p>
+            </a>
+            
+            <a href="test-all-scenarios.html" class="nav-card">
+                <span class="icon">🧪</span>
+                <h3>Тестирование</h3>
+                <p>Комплексное тестирование всех сценариев</p>
+            </a>
+            
+            <a href="debug.html" class="nav-card">
+                <span class="icon">🐛</span>
+                <h3>Отладка</h3>
+                <p>Инструменты для разработки и диагностики</p>
+            </a>
+            
+            <a href="perfect.html" class="nav-card">
+                <span class="icon">✨</span>
+                <h3>Идеальная версия</h3>
+                <p>Оптимизированная версия интерфейса</p>
+            </a>
         </div>
         
-        <!-- Внешний круг -->
-        <div class="board-outer-track" id="outerTrack">
-            <div class="board-cell fast-track-cell" data-position="0">
-                <div class="cell-content">
-                    <div class="cell-icon">🚀</div>
-                    <div class="cell-name">Быстрая дорога</div>
-                </div>
-            </div>
-            <div class="board-cell fast-track-cell" data-position="1">
-                <div class="cell-content">
-                    <div class="cell-icon">💼</div>
-                    <div class="cell-name">Пассивный доход</div>
-                </div>
-            </div>
-            <div class="board-cell fast-track-cell" data-position="2">
-                <div class="cell-content">
-                    <div class="cell-icon">👑</div>
-                    <div class="cell-name">Финансовая свобода</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Центральная область -->
-        <div class="board-center">
-            <div class="game-title">Энергия денег</div>
-            <div class="game-status">
-                <span id="gameStatus">Готов к игре</span>
-            </div>
-            
-            <!-- Кубики -->
-            <div class="dice-container">
-                <div class="dice" data-value="0">0</div>
-                <div class="dice" data-value="0">0</div>
-                <div class="dice-total">0</div>
-            </div>
-            
-            <!-- Кнопки действий -->
-            <div class="action-buttons">
-                <button id="rollDiceBtn" class="btn btn-primary">
-                    <i class="fas fa-dice"></i> Бросить кубики
-                </button>
-                <button id="endTurnBtn" class="btn btn-secondary" disabled>
-                    <i class="fas fa-arrow-right"></i> Завершить ход
-                </button>
-            </div>
+        <div class="status">
+            <h4>✅ Система готова к работе</h4>
+            <p>Все модули загружены, отладочная панель доступна на всех страницах</p>
         </div>
     </div>
 
-    <!-- Карточки игроков -->
-    <div id="playerCards" class="player-cards">
-        <!-- Карточки игроков будут добавлены динамически -->
-    </div>
-
-    <!-- Банковский интерфейс -->
-    <div id="bankInterface" class="bank-interface">
-        <div class="bank-balance">
-            <span class="balance-label">Баланс:</span>
-            <span id="currentBalance" class="balance-amount">$0</span>
-        </div>
-        <div class="bank-income">
-            <span class="income-label">Доход:</span>
-            <span id="monthlyIncome" class="income-amount">$0</span>
-        </div>
-        <div class="bank-expenses">
-            <span class="expenses-label">Расходы:</span>
-            <span id="monthlyExpenses" class="expenses-amount">$0</span>
-        </div>
-        <button id="openBankBtn" class="btn btn-bank">
-            <i class="fas fa-university"></i> Банк
-        </button>
-    </div>
-
-    <!-- Модальные окна -->
-    <div id="modals" class="modals">
-        <!-- Модальные окна будут добавлены динамически -->
-    </div>
-
-    <!-- Уведомления -->
-    <div id="notifications" class="notifications">
-        <!-- Уведомления будут добавляться динамически -->
-    </div>
-
-    <!-- Загрузочный экран -->
-    <div id="loadingScreen" class="loading-screen">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Загрузка игры...</div>
-            <div class="loading-progress">
-                <div id="loadingProgress" class="progress-bar"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Ошибка загрузки -->
-    <div id="errorScreen" class="error-screen" style="display: none;">
-        <div class="error-content">
-            <div class="error-icon">⚠️</div>
-            <div class="error-title">Ошибка загрузки</div>
-            <div id="errorMessage" class="error-message">Не удалось загрузить игру</div>
-            <button id="retryBtn" class="btn btn-primary">
-                <i class="fas fa-redo"></i> Попробовать снова
-            </button>
-        </div>
-    </div>
-
-    <!-- Подключение скриптов -->
-    <script src="config/game-config.js"></script>
-    <script src="assets/js/utils/constants.js"></script>
-    <script src="assets/js/utils/helpers.js"></script>
-    <script src="assets/js/utils/validators.js"></script>
-    <script src="assets/js/services/EventBus.js"></script>
-    <script src="assets/js/services/StorageService.js"></script>
-    <script src="assets/js/services/ApiService.js"></script>
-    <script src="assets/js/core/StateManager.js"></script>
-    <script src="assets/js/core/ModuleManager.js"></script>
-    <script src="assets/js/core/PlayerManager.js"></script>
-    <script src="assets/js/modules/DiceModule.js"></script>
-    <script src="assets/js/modules/MovementModule.js"></script>
-    <script src="assets/js/modules/CardModule.js"></script>
-    <script src="assets/js/modules/EventModule.js"></script>
-    <script src="assets/js/modules/BankModule.js"></script>
-    <script src="assets/js/ui/Notifications.js"></script>
-    <script src="assets/js/ui/Board.js"></script>
-    <script src="assets/js/core/GameCore.js"></script>
+    <!-- Отладочная панель -->
     <script src="assets/js/debug/DebugPanel.js"></script>
-    
-    <script>
-        // Глобальные переменные
-        window.gameCore = null;
-        window.isGameLoaded = false;
-
-        // Функция инициализации игры
-        async function initGame() {
-            try {
-                console.log('🚀 Запуск игры "Энергия денег"...');
-                
-                // Показать загрузочный экран
-                showLoadingScreen();
-                
-                // Создание игрового ядра
-                window.gameCore = new GameCore();
-                
-                // Инициализация с конфигурацией
-                await window.gameCore.init(GAME_CONFIG);
-                
-                // Запуск игры
-                await window.gameCore.start();
-                
-                // Скрыть загрузочный экран
-                hideLoadingScreen();
-                
-                // Установка флага загрузки
-                window.isGameLoaded = true;
-                
-                console.log('✅ Игра успешно загружена');
-                
-            } catch (error) {
-                console.error('❌ Ошибка инициализации игры:', error);
-                
-                // Попытка загрузить базовую версию игры
-                try {
-                    console.log('🔄 Попытка загрузки базовой версии...');
-                    await initBasicGame();
-                    hideLoadingScreen();
-                    window.isGameLoaded = true;
-                } catch (basicError) {
-                    console.error('❌ Ошибка загрузки базовой версии:', basicError);
-                    showErrorScreen(error.message);
-                }
-            }
-        }
-
-        // Базовая версия игры без модулей
-        async function initBasicGame() {
-            console.log('🎮 Запуск базовой версии игры...');
-            
-            // Простая инициализация кубиков
-            window.diceValues = [0, 0];
-            
-            // Обновление статуса
-            document.getElementById('gameStatus').textContent = 'Готов к игре (базовая версия)';
-            
-            console.log('✅ Базовая версия игры загружена');
-        }
-
-        // Показать загрузочный экран
-        function showLoadingScreen() {
-            const loadingScreen = document.getElementById('loadingScreen');
-            const errorScreen = document.getElementById('errorScreen');
-            
-            loadingScreen.style.display = 'flex';
-            errorScreen.style.display = 'none';
-            
-            // Анимация прогресса
-            let progress = 0;
-            const progressBar = document.getElementById('loadingProgress');
-            const interval = setInterval(() => {
-                progress += Math.random() * 15;
-                if (progress >= 100) {
-                    progress = 100;
-                    clearInterval(interval);
-                }
-                progressBar.style.width = progress + '%';
-            }, 200);
-        }
-
-        // Скрыть загрузочный экран
-        function hideLoadingScreen() {
-            const loadingScreen = document.getElementById('loadingScreen');
-            loadingScreen.style.display = 'none';
-        }
-
-        // Показать экран ошибки
-        function showErrorScreen(message) {
-            const loadingScreen = document.getElementById('loadingScreen');
-            const errorScreen = document.getElementById('errorScreen');
-            const errorMessage = document.getElementById('errorMessage');
-            
-            loadingScreen.style.display = 'none';
-            errorMessage.textContent = message;
-            errorScreen.style.display = 'flex';
-        }
-
-        // Обработчик кнопки повтора
-        document.getElementById('retryBtn').addEventListener('click', () => {
-            window.location.reload();
-        });
-
-        // Обработчики кнопок
-        document.getElementById('rollDiceBtn').addEventListener('click', async () => {
-            if (window.gameCore && window.isGameLoaded) {
-                const diceModule = window.gameCore.getModule('diceModule');
-                if (diceModule) {
-                    await diceModule.roll();
-                }
-            } else if (window.isGameLoaded) {
-                // Базовая версия игры
-                rollBasicDice();
-            }
-        });
-
-        // Базовая функция броска кубика
-        function rollBasicDice() {
-            const dice1 = Math.floor(Math.random() * 6) + 1;
-            const dice2 = Math.floor(Math.random() * 6) + 1;
-            const total = dice1 + dice2;
-            
-            // Обновление отображения
-            const diceElements = document.querySelectorAll('.dice');
-            if (diceElements.length >= 2) {
-                diceElements[0].textContent = dice1;
-                diceElements[1].textContent = dice2;
-            }
-            document.querySelector('.dice-total').textContent = total;
-            
-            console.log(`🎲 Брошены кубики: ${dice1} + ${dice2} = ${total}`);
-        }
-
-        document.getElementById('endTurnBtn').addEventListener('click', () => {
-            if (window.gameCore && window.isGameLoaded) {
-                const playerManager = window.gameCore.getModule('playerManager');
-                if (playerManager) {
-                    const currentPlayer = playerManager.getCurrentPlayer();
-                    if (currentPlayer) {
-                        window.gameCore.eventBus.emit('playerTurnEnded', currentPlayer);
-                    }
-                }
-            }
-        });
-
-        document.getElementById('openBankBtn').addEventListener('click', () => {
-            if (window.gameCore && window.isGameLoaded) {
-                const bankModule = window.gameCore.getModule('bankModule');
-                if (bankModule) {
-                    bankModule.openBank();
-                }
-            }
-        });
-
-        // Обработка закрытия страницы
-        window.addEventListener('beforeunload', () => {
-            if (window.gameCore) {
-                window.gameCore.destroy();
-            }
-        });
-
-        // Запуск инициализации при загрузке DOM
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initGame);
-        } else {
-            initGame();
-        }
-    </script>
 </body>
 </html>
