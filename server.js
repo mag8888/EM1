@@ -9,10 +9,40 @@ const cors = require('cors');
 const Database = require('./database-memory');
 
 // const CreditService = require('./credit-module/CreditService');
-const { GAME_CELLS, GameCellsUtils } = require('./game-board/config/game-cells.js');
-const { SMALL_DEAL_CARDS, BIG_DEAL_CARDS, EXPENSE_CARDS, createDeck, shuffleDeck, drawCard } = require('./assets/js/utils/cards-config.js');
+// const { GAME_CELLS, GameCellsUtils } = require('./game-board/config/game-cells.js');
+// const { SMALL_DEAL_CARDS, BIG_DEAL_CARDS, EXPENSE_CARDS, createDeck, shuffleDeck, drawCard } = require('./assets/js/utils/cards-config.js');
 // const userManager = require('./game-board/utils/userManager');
 // const LegacyUser = require('./models/LegacyUser'); // Отключено для SQLite
+
+// Временные константы для работы без внешних модулей
+const GAME_CELLS = [];
+const GameCellsUtils = {
+    getDreams: () => [
+        { id: 2, name: 'Дом мечты', description: 'Построить дом мечты для семьи', cost: 100000, icon: '🏠' },
+        { id: 6, name: 'Антарктида', description: 'Посетить Антарктиду', cost: 150000, icon: '🧊' },
+        { id: 14, name: 'Высочайшие вершины', description: 'Подняться на все высочайшие вершины мира', cost: 500000, icon: '🏔️' },
+        { id: 16, name: 'Книга-бестселлер', description: 'Стать автором книги-бестселлера', cost: 300000, icon: '📚' },
+        { id: 20, name: 'Яхта в Средиземном море', description: 'Жить год на яхте в Средиземном море', cost: 300000, icon: '⛵' },
+        { id: 22, name: 'Мировой фестиваль', description: 'Организовать мировой фестиваль', cost: 200000, icon: '🎪' },
+        { id: 26, name: 'Ретрит-центр', description: 'Построить ретрит-центр', cost: 500000, icon: '🕯️' },
+        { id: 27, name: 'Фонд поддержки талантов', description: 'Создать фонд поддержки талантов', cost: 300000, icon: '🎭' },
+        { id: 28, name: 'Кругосветное плавание', description: 'Кругосветное плавание на паруснике', cost: 200000, icon: '⛵' },
+        { id: 30, name: 'Кругосветное плавание 2', description: 'Кругосветное плавание на паруснике', cost: 300000, icon: '⛵' },
+        { id: 32, name: 'Частный самолёт', description: 'Купить частный самолёт', cost: 1000000, icon: '✈️' },
+        { id: 36, name: 'Коллекция суперкаров', description: 'Купить коллекцию суперкаров', cost: 1000000, icon: '🏎️' },
+        { id: 38, name: 'Полнометражный фильм', description: 'Снять полнометражный фильм', cost: 500000, icon: '🎬' },
+        { id: 40, name: 'Мировой лидер мнений', description: 'Стать мировым лидером мнений', cost: 1000000, icon: '👑' },
+        { id: 42, name: 'Белоснежная яхта', description: 'Белоснежная Яхта', cost: 300000, icon: '⛵' },
+        { id: 44, name: 'Полёт в космос', description: 'Полёт в космос', cost: 250000, icon: '🚀' }
+    ]
+};
+
+const SMALL_DEAL_CARDS = [];
+const BIG_DEAL_CARDS = [];
+const EXPENSE_CARDS = [];
+const createDeck = (cards) => ({ cards: [...cards] });
+const shuffleDeck = (deck) => deck;
+const drawCard = (deck) => deck.cards[0] || null;
 
 const app = express();
 const PORT = process.env.PORT || 8080;
