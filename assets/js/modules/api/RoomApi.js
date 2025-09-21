@@ -198,4 +198,4 @@ class RoomApi {
     }
 }
 
-export default RoomApi;
+window.RoomApi = RoomApi;
