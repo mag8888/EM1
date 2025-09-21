@@ -44,6 +44,21 @@
         "updatedAt": "2025-09-21T06:41:49.877Z",
         "lastActivity": 1758436909877
       }
+    ],
+    [
+      "room_32787992-b9bf-4445-88b4-2aa0abec0167",
+      {
+        "id": "room_32787992-b9bf-4445-88b4-2aa0abec0167",
+        "name": "Тестовая комната",
+        "creatorId": "test-user",
+        "creatorName": "Тестовый пользователь",
+        "maxPlayers": 4,
+        "minPlayers": 2,
+        "gameStarted": false,
+        "createdAt": "2025-09-21T08:09:24.392Z",
+        "updatedAt": "2025-09-21T08:09:24.392Z",
+        "lastActivity": 1758442164392
+      }
     ]
   ],
   "players": [
@@ -94,7 +109,23 @@
           "joinedAt": "2025-09-21T06:41:49.879Z"
         }
       ]
+    ],
+    [
+      "room_32787992-b9bf-4445-88b4-2aa0abec0167",
+      [
+        {
+          "userId": "test-user",
+          "name": "Тестовый пользователь",
+          "isHost": true,
+          "isReady": false,
+          "selectedDream": null,
+          "selectedToken": null,
+          "position": 0,
+          "balance": 1000,
+          "joinedAt": "2025-09-21T08:09:24.393Z"
+        }
+      ]
     ]
   ],
-  "timestamp": "2025-09-21T07:17:16.475Z"
+  "timestamp": "2025-09-21T08:09:28.312Z"
 }
