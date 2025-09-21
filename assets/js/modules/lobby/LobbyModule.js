@@ -36,7 +36,11 @@ class LobbyModule {
         console.log('Current URL:', window.location.href);
         console.log('Current domain:', window.location.hostname);
         
-        // Проверяем авторизацию в самом начале
+        this.cacheDom();
+        this.bindEvents();
+        this.exposeLegacyBridges();
+        
+        // Проверяем авторизацию перед загрузкой данных
         const authToken = localStorage.getItem('authToken');
         if (!authToken) {
             console.log('❌ No auth token found, redirecting to login');
@@ -47,13 +51,21 @@ class LobbyModule {
             return;
         }
         
-        this.cacheDom();
-        this.bindEvents();
-        this.exposeLegacyBridges();
         await this.initializeUser();
         
         // Небольшая задержка для стабилизации localStorage
         await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Проверяем токен еще раз перед загрузкой данных
+        const authToken2 = localStorage.getItem('authToken');
+        if (!authToken2) {
+            console.log('❌ Auth token lost during initialization, redirecting to login');
+            this.showError(null, 'Сессия прервана. Необходимо войти в систему');
+            setTimeout(() => {
+                window.location.href = '/auth.html';
+            }, 2000);
+            return;
+        }
         
         await this.loadUserStats();
         await this.loadRooms();
@@ -300,12 +312,31 @@ class LobbyModule {
         } catch (error) {
             console.error('Failed to load user stats', error);
             // Не блокируем загрузку страницы из-за ошибки статистики
+            // Но если это ошибка авторизации, то перенаправляем
+            if (error.message && (error.message.includes('401') || error.message.includes('Сессия истекла'))) {
+                console.log('Authorization error in loadUserStats, redirecting to login');
+                this.showError(null, 'Сессия истекла. Необходимо войти в систему');
+                setTimeout(() => {
+                    window.location.href = '/auth.html';
+                }, 2000);
+            }
         }
     }
 
     async loadRooms(showLoading = true) {
         console.log('=== Загрузка комнат ===');
         console.log('Auth token present:', !!localStorage.getItem('authToken'));
+        
+        // Дополнительная проверка токена перед загрузкой
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) {
+            console.log('❌ No auth token found in loadRooms, redirecting to login');
+            this.showError(null, 'Сессия истекла. Необходимо войти в систему');
+            setTimeout(() => {
+                window.location.href = '/auth.html';
+            }, 2000);
+            return;
+        }
         
         try {
             if (showLoading) {
