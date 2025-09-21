@@ -1023,6 +1023,26 @@ app.get('/api/rooms', async (req, res) => {
     }
 });
 
+// Простой endpoint для комнат без авторизации (для обхода CORS)
+app.get('/api/rooms/simple', (req, res) => {
+    try {
+        const roomsList = Array.from(rooms.values()).map(room => ({
+            id: room.id,
+            name: room.name,
+            creatorName: room.creatorName,
+            maxPlayers: room.maxPlayers,
+            playersCount: room.players.length,
+            gameStarted: room.gameStarted,
+            status: room.status,
+            canStart: room.players.length >= MIN_PLAYERS && room.players.every(p => p.isReady)
+        }));
+        res.json(roomsList);
+    } catch (error) {
+        console.error('❌ Ошибка получения простого списка комнат:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
 app.post('/api/rooms', async (req, res) => {
     try {
         const userId = getRequestUserId(req);

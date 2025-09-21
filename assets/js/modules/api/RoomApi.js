@@ -62,152 +62,105 @@ class RoomApi {
     async request(endpoint, options = {}) {
         const url = `${this.baseUrl}${endpoint}`;
         
-        // Минимальная конфигурация для избежания CORS проблем
-        let config = {
-            method: 'GET',
-            mode: 'cors',
-            credentials: 'omit',
-            ...options
-        };
-        
-        // Минимальные заголовки
-        const basicHeaders = {};
-        
-        // Добавляем авторизацию если есть токен
-        const token = localStorage.getItem('authToken');
-        if (token) {
-            basicHeaders['Authorization'] = `Bearer ${token}`;
-            console.log('Using auth token for request:', token.substring(0, 20) + '...');
-            
-            // Добавляем X-User-ID заголовок из токена или localStorage
-            try {
-                const user = localStorage.getItem('user');
-                if (user) {
-                    const userData = JSON.parse(user);
-                    if (userData.id) {
-                        basicHeaders['X-User-ID'] = userData.id;
-                        console.log('Added X-User-ID header:', userData.id);
-                    }
-                }
-            } catch (e) {
-                console.warn('Failed to parse user data for X-User-ID header:', e);
-            }
-        } else {
-            console.warn('No auth token found, request may fail');
-            console.log('Available localStorage keys:', Object.keys(localStorage));
-        }
-        
-        // Добавляем Content-Type только для POST/PUT запросов с телом
-        if (config.method !== 'GET' && config.body) {
-            basicHeaders['Content-Type'] = 'application/json';
-        }
-        
-        config.headers = { ...basicHeaders, ...(options.headers || {}) };
-        
-        console.log('RoomApi request:', { url, config });
+        console.log('RoomApi request:', { url, method: options.method || 'GET' });
 
-        try {
-            console.log('Making fetch request to:', url);
-            
-            // Попробуем сначала fetch
+        // Получаем токен и данные пользователя
+        const token = localStorage.getItem('authToken');
+        const user = localStorage.getItem('user');
+        let userData = null;
+        
+        if (user) {
             try {
-                const response = await fetch(url, config);
-                console.log('Fetch response received:', { status: response.status, ok: response.ok });
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        // Очищаем токен при 401 ошибке
-                        localStorage.removeItem('authToken');
-                        localStorage.removeItem('user');
-                        throw new Error('Сессия истекла. Пожалуйста, войдите снова.');
-                    }
-                    const message = await this.extractError(response);
-                    throw new Error(message || `Ошибка запроса ${response.status}`);
-                }
-                return response.json();
-            } catch (fetchError) {
-                console.warn('Fetch failed, trying XMLHttpRequest:', fetchError);
-                
-                // Если fetch не работает, попробуем XMLHttpRequest
-                return new Promise((resolve, reject) => {
-                    const xhr = new XMLHttpRequest();
-                    xhr.open(config.method, url, true);
-                    xhr.timeout = 10000; // 10 секунд таймаут
-                    
-                    // Устанавливаем только критически важные заголовки
-                    const safeHeaders = ['Authorization', 'X-User-ID'];
-                    Object.keys(config.headers || {}).forEach(key => {
-                        if (safeHeaders.includes(key)) {
-                            try {
-                                xhr.setRequestHeader(key, config.headers[key]);
-                            } catch (e) {
-                                console.warn('Failed to set header:', key, e);
-                            }
-                        }
-                    });
-                    
-                    xhr.onreadystatechange = function() {
-                        if (xhr.readyState === 4) {
-                            if (xhr.status === 0) {
-                                // Статус 0 обычно означает CORS ошибку или сетевую проблему
-                                reject(new Error('Ошибка сети. Проверьте подключение к интернету.'));
-                            } else if (xhr.status >= 200 && xhr.status < 300) {
-                                try {
-                                    const data = JSON.parse(xhr.responseText);
-                                    resolve(data);
-                                } catch (parseError) {
-                                    reject(new Error('Ошибка парсинга ответа сервера'));
-                                }
-                            } else if (xhr.status === 401) {
-                                localStorage.removeItem('authToken');
-                                localStorage.removeItem('user');
-                                reject(new Error('Сессия истекла. Пожалуйста, войдите снова.'));
-                            } else {
-                                reject(new Error(`Ошибка запроса ${xhr.status}`));
-                            }
-                        }
-                    };
-                    
-                    xhr.onerror = function() {
-                        console.error('XMLHttpRequest error:', xhr.status, xhr.statusText);
-                        reject(new Error('Ошибка сети. Проверьте подключение к интернету.'));
-                    };
-                    
-                    xhr.ontimeout = function() {
-                        console.error('XMLHttpRequest timeout');
-                        reject(new Error('Превышено время ожидания запроса.'));
-                    };
-                    
-                    xhr.send();
-                });
+                userData = JSON.parse(user);
+            } catch (e) {
+                console.warn('Failed to parse user data:', e);
             }
-        } catch (error) {
-            console.error('RoomApi request error:', error);
-            
-            // Если и fetch, и XMLHttpRequest не работают, попробуем простой GET запрос
-            if (config.method === 'GET') {
-                console.log('Trying simple GET request as last resort...');
+        }
+
+        // Для GET запросов используем простейший подход
+        if ((options.method || 'GET') === 'GET') {
+            try {
+                // Пробуем простейший fetch без заголовков
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+                
+                if (response.ok) {
+                    return await response.json();
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.warn('Simple GET failed, trying with auth headers:', error);
+                
+                // Если простой запрос не работает, пробуем с авторизацией
                 try {
+                    const headers = {};
+                    if (token) {
+                        headers['Authorization'] = `Bearer ${token}`;
+                    }
+                    if (userData && userData.id) {
+                        headers['X-User-ID'] = userData.id;
+                    }
+                    
                     const response = await fetch(url, {
                         method: 'GET',
-                        mode: 'no-cors'
+                        mode: 'cors',
+                        credentials: 'omit',
+                        headers
                     });
-                    // no-cors не позволяет читать ответ, но может обойти CORS
-                    console.log('Simple GET request completed');
-                    return []; // Возвращаем пустой массив для комнат
-                } catch (simpleError) {
-                    console.error('Simple GET request also failed:', simpleError);
+                    
+                    if (response.ok) {
+                        return await response.json();
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                } catch (authError) {
+                    console.error('Authenticated GET also failed:', authError);
+                    // Возвращаем пустой массив для комнат как fallback
+                    if (endpoint.includes('/rooms')) {
+                        return [];
+                    }
+                    throw authError;
                 }
+            }
+        }
+        
+        // Для POST/PUT запросов
+        try {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            if (userData && userData.id) {
+                headers['X-User-ID'] = userData.id;
             }
             
-            if (error.name === 'TypeError') {
-                if (error.message.includes('Failed to fetch')) {
-                    throw new Error('Ошибка сети. Проверьте подключение к интернету.');
-                } else if (error.message.includes('Type error')) {
-                    throw new Error('Ошибка типа данных. Попробуйте обновить страницу.');
-                } else {
-                    throw new Error('Ошибка запроса. Попробуйте еще раз.');
+            const response = await fetch(url, {
+                method: options.method || 'POST',
+                mode: 'cors',
+                credentials: 'omit',
+                headers,
+                body: options.body ? JSON.stringify(options.body) : undefined
+            });
+            
+            if (response.ok) {
+                return await response.json();
+            } else {
+                if (response.status === 401) {
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                    throw new Error('Сессия истекла. Пожалуйста, войдите снова.');
                 }
+                throw new Error(`HTTP ${response.status}`);
             }
+        } catch (error) {
+            console.error('POST/PUT request failed:', error);
             throw error;
         }
     }
@@ -222,8 +175,27 @@ class RoomApi {
     }
 
     async listRooms() {
-        const data = await this.request('/api/rooms');
-        return data.rooms || [];
+        try {
+            // Сначала пробуем простой endpoint без авторизации
+            const response = await fetch(`${this.baseUrl}/api/rooms/simple`, {
+                method: 'GET',
+                mode: 'cors',
+                credentials: 'omit'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Simple rooms endpoint worked:', data);
+                return data;
+            } else {
+                throw new Error(`HTTP ${response.status}`);
+            }
+        } catch (error) {
+            console.warn('Simple rooms endpoint failed, trying full endpoint:', error);
+            // Fallback на полный endpoint
+            const data = await this.request('/api/rooms');
+            return data.rooms || [];
+        }
     }
 
     async createRoom(payload) {
