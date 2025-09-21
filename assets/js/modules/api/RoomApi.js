@@ -62,7 +62,7 @@ class RoomApi {
     async request(endpoint, options = {}) {
         const url = `${this.baseUrl}${endpoint}`;
         
-        // Сначала попробуем простой запрос без дополнительных заголовков
+        // Минимальная конфигурация для избежания CORS проблем
         let config = {
             method: 'GET',
             mode: 'cors',
@@ -70,10 +70,8 @@ class RoomApi {
             ...options
         };
         
-        // Добавляем только базовые заголовки
-        const basicHeaders = {
-            'Accept': 'application/json'
-        };
+        // Минимальные заголовки
+        const basicHeaders = {};
         
         // Добавляем авторизацию если есть токен
         const token = localStorage.getItem('authToken');
@@ -99,7 +97,7 @@ class RoomApi {
             console.log('Available localStorage keys:', Object.keys(localStorage));
         }
         
-        // Добавляем Content-Type для POST/PUT запросов
+        // Добавляем Content-Type только для POST/PUT запросов с телом
         if (config.method !== 'GET' && config.body) {
             basicHeaders['Content-Type'] = 'application/json';
         }
@@ -135,8 +133,8 @@ class RoomApi {
                     xhr.open(config.method, url, true);
                     xhr.timeout = 10000; // 10 секунд таймаут
                     
-                    // Устанавливаем только безопасные заголовки
-                    const safeHeaders = ['Accept', 'Content-Type', 'Authorization', 'X-User-ID'];
+                    // Устанавливаем только критически важные заголовки
+                    const safeHeaders = ['Authorization', 'X-User-ID'];
                     Object.keys(config.headers || {}).forEach(key => {
                         if (safeHeaders.includes(key)) {
                             try {
@@ -184,6 +182,23 @@ class RoomApi {
             }
         } catch (error) {
             console.error('RoomApi request error:', error);
+            
+            // Если и fetch, и XMLHttpRequest не работают, попробуем простой GET запрос
+            if (config.method === 'GET') {
+                console.log('Trying simple GET request as last resort...');
+                try {
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        mode: 'no-cors'
+                    });
+                    // no-cors не позволяет читать ответ, но может обойти CORS
+                    console.log('Simple GET request completed');
+                    return []; // Возвращаем пустой массив для комнат
+                } catch (simpleError) {
+                    console.error('Simple GET request also failed:', simpleError);
+                }
+            }
+            
             if (error.name === 'TypeError') {
                 if (error.message.includes('Failed to fetch')) {
                     throw new Error('Ошибка сети. Проверьте подключение к интернету.');

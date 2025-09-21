@@ -1,40 +1,37 @@
-// Загружаем модули как скрипты
-(async () => {
+// Простая инициализация лобби
+function initLobby() {
     console.log('=== Инициализация лобби ===');
     
-    // Ждем загрузки модулей с таймаутом
-    await new Promise((resolve, reject) => {
-        let attempts = 0;
-        const maxAttempts = 50; // 5 секунд максимум
-        
-        const checkInterval = setInterval(() => {
-            attempts++;
-            console.log(`Попытка ${attempts}/${maxAttempts}: RoomApi=${!!window.RoomApi}, LobbyModule=${!!window.LobbyModule}`);
-            
-            if (window.RoomApi && window.LobbyModule) {
-                clearInterval(checkInterval);
-                console.log('✅ Модули загружены');
-                resolve();
-            } else if (attempts >= maxAttempts) {
-                clearInterval(checkInterval);
-                console.error('❌ Таймаут загрузки модулей');
-                reject(new Error('Модули не загрузились в течение 5 секунд'));
-            }
-        }, 100);
-    });
-
+    // Проверяем доступность модулей
+    if (!window.RoomApi) {
+        console.error('❌ RoomApi не найден');
+        return;
+    }
+    
+    if (!window.LobbyModule) {
+        console.error('❌ LobbyModule не найден');
+        return;
+    }
+    
+    console.log('✅ Модули найдены');
+    
     try {
         console.log('Создание экземпляра LobbyModule...');
         const lobby = new window.LobbyModule({ api: new window.RoomApi(), pollInterval: 10000 });
         console.log('Инициализация LobbyModule...');
-        await lobby.init();
-        console.log('✅ LobbyModule инициализирован успешно');
-    } catch (error) {
-        console.error('❌ Lobby initialisation failed:', error);
-        console.error('Error details:', {
-            message: error.message,
-            name: error.name,
-            stack: error.stack
+        lobby.init().then(() => {
+            console.log('✅ LobbyModule инициализирован успешно');
+        }).catch(error => {
+            console.error('❌ Lobby initialisation failed:', error);
         });
+    } catch (error) {
+        console.error('❌ Lobby creation failed:', error);
     }
-})();
+}
+
+// Инициализируем сразу или ждем загрузки DOM
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLobby);
+} else {
+    initLobby();
+}
