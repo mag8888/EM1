@@ -320,7 +320,8 @@ class LobbyModule {
             // Удаляем токен только при явных ошибках авторизации
             if (error.message.includes('401') || error.message.includes('403') || 
                 error.message.includes('Unauthorized') || error.message.includes('Forbidden') ||
-                error.message.includes('Недействительный токен') || error.message.includes('Токен истек')) {
+                error.message.includes('Недействительный токен') || error.message.includes('Токен истек') ||
+                error.message.includes('Токен доступа отсутствует')) {
                 console.log('Authentication error, clearing tokens');
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('user');

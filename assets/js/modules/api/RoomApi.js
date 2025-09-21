@@ -72,13 +72,15 @@ class RoomApi {
         const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
         if (isSafari) {
             console.log('Safari detected, using simplified headers');
-            // Упрощаем заголовки для Safari
+            // Сохраняем Authorization заголовок для Safari
+            const authHeader = config.headers.Authorization;
             config.headers = {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             };
-            if (config.headers.Authorization) {
-                config.headers.Authorization = config.headers.Authorization;
+            if (authHeader) {
+                config.headers.Authorization = authHeader;
+                console.log('Authorization header preserved for Safari');
             }
         }
         
