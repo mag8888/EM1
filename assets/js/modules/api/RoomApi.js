@@ -99,9 +99,9 @@ class RoomApi {
             console.log('Available localStorage keys:', Object.keys(localStorage));
         }
         
-        // Убираем Content-Type для GET запросов, так как это может вызывать CORS проблемы
-        if (config.method === 'GET') {
-            delete basicHeaders['Content-Type'];
+        // Добавляем Content-Type для POST/PUT запросов
+        if (config.method !== 'GET' && config.body) {
+            basicHeaders['Content-Type'] = 'application/json';
         }
         
         config.headers = { ...basicHeaders, ...(options.headers || {}) };

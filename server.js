@@ -249,9 +249,10 @@ const createRoomInstance = async ({
     };
 
     // Сохраняем комнату в БД
+    console.log('🔍 Сохранение комнаты в БД:', { dbConnected, id, name: room.name });
     if (dbConnected) {
         try {
-            await db.createRoom({
+            const result = await db.createRoom({
                 id,
                 name: room.name,
                 creatorId: room.creatorId,
@@ -259,9 +260,12 @@ const createRoomInstance = async ({
                 maxPlayers: room.maxPlayers,
                 minPlayers: MIN_PLAYERS
             });
+            console.log('✅ Комната создана в SQLite:', result);
         } catch (error) {
             console.error('❌ Ошибка сохранения комнаты в БД:', error);
         }
+    } else {
+        console.warn('⚠️ База данных не подключена, комната не будет сохранена');
     }
 
     // Добавляем создателя комнаты
@@ -274,15 +278,18 @@ const createRoomInstance = async ({
         // Сохраняем создателя в БД
         if (dbConnected) {
             try {
-                await db.addPlayerToRoom(id, {
+                const result = await db.addPlayerToRoom(id, {
                     userId: creatorId,
                     name: creatorName,
                     avatar: creatorAvatar,
                     isHost: true
                 });
+                console.log('✅ Игрок добавлен в комнату SQLite:', result);
             } catch (error) {
                 console.error('❌ Ошибка сохранения создателя в БД:', error);
             }
+        } else {
+            console.warn('⚠️ База данных не подключена, игрок не будет сохранен');
         }
     }
 
