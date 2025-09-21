@@ -130,6 +130,92 @@
             transform: translateY(-3px) scale(1.02);
         }
 
+        /* Стили для игровой доски */
+        .game-board-container {
+            width: 100%;
+            height: 500px;
+            background: linear-gradient(135deg, #1a1d24 0%, #242830 100%);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .game-board-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            padding: 20px;
+            width: 100%;
+            height: 100%;
+            align-content: flex-start;
+        }
+
+        .game-cell {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+        }
+
+        .game-cell:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .cell-number {
+            position: absolute;
+            top: 4px;
+            left: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        .cell-type {
+            font-size: 8px;
+            margin-top: 2px;
+            opacity: 0.9;
+        }
+
+        .cell-value {
+            font-size: 7px;
+            margin-top: 1px;
+            opacity: 0.8;
+        }
+
+        .board-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .board-info {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+
         .test-btn.success {
             background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
         }
@@ -379,26 +465,22 @@
         <!-- Игровое поле для тестирования -->
         <div class="test-section" style="grid-column: 1 / -1; margin-top: 30px;">
             <h2>🎮 Игровое поле (Live Preview)</h2>
-            <div id="gameBoardPreview" style="
-                width: 100%;
-                height: 500px;
-                background: linear-gradient(135deg, #1a1d24 0%, #242830 100%);
-                border-radius: 15px;
-                border: 2px solid rgba(255, 255, 255, 0.1);
-                position: relative;
-                overflow: hidden;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                flex-direction: column;
-                gap: 20px;
-            ">
-                <div style="color: rgba(255, 255, 255, 0.6); font-size: 18px;">
-                    Игровое поле будет отображено после генерации клеток
+            <div class="game-board-container" id="gameBoardPreview">
+                <div class="board-info">
+                    <div>Игровое поле будет отображено после генерации клеток</div>
+                    <div>Нажмите кнопку ниже для создания игровой доски</div>
                 </div>
-                <button class="test-btn" onclick="generateGameBoardPreview()" style="max-width: 200px;">
-                    <span>🎯</span> Сгенерировать поле
-                </button>
+                <div class="board-controls">
+                    <button class="test-btn" onclick="generateGameBoardPreview()">
+                        <span>🎲</span> Сгенерировать поле
+                    </button>
+                    <button class="test-btn" onclick="clearGameBoard()">
+                        <span>🗑️</span> Очистить поле
+                    </button>
+                    <button class="test-btn" onclick="randomizeBoard()">
+                        <span>🎲</span> Случайное поле
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -1010,40 +1092,17 @@
                 
                 // Создаем контейнер для игрового поля
                 const boardContainer = document.createElement('div');
-                boardContainer.style.cssText = `
-                    width: 100%;
-                    height: 100%;
-                    position: relative;
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 8px;
-                    padding: 20px;
-                    justify-content: center;
-                    align-items: flex-start;
-                    align-content: flex-start;
-                `;
+                boardContainer.className = 'game-board-grid';
                 
                 // Создаем клетки
                 cells.forEach((cell, index) => {
                     const cellElement = document.createElement('div');
-                    cellElement.style.cssText = `
-                        width: 60px;
-                        height: 60px;
-                        background: ${cell.color || '#4CAF50'};
-                        border-radius: 12px;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        position: relative;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                        border: 2px solid rgba(255, 255, 255, 0.2);
-                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-                    `;
+                    cellElement.className = 'game-cell';
+                    cellElement.style.background = cell.color || '#4CAF50';
                     
                     // Добавляем номер клетки
                     const numberElement = document.createElement('div');
+                    numberElement.className = 'cell-number';
                     numberElement.textContent = cell.position;
                     numberElement.style.cssText = `
                         position: absolute;
@@ -1245,6 +1304,62 @@
             logResult('🎯 Открытие главной игровой доски с полным интерфейсом', 'success');
             window.open('/index.html', '_blank');
         }
+
+        // Функция очистки игрового поля
+        window.clearGameBoard = function() {
+            const preview = document.getElementById('gameBoardPreview');
+            preview.innerHTML = `
+                <div class="board-info">
+                    <div>Игровое поле очищено</div>
+                    <div>Нажмите кнопку для создания новой доски</div>
+                </div>
+                <div class="board-controls">
+                    <button class="test-btn" onclick="generateGameBoardPreview()">
+                        <span>🎲</span> Сгенерировать поле
+                    </button>
+                    <button class="test-btn" onclick="clearGameBoard()">
+                        <span>🗑️</span> Очистить поле
+                    </button>
+                    <button class="test-btn" onclick="randomizeBoard()">
+                        <span>🎲</span> Случайное поле
+                    </button>
+                </div>
+            `;
+            logResult('🗑️ Игровое поле очищено', 'info');
+        };
+
+        // Функция создания случайного поля
+        window.randomizeBoard = function() {
+            try {
+                if (!window.gameCore) {
+                    throw new Error('GameCore не инициализирован');
+                }
+                
+                // Создаем случайную конфигурацию
+                const randomConfig = {
+                    ...window.gameCore.config,
+                    board: {
+                        ...window.gameCore.config.board,
+                        cellCount: Math.floor(Math.random() * 20) + 20, // 20-40 клеток
+                        specialCells: Math.floor(Math.random() * 5) + 3   // 3-8 специальных клеток
+                    }
+                };
+                
+                // Временно заменяем конфиг
+                const originalConfig = window.gameCore.config;
+                window.gameCore.config = randomConfig;
+                
+                // Генерируем поле
+                generateGameBoardPreview();
+                
+                // Восстанавливаем оригинальный конфиг
+                window.gameCore.config = originalConfig;
+                
+                logResult('🎲 Создано случайное игровое поле', 'success');
+            } catch (error) {
+                logResult(`❌ Ошибка создания случайного поля: ${error.message}`, 'error');
+            }
+        };
 
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', async () => {
