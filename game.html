@@ -1120,7 +1120,51 @@
 
     <div class="game-toast" id="gameToast"></div>
 
-    <script type="module" src="../assets/js/modules/game/index.js"></script>
+    <!-- Загружаем конфигурацию игры -->
+    <script src="config/game-config.js"></script>
+    
+    <!-- Загружаем основные модули -->
+    <script src="assets/js/core/EventBus.js"></script>
+    <script src="assets/js/core/StateManager.js"></script>
+    <script src="assets/js/core/ModuleManager.js"></script>
+    <script src="assets/js/core/GameCore.js"></script>
+    
+    <!-- Загружаем API клиент -->
+    <script src="assets/js/modules/api/ApiClient.js"></script>
+    
+    <!-- Загружаем игровые модули -->
+    <script src="assets/js/modules/game/Board.js"></script>
+    
+    <!-- Инициализируем игру -->
+    <script>
+        (async () => {
+            try {
+                console.log('🎮 Initializing game...');
+                
+                // Создаем экземпляр GameCore
+                window.gameCore = new GameCore();
+                
+                // Инициализируем
+                await window.gameCore.init();
+                
+                console.log('✅ Game initialized successfully');
+                
+                // Обновляем статус
+                const statusElement = document.getElementById('turnState');
+                if (statusElement) {
+                    statusElement.textContent = 'Готов к игре';
+                }
+                
+            } catch (error) {
+                console.error('❌ Failed to initialize game:', error);
+                
+                const statusElement = document.getElementById('turnState');
+                if (statusElement) {
+                    statusElement.textContent = 'Ошибка инициализации';
+                }
+            }
+        })();
+    </script>
 
 </body>
 </html>
