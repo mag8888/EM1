@@ -138,6 +138,18 @@ class LobbyModule {
     }
 
     async initializeUser() {
+        // Сначала попробуем загрузить пользователя из localStorage
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+            try {
+                this.currentUser = JSON.parse(savedUser);
+                console.log('Loaded user from localStorage:', this.currentUser);
+                this.updateUserDisplay();
+            } catch (error) {
+                console.error('Failed to parse saved user data:', error);
+            }
+        }
+        
         const userValid = await this.validateAndUpdateUser();
         if (!userValid) {
             this.logout();
@@ -147,9 +159,18 @@ class LobbyModule {
     }
 
     updateUserDisplay() {
-        if (!this.currentUser) return;
+        if (!this.currentUser) {
+            console.log('No current user data available');
+            return;
+        }
+        
+        console.log('Updating user display with data:', this.currentUser);
+        
         if (this.dom.userName) {
-            this.dom.userName.textContent = this.currentUser.first_name || this.currentUser.username || 'Игрок';
+            const displayName = this.currentUser.first_name && this.currentUser.last_name 
+                ? `${this.currentUser.first_name} ${this.currentUser.last_name}`.trim()
+                : this.currentUser.first_name || this.currentUser.username || 'Игрок';
+            this.dom.userName.textContent = displayName;
         }
         if (this.dom.userBalance && typeof this.currentUser.balance === 'number') {
             this.dom.userBalance.textContent = `$${this.currentUser.balance.toLocaleString()}`;
