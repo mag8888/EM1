@@ -1,6 +1,8 @@
 /**
  * RoomApi — высокоуровневый API-клиент для работы с лобби и комнатами
  */
+console.log('=== Загрузка RoomApi.js ===');
+
 class RoomApi {
     constructor(baseUrl = null) {
         if (baseUrl) {
@@ -414,3 +416,4 @@ class RoomApi {
 }
 
 window.RoomApi = RoomApi;
+console.log('✅ RoomApi экспортирован в window');

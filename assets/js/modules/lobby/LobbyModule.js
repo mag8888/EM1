@@ -1,6 +1,8 @@
 /**
  * LobbyModule — управление логикой лобби, реализованной через микромодули.
  */
+console.log('=== Загрузка LobbyModule.js ===');
+
 class LobbyModule {
     constructor({ api = new window.RoomApi(), pollInterval = 10000 } = {}) {
         // Защита от множественной инициализации
@@ -709,3 +711,4 @@ class LobbyModule {
 
 // Экспортируем в window для глобального доступа
 window.LobbyModule = LobbyModule;
+console.log('✅ LobbyModule экспортирован в window');
