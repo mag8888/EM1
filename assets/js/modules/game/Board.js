@@ -106,6 +106,14 @@ class Board {
             spiralContainer.appendChild(cellElement);
         });
         
+        // Добавляем центральный элемент
+        const centerElement = document.createElement('div');
+        centerElement.className = 'center-element';
+        centerElement.innerHTML = `
+            <div class="center-number">1</div>
+        `;
+        spiralContainer.appendChild(centerElement);
+        
         container.appendChild(spiralContainer);
     }
 
@@ -307,6 +315,29 @@ class Board {
             .board-cell.blue { background: linear-gradient(135deg, #3742fa, #2f3542); }
             .board-cell.red { background: linear-gradient(135deg, #ff3838, #ff6b6b); }
             .board-cell.green { background: linear-gradient(135deg, #2ed573, #7bed9f); }
+
+            .center-element {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 80px;
+                height: 80px;
+                background: linear-gradient(135deg, #ffd700, #ffed4e);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+                z-index: 10;
+            }
+
+            .center-number {
+                font-size: 32px;
+                font-weight: bold;
+                color: #000;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            }
         `;
 
         document.head.appendChild(style);
@@ -496,7 +527,12 @@ class Board {
         const icons = {
             1: '🏁', 2: '💭', 6: '💭', 14: '💭', 16: '💭', 20: '💭',
             22: '💭', 26: '💭', 27: '💭', 28: '💭', 30: '💭',
-            32: '💭', 36: '💭', 38: '💭', 40: '💭', 42: '💭', 44: '🏆'
+            32: '💭', 36: '💭', 38: '💭', 40: '💭', 42: '💭', 44: '🏆',
+            // Добавляем разнообразные иконки для обычных ячеек
+            3: '💰', 4: '📈', 5: '🏠', 7: '🚗', 8: '💡', 9: '💼', 10: '🛍️',
+            11: '🎯', 12: '❤️', 13: '🐼', 15: '🐸', 17: '🦉', 18: '🐱', 19: '🌟',
+            21: '⚡', 23: '🎲', 24: '🎪', 25: '🎨', 29: '🔮', 31: '🎭', 33: '🎵',
+            34: '🎬', 35: '🎮', 37: '📚', 39: '🌍', 41: '🚀', 43: '⭐'
         };
         return icons[cellId] || '●';
     }
