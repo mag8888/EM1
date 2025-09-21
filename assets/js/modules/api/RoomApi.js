@@ -2,8 +2,18 @@
  * RoomApi - высокоуровневый API клиент для лобби и игровых комнат
  */
 class RoomApi {
-    constructor(baseUrl = window.location.origin) {
-        this.baseUrl = baseUrl.replace(/\/$/, '');
+    constructor(baseUrl = null) {
+        // Определяем базовый URL
+        if (baseUrl) {
+            this.baseUrl = baseUrl.replace(/\/$/, '');
+        } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            this.baseUrl = 'http://localhost:8080';
+        } else {
+            this.baseUrl = window.location.origin;
+        }
+        
+        console.log('RoomApi baseUrl:', this.baseUrl);
+        
         this.defaultHeaders = {
             'Content-Type': 'application/json',
             Accept: 'application/json'
