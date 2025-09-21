@@ -11,7 +11,7 @@ const jwt = require('jsonwebtoken');
 
 const CreditService = require('./credit-module/CreditService');
 const { GAME_CELLS, GameCellsUtils } = require('./game-board/config/game-cells.js');
-const { SMALL_DEAL_CARDS, BIG_DEAL_CARDS, EXPENSE_CARDS, createDeck } = require('./assets/js/utils/cards-config.js');
+const { SMALL_DEAL_CARDS, BIG_DEAL_CARDS, EXPENSE_CARDS, createDeck, shuffleDeck, drawCard } = require('./assets/js/utils/cards-config.js');
 const userManager = require('./game-board/utils/userManager');
 const LegacyUser = require('./models/LegacyUser');
 
@@ -172,26 +172,7 @@ const MARKET_CARDS = [
     { id: 'mkt_004', name: 'Золото', price: 3000, income: 300, type: 'commodity' }
 ];
 
-const SMALL_DEALS = [
-    { id: 'small_001', name: 'Акции компании', amount: 5000, income: 500, type: 'stock' },
-    { id: 'small_002', name: 'Облигации', amount: 3000, income: 250, type: 'bond' },
-    { id: 'small_003', name: 'Франшиза кофе-точки', amount: 8000, income: 900, type: 'business' },
-    { id: 'small_004', name: 'Мини-склад', amount: 7500, income: 850, type: 'real_estate' }
-];
-
-const BIG_DEALS = [
-    { id: 'big_001', name: 'Жилой комплекс', amount: 45000, income: 5200, type: 'real_estate' },
-    { id: 'big_002', name: 'Частная клиника', amount: 60000, income: 6500, type: 'business' },
-    { id: 'big_003', name: 'IT-стартап', amount: 80000, income: 9000, type: 'business' },
-    { id: 'big_004', name: 'Пакет акций корпорации', amount: 55000, income: 5000, type: 'stock' }
-];
-
-const EXPENSE_CARDS = [
-    { id: 'exp_001', name: 'Налоги', amount: 2000, type: 'tax' },
-    { id: 'exp_002', name: 'Медицинские расходы', amount: 1500, type: 'medical' },
-    { id: 'exp_003', name: 'Ремонт дома', amount: 2500, type: 'repair' },
-    { id: 'exp_004', name: 'Образование детей', amount: 3000, type: 'education' }
-];
+// Константы карт импортированы из assets/js/utils/cards-config.js
 
 const shuffle = (array) => {
     const result = [...array];
@@ -202,19 +183,10 @@ const shuffle = (array) => {
     return result;
 };
 
-const createDeck = (cards) => ({
-    cards: shuffle(cards.map(card => ({ ...card }))),
-    original: cards.map(card => ({ ...card })),
-    discard: []
-});
+// createDeck импортирована из assets/js/utils/cards-config.js
 
 const drawFromDeck = (deck) => {
-    if (!deck.cards.length) {
-        deck.cards = shuffle(deck.original.map(card => ({ ...card })));
-        deck.discard = [];
-    }
-    const card = deck.cards.shift();
-    return card || null;
+    return drawCard(deck);
 };
 
 const returnCardToDeck = (deck, card) => {
