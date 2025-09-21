@@ -106,6 +106,16 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
         }
 
+        .navigation-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+
+        .navigation-btn:hover {
+            background: linear-gradient(135deg, #ff5252 0%, #ff7043 100%);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
         .test-btn.success {
             background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
         }
@@ -223,6 +233,25 @@
         <div class="test-header">
             <h1>🎮 EM1 Game Board v2.0</h1>
             <p>Комплексное тестирование всех игровых сценариев</p>
+        </div>
+
+        <!-- Навигация по приложению -->
+        <div class="test-section">
+            <h2>🧭 Навигация по приложению</h2>
+            <div class="test-buttons">
+                <button class="test-btn navigation-btn" onclick="navigateToLogin()">
+                    <span>🔐</span> Логин
+                </button>
+                <button class="test-btn navigation-btn" onclick="navigateToLobby()">
+                    <span>🏠</span> Лобби
+                </button>
+                <button class="test-btn navigation-btn" onclick="navigateToRoom()">
+                    <span>🚪</span> Комната
+                </button>
+                <button class="test-btn navigation-btn" onclick="navigateToGameBoard()">
+                    <span>🎮</span> Игровая доска
+                </button>
+            </div>
         </div>
 
         <div class="test-sections">
@@ -1159,6 +1188,27 @@
                     modal.remove();
                 }
             });
+        }
+
+        // Навигационные функции
+        function navigateToLogin() {
+            logResult('🔐 Переход на страницу логина...', 'info');
+            window.location.href = '/auth.html';
+        }
+
+        function navigateToLobby() {
+            logResult('🏠 Переход в лобби...', 'info');
+            window.location.href = '/lobby.html';
+        }
+
+        function navigateToRoom() {
+            logResult('🚪 Переход в комнату...', 'info');
+            window.location.href = '/room.html';
+        }
+
+        function navigateToGameBoard() {
+            logResult('🎮 Переход на игровую доску...', 'info');
+            window.location.href = '/index.html';
         }
 
         // Инициализация при загрузке страницы
