@@ -47,6 +47,8 @@ class RoomApi {
             ...options,
             headers: this.withUserHeaders({ ...this.defaultHeaders, ...(options.headers || {}) })
         };
+        
+        console.log('RoomApi request:', { url, config });
 
         try {
             const response = await fetch(url, config);
@@ -62,8 +64,15 @@ class RoomApi {
             }
             return response.json();
         } catch (error) {
-            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                throw new Error('Ошибка сети. Проверьте подключение к интернету.');
+            console.error('RoomApi request error:', error);
+            if (error.name === 'TypeError') {
+                if (error.message.includes('Failed to fetch')) {
+                    throw new Error('Ошибка сети. Проверьте подключение к интернету.');
+                } else if (error.message.includes('Type error')) {
+                    throw new Error('Ошибка типа данных. Попробуйте обновить страницу.');
+                } else {
+                    throw new Error('Ошибка запроса. Попробуйте еще раз.');
+                }
             }
             throw error;
         }
