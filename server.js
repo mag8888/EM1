@@ -530,15 +530,21 @@ app.use(express.static(resolvePath('.')));
 
 // CORS
 app.use((req, res, next) => {
+    // Более агрессивные CORS настройки для Safari
     res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-User-ID, X-User-Name');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-User-ID, X-User-Name, Cache-Control, Pragma');
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Access-Control-Max-Age', '86400');
     
     // Дополнительные заголовки для Safari
-    res.header('Access-Control-Expose-Headers', 'Content-Length, X-JSON');
+    res.header('Access-Control-Expose-Headers', 'Content-Length, X-JSON, Content-Type, Authorization');
     res.header('Vary', 'Origin');
+    
+    // Дополнительные заголовки для Safari CORS
+    res.header('Access-Control-Allow-Private-Network', 'true');
+    res.header('Cross-Origin-Embedder-Policy', 'unsafe-none');
+    res.header('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
     
     if (req.method === 'OPTIONS') {
         res.sendStatus(200);
@@ -564,6 +570,18 @@ registerRoomsModule({
     db,
     auth: { sanitizeUser, authenticateToken },
     isDbReady: () => dbConnected
+});
+
+// Специальный endpoint для Safari без авторизации
+app.get('/api/rooms/safari', async (req, res) => {
+    try {
+        console.log('Safari rooms endpoint called');
+        const result = await loadRoomsFromDatabase();
+        res.json({ success: true, rooms: result });
+    } catch (error) {
+        console.error('Ошибка получения списка комнат для Safari:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
 });
 
 // Статические директории для отдельных модулей

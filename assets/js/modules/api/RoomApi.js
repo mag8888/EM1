@@ -68,29 +68,96 @@ class RoomApi {
             throw new Error('Fetch API not supported in this browser');
         }
         
-        // Специальная обработка для Safari
-        const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
-        if (isSafari) {
-            console.log('Safari detected, trying XMLHttpRequest first');
-            try {
-                const result = await this.xhrRequest(url, config);
-                console.log('XMLHttpRequest succeeded, returning result');
-                return result;
-            } catch (xhrError) {
-                console.log('XMLHttpRequest failed:', xhrError);
-                console.log('Trying fetch with simplified headers as fallback');
+            // Специальная обработка для Safari
+            const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+            if (isSafari) {
+                console.log('Safari detected, trying special endpoint first');
+                
+                // Для Safari используем специальный endpoint без авторизации
+                if (endpoint === '/api/rooms' && method === 'GET') {
+                    try {
+                        const safariUrl = `${this.baseUrl}/api/rooms/safari`;
+                        console.log('Trying Safari endpoint:', safariUrl);
+                        const result = await fetch(safariUrl, { method: 'GET' });
+                        if (result.ok) {
+                            const data = await result.json();
+                            console.log('Safari endpoint succeeded');
+                            return data;
+                        }
+                    } catch (safariError) {
+                        console.log('Safari endpoint failed, trying regular request:', safariError);
+                    }
+                }
+                
+                console.log('Safari detected, trying simplified fetch');
                 // Сохраняем Authorization заголовок для Safari
                 const authHeader = config.headers.Authorization;
                 config.headers = {
-                    'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 };
                 if (authHeader) {
                     config.headers.Authorization = authHeader;
                     console.log('Authorization header preserved for Safari');
                 }
+                
+                try {
+                    const result = await fetch(url, config);
+                    console.log('Safari fetch succeeded, returning result');
+                    if (!result.ok) {
+                        if (result.status === 401 || result.status === 403) {
+                            localStorage.removeItem('authToken');
+                            localStorage.removeItem('user');
+                        }
+                        let message = result.statusText || `HTTP ${result.status}`;
+                        try {
+                            const data = await result.json();
+                            message = data?.message || data?.error || message;
+                        } catch (_) {
+                            // ignore body parse errors
+                        }
+                        throw new Error(message);
+                    }
+                    
+                    if (result.status === 204) {
+                        return null;
+                    }
+                    
+                    try {
+                        const data = await result.json();
+                        return data;
+                    } catch (error) {
+                        console.error('Failed to parse JSON response:', error);
+                        throw new Error(`Invalid JSON response from server: ${error.message}`);
+                    }
+                } catch (safariError) {
+                    console.log('Safari fetch failed, trying XMLHttpRequest fallback:', safariError);
+                    try {
+                        const result = await this.xhrRequest(url, config);
+                        console.log('XMLHttpRequest succeeded, returning result');
+                        return result;
+                    } catch (xhrError) {
+                        console.log('XMLHttpRequest also failed, trying minimal request:', xhrError);
+                        try {
+                            // Последняя попытка - минимальный запрос без заголовков
+                            const minimalConfig = {
+                                method: config.method,
+                                headers: {}
+                            };
+                            if (config.body) {
+                                minimalConfig.body = config.body;
+                            }
+                            const result = await fetch(url, minimalConfig);
+                            if (!result.ok) {
+                                throw new Error(`HTTP ${result.status}: ${result.statusText}`);
+                            }
+                            return await result.json();
+                        } catch (minimalError) {
+                            console.log('Minimal request also failed:', minimalError);
+                            throw new Error('CORS error in Safari - please try refreshing the page');
+                        }
+                    }
+                }
             }
-        }
         
         let response;
         try {
