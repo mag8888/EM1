@@ -58,15 +58,23 @@ class RoomApi {
             ...options
         };
         
-        // Добавляем только базовые заголовки
+        // Добавляем базовые заголовки
         const basicHeaders = {
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
         };
         
         // Добавляем авторизацию если есть токен
         const token = localStorage.getItem('authToken');
         if (token) {
             basicHeaders['Authorization'] = `Bearer ${token}`;
+        }
+        
+        // Добавляем заголовки пользователя
+        const user = this.getCurrentUser();
+        if (user?.id) {
+            basicHeaders['X-User-ID'] = user.id;
+            basicHeaders['X-User-Name'] = user.first_name || user.username || user.email || 'Игрок';
         }
         
         config.headers = { ...basicHeaders, ...(options.headers || {}) };
@@ -101,7 +109,11 @@ class RoomApi {
                     
                     // Устанавливаем заголовки
                     Object.keys(config.headers || {}).forEach(key => {
-                        xhr.setRequestHeader(key, config.headers[key]);
+                        try {
+                            xhr.setRequestHeader(key, config.headers[key]);
+                        } catch (e) {
+                            console.warn('Failed to set header:', key, e);
+                        }
                     });
                     
                     xhr.onreadystatechange = function() {
