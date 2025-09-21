@@ -1598,7 +1598,9 @@ const gracefulShutdown = (signal) => {
     if (httpServer) {
         httpServer.close(() => {
             console.log('✅ Server closed');
-            mongoose.connection.close(false, () => {
+            mongoose.connection.close().then(() => {
+                process.exit(0);
+            }).catch(() => {
                 process.exit(0);
             });
         });
