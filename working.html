@@ -92,6 +92,14 @@
             pointer-events: none;
         }
 
+        .outer-track {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 4px;
+            padding: 20px;
+        }
+
         .track-cell {
             position: absolute;
             width: var(--outer-cell-size);
@@ -1020,6 +1028,8 @@
                     <div class="turn-controls">
                         <button class="btn btn-primary" id="rollDiceBtn">Бросить кубик</button>
                         <button class="btn btn-secondary" id="endTurnBtn" disabled>Завершить ход</button>
+                        <button class="btn btn-accent" id="addPlayerBtn">Добавить игрока</button>
+                        <button class="btn btn-accent" id="movePlayerBtn">Переместить игрока</button>
                     </div>
                 </div>
             </div>

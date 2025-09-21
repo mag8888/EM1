@@ -88,7 +88,7 @@ class GameCore {
         // Регистрируем модули в порядке зависимостей
         // Создаем экземпляры модулей
         const apiClient = new window.ApiClient();
-        const board = new window.Board(this, 'gameBoardContainer');
+        const board = new window.Board(this, 'outerTrack');
         const dice = new window.Dice(this);
         const player = new window.Player(this);
 

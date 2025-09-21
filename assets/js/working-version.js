@@ -250,29 +250,38 @@ class WorkingVersion {
     }
 
     initializeGameBoard() {
-        const gameBoardElement = document.getElementById('gameBoard');
-        if (!gameBoardElement) return;
-
-        // Получаем ячейки из модуля Board
-        const cells = this.gameBoard?.getAllCells() || [];
+        console.log('🎯 Initializing game board...');
         
-        // Создаем ячейки для отображения
-        cells.forEach(cell => {
-            const cellElement = document.createElement('div');
-            cellElement.className = `game-cell ${cell.type}`;
-            cellElement.innerHTML = `
-                <div class="cell-number">${cell.id}</div>
-                <div class="cell-icon">${cell.icon}</div>
-                <div class="cell-name">${cell.name}</div>
-            `;
+        // Получаем модуль доски
+        const boardModule = this.gameCore.getModule('board');
+        if (boardModule) {
+            console.log('✅ Board module found');
             
-            // Добавляем обработчик клика
-            cellElement.addEventListener('click', () => {
-                this.onCellClick(cell);
-            });
-            
-            gameBoardElement.appendChild(cellElement);
+            // Добавляем тестовых игроков для демонстрации
+            this.addTestPlayers();
+        } else {
+            console.warn('⚠️ Board module not found');
+        }
+        
+        console.log('✅ Game board initialized');
+    }
+
+    addTestPlayers() {
+        const boardModule = this.gameCore.getModule('board');
+        if (!boardModule) return;
+
+        // Добавляем тестовых игроков
+        const testPlayers = [
+            { id: 'player1', name: 'Алиса', position: 0, balance: 10000 },
+            { id: 'player2', name: 'Боб', position: 5, balance: 12000 },
+            { id: 'player3', name: 'Чарли', position: 10, balance: 8000 }
+        ];
+
+        testPlayers.forEach(player => {
+            boardModule.addPlayerToken(player);
         });
+
+        console.log('👥 Test players added to board');
     }
 
     updateBoardDisplay(cells) {
