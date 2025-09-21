@@ -69,7 +69,24 @@ class Board {
         // Очищаем контейнер
         container.innerHTML = '';
 
-        // Добавляем ячейки прямо в контейнер
+        // Создаем спиральное расположение ячеек
+        this.createSpiralLayout(container);
+        
+        // Добавляем стили для доски
+        this.addBoardStyles();
+        
+        console.log('🎯 Board rendered on page');
+    }
+
+    /**
+     * Создание спирального расположения ячеек
+     */
+    createSpiralLayout(container) {
+        // Создаем контейнер для спирали
+        const spiralContainer = document.createElement('div');
+        spiralContainer.className = 'spiral-container';
+        
+        // Создаем ячейки с позиционированием
         this.cells.forEach(cell => {
             const cellElement = document.createElement('div');
             cellElement.className = `board-cell ${cell.type} ${cell.color}`;
@@ -80,13 +97,105 @@ class Board {
                 <div class="cell-name">${cell.name}</div>
                 <div class="cell-players"></div>
             `;
-            container.appendChild(cellElement);
+            
+            // Позиционируем ячейку в спирали
+            const position = this.getSpiralPosition(cell.id);
+            cellElement.style.left = position.x + 'px';
+            cellElement.style.top = position.y + 'px';
+            
+            spiralContainer.appendChild(cellElement);
         });
         
-        // Добавляем стили для доски
-        this.addBoardStyles();
+        container.appendChild(spiralContainer);
+    }
+
+    /**
+     * Получение позиции ячейки в спирали
+     */
+    getSpiralPosition(cellId) {
+        // Спиральное расположение: начинаем с внешнего кольца и идем внутрь
+        const positions = this.generateSpiralPositions();
+        return positions[cellId - 1] || { x: 0, y: 0 };
+    }
+
+    /**
+     * Генерация позиций для спирального расположения
+     */
+    generateSpiralPositions() {
+        const positions = [];
+        const cellSize = 60;
+        const spacing = 80;
         
-        console.log('🎯 Board rendered on page');
+        // Спиральное расположение точно как на изображении
+        // Начинаем с правого нижнего угла (СТАРТ) и идем по спирали к центру
+        
+        // Внешний периметр (ячейки 1-16) - начинаем с правого нижнего угла
+        const outerPositions = [
+            { x: 600, y: 600 }, // 1 - СТАРТ (правый нижний угол)
+            { x: 500, y: 600 }, // 2
+            { x: 400, y: 600 }, // 3
+            { x: 300, y: 600 }, // 4
+            { x: 200, y: 600 }, // 5
+            { x: 100, y: 600 }, // 6
+            { x: 100, y: 500 }, // 7 - левый край
+            { x: 100, y: 400 }, // 8
+            { x: 100, y: 300 }, // 9
+            { x: 100, y: 200 }, // 10
+            { x: 100, y: 100 }, // 11
+            { x: 200, y: 100 }, // 12 - верхний край
+            { x: 300, y: 100 }, // 13
+            { x: 400, y: 100 }, // 14
+            { x: 500, y: 100 }, // 15
+            { x: 600, y: 100 }, // 16
+        ];
+        
+        // Второй периметр (ячейки 17-28) - продолжаем спираль
+        const secondPositions = [
+            { x: 600, y: 200 }, // 17 - правый край
+            { x: 600, y: 300 }, // 18
+            { x: 600, y: 400 }, // 19
+            { x: 600, y: 500 }, // 20
+            { x: 500, y: 500 }, // 21 - поворот внутрь
+            { x: 400, y: 500 }, // 22
+            { x: 300, y: 500 }, // 23
+            { x: 200, y: 500 }, // 24
+            { x: 200, y: 400 }, // 25 - левый край
+            { x: 200, y: 300 }, // 26
+            { x: 200, y: 200 }, // 27
+            { x: 300, y: 200 }, // 28 - поворот внутрь
+        ];
+        
+        // Третий периметр (ячейки 29-36) - продолжаем спираль
+        const thirdPositions = [
+            { x: 400, y: 200 }, // 29
+            { x: 500, y: 200 }, // 30
+            { x: 500, y: 300 }, // 31 - поворот
+            { x: 500, y: 400 }, // 32
+            { x: 400, y: 400 }, // 33 - поворот внутрь
+            { x: 300, y: 400 }, // 34
+            { x: 300, y: 300 }, // 35 - поворот
+            { x: 400, y: 300 }, // 36
+        ];
+        
+        // Внутренний периметр (ячейки 37-44) - завершаем спираль к центру
+        const innerPositions = [
+            { x: 350, y: 250 }, // 37
+            { x: 450, y: 250 }, // 38
+            { x: 450, y: 350 }, // 39 - поворот
+            { x: 450, y: 450 }, // 40
+            { x: 350, y: 450 }, // 41 - поворот внутрь
+            { x: 250, y: 450 }, // 42
+            { x: 250, y: 350 }, // 43 - поворот
+            { x: 350, y: 350 }, // 44 - ФИНИШ (центр)
+        ];
+        
+        // Объединяем все позиции
+        positions.push(...outerPositions);
+        positions.push(...secondPositions);
+        positions.push(...thirdPositions);
+        positions.push(...innerPositions);
+        
+        return positions;
     }
 
     /**
@@ -98,16 +207,19 @@ class Board {
         const style = document.createElement('style');
         style.id = 'board-styles';
         style.textContent = `
-            .game-board {
-                width: 100%;
-                height: 100%;
+            .spiral-container {
                 position: relative;
-                display: flex;
-                justify-content: center;
-                align-items: center;
+                width: 700px;
+                height: 700px;
+                margin: 0 auto;
+                background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+                border-radius: 50%;
             }
 
             .board-cell {
+                position: absolute;
+                width: 60px;
+                height: 60px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -117,9 +229,8 @@ class Board {
                 background: rgba(255, 255, 255, 0.05);
                 backdrop-filter: blur(10px);
                 transition: all 0.3s ease;
-                position: relative;
-                min-height: 60px;
                 cursor: pointer;
+                z-index: 1;
             }
 
             .board-cell:hover {
