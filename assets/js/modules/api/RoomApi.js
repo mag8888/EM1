@@ -14,15 +14,22 @@ class RoomApi {
         const user = this.getCurrentUser();
         const token = localStorage.getItem('authToken');
         
+        // Упрощаем заголовки для тестирования
+        const baseHeaders = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        };
+        
         if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
+            baseHeaders['Authorization'] = `Bearer ${token}`;
         }
         
         if (user?.id) {
-            headers['X-User-ID'] = user.id;
-            headers['X-User-Name'] = user.first_name || user.username || user.email || 'Игрок';
+            baseHeaders['X-User-ID'] = user.id;
+            baseHeaders['X-User-Name'] = user.first_name || user.username || user.email || 'Игрок';
         }
-        return headers;
+        
+        return { ...baseHeaders, ...headers };
     }
 
     getCurrentUser() {
@@ -44,6 +51,8 @@ class RoomApi {
         const url = `${this.baseUrl}${endpoint}`;
         const config = {
             method: 'GET',
+            mode: 'cors',
+            credentials: 'omit',
             ...options,
             headers: this.withUserHeaders({ ...this.defaultHeaders, ...(options.headers || {}) })
         };
@@ -51,7 +60,9 @@ class RoomApi {
         console.log('RoomApi request:', { url, config });
 
         try {
+            console.log('Making fetch request to:', url);
             const response = await fetch(url, config);
+            console.log('Fetch response received:', { status: response.status, ok: response.ok });
             if (!response.ok) {
                 if (response.status === 401) {
                     // Очищаем токен при 401 ошибке
