@@ -68,6 +68,20 @@ class RoomApi {
             throw new Error('Fetch API not supported in this browser');
         }
         
+        // Специальная обработка для Safari
+        const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+        if (isSafari) {
+            console.log('Safari detected, using simplified headers');
+            // Упрощаем заголовки для Safari
+            config.headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            };
+            if (config.headers.Authorization) {
+                config.headers.Authorization = config.headers.Authorization;
+            }
+        }
+        
         let response;
         try {
             response = await fetch(url, config);
@@ -80,6 +94,18 @@ class RoomApi {
                 stack: error.stack,
                 cause: error.cause
             });
+            
+            // Специальная обработка для Safari CORS ошибок
+            if (isSafari && error.message === 'Type error') {
+                console.log('Safari CORS error detected, trying XMLHttpRequest fallback');
+                try {
+                    return await this.xhrRequest(url, config);
+                } catch (xhrError) {
+                    console.error('XMLHttpRequest also failed:', xhrError);
+                    throw new Error('CORS error in Safari - please try refreshing the page');
+                }
+            }
+            
             throw error;
         }
 
@@ -111,6 +137,38 @@ class RoomApi {
             console.error('Response headers:', Object.fromEntries(response.headers.entries()));
             throw new Error(`Invalid JSON response from server: ${error.message}`);
         }
+    }
+
+    // Fallback метод для Safari с использованием XMLHttpRequest
+    async xhrRequest(url, config) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open(config.method, url, true);
+            
+            // Устанавливаем заголовки
+            Object.keys(config.headers).forEach(key => {
+                xhr.setRequestHeader(key, config.headers[key]);
+            });
+            
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const data = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+                        resolve(data);
+                    } catch (error) {
+                        reject(new Error('Invalid JSON response'));
+                    }
+                } else {
+                    reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+                }
+            };
+            
+            xhr.onerror = () => {
+                reject(new Error('Network error'));
+            };
+            
+            xhr.send(config.body);
+        });
     }
 
     async listRooms() {
