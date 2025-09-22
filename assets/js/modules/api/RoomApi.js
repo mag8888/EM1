@@ -126,6 +126,30 @@ class RoomApi {
         return response.data;
     }
 
+    // Публичный запрос без Authorization/X-User-* заголовков, чтобы избежать CORS preflight
+    async requestPublic(endpoint, { method = 'GET', headers = {}, body } = {}) {
+        const url = `${this.baseUrl}${endpoint}`;
+        const publicHeaders = {
+            Accept: 'application/json',
+            ...(headers || {})
+        };
+        // Не добавляем Content-Type для GET, чтобы не вызывать preflight
+        const config = {
+            method,
+            headers: publicHeaders
+        };
+        if (method !== 'GET' && body !== undefined) {
+            // Для публичных POST можно добавить content-type при необходимости
+            config.headers['Content-Type'] = 'application/json';
+            config.body = typeof body === 'string' ? body : JSON.stringify(body);
+        }
+        const response = await this.sendWithFallback(url, config);
+        if (!response.ok) {
+            throw new Error(this.extractErrorMessage(response));
+        }
+        return response.data;
+    }
+
     shouldDropAuthToken(status) {
         return status === 401 || status === 403;
     }
@@ -309,7 +333,8 @@ class RoomApi {
             // Если обычный endpoint не работает, пробуем Safari endpoint
             console.log('Regular rooms endpoint failed, trying Safari endpoint:', error.message);
             try {
-                const data = await this.request('/api/rooms/safari');
+                // Публичный запрос без авторизационных заголовков, чтобы избежать CORS-блокировок
+                const data = await this.requestPublic('/api/rooms/safari');
                 return data?.rooms || [];
             } catch (safariError) {
                 console.log('Safari endpoint also failed:', safariError.message);
