@@ -1,4 +1,5 @@
-import RoomApi from '../api/RoomApi.js?v=1';
+// Use shared RoomApi from root assets
+import RoomApi from '/assets/js/modules/api/RoomApi.js?v=1';
 
 /**
  * LobbyModule — управление логикой лобби, реализованной через микромодули.
