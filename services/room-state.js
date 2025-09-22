@@ -252,7 +252,7 @@ const addPlayerToRoom = (room, { userId, name, avatar, isHost = false, isReady =
     room.game_data.credit_data.player_credits.push(0);
     room.updatedAt = new Date().toISOString();
     
-    console.log(`✅ addPlayerToRoom: новый игрок ${newPlayer.name} создан, isHost: ${newPlayer.isHost}, isReady: ${newPlayer.isReady}`);
+    console.log(`✅ addPlayerToRoom: новый игрок ${newPlayer.name} создан, isHost: ${newPlayer.isHost}, isReady: ${newPlayer.isReady}, selectedDream: ${newPlayer.selectedDream}, selectedToken: ${newPlayer.selectedToken}`);
     room.lastActivity = Date.now();
     return newPlayer;
 };

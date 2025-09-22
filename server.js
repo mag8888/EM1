@@ -117,7 +117,7 @@ const loadRoomsFromDatabase = async () => {
                         selectedDream: playerRow.selected_dream,
                         selectedToken: playerRow.selected_token
                     });
-                    console.log(`✅ Игрок добавлен: ${player.name} (мечта: ${player.selectedDream}, фишка: ${player.selectedToken})`);
+                    console.log(`✅ Игрок добавлен: ${player.name} (мечта: ${player.selectedDream}, фишка: ${player.selectedToken}, isHost: ${player.isHost})`);
                 }
                 
                 console.log(`✅ Загружена комната: ${room.name} (${room.players.length} игроков)`);

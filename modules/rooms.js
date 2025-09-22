@@ -165,9 +165,9 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
             const host = addPlayerToRoom(room, {
                 userId,
                 name: getDisplayName(user),
-                avatar: user?.avatar || null
+                avatar: user?.avatar || null,
+                isHost: true
             });
-            host.isHost = true;
 
             if (isDbReady?.()) {
                 await db.createRoom({
