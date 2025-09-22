@@ -1,11 +1,11 @@
-import RoomApi from '../api/RoomApi.js';
+import RoomApi from '../api/RoomApi.js?v=1';
 
 /**
  * LobbyModule — управление логикой лобби, реализованной через микромодули.
  */
 class LobbyModule {
-    constructor({ api = new RoomApi(), pollInterval = 10000 } = {}) {
-        this.api = api;
+    constructor({ api, pollInterval = 10000 } = {}) {
+        this.api = api || new RoomApi();
         this.pollInterval = pollInterval;
         this.currentUser = null;
         this.rooms = [];

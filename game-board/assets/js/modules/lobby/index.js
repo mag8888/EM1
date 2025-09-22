@@ -1,5 +1,5 @@
 // Импортируем модули
-import LobbyModule from './LobbyModule.js';
+import LobbyModule from './LobbyModule.js?v=1';
 
 // Инициализируем лобби
 (async () => {

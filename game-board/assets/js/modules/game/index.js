@@ -3,7 +3,7 @@
  */
 
 // Импортируем модули
-import LobbyModule from '../lobby/LobbyModule.js';
+import LobbyModule from '../lobby/LobbyModule.js?v=1';
 
 console.log('=== Загрузка Game Module ===');
 
