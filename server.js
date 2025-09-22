@@ -644,6 +644,7 @@ app.get('/api/rooms/safari', async (req, res) => {
 // Статические директории для отдельных модулей
 app.use('/assets', express.static(resolvePath('assets')));
 app.use('/game-board', express.static(resolvePath('game-board')));
+app.use('/game', express.static(resolvePath('game-board'))); // Добавляем статический маршрут для /game
 app.use('/bank', express.static(resolvePath('bank-module-v4')));
 app.use('/telegram-bot', express.static(resolvePath('telegram-bot')));
 
