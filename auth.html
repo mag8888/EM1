@@ -508,7 +508,7 @@
             const password = document.getElementById('loginPassword').value;
             const rememberMe = document.getElementById('rememberMe').checked;
 
-            // Создаем скрытую форму для Chrome password manager
+            // Создаем скрытую форму для Chrome password manager (только для триггера сохранения пароля)
             const hiddenForm = document.createElement('form');
             hiddenForm.method = 'POST';
             hiddenForm.action = '/api/auth/login';
@@ -530,9 +530,8 @@
             hiddenForm.appendChild(emailInput);
             hiddenForm.appendChild(passwordInput);
             document.body.appendChild(hiddenForm);
-
-            // Отправляем скрытую форму для Chrome password manager
-            hiddenForm.submit();
+            // ВАЖНО: НЕ отправляем скрытую форму, чтобы не было навигации на /api/auth/login
+            // Браузеры (Chrome) все равно предлагают сохранить пароль по факту отправки fetch ниже
 
             try {
                 const response = await fetch('/api/auth/login', {
