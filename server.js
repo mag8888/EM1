@@ -556,35 +556,20 @@ app.use((req, res, next) => {
     const allowedOriginsEnv = process.env.ALLOWED_ORIGINS || '';
     const allowedOrigins = allowedOriginsEnv.split(',').map(s => s.trim()).filter(Boolean);
     const requestOrigin = req.headers.origin;
-    const isProd = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT === 'production';
-    
-    // Добавляем Railway production domain по умолчанию
-    const defaultAllowedOrigins = [
-        'https://em1-production.up.railway.app',
-        'http://localhost:8080',
-        'http://localhost:3000',
-        'http://127.0.0.1:8080'
-    ];
-    
-    const allAllowedOrigins = [...new Set([...allowedOrigins, ...defaultAllowedOrigins])];
-    
+    // Упрощенная CORS логика - всегда разрешаем запросы с Railway домена
     let origin = '*';
     
-    if (isProd) {
-        // В продакшене разрешаем только определенные домены
-        if (requestOrigin && allAllowedOrigins.includes(requestOrigin)) {
-            origin = requestOrigin;
-        } else if (requestOrigin && requestOrigin.includes('em1-production.up.railway.app')) {
-            origin = requestOrigin;
-        } else {
-            origin = 'https://em1-production.up.railway.app';
-        }
+    if (requestOrigin && requestOrigin.includes('em1-production.up.railway.app')) {
+        origin = requestOrigin;
+    } else if (requestOrigin && (requestOrigin.includes('localhost') || requestOrigin.includes('127.0.0.1'))) {
+        origin = requestOrigin;
+    } else if (requestOrigin) {
+        origin = requestOrigin;
     } else {
-        // В dev разрешаем все
-        origin = requestOrigin || '*';
+        origin = 'https://em1-production.up.railway.app';
     }
     
-    console.log(`🌐 CORS: origin=${requestOrigin}, isProd=${isProd}, allowed=${allAllowedOrigins.includes(requestOrigin)}, setting=${origin}`);
+    console.log(`🌐 CORS: origin=${requestOrigin}, setting=${origin}`);
     
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
