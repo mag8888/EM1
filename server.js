@@ -89,16 +89,26 @@ const loadRoomsFromDatabase = async () => {
                 const room = createRoomInstance({
                     id: roomWithPlayers.room.id,
                     name: roomWithPlayers.room.name,
-                    creatorId: roomWithPlayers.room.creator_id,
-                    creatorName: roomWithPlayers.room.creator_name,
+                    creator: {
+                        id: roomWithPlayers.room.creator_id,
+                        name: roomWithPlayers.room.creator_name || 'Создатель'
+                    },
                     maxPlayers: roomWithPlayers.room.max_players,
                     turnTime: roomWithPlayers.room.turn_time,
                     assignProfessions: roomWithPlayers.room.assign_professions
                 });
                 
+                // Устанавливаем дополнительные свойства
+                room.creatorId = roomWithPlayers.room.creator_id;
+                room.status = roomWithPlayers.room.status;
+                room.gameStarted = Boolean(roomWithPlayers.room.game_started);
+                room.createdAt = roomWithPlayers.room.created_at;
+                room.updatedAt = roomWithPlayers.room.updated_at;
+                
                 // Добавляем игроков
                 for (const playerRow of roomWithPlayers.players || []) {
-                    addPlayerToRoom(room, {
+                    console.log(`👤 Загружаем игрока: ${playerRow.name} (мечта: ${playerRow.selected_dream}, фишка: ${playerRow.selected_token})`);
+                    const player = addPlayerToRoom(room, {
                         userId: playerRow.user_id,
                         name: playerRow.name,
                         avatar: playerRow.avatar,
@@ -107,6 +117,7 @@ const loadRoomsFromDatabase = async () => {
                         selectedDream: playerRow.selected_dream,
                         selectedToken: playerRow.selected_token
                     });
+                    console.log(`✅ Игрок добавлен: ${player.name} (мечта: ${player.selectedDream}, фишка: ${player.selectedToken})`);
                 }
                 
                 console.log(`✅ Загружена комната: ${room.name} (${room.players.length} игроков)`);
