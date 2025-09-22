@@ -218,7 +218,7 @@ const getRoomById = (roomId) => rooms.get(roomId);
 
 const listRooms = () => Array.from(rooms.values());
 
-const addPlayerToRoom = (room, { userId, name, avatar }) => {
+const addPlayerToRoom = (room, { userId, name, avatar, isHost = false, isReady = false, selectedDream = null, selectedToken = null }) => {
     if (!room || !userId) {
         throw new Error('room and userId are required');
     }
@@ -227,6 +227,10 @@ const addPlayerToRoom = (room, { userId, name, avatar }) => {
     if (existingPlayer) {
         existingPlayer.name = name || existingPlayer.name;
         existingPlayer.avatar = avatar || existingPlayer.avatar;
+        existingPlayer.isHost = isHost !== undefined ? isHost : existingPlayer.isHost;
+        existingPlayer.isReady = isReady !== undefined ? isReady : existingPlayer.isReady;
+        existingPlayer.selectedDream = selectedDream !== undefined ? selectedDream : existingPlayer.selectedDream;
+        existingPlayer.selectedToken = selectedToken !== undefined ? selectedToken : existingPlayer.selectedToken;
         return existingPlayer;
     }
 
@@ -235,6 +239,10 @@ const addPlayerToRoom = (room, { userId, name, avatar }) => {
     }
 
     const newPlayer = createPlayer({ userId, name, avatar });
+    newPlayer.isHost = isHost;
+    newPlayer.isReady = isReady;
+    newPlayer.selectedDream = selectedDream;
+    newPlayer.selectedToken = selectedToken;
     room.players.push(newPlayer);
     room.game_data.player_balances.push(newPlayer.cash);
     room.game_data.credit_data.player_credits.push(0);
