@@ -895,6 +895,27 @@
         </div>
     </div>
 
+    <!-- Глобальная обработка ошибок для расширений браузера -->
+    <script>
+        // Обработка ошибок от расширений браузера
+        window.addEventListener('error', function(event) {
+            if (event.filename && event.filename.includes('content.js')) {
+                console.warn('⚠️ Ошибка расширения браузера (игнорируется):', event.message);
+                event.preventDefault();
+                return false;
+            }
+        });
+        
+        // Обработка необработанных промисов
+        window.addEventListener('unhandledrejection', function(event) {
+            if (event.reason && event.reason.message && event.reason.message.includes('message port closed')) {
+                console.warn('⚠️ Ошибка расширения браузера (игнорируется):', event.reason.message);
+                event.preventDefault();
+                return false;
+            }
+        });
+    </script>
+    
     <script src="/assets/js/modules/shared/EventEmitter.js"></script>
     <script src="/assets/js/modules/api/RoomApi.js"></script>
     <script src="/assets/js/modules/room/ErrorDisplay.js"></script>
