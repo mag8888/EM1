@@ -4,6 +4,7 @@
  */
 
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 function registerAuthModule({ app, db, jwtSecret, roomState }) {
     if (!app || !db || !jwtSecret) {
@@ -89,10 +90,14 @@ function registerAuthModule({ app, db, jwtSecret, roomState }) {
                 return res.status(409).json({ message: 'Пользователь с таким email уже существует' });
             }
 
-            // Создаем нового пользователя
+            // Хешируем пароль
+            const salt = await bcrypt.genSalt(10);
+            const passwordHash = await bcrypt.hash(password, salt);
+
+            // Создаем нового пользователя с хешем
             const newUser = await db.createUser({
                 email,
-                password,
+                password: passwordHash,
                 username: String(username).trim(),
                 first_name: first_name || '',
                 last_name: last_name || '',
@@ -163,8 +168,11 @@ function registerAuthModule({ app, db, jwtSecret, roomState }) {
             
             console.log(`✅ Пользователь найден: ${user.email} (ID: ${user.id})`);
 
-            // Проверяем пароль
-            if (user.password !== password) {
+            // Проверяем пароль (учитываем legacy-пользователей с незахешированным паролем)
+            const passwordsMatch = user.password && user.password.startsWith('$2')
+                ? await bcrypt.compare(password, user.password)
+                : user.password === password;
+            if (!passwordsMatch) {
                 return res.status(401).json({ message: 'Неверный пароль' });
             }
 

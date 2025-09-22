@@ -553,7 +553,13 @@ app.use(express.static(resolvePath('.')));
 // CORS
 app.use((req, res, next) => {
     // Специфичный для браузеров CORS: с credentials нельзя ставить '*'
-    const origin = req.headers.origin || '*';
+    const allowedOriginsEnv = process.env.ALLOWED_ORIGINS || '';
+    const allowedOrigins = allowedOriginsEnv.split(',').map(s => s.trim()).filter(Boolean);
+    const requestOrigin = req.headers.origin;
+    const isProd = process.env.NODE_ENV === 'production';
+    const origin = isProd
+        ? (allowedOrigins.includes(requestOrigin) ? requestOrigin : '')
+        : (requestOrigin || '*');
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-User-ID, X-User-Name, Cache-Control, Pragma');

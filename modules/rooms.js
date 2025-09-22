@@ -28,10 +28,22 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
         return authenticate(req, res, next);
     };
 
+    // Простая защита от параллельной загрузки одной и той же комнаты
+    const roomLoadLocks = new Map();
+
     const ensureRoomLoaded = async (roomId) => {
+        if (roomLoadLocks.has(roomId)) {
+            // ждем существующую загрузку
+            await roomLoadLocks.get(roomId);
+            return getRoomById(roomId);
+        }
+
         let room = getRoomById(roomId);
         if (!room && isDbReady?.()) {
-            const snapshot = await db.getRoomWithPlayers(roomId);
+            const loadPromise = db.getRoomWithPlayers(roomId)
+                .finally(() => roomLoadLocks.delete(roomId));
+            roomLoadLocks.set(roomId, loadPromise);
+            const snapshot = await loadPromise;
             if (snapshot?.room) {
                 room = createRoomInstance({
                     id: snapshot.room.id,
@@ -160,19 +172,32 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
             if (!userId) {
                 throw new Error('Не указан идентификатор пользователя');
             }
+            // Базовая валидация входных данных
+            const name = (req.body?.name || '').toString().trim();
+            const maxPlayers = Number(req.body?.max_players || req.body?.maxPlayers || 4);
+            const turnTime = Number(req.body?.turn_time || req.body?.turnTime || 120);
+            if (name.length < 3 || name.length > 48) {
+                return res.status(400).json({ success: false, message: 'Название комнаты должно быть 3-48 символов' });
+            }
+            if (!Number.isInteger(maxPlayers) || maxPlayers < 2 || maxPlayers > 8) {
+                return res.status(400).json({ success: false, message: 'maxPlayers должен быть от 2 до 8' });
+            }
+            if (!Number.isInteger(turnTime) || turnTime < 30 || turnTime > 600) {
+                return res.status(400).json({ success: false, message: 'turnTime должен быть 30-600 секунд' });
+            }
             let user = null;
             if (isDbReady?.()) {
                 user = await db.getUserById(userId);
             }
             const room = createRoomInstance({
-                name: req.body?.name,
+                name,
                 creator: {
                     id: userId,
                     name: getDisplayName(user),
                     avatar: user?.avatar || null
                 },
-                maxPlayers: req.body?.max_players || req.body?.maxPlayers,
-                turnTime: req.body?.turn_time || req.body?.turnTime,
+                maxPlayers,
+                turnTime,
                 assignProfessions: req.body?.assign_professions || req.body?.profession_mode
             });
 
