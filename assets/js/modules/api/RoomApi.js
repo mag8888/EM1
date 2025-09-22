@@ -207,6 +207,9 @@ class RoomApi {
         }
 
         const requestConfig = this.cloneRequestConfig(config);
+        // Ensure cookies and CORS are allowed
+        requestConfig.credentials = 'include';
+        requestConfig.mode = 'cors';
         const response = await fetch(url, requestConfig);
         const bodyText = response.status === 204 ? '' : await response.text();
 
@@ -234,6 +237,7 @@ class RoomApi {
             }
 
             xhr.timeout = DEFAULT_REQUEST_TIMEOUT;
+            xhr.withCredentials = true;
 
             Object.entries(requestConfig.headers || {}).forEach(([key, value]) => {
                 try {

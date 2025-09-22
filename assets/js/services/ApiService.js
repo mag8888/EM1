@@ -63,7 +63,9 @@ export class ApiService {
             headers: {
                 ...this.defaultHeaders,
                 ...options.headers
-            }
+            },
+            credentials: 'include',
+            mode: 'cors'
         };
 
         // Добавление авторизации если доступна
