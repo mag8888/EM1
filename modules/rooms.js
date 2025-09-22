@@ -361,18 +361,30 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
     app.post('/api/rooms/:roomId/start', ensureAuth, async (req, res) => {
         try {
             const userId = req.user?.userId || req.headers['x-user-id'];
+            console.log(`🎮 Запуск игры: userId=${userId}, roomId=${req.params.roomId}`);
+            
             const room = await ensureRoomLoaded(req.params.roomId);
             if (!room) {
+                console.log('❌ Комната не найдена:', req.params.roomId);
                 return res.status(404).json({ success: false, message: 'Комната не найдена' });
             }
+            
+            console.log(`🔍 Проверка прав: creatorId=${room.creatorId}, userId=${userId}`);
             if (room.creatorId && room.creatorId.toString() !== userId.toString()) {
+                console.log('❌ Пользователь не является создателем комнаты');
                 return res.status(403).json({ success: false, message: 'Только создатель комнаты может начать игру' });
             }
+            
             const readyPlayers = room.players.filter(player => player.isReady);
+            console.log(`👥 Готовые игроки: ${readyPlayers.length}/${MIN_PLAYERS}`);
             if (readyPlayers.length < MIN_PLAYERS) {
+                console.log('❌ Недостаточно готовых игроков');
                 return res.status(400).json({ success: false, message: 'Недостаточно готовых игроков' });
             }
+            
+            console.log('🎯 Инициализация игры...');
             initializeGame(room);
+            
             if (isDbReady?.()) {
                 await db.markRoomStatus(room.id, { status: 'playing', gameStarted: true });
                 
@@ -380,9 +392,11 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
                 await forceSaveRoom(room.id);
                 console.log(`💾 Комната ${room.name} принудительно сохранена после запуска игры`);
             }
+            
+            console.log('✅ Игра успешно запущена');
             res.json({ success: true, room: buildRoomResponse(room, userId) });
         } catch (error) {
-            console.error('Ошибка запуска игры:', error);
+            console.error('❌ Ошибка запуска игры:', error);
             res.status(400).json({ success: false, message: error.message || 'Ошибка запуска игры' });
         }
     });
