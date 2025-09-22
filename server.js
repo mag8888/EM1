@@ -720,6 +720,13 @@ app.post('/api/rooms/:roomId/roll', ensureAuth, (req, res) => {
 
         const rollResult = rollDice();
         const moveResult = movePlayerAndResolve(room, player, rollResult);
+        // Сохраняем позицию/трек игрока после хода
+        db.updatePlayerState(room.id, player.userId, {
+            position: player.position,
+            track: player.track,
+            cash: player.cash,
+            passiveIncome: player.passiveIncome
+        }).catch((e) => console.warn('SQLite save player state failed:', e?.message));
         res.json({
             success: true,
             roll: rollResult,

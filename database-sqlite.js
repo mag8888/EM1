@@ -325,6 +325,21 @@ class SQLiteDatabase {
         console.log('✅ Готовность игрока обновлена в SQLite:', { roomId, userId, isReady });
     }
 
+    async updatePlayerState(roomId, userId, { position, track, cash, passiveIncome }) {
+        const fields = [];
+        const values = [];
+        if (position !== undefined) { fields.push('position = ?'); values.push(Math.max(0, Number(position) || 0)); }
+        if (track !== undefined) { fields.push('track = ?'); values.push(String(track)); }
+        if (cash !== undefined) { fields.push('cash = ?'); values.push(Math.floor(Number(cash) || 0)); }
+        if (passiveIncome !== undefined) { fields.push('passive_income = ?'); values.push(Math.floor(Number(passiveIncome) || 0)); }
+        if (!fields.length) return;
+        const sql = `UPDATE room_players SET ${fields.join(', ')} WHERE room_id = ? AND user_id = ?`;
+        values.push(roomId, userId);
+        await this.run(sql, values);
+        await this.updateRoomActivity(roomId);
+        console.log('✅ Состояние игрока сохранено в SQLite:', { roomId, userId, position, track, cash, passiveIncome });
+    }
+
     async updatePlayerSelection(roomId, userId, { dreamId = null, tokenId = null }) {
         const sql = `UPDATE room_players SET selected_dream = ?, selected_token = ? WHERE room_id = ? AND user_id = ?`;
         await this.run(sql, [dreamId, tokenId, roomId, userId]);
