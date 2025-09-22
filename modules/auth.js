@@ -5,10 +5,13 @@
 
 const jwt = require('jsonwebtoken');
 
-function registerAuthModule({ app, db, jwtSecret }) {
+function registerAuthModule({ app, db, jwtSecret, roomState }) {
     if (!app || !db || !jwtSecret) {
         throw new Error('Auth module requires app, db, and jwtSecret parameters');
     }
+    
+    // Получаем функции для работы с пользователями в памяти
+    const { addUserToMemory, getUserFromMemory, updateUserInMemory } = roomState || {};
 
     // Middleware для проверки JWT токена
     function authenticateToken(req, res, next) {
@@ -92,6 +95,11 @@ function registerAuthModule({ app, db, jwtSecret }) {
                 referral_earnings: 0,
                 is_active: true
             });
+            
+            // Сохраняем пользователя в память
+            if (addUserToMemory) {
+                addUserToMemory(newUser);
+            }
 
             // Генерируем JWT токен
             const token = jwt.sign(
@@ -122,8 +130,17 @@ function registerAuthModule({ app, db, jwtSecret }) {
         }
 
         try {
-            // Находим пользователя
-            const user = await db.getUserByEmail(email);
+            // Сначала проверяем пользователя в памяти
+            let user = getUserFromMemory ? getUserFromMemory(email) : null;
+            
+            // Если не найден в памяти, загружаем из базы данных
+            if (!user) {
+                user = await db.getUserByEmail(email);
+                if (user && addUserToMemory) {
+                    addUserToMemory(user);
+                }
+            }
+            
             if (!user) {
                 return res.status(401).json({ message: 'Пользователь не найден' });
             }
@@ -161,7 +178,17 @@ function registerAuthModule({ app, db, jwtSecret }) {
     // Получение профиля пользователя
     app.get('/api/user/profile', authenticateToken, async (req, res) => {
         try {
-            const user = await db.getUserById(req.user.userId);
+            // Сначала проверяем пользователя в памяти
+            let user = getUserFromMemory ? getUserFromMemory(req.user.userId) : null;
+            
+            // Если не найден в памяти, загружаем из базы данных
+            if (!user) {
+                user = await db.getUserById(req.user.userId);
+                if (user && addUserToMemory) {
+                    addUserToMemory(user);
+                }
+            }
+            
             if (!user) {
                 return res.status(404).json({ message: 'Пользователь не найден' });
             }
@@ -208,6 +235,11 @@ function registerAuthModule({ app, db, jwtSecret }) {
 
             if (!updatedUser) {
                 return res.status(404).json({ message: 'Пользователь не найден' });
+            }
+            
+            // Обновляем пользователя в памяти
+            if (updateUserInMemory) {
+                updateUserInMemory(userId, updatedUser);
             }
 
             res.json({

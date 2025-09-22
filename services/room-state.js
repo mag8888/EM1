@@ -6,6 +6,7 @@ const MAX_PLAYERS = 8;
 
 const rooms = new Map();
 const creditRooms = new Map();
+const users = new Map(); // Хранилище пользователей в памяти
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -654,9 +655,54 @@ const advanceTurn = (room) => {
     logGameEvent(room, { type: 'turn_advanced', activePlayerId: getActivePlayer(room)?.userId || null });
 };
 
+// Функции для работы с пользователями в памяти
+const addUserToMemory = (user) => {
+    if (!user || !user.id) return null;
+    users.set(user.id, { ...user });
+    return users.get(user.id);
+};
+
+const getUserFromMemory = (userId) => {
+    return users.get(userId) || null;
+};
+
+const updateUserInMemory = (userId, updateData) => {
+    const user = users.get(userId);
+    if (!user) return null;
+    
+    Object.assign(user, updateData);
+    users.set(userId, user);
+    return user;
+};
+
+const removeUserFromMemory = (userId) => {
+    return users.delete(userId);
+};
+
+const getAllUsersFromMemory = () => {
+    return Array.from(users.values());
+};
+
+const loadUsersFromDatabase = async (db) => {
+    try {
+        console.log('🔄 Загружаем пользователей из SQLite...');
+        const dbUsers = await db.getAllUsers();
+        console.log(`📋 Найдено пользователей в SQLite: ${dbUsers.length}`);
+        
+        for (const user of dbUsers) {
+            addUserToMemory(user);
+        }
+        
+        console.log(`✅ Загружено пользователей в память: ${users.size}`);
+    } catch (error) {
+        console.error('❌ Ошибка загрузки пользователей из SQLite:', error);
+    }
+};
+
 module.exports = {
     rooms,
     creditRooms,
+    users,
     STARTING_BALANCE,
     MIN_PLAYERS,
     MAX_PLAYERS,
@@ -708,5 +754,12 @@ module.exports = {
     advanceTurn,
     drawFromDeck,
     returnCardToDeck,
-    createDeck
+    createDeck,
+    // Функции для работы с пользователями
+    addUserToMemory,
+    getUserFromMemory,
+    updateUserInMemory,
+    removeUserFromMemory,
+    getAllUsersFromMemory,
+    loadUsersFromDatabase
 };

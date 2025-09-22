@@ -91,25 +91,32 @@
         .room-content {
             flex: 1;
             display: grid;
-            grid-template-columns: 1fr 300px;
-            gap: 20px;
+            grid-template-columns: repeat(3, minmax(280px, 1fr));
+            gap: 24px;
+            align-items: start;
         }
 
-        .game-area {
+        .panel {
             background: rgba(30, 41, 59, 0.8);
             backdrop-filter: blur(20px);
             border-radius: 20px;
-            padding: 30px;
+            padding: 24px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            gap: 18px;
+        }
+
+        .actions-panel {
+            gap: 24px;
         }
 
         .waiting-message {
             text-align: center;
-            padding: 40px;
+            padding: 10px 0 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
 
         .waiting-icon {
@@ -127,7 +134,6 @@
         .waiting-text {
             font-size: 16px;
             color: #94a3b8;
-            margin-bottom: 30px;
         }
 
         .ready-btn {
@@ -162,9 +168,10 @@
 
         .button-group {
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
         .start-btn {
@@ -254,18 +261,17 @@
             transform: rotate(180deg);
         }
 
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+        .players-panel {
+            gap: 16px;
+            max-height: 100%;
         }
 
-        .players-panel {
-            background: rgba(30, 41, 59, 0.8);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .players-panel .panel-title {
+            margin-bottom: 0;
+        }
+
+        .players-panel .players-list {
+            flex: 1;
         }
 
         .panel-title {
@@ -275,10 +281,21 @@
             margin-bottom: 15px;
         }
 
+        .selection-panel > .panel-title {
+            margin-bottom: 0;
+        }
+
+        .selection-card .panel-title {
+            margin-bottom: 8px;
+        }
+
         .players-list {
             display: flex;
             flex-direction: column;
             gap: 10px;
+            max-height: 420px;
+            overflow-y: auto;
+            padding-right: 4px;
         }
 
         .player-item {
@@ -414,22 +431,26 @@
             border: 1px solid rgba(107, 114, 128, 0.3);
         }
 
+        .selection-panel {
+            gap: 24px;
+        }
+
         .selection-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            grid-template-columns: repeat(2, minmax(220px, 1fr));
             gap: 16px;
-            margin-bottom: 20px;
         }
 
         .selection-card,
         .dream-selection,
         .token-selection {
-            background: rgba(30, 41, 59, 0.8);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 20px;
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            border-radius: 18px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
         }
 
         .selection-description {
@@ -464,8 +485,9 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 10px;
-            max-height: 320px;
+            max-height: 290px;
             overflow-y: auto;
+            padding-right: 4px;
         }
 
         .dream-item,
@@ -561,11 +583,9 @@
         }
 
         .room-settings {
-            background: rgba(30, 41, 59, 0.8);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(148, 163, 184, 0.2);
+            padding-top: 16px;
+            margin-top: 8px;
         }
 
         .setting-item {
@@ -621,13 +641,29 @@
             display: block;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1280px) {
+            .room-content {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .players-panel {
+                order: 3;
+            }
+        }
+
+        @media (max-width: 900px) {
             .room-content {
                 grid-template-columns: 1fr;
             }
-            
-            .sidebar {
-                order: -1;
+
+            .selection-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .players-list,
+            .dream-list,
+            .token-list {
+                max-height: none;
             }
         }
     </style>
@@ -661,8 +697,7 @@
 
         <!-- Room Content -->
         <div class="room-content" id="roomContent" style="display: none;">
-            <!-- Game Area -->
-            <div class="game-area">
+            <section class="panel actions-panel">
                 <div class="waiting-message">
                     <div class="waiting-icon">🎲</div>
                     <div class="waiting-title" id="waitingTitle">Ожидание игроков</div>
@@ -674,18 +709,26 @@
                         <button class="ready-btn" id="readyBtn">Готов</button>
                     </div>
                 </div>
-            </div>
 
-            <!-- Sidebar -->
-            <div class="sidebar">
-                <!-- Players Panel -->
-                <div class="players-panel">
-                    <div class="panel-title">Игроки (<span id="playersCount">0</span>/<span id="maxPlayers">0</span>)</div>
-                    <div class="players-list" id="playersList">
-                        <!-- Players will be loaded here -->
+                <div class="room-settings">
+                    <div class="panel-title">Настройки комнаты</div>
+                    <div class="setting-item">
+                        <span class="setting-label">Время на ход:</span>
+                        <span class="setting-value" id="turnTime">2 мин</span>
+                    </div>
+                    <div class="setting-item">
+                        <span class="setting-label">Профессии:</span>
+                        <span class="setting-value" id="professionMode">Свободный выбор</span>
+                    </div>
+                    <div class="setting-item">
+                        <span class="setting-label">Создатель:</span>
+                        <span class="setting-value" id="creatorName">-</span>
                     </div>
                 </div>
+            </section>
 
+            <section class="panel selection-panel">
+                <div class="panel-title">Подготовьте персонажа</div>
                 <div class="selection-grid">
                     <div class="selection-card dream-selection">
                         <div class="panel-title">Выберите мечту</div>
@@ -705,24 +748,14 @@
                         <div class="token-list" id="tokenList"></div>
                     </div>
                 </div>
+            </section>
 
-                <!-- Room Settings -->
-                <div class="room-settings">
-                    <div class="panel-title">Настройки комнаты</div>
-                    <div class="setting-item">
-                        <span class="setting-label">Время на ход:</span>
-                        <span class="setting-value" id="turnTime">2 мин</span>
-                    </div>
-                    <div class="setting-item">
-                        <span class="setting-label">Профессии:</span>
-                        <span class="setting-value" id="professionMode">Свободный выбор</span>
-                    </div>
-                    <div class="setting-item">
-                        <span class="setting-label">Создатель:</span>
-                        <span class="setting-value" id="creatorName">-</span>
-                    </div>
+            <section class="panel players-panel">
+                <div class="panel-title">Игроки (<span id="playersCount">0</span>/<span id="maxPlayers">0</span>)</div>
+                <div class="players-list" id="playersList">
+                    <!-- Players will be loaded here -->
                 </div>
-            </div>
+            </section>
         </div>
     </div>
 

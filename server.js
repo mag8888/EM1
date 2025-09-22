@@ -24,7 +24,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'em1-production-secret-key-2024-rai
 
 // --- Shared services -----------------------------------------------------
 // const creditService = new CreditService();
-const { rooms, creditRooms, drawFromDeck, returnCardToDeck, createRoomInstance, addPlayerToRoom } = roomState;
+const { rooms, creditRooms, users, drawFromDeck, returnCardToDeck, createRoomInstance, addPlayerToRoom, loadUsersFromDatabase } = roomState;
 
 // Инициализация базы данных
 const db = new Database();
@@ -60,6 +60,9 @@ const connectToDatabase = async () => {
             });
             console.log('✅ Создан тестовый пользователь: test@example.com / test123');
         }
+        
+        // Загружаем пользователей из базы данных
+        await loadUsersFromDatabase(db);
         
         // Загружаем существующие комнаты из SQLite в память
         await loadRoomsFromDatabase();
@@ -563,7 +566,7 @@ app.use((error, req, res, next) => {
 });
 
 // Регистрируем модуль авторизации после middleware
-const { sanitizeUser, authenticateToken } = registerAuthModule({ app, db, jwtSecret: JWT_SECRET });
+const { sanitizeUser, authenticateToken } = registerAuthModule({ app, db, jwtSecret: JWT_SECRET, roomState });
 
 registerRoomsModule({
     app,
