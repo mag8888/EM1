@@ -5,6 +5,11 @@ function extractRoomId() {
     if (window.location.pathname.startsWith('/room/u/')) {
         const stored = localStorage.getItem('currentRoomId');
         if (stored) return stored;
+        // Фолбэк: пробуем взять из сохраненного объекта комнаты
+        try {
+            const room = JSON.parse(localStorage.getItem('currentRoom') || 'null');
+            if (room?.id) return room.id;
+        } catch(_) {}
     }
 
     // 2) Попробуем взять из query (?roomId=...)
