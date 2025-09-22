@@ -1,5 +1,20 @@
 // Game Board v2.0 - Game Cells Configuration
 // Структурированный список всех клеток игрового поля
+// Примечание: BIG круг описан в этом файле как GAME_CELLS.
+// Для малого круга используем конфигурацию из корня репо: config/small-circle-cells.js
+
+let SMALL_CIRCLE_CELLS = [];
+try {
+    // Эта зависимость доступна в Node-контексте сервера
+    // Экспортирует { SMALL_CIRCLE_CELLS, CELL_TYPES, CELL_COLORS }
+    // Путь из game-board/config → ../../config/small-circle-cells.js
+    // eslint-disable-next-line global-require, import/no-dynamic-require
+    const small = require('../../config/small-circle-cells');
+    SMALL_CIRCLE_CELLS = small.SMALL_CIRCLE_CELLS || [];
+} catch (_e) {
+    // В браузере этот require не выполнится — это нормально
+    SMALL_CIRCLE_CELLS = typeof window !== 'undefined' && window.SMALL_CIRCLE_CELLS ? window.SMALL_CIRCLE_CELLS : [];
+}
 
 const GAME_CELLS = [
     {
@@ -626,5 +641,6 @@ const GameCellsUtils = {
 module.exports = {
     GAME_CELLS,
     CELL_CATEGORIES,
-    GameCellsUtils
+    GameCellsUtils,
+    SMALL_CIRCLE_CELLS
 };
