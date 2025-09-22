@@ -1,7 +1,7 @@
 /**
  * RoomApi - высокоуровневый API клиент для лобби и игровых комнат
  */
-export class RoomApi {
+class RoomApi {
     constructor(baseUrl = window.location.origin) {
         this.baseUrl = baseUrl.replace(/\/$/, '');
         this.defaultHeaders = {
