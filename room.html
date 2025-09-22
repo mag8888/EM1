@@ -298,6 +298,88 @@
             padding-right: 4px;
         }
 
+        /* Player slots visualization */
+        .player-slots {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .player-slot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .player-slot.occupied {
+            border: 2px solid #10b981;
+            background: rgba(16, 185, 129, 0.2);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+        }
+
+        .player-slot.ready {
+            border: 2px solid #3b82f6;
+            background: rgba(59, 130, 246, 0.2);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+        }
+
+        .player-slot .player-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .player-slot .empty-slot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .player-slot .empty-slot::before {
+            content: '👤';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            opacity: 0.5;
+        }
+
+        .player-slot .status-indicator {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid #1e293b;
+        }
+
+        .player-slot.ready .status-indicator {
+            background: #3b82f6;
+        }
+
+        .player-slot.occupied .status-indicator {
+            background: #10b981;
+        }
+
         .player-item {
             display: flex;
             align-items: center;
@@ -752,6 +834,9 @@
 
             <section class="panel players-panel">
                 <div class="panel-title">Игроки (<span id="playersCount">0</span>/<span id="maxPlayers">0</span>)</div>
+                <div class="player-slots" id="playerSlots">
+                    <!-- Player slots will be rendered here -->
+                </div>
                 <div class="players-list" id="playersList">
                     <!-- Players will be loaded here -->
                 </div>

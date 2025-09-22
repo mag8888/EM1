@@ -4,8 +4,9 @@ if (window.PlayersList) {
 } else {
 
 class PlayersList {
-    constructor({ container, state }) {
+    constructor({ container, state, slotsContainer }) {
         this.container = container;
+        this.slotsContainer = slotsContainer;
         this.state = state;
     }
 
@@ -13,7 +14,10 @@ class PlayersList {
         if (!this.container) {
             return;
         }
-        this.state.on('change', (room) => this.render(room));
+        this.state.on('change', (room) => {
+            this.render(room);
+            this.renderSlots(room);
+        });
     }
 
     render(room) {
@@ -116,6 +120,55 @@ class PlayersList {
             item.appendChild(status);
             this.container.appendChild(item);
         });
+    }
+
+    renderSlots(room) {
+        if (!this.slotsContainer || !room) {
+            return;
+        }
+
+        const maxPlayers = room.maxPlayers || 4;
+        const players = room.players || [];
+        const currentUserId = room.currentPlayer?.userId;
+
+        this.slotsContainer.innerHTML = '';
+
+        for (let i = 0; i < maxPlayers; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'player-slot';
+
+            const player = players[i];
+            
+            if (player) {
+                // Слот занят игроком
+                slot.classList.add('occupied');
+                
+                if (player.isReady) {
+                    slot.classList.add('ready');
+                }
+
+                const avatar = document.createElement('div');
+                avatar.className = 'player-avatar';
+                avatar.textContent = (player.name || 'Игрок').slice(0, 1).toUpperCase();
+                slot.appendChild(avatar);
+
+                const statusIndicator = document.createElement('div');
+                statusIndicator.className = 'status-indicator';
+                slot.appendChild(statusIndicator);
+
+                // Добавляем подсказку при наведении
+                slot.title = `${player.name}${player.isReady ? ' (Готов)' : ' (Ожидает)'}`;
+            } else {
+                // Пустой слот
+                const emptySlot = document.createElement('div');
+                emptySlot.className = 'empty-slot';
+                slot.appendChild(emptySlot);
+
+                slot.title = 'Свободное место';
+            }
+
+            this.slotsContainer.appendChild(slot);
+        }
     }
 }
 

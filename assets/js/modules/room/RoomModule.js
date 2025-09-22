@@ -61,7 +61,8 @@ class RoomModule {
 
         const playersList = new PlayersList({
             state: this.state,
-            container: document.getElementById('playersList')
+            container: document.getElementById('playersList'),
+            slotsContainer: document.getElementById('playerSlots')
         });
         playersList.init();
         this.modules.push(playersList);

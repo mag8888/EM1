@@ -60,12 +60,19 @@ class StatusPanel {
         }
 
         if (roomStatus) {
-            if (readyPlayers >= 2 && totalPlayers >= 2) {
-                roomStatus.textContent = room.canStart
-                    ? 'Все готовы! Создатель может начинать игру'
-                    : `Почти готовы (${readyText})`;
+            if (room.gameStarted) {
+                roomStatus.textContent = 'Игра в процессе';
+            } else if (room.canStart) {
+                roomStatus.textContent = 'Все готовы! Создатель может начинать игру';
+            } else if (readyPlayers >= 2 && totalPlayers >= 2) {
+                roomStatus.textContent = `Почти готовы (${readyText})`;
             } else {
-                roomStatus.textContent = `Ожидание игроков (${readyText} готовы)`;
+                const neededPlayers = (room.minPlayers || 2) - totalPlayers;
+                if (neededPlayers > 0) {
+                    roomStatus.textContent = `Ожидание игроков (нужно еще ${neededPlayers})`;
+                } else {
+                    roomStatus.textContent = `Ожидание готовности (${readyText} готовы)`;
+                }
             }
         }
 
