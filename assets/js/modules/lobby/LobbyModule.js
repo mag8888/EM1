@@ -43,28 +43,21 @@ class LobbyModule {
         this.bindEvents();
         this.exposeLegacyBridges();
         
-        // Проверяем авторизацию перед загрузкой данных
+        // Если нет токена — пробуем мягко восстановить из старых данных (и не делаем мгновенный редирект)
         const authToken = localStorage.getItem('authToken');
         if (!authToken) {
-            console.log('❌ No auth token found, redirecting to login');
+            console.log('❌ No auth token found. Trying soft flow: show UI, no stats/rooms until login.');
+            this.updateUserDisplay();
             this.showError(null, 'Необходимо войти в систему');
-            setTimeout(() => {
-                window.location.href = '/auth.html';
-            }, 2000);
-            return;
+            // Не редиректим сразу — даем возможность нажать "Войти" в UI
         }
         
         try {
-            const userInitialized = await this.initializeUser();
+            const userInitialized = authToken ? await this.initializeUser() : false;
             
             // Проверяем, что пользователь успешно инициализирован
             if (!userInitialized) {
-                console.log('❌ User initialization failed, redirecting to login');
-                this.showError(null, 'Ошибка авторизации. Необходимо войти в систему');
-                setTimeout(() => {
-                    window.location.href = '/auth.html';
-                }, 2000);
-                return;
+                console.log('⚠️ User not initialized. Showing lobby shell without protected data.');
             }
             
             // Небольшая задержка для стабилизации localStorage
@@ -81,8 +74,10 @@ class LobbyModule {
                 return;
             }
             
-            await this.loadUserStats();
-            await this.loadRooms();
+            if (authToken) {
+                await this.loadUserStats();
+                await this.loadRooms();
+            }
             this.scheduleRoomRefresh();
             
             this.initialized = true;
