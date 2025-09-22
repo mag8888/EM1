@@ -339,8 +339,8 @@
 
         <form id="auth-form">
             <div class="form-group">
-                <label for="username">Имя пользователя</label>
-                <input type="text" id="username" name="username" placeholder="Введите имя пользователя" required>
+                <label for="username">Email</label>
+                <input type="email" id="username" name="username" placeholder="Введите email" required>
             </div>
 
             <div class="form-group">
@@ -395,8 +395,8 @@
                 successMessage.style.display = 'none';
 
                 // Простая валидация
-                if (username.length < 3) {
-                    showError('Имя пользователя должно содержать минимум 3 символа');
+                if (username.length < 5 || !username.includes('@')) {
+                    showError('Введите корректный email адрес');
                     return;
                 }
 
@@ -405,17 +405,39 @@
                     return;
                 }
 
-                // Симуляция успешной авторизации
-                showSuccess('Авторизация успешна! Переход в лобби...');
-                
-                // Сохранить данные пользователя
-                localStorage.setItem('username', username);
-                localStorage.setItem('isAuthenticated', 'true');
-
-                // Переход в лобби через 2 секунды
-                setTimeout(() => {
-                    window.location.href = 'lobby.html';
-                }, 2000);
+                // Реальная авторизация через API
+                fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: username, // Используем username как email для тестирования
+                        password: password
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.token) {
+                        // Сохраняем токен и данные пользователя
+                        localStorage.setItem('authToken', data.token);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        localStorage.setItem('isAuthenticated', 'true');
+                        
+                        showSuccess('Авторизация успешна! Переход в лобби...');
+                        
+                        // Переход в лобби через 2 секунды
+                        setTimeout(() => {
+                            window.location.href = 'lobby.html';
+                        }, 2000);
+                    } else {
+                        showError(data.message || 'Ошибка авторизации');
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка авторизации:', error);
+                    showError('Ошибка подключения к серверу');
+                });
             });
 
             function showError(message) {
@@ -429,7 +451,7 @@
             }
 
             // Проверить, если пользователь уже авторизован
-            if (localStorage.getItem('isAuthenticated') === 'true') {
+            if (localStorage.getItem('authToken') && localStorage.getItem('isAuthenticated') === 'true') {
                 showSuccess('Вы уже авторизованы! Переход в лобби...');
                 setTimeout(() => {
                     window.location.href = 'lobby.html';
