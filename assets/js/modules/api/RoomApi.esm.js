@@ -48,13 +48,24 @@ export default class RoomApi {
         const headers = { ...this.defaultHeaders, ...extra };
         try {
             const token = localStorage.getItem('authToken');
-            if (token) headers.Authorization = `Bearer ${token}`;
-        } catch (_e) {}
+            if (token) {
+                headers.Authorization = `Bearer ${token}`;
+                console.log('🔍 RoomApi.buildHeaders: token=present');
+            } else {
+                console.log('🔍 RoomApi.buildHeaders: token=missing');
+            }
+        } catch (_e) {
+            console.log('🔍 RoomApi.buildHeaders: token=error');
+        }
         const user = this.getCurrentUser();
         if (user?.id) {
             headers['X-User-ID'] = user.id;
             headers['X-User-Name'] = user.first_name || user.username || user.email || 'Игрок';
+            console.log('🔍 RoomApi.buildHeaders: user=', user.id);
+        } else {
+            console.log('🔍 RoomApi.buildHeaders: user=null');
         }
+        console.log('🔍 RoomApi.buildHeaders: final headers=', headers);
         return headers;
     }
 
@@ -62,11 +73,13 @@ export default class RoomApi {
         const built = this.buildHeaders(headers);
         if (method === 'GET') {
             delete built['Content-Type'];
+            // Для GET не удаляем X-User-ID и X-User-Name - они нужны для авторизации
         }
         const config = { method, headers: built };
         if (method !== 'GET' && body !== undefined) {
             config.body = typeof body === 'string' ? body : JSON.stringify(body);
         }
+        console.log('🔍 RoomApi.createFetchConfig: method=', method, 'config=', config);
         return config;
     }
 

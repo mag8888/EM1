@@ -556,10 +556,36 @@ app.use((req, res, next) => {
     const allowedOriginsEnv = process.env.ALLOWED_ORIGINS || '';
     const allowedOrigins = allowedOriginsEnv.split(',').map(s => s.trim()).filter(Boolean);
     const requestOrigin = req.headers.origin;
-    const isProd = process.env.NODE_ENV === 'production';
-    const origin = isProd
-        ? (allowedOrigins.includes(requestOrigin) ? requestOrigin : '')
-        : (requestOrigin || '*');
+    const isProd = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT === 'production';
+    
+    // Добавляем Railway production domain по умолчанию
+    const defaultAllowedOrigins = [
+        'https://em1-production.up.railway.app',
+        'http://localhost:8080',
+        'http://localhost:3000',
+        'http://127.0.0.1:8080'
+    ];
+    
+    const allAllowedOrigins = [...new Set([...allowedOrigins, ...defaultAllowedOrigins])];
+    
+    let origin = '*';
+    
+    if (isProd) {
+        // В продакшене разрешаем только определенные домены
+        if (requestOrigin && allAllowedOrigins.includes(requestOrigin)) {
+            origin = requestOrigin;
+        } else if (requestOrigin && requestOrigin.includes('em1-production.up.railway.app')) {
+            origin = requestOrigin;
+        } else {
+            origin = 'https://em1-production.up.railway.app';
+        }
+    } else {
+        // В dev разрешаем все
+        origin = requestOrigin || '*';
+    }
+    
+    console.log(`🌐 CORS: origin=${requestOrigin}, isProd=${isProd}, allowed=${allAllowedOrigins.includes(requestOrigin)}, setting=${origin}`);
+    
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-User-ID, X-User-Name, Cache-Control, Pragma');

@@ -19,7 +19,10 @@ function registerAuthModule({ app, db, jwtSecret, roomState }) {
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1];
 
+        console.log(`🔍 Auth check: origin=${req.headers.origin}, authHeader=${authHeader ? 'present' : 'missing'}, token=${token ? 'present' : 'missing'}`);
+
         if (!token) {
+            console.log('❌ No token provided');
             return res.status(401).json({ message: 'Токен доступа отсутствует' });
         }
 
