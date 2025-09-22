@@ -65,12 +65,15 @@ function registerAuthModule({ app, db, jwtSecret, roomState }) {
         };
     }
 
-    // Регистрация пользователя
+    // Регистрация пользователя (username обязателен)
     app.post('/api/auth/register', async (req, res) => {
-        const { email, password, first_name, last_name, referral_code } = req.body || {};
+        const { email, password, username, first_name, last_name, referral_code } = req.body || {};
         
         if (!email || !password) {
             return res.status(400).json({ message: 'Email и пароль обязательны' });
+        }
+        if (!username || String(username).trim().length < 3) {
+            return res.status(400).json({ message: 'Имя пользователя (username) обязательно и должно быть не короче 3 символов' });
         }
 
         try {
@@ -84,6 +87,7 @@ function registerAuthModule({ app, db, jwtSecret, roomState }) {
             const newUser = await db.createUser({
                 email,
                 password,
+                username: String(username).trim(),
                 first_name: first_name || '',
                 last_name: last_name || '',
                 balance: 10000,
@@ -183,7 +187,7 @@ function registerAuthModule({ app, db, jwtSecret, roomState }) {
         }
     });
 
-    // Получение профиля пользователя
+    // Получение профиля пользователя (при отсутствии username — автозаполнение из email)
     app.get('/api/user/profile', authenticateToken, async (req, res) => {
         try {
             // Сначала проверяем пользователя в памяти
@@ -200,6 +204,24 @@ function registerAuthModule({ app, db, jwtSecret, roomState }) {
             if (!user) {
                 return res.status(404).json({ message: 'Пользователь не найден' });
             }
+
+            // Если у пользователя пустой username — создаем дефолтный и сохраняем
+            if (!user.username || String(user.username).trim() === '') {
+                const fallback = (user.email || 'user').split('@')[0];
+                try {
+                    const updated = await db.updateUser(user.id, { username: fallback });
+                    if (updateUserInMemory && updated) {
+                        updateUserInMemory(user.id, updated);
+                        user = updated;
+                    } else {
+                        user.username = fallback;
+                    }
+                } catch (e) {
+                    // Не блокируем ответ профиля, просто логируем
+                    console.warn('Failed to backfill username for user:', user.id, e?.message);
+                }
+            }
+
             res.json(sanitizeUser(user));
         } catch (error) {
             console.error('Ошибка получения профиля:', error);
