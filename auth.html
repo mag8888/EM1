@@ -573,7 +573,7 @@
                     }
                     
                     // Сохраняем токен и данные пользователя
-                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('authToken', data.accessToken);
                     localStorage.setItem('user', JSON.stringify(normalizedUser));
                     
                     // Сохраняем email и rememberMe если выбрано

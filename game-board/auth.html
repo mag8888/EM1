@@ -418,9 +418,9 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.token) {
+                    if (data.accessToken) {
                         // Сохраняем токен и данные пользователя
-                        localStorage.setItem('authToken', data.token);
+                        localStorage.setItem('authToken', data.accessToken);
                         localStorage.setItem('user', JSON.stringify(data.user));
                         localStorage.setItem('isAuthenticated', 'true');
                         

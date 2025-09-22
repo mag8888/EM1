@@ -140,11 +140,11 @@
                 
                 if (response.ok) {
                     log('authTest', `Вход успешен!`, 'success');
-                    log('authTest', `Token: ${data.token.substring(0, 20)}...`);
+                    log('authTest', `Token: ${data.accessToken.substring(0, 20)}...`);
                     log('authTest', `User ID: ${data.user.id}`);
                     
                     // Сохраняем в localStorage
-                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('authToken', data.accessToken);
                     localStorage.setItem('user', JSON.stringify(data.user));
                     log('authTest', `Данные сохранены в localStorage`, 'success');
                 } else {

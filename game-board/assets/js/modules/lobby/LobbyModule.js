@@ -161,22 +161,18 @@ class LobbyModule {
 
     async validateAndUpdateUser() {
         try {
-            // Проверяем, есть ли пользователь в localStorage
-            let userEmail = localStorage.getItem('email');
-            let username = localStorage.getItem('username');
-            
-            // Если нет данных в localStorage, используем гостевой режим
-            if (!userEmail) {
-                userEmail = `guest_${Date.now()}@example.com`;
-                username = 'Гость';
-                localStorage.setItem('email', userEmail);
-                localStorage.setItem('username', username);
+            // Проверяем, есть ли токен авторизации
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) {
+                console.log('❌ No auth token found, redirecting to auth');
+                this.logout();
+                return false;
             }
-            
-            // Получаем профиль пользователя
+
+            // Получаем профиль пользователя с токеном
             const response = await fetch('/api/user/profile', {
                 headers: { 
-                    'X-User-Name': userEmail,
+                    'Authorization': `Bearer ${authToken}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -205,10 +201,15 @@ class LobbyModule {
 
     async loadUserStats() {
         try {
-            const userEmail = localStorage.getItem('email') || 'guest@example.com';
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) {
+                console.log('❌ No auth token for stats request');
+                return;
+            }
+
             const response = await fetch('/api/user/stats', {
                 headers: {
-                    'X-User-Name': userEmail,
+                    'Authorization': `Bearer ${authToken}`,
                     'Content-Type': 'application/json'
                 }
             });

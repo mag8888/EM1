@@ -141,8 +141,8 @@ class ApiClient {
             rememberMe
         });
 
-        if (response.token) {
-            this.setAuthToken(response.token);
+        if (response.accessToken) {
+            this.setAuthToken(response.accessToken);
         }
 
         return response;
