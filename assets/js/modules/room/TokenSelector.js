@@ -9,7 +9,7 @@ const DEFAULT_TOKENS = [
     { id: 'whale', icon: '🐳', name: 'Кит' }
 ];
 
-export default class TokenSelector {
+class TokenSelector {
     constructor({ state, container, searchInput }) {
         this.state = state;
         this.container = container;
@@ -92,3 +92,5 @@ export default class TokenSelector {
         }
     }
 }
+
+window.TokenSelector = TokenSelector;

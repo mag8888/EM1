@@ -1,4 +1,4 @@
-export default class PlayersList {
+class PlayersList {
     constructor({ container, state }) {
         this.container = container;
         this.state = state;
@@ -113,3 +113,5 @@ export default class PlayersList {
         });
     }
 }
+
+window.PlayersList = PlayersList;

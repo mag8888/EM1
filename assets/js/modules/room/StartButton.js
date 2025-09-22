@@ -1,4 +1,4 @@
-export default class StartButton {
+class StartButton {
     constructor({ state, button }) {
         this.state = state;
         this.button = button;
@@ -47,3 +47,5 @@ export default class StartButton {
         }
     }
 }
+
+window.StartButton = StartButton;

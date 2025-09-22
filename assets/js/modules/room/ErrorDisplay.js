@@ -1,4 +1,4 @@
-export default class ErrorDisplay {
+class ErrorDisplay {
     constructor(element) {
         this.element = element;
         this.timer = null;
@@ -25,3 +25,5 @@ export default class ErrorDisplay {
         this.element.classList.remove('visible');
     }
 }
+
+window.ErrorDisplay = ErrorDisplay;

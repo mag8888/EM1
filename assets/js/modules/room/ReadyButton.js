@@ -1,4 +1,4 @@
-export default class ReadyButton {
+class ReadyButton {
     constructor({ state, button }) {
         this.state = state;
         this.button = button;
@@ -76,3 +76,5 @@ export default class ReadyButton {
         }
     }
 }
+
+window.ReadyButton = ReadyButton;

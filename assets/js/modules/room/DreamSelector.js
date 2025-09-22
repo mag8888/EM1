@@ -17,7 +17,7 @@ const DEFAULT_DREAMS = [
     { id: 50, name: 'Создать собственный остров', cost: 500000, icon: '🏝️' }
 ];
 
-export default class DreamSelector {
+class DreamSelector {
     constructor({ state, container, searchInput }) {
         this.state = state;
         this.container = container;
@@ -94,3 +94,5 @@ export default class DreamSelector {
         }
     }
 }
+
+window.DreamSelector = DreamSelector;

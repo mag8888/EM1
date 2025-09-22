@@ -1,4 +1,4 @@
-export default class StatusPanel {
+class StatusPanel {
     constructor({ state, elements }) {
         this.state = state;
         this.elements = elements || {};
@@ -75,3 +75,5 @@ export default class StatusPanel {
         }
     }
 }
+
+window.StatusPanel = StatusPanel;

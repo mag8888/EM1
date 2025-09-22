@@ -1,4 +1,4 @@
-export default class UpdateIndicator {
+class UpdateIndicator {
     constructor({ state, element }) {
         this.state = state;
         this.element = element;
@@ -31,3 +31,5 @@ export default class UpdateIndicator {
         }
     }
 }
+
+window.UpdateIndicator = UpdateIndicator;

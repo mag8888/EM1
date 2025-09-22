@@ -1,4 +1,4 @@
-export default class EventEmitter {
+class EventEmitter {
     constructor() {
         this.listeners = new Map();
     }
@@ -47,3 +47,5 @@ export default class EventEmitter {
         this.listeners.clear();
     }
 }
+
+window.EventEmitter = EventEmitter;
