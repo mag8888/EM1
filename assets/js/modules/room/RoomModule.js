@@ -131,9 +131,11 @@ class RoomModule {
     handleRoomChange(room) {
         if (room?.gameStarted && !this.redirecting) {
             this.redirecting = true;
+            const storedUser = (() => { try { return JSON.parse(localStorage.getItem('user')||'null'); } catch(_) { return null; } })();
+            const username = (storedUser?.username || storedUser?.email?.split('@')[0] || 'player').toString();
             // Даем интерфейсу время показать сообщение
             setTimeout(() => {
-                window.location.assign(`/game/${this.roomId}`);
+                window.location.assign(`/game/u/${encodeURIComponent(username)}`);
             }, 800);
         }
     }
