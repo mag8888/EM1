@@ -564,6 +564,14 @@
                         showError('Ошибка: не удалось определить ID пользователя. Попробуйте войти заново.');
                         return;
                     }
+                    // Гарантируем наличие email и отображаемого имени
+                    if (!normalizedUser.email) {
+                        normalizedUser.email = data.user?.email || email;
+                    }
+                    if (!normalizedUser.first_name && !normalizedUser.username) {
+                        // если нет имени/ника, используем email как имя для UI
+                        normalizedUser.first_name = normalizedUser.email || 'Игрок';
+                    }
                     
                     // Сохраняем токен и данные пользователя
                     localStorage.setItem('authToken', data.token);

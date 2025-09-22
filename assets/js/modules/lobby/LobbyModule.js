@@ -234,6 +234,25 @@ class LobbyModule {
         
         console.log('Validating user with token...');
         const userValid = await this.validateAndUpdateUser();
+        // Подстраховка: если после валидации не хватает имени/email — дозаполняем
+        if (userValid && this.currentUser) {
+            let patched = false;
+            if (!this.currentUser.email && typeof this.currentUser === 'object') {
+                // попробуем взять email из сохраненного пользователя
+                const cached = savedUser ? JSON.parse(savedUser) : null;
+                if (cached?.email) {
+                    this.currentUser.email = cached.email;
+                    patched = true;
+                }
+            }
+            if (!this.currentUser.first_name && !this.currentUser.username) {
+                this.currentUser.first_name = this.currentUser.email || 'Игрок';
+                patched = true;
+            }
+            if (patched) {
+                localStorage.setItem('user', JSON.stringify(this.currentUser));
+            }
+        }
         if (!userValid) {
             console.log('User validation failed, logging out');
             this.logout();
