@@ -403,3 +403,17 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
 }
 
 module.exports = registerRoomsModule;
+// Создаем ensureAuth функцию, которая будет использовать переданную аутентификацию
+const createEnsureAuth = (authenticate) => {
+    return (req, res, next) => {
+        if (!authenticate) {
+            return res.status(401).json({ success: false, message: 'Авторизация недоступна' });
+        }
+        if (!req.headers.authorization) {
+            return res.status(401).json({ success: false, message: 'Требуется авторизация' });
+        }
+        return authenticate(req, res, next);
+    };
+};
+
+module.exports.ensureAuth = createEnsureAuth;

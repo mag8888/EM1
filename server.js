@@ -8,6 +8,7 @@ const cors = require('cors');
 const Database = require('./database-sqlite');
 const registerAuthModule = require('./modules/auth');
 const registerRoomsModule = require('./modules/rooms');
+const { ensureAuth: createEnsureAuth } = require('./modules/rooms');
 const roomState = require('./services/room-state');
 const { GAME_CELLS } = require('./game-board/config/game-cells');
 
@@ -626,6 +627,9 @@ registerRoomsModule({
     auth: { sanitizeUser, authenticateToken },
     isDbReady: () => dbConnected
 });
+
+// Создаем ensureAuth middleware для игровых endpoints
+const ensureAuth = createEnsureAuth(authenticateToken);
 
 // API для принудительного сохранения
 app.post('/api/admin/force-save', (req, res) => {
