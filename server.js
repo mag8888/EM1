@@ -241,6 +241,10 @@ const requireRoom = (roomId) => {
 };
 
 const getRequestUserId = (req) => {
+    // Приоритет: JWT токен > x-user-id > body > query
+    if (req.user?.userId) {
+        return req.user.userId.toString();
+    }
     return (req.body?.user_id || req.headers['x-user-id'] || req.query.user_id || '').toString();
 };
 
@@ -715,7 +719,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Тестовый endpoint для создания комнаты
-app.get('/api/rooms/:roomId/game-state', (req, res) => {
+app.get('/api/rooms/:roomId/game-state', ensureAuth, (req, res) => {
     try {
         console.log(`🔍 Запрос game-state для комнаты: ${req.params.roomId}`);
         const room = requireRoom(req.params.roomId);
@@ -724,7 +728,14 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
         if (!room.gameStarted || !room.gameState) {
             throw new Error('Игра еще не началась');
         }
-        const userId = getRequestUserId(req);
+        
+        // Проверяем, что пользователь находится в комнате
+        const userId = req.user?.userId || req.headers['x-user-id'];
+        const player = room.players.find(p => p.userId === userId);
+        if (!player) {
+            throw new Error('Вы не находитесь в этой комнате');
+        }
+        
         res.json({ success: true, state: serializeGameState(room, userId) });
     } catch (error) {
         console.error(`❌ Ошибка game-state для комнаты ${req.params.roomId}:`, error.message);
@@ -732,7 +743,7 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
     }
 });
 
-app.post('/api/rooms/:roomId/roll', (req, res) => {
+app.post('/api/rooms/:roomId/roll', ensureAuth, (req, res) => {
     try {
         const room = requireRoom(req.params.roomId);
         if (!room.gameStarted || !room.gameState) {
@@ -764,7 +775,7 @@ app.post('/api/rooms/:roomId/roll', (req, res) => {
     }
 });
 
-app.post('/api/rooms/:roomId/deals/choose', (req, res) => {
+app.post('/api/rooms/:roomId/deals/choose', ensureAuth, (req, res) => {
     try {
         const room = requireRoom(req.params.roomId);
         const userId = getRequestUserId(req);
@@ -782,7 +793,7 @@ app.post('/api/rooms/:roomId/deals/choose', (req, res) => {
     }
 });
 
-app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
+app.post('/api/rooms/:roomId/deals/resolve', ensureAuth, (req, res) => {
     try {
         const room = requireRoom(req.params.roomId);
         const userId = getRequestUserId(req);
@@ -801,7 +812,7 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
     }
 });
 
-app.post('/api/rooms/:roomId/assets/transfer', (req, res) => {
+app.post('/api/rooms/:roomId/assets/transfer', ensureAuth, (req, res) => {
     try {
         const room = requireRoom(req.params.roomId);
         const userId = getRequestUserId(req);
@@ -825,7 +836,7 @@ app.post('/api/rooms/:roomId/assets/transfer', (req, res) => {
     }
 });
 
-app.post('/api/rooms/:roomId/assets/sell', (req, res) => {
+app.post('/api/rooms/:roomId/assets/sell', ensureAuth, (req, res) => {
     try {
         const room = requireRoom(req.params.roomId);
         const userId = getRequestUserId(req);
@@ -841,7 +852,7 @@ app.post('/api/rooms/:roomId/assets/sell', (req, res) => {
     }
 });
 
-app.post('/api/rooms/:roomId/end-turn', (req, res) => {
+app.post('/api/rooms/:roomId/end-turn', ensureAuth, (req, res) => {
     try {
         const room = requireRoom(req.params.roomId);
         const userId = getRequestUserId(req);
@@ -878,7 +889,7 @@ app.get('/api/rooms/:roomId/credit', (req, res) => {
     }
 });
 
-app.post('/api/rooms/:roomId/credit/take', async (req, res) => {
+app.post('/api/rooms/:roomId/credit/take', ensureAuth, async (req, res) => {
     const { roomId } = req.params;
     const { playerIndex = 0, amount, playerName } = req.body;
 
@@ -901,7 +912,7 @@ app.post('/api/rooms/:roomId/credit/take', async (req, res) => {
     }
 });
 
-app.post('/api/rooms/:roomId/credit/payoff', async (req, res) => {
+app.post('/api/rooms/:roomId/credit/payoff', ensureAuth, async (req, res) => {
     const { roomId } = req.params;
     const { playerIndex = 0, amount } = req.body;
 

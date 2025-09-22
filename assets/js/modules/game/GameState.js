@@ -17,9 +17,22 @@ class GameState extends EventEmitter {
     async init() {
         this.user = this.api?.getCurrentUser?.() || null;
         if (!this.user?.id) {
+            console.log('Пользователь не найден, перенаправляем на авторизацию');
             window.location.assign('/auth');
             return;
         }
+        
+        // Проверяем валидность токена, пытаясь получить данные пользователя
+        try {
+            await this.api.request('/api/user/profile');
+        } catch (error) {
+            console.log('Токен недействителен, перенаправляем на авторизацию:', error.message);
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
+            window.location.assign('/auth');
+            return;
+        }
+        
         await this.ensureJoined();
         await this.refresh();
         this.startPolling();
@@ -51,20 +64,31 @@ class GameState extends EventEmitter {
     }
 
     async ensureJoined() {
-        const room = await this.api.getRoom(this.roomId, { user_id: this.user.id });
-        if (!room?.currentPlayer) {
-            await this.api.joinRoom(this.roomId, {
-                name: this.user.first_name || this.user.username || this.user.email || 'Игрок',
-                avatar: this.user.avatar || this.user.photo || null
-            });
+        try {
+            const room = await this.api.getRoom(this.roomId, { user_id: this.user.id });
+            
+            // Проверяем, что пользователь находится в комнате
+            if (!room?.currentPlayer) {
+                throw new Error('Вы не находитесь в этой комнате. Пожалуйста, присоединитесь к комнате сначала.');
+            }
+            
+            // Проверяем, что игра началась
+            if (!room.gameStarted && this.redirectOnMissingGame) {
+                window.location.assign(`/room/${this.roomId}`);
+                return;
+            }
+            
+            this.room = room;
+            localStorage.setItem('currentRoom', JSON.stringify(room));
+            localStorage.setItem('currentRoomId', this.roomId);
+        } catch (error) {
+            console.error('Ошибка при проверке принадлежности к комнате:', error);
+            if (error.message.includes('не находитесь в этой комнате')) {
+                window.location.assign(`/room/${this.roomId}`);
+                return;
+            }
+            throw error;
         }
-        if (!room.gameStarted && this.redirectOnMissingGame) {
-            window.location.assign(`/room/${this.roomId}`);
-            return;
-        }
-        this.room = room;
-        localStorage.setItem('currentRoom', JSON.stringify(room));
-        localStorage.setItem('currentRoomId', this.roomId);
     }
 
     async refresh() {
