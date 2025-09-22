@@ -66,6 +66,12 @@ class DreamSelectButton {
         const room = this.state.getSnapshot();
         const player = room?.currentPlayer;
         
+        console.log('🎯 DreamSelectButton update:', {
+            room: room ? { id: room.id, gameStarted: room.gameStarted, playersCount: room.players?.length } : null,
+            player: player ? { name: player.name, userId: player.userId, isHost: player.isHost } : null,
+            state: this.state
+        });
+        
         if (!room || !player) {
             console.log('🎯 DreamSelectButton: комната или игрок не найдены, скрываем кнопку');
             this.button.style.display = 'none';
