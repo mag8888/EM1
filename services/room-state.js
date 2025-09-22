@@ -666,6 +666,15 @@ const getUserFromMemory = (userId) => {
     return users.get(userId) || null;
 };
 
+const getUserByEmailFromMemory = (email) => {
+    for (const user of users.values()) {
+        if (user.email === email) {
+            return user;
+        }
+    }
+    return null;
+};
+
 const updateUserInMemory = (userId, updateData) => {
     const user = users.get(userId);
     if (!user) return null;
@@ -690,10 +699,17 @@ const loadUsersFromDatabase = async (db) => {
         console.log(`📋 Найдено пользователей в SQLite: ${dbUsers.length}`);
         
         for (const user of dbUsers) {
+            console.log(`👤 Загружаем пользователя: ${user.email} (ID: ${user.id})`);
             addUserToMemory(user);
         }
         
         console.log(`✅ Загружено пользователей в память: ${users.size}`);
+        
+        // Выводим список загруженных пользователей для отладки
+        console.log('📋 Загруженные пользователи:');
+        for (const [id, user] of users) {
+            console.log(`  - ${user.email} (ID: ${id})`);
+        }
     } catch (error) {
         console.error('❌ Ошибка загрузки пользователей из SQLite:', error);
     }
@@ -758,6 +774,7 @@ module.exports = {
     // Функции для работы с пользователями
     addUserToMemory,
     getUserFromMemory,
+    getUserByEmailFromMemory,
     updateUserInMemory,
     removeUserFromMemory,
     getAllUsersFromMemory,

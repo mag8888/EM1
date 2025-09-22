@@ -11,7 +11,7 @@ function registerAuthModule({ app, db, jwtSecret, roomState }) {
     }
     
     // Получаем функции для работы с пользователями в памяти
-    const { addUserToMemory, getUserFromMemory, updateUserInMemory } = roomState || {};
+    const { addUserToMemory, getUserFromMemory, getUserByEmailFromMemory, updateUserInMemory } = roomState || {};
 
     // Middleware для проверки JWT токена
     function authenticateToken(req, res, next) {
@@ -130,20 +130,28 @@ function registerAuthModule({ app, db, jwtSecret, roomState }) {
         }
 
         try {
-            // Сначала проверяем пользователя в памяти
-            let user = getUserFromMemory ? getUserFromMemory(email) : null;
+            console.log(`🔍 Попытка входа для email: ${email}`);
+            
+            // Сначала проверяем пользователя в памяти по email
+            let user = getUserByEmailFromMemory ? getUserByEmailFromMemory(email) : null;
+            console.log(`🔍 Поиск в памяти: ${user ? 'найден' : 'не найден'}`);
             
             // Если не найден в памяти, загружаем из базы данных
             if (!user) {
+                console.log('🔍 Поиск в базе данных...');
                 user = await db.getUserByEmail(email);
                 if (user && addUserToMemory) {
+                    console.log('💾 Сохраняем пользователя в память');
                     addUserToMemory(user);
                 }
             }
             
             if (!user) {
+                console.log('❌ Пользователь не найден ни в памяти, ни в базе данных');
                 return res.status(401).json({ message: 'Пользователь не найден' });
             }
+            
+            console.log(`✅ Пользователь найден: ${user.email} (ID: ${user.id})`);
 
             // Проверяем пароль
             if (user.password !== password) {

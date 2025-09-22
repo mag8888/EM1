@@ -24,7 +24,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'em1-production-secret-key-2024-rai
 
 // --- Shared services -----------------------------------------------------
 // const creditService = new CreditService();
-const { rooms, creditRooms, users, drawFromDeck, returnCardToDeck, createRoomInstance, addPlayerToRoom, loadUsersFromDatabase } = roomState;
+const { rooms, creditRooms, users, drawFromDeck, returnCardToDeck, createRoomInstance, addPlayerToRoom, loadUsersFromDatabase, getUserByEmailFromMemory } = roomState;
 
 // Инициализация базы данных
 const db = new Database();
