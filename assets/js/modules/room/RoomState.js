@@ -18,13 +18,23 @@ class RoomState extends EventEmitter {
     }
 
     async init() {
+        console.log(`🔍 RoomState.init: инициализация для комнаты ${this.roomId}`);
         this.user = this.api?.getCurrentUser?.() || null;
+        console.log(`🔍 RoomState.init: пользователь:`, {
+            id: this.user?.id,
+            name: this.user?.first_name || this.user?.username || this.user?.email,
+            hasApi: !!this.api
+        });
         if (!this.user?.id) {
             throw new Error('Пользователь не найден. Авторизуйтесь заново.');
         }
+        console.log(`🔍 RoomState.init: вызываем ensureJoined()...`);
         await this.ensureJoined();
+        console.log(`🔍 RoomState.init: вызываем refresh()...`);
         await this.refresh();
+        console.log(`🔍 RoomState.init: запускаем polling...`);
         this.startPolling();
+        console.log(`🔍 RoomState.init: инициализация завершена`);
     }
 
     destroy() {
@@ -40,18 +50,35 @@ class RoomState extends EventEmitter {
 
     async ensureJoined() {
         try {
+            console.log(`🔍 RoomState.ensureJoined: проверяем комнату ${this.roomId} для пользователя ${this.user.id}`);
             const room = await this.api.getRoom(this.roomId, { user_id: this.user.id });
+            console.log(`🔍 RoomState.ensureJoined: получена комната:`, {
+                roomId: room?.id,
+                hasCurrentPlayer: !!room?.currentPlayer,
+                playersCount: room?.players?.length,
+                gameStarted: room?.gameStarted
+            });
+            
             if (!room?.currentPlayer) {
+                console.log(`🔍 RoomState.ensureJoined: пользователь не в комнате, присоединяемся...`);
                 const joinResult = await this.api.joinRoom(this.roomId, {
                     name: this.user.first_name || this.user.username || this.user.email || 'Игрок',
                     avatar: this.user.avatar || this.user.photo || null,
                     user_id: this.user.id
                 });
+                console.log(`🔍 RoomState.ensureJoined: результат присоединения:`, {
+                    success: !!joinResult?.room,
+                    hasRoom: !!joinResult?.room,
+                    playersCount: joinResult?.room?.players?.length
+                });
                 if (joinResult?.room) {
                     this.handleUpdate(joinResult.room);
                 }
+            } else {
+                console.log(`🔍 RoomState.ensureJoined: пользователь уже в комнате`);
             }
         } catch (error) {
+            console.error(`❌ RoomState.ensureJoined: ошибка:`, error);
             this.emit('error', error);
             throw error;
         }

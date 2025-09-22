@@ -16,6 +16,7 @@ class RoomModule {
     }
 
     async init() {
+        console.log(`🔍 RoomModule.init: инициализация комнаты ${this.roomId}`);
         if (!this.roomId) {
             throw new Error('roomId отсутствует в URL');
         }
@@ -26,7 +27,9 @@ class RoomModule {
             loading.style.display = 'flex';
         }
         try {
+            console.log(`🔍 RoomModule.init: вызываем state.init()...`);
             await this.state.init();
+            console.log(`🔍 RoomModule.init: state.init() завершен успешно`);
             if (loading) {
                 loading.style.display = 'none';
             }

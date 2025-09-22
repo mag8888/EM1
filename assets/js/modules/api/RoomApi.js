@@ -334,10 +334,18 @@ class RoomApi {
     }
 
     async joinRoom(roomId, payload = {}) {
-        return this.request(`/api/rooms/${roomId}/join`, {
-            method: 'POST',
-            body: payload
-        });
+        console.log(`🔍 RoomApi.joinRoom: присоединяемся к комнате ${roomId}`, payload);
+        try {
+            const result = await this.request(`/api/rooms/${roomId}/join`, {
+                method: 'POST',
+                body: payload
+            });
+            console.log(`🔍 RoomApi.joinRoom: результат присоединения:`, result);
+            return result;
+        } catch (error) {
+            console.error(`❌ RoomApi.joinRoom: ошибка присоединения:`, error);
+            throw error;
+        }
     }
 
     async leaveRoom(roomId, payload = {}) {

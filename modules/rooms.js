@@ -130,11 +130,20 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
     app.get('/api/rooms/:roomId', ensureAuth, async (req, res) => {
         try {
             const userId = req.user?.userId || null;
+            console.log(`🔍 API getRoom: запрос комнаты ${req.params.roomId} от пользователя ${userId}`);
             const room = await ensureRoomLoaded(req.params.roomId);
+            console.log(`🔍 API getRoom: комната загружена:`, {
+                roomId: room?.id,
+                playersCount: room?.players?.length,
+                hasCurrentPlayer: !!room?.players?.find(p => p.userId === userId),
+                gameStarted: room?.gameStarted
+            });
             if (!room) {
                 return res.status(404).json({ success: false, message: 'Комната не найдена' });
             }
-            res.json({ success: true, room: sanitizeRoom(room, { includePlayers: true, userId }) });
+            const sanitizedRoom = sanitizeRoom(room, { includePlayers: true, userId });
+            console.log(`🔍 API getRoom: возвращаем комнату с ${sanitizedRoom.players?.length} игроками`);
+            res.json({ success: true, room: sanitizedRoom });
         } catch (error) {
             console.error('Ошибка получения комнаты:', error);
             res.status(400).json({ success: false, message: error.message || 'Ошибка получения комнаты' });
@@ -206,10 +215,17 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
     app.post('/api/rooms/:roomId/join', ensureAuth, async (req, res) => {
         try {
             const userId = req.user?.userId || req.headers['x-user-id'];
+            console.log(`🔍 API join: запрос присоединения к комнате ${req.params.roomId} от пользователя ${userId}`);
             if (!userId) {
                 throw new Error('Не указан идентификатор пользователя');
             }
             const room = await ensureRoomLoaded(req.params.roomId);
+            console.log(`🔍 API join: комната загружена:`, {
+                roomId: room?.id,
+                playersCount: room?.players?.length,
+                maxPlayers: room?.maxPlayers,
+                gameStarted: room?.gameStarted
+            });
             if (!room) {
                 return res.status(404).json({ success: false, message: 'Комната не найдена' });
             }
@@ -219,16 +235,25 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
             let user = null;
             if (isDbReady?.()) {
                 user = await db.getUserById(userId);
+                console.log(`🔍 API join: пользователь из БД:`, {
+                    id: user?.id,
+                    name: user?.first_name || user?.username || user?.email
+                });
             }
             // Проверяем, является ли пользователь создателем комнаты
             const isCreator = room.creatorId === userId;
-            console.log(`🔍 Вход в комнату: userId=${userId}, creatorId=${room.creatorId}, isCreator=${isCreator}`);
+            console.log(`🔍 API join: проверка создателя: userId=${userId}, creatorId=${room.creatorId}, isCreator=${isCreator}`);
             
             const newPlayer = addPlayerToRoom(room, {
                 userId,
                 name: getDisplayName(user),
                 avatar: user?.avatar || null,
                 isHost: isCreator // Если это создатель комнаты, то isHost = true
+            });
+            console.log(`🔍 API join: игрок добавлен:`, {
+                userId: newPlayer.userId,
+                name: newPlayer.name,
+                isHost: newPlayer.isHost
             });
 
             if (isDbReady?.()) {
