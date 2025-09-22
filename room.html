@@ -240,6 +240,38 @@
             align-items: center;
         }
 
+        .dream-select-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .dream-select-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .dream-select-btn:active {
+            transform: translateY(0);
+        }
+
+        .dream-select-btn.disabled {
+            background: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .dream-select-btn.disabled:hover {
+            transform: none;
+        }
+
         .refresh-btn {
             background: rgba(59, 130, 246, 0.1);
             border: 2px solid #3b82f6;
@@ -781,6 +813,7 @@
                 </div>
             </div>
             <div class="header-buttons">
+                <button class="dream-select-btn" id="dreamSelectBtn" style="display: none;">🎯 Выберите мечту</button>
                 <button class="refresh-btn" title="Обновить данные">🔄</button>
                 <button class="back-btn">← Назад в лобби</button>
             </div>
@@ -867,6 +900,7 @@
     <script src="/assets/js/modules/room/ErrorDisplay.js"></script>
     <script src="/assets/js/modules/room/PlayersList.js"></script>
     <script src="/assets/js/modules/room/DreamSelector.js"></script>
+    <script src="/assets/js/modules/room/DreamSelectButton.js"></script>
     <script src="/assets/js/modules/room/TokenSelector.js"></script>
     <script src="/assets/js/modules/room/ReadyButton.js"></script>
     <script src="/assets/js/modules/room/StartButton.js"></script>

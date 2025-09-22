@@ -74,6 +74,9 @@ class RoomModule {
         readyButton.init();
         this.modules.push(readyButton);
 
+        const dreamSelectButton = new DreamSelectButton(this.state);
+        this.modules.push(dreamSelectButton);
+
         const startButton = new StartButton({
             state: this.state,
             button: document.getElementById('startBtn')
