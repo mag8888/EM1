@@ -141,14 +141,28 @@ class RoomState extends EventEmitter {
             console.log('⚠️ RoomState.handleUpdate: пустая комната');
             return;
         }
+        
+        // Находим текущего игрока
+        const currentPlayer = room.players?.find(p => p.userId === this.user?.id?.toString());
+        room.currentPlayer = currentPlayer;
+        
         console.log('🔄 RoomState.handleUpdate: обновление состояния комнаты:', {
             roomId: room.id,
+            currentUserId: this.user?.id,
+            currentPlayer: currentPlayer ? {
+                name: currentPlayer.name,
+                userId: currentPlayer.userId,
+                isHost: currentPlayer.isHost,
+                isReady: currentPlayer.isReady
+            } : null,
             players: room.players?.map(p => ({
                 name: p.name,
                 isReady: p.isReady,
+                isHost: p.isHost,
                 userId: p.userId
             }))
         });
+        
         this.room = room;
         localStorage.setItem('currentRoomId', this.roomId);
         localStorage.setItem('currentRoom', JSON.stringify(room));
