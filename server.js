@@ -550,47 +550,31 @@ app.use(express.json({
 
 app.use(express.static(resolvePath('.')));
 
-// CORS
-app.use((req, res, next) => {
-    // Специфичный для браузеров CORS: с credentials нельзя ставить '*'
-    const allowedOriginsEnv = process.env.ALLOWED_ORIGINS || '';
-    const allowedOrigins = allowedOriginsEnv.split(',').map(s => s.trim()).filter(Boolean);
-    const requestOrigin = req.headers.origin;
-    // Упрощенная CORS логика - всегда разрешаем запросы с Railway домена
-    let origin = '*';
-    
-    if (requestOrigin && requestOrigin.includes('em1-production.up.railway.app')) {
-        origin = requestOrigin;
-    } else if (requestOrigin && (requestOrigin.includes('localhost') || requestOrigin.includes('127.0.0.1'))) {
-        origin = requestOrigin;
-    } else if (requestOrigin) {
-        origin = requestOrigin;
-    } else {
-        origin = 'https://em1-production.up.railway.app';
-    }
-    
-    console.log(`🌐 CORS: origin=${requestOrigin}, setting=${origin}`);
-    
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-User-ID, X-User-Name, Cache-Control, Pragma');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Max-Age', '86400');
-    
-    // Дополнительные заголовки для Safari
-    res.header('Access-Control-Expose-Headers', 'Content-Length, X-JSON, Content-Type, Authorization');
-    res.header('Vary', 'Origin');
-    
-    // Дополнительные заголовки для Safari CORS
-    res.header('Access-Control-Allow-Private-Network', 'true');
-    res.header('Cross-Origin-Embedder-Policy', 'unsafe-none');
-    res.header('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
-    
-    if (req.method === 'OPTIONS') {
-        return res.sendStatus(200);
-    }
-    next();
-});
+// CORS (proper corsOptions application)
+const allowedOriginsEnv = process.env.ALLOWED_ORIGINS || '';
+const allowedOriginsFromEnv = allowedOriginsEnv.split(',').map(s => s.trim()).filter(Boolean);
+const defaultAllowed = ['https://em1-production.up.railway.app', 'http://localhost:3000', 'http://localhost:8080'];
+const whitelist = allowedOriginsFromEnv.length ? allowedOriginsFromEnv : defaultAllowed;
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        // Allow requests without origin (curl, server-to-server)
+        if (!origin) return callback(null, true);
+        if (whitelist.some(allowed => origin.includes(allowed.replace(/^https?:\/\//, '')))) {
+            return callback(null, true);
+        }
+        console.warn(`❌ CORS blocked: ${origin}`);
+        return callback(new Error('Not allowed by CORS'));
+    },
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+    allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-User-ID, X-User-Name, Cache-Control, Pragma',
+    exposedHeaders: 'Content-Length, X-JSON, Content-Type, Authorization',
+    maxAge: 86400
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Обработка ошибок JSON парсинга
 app.use((error, req, res, next) => {

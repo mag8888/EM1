@@ -14,6 +14,11 @@ function registerAuthModule({ app, db, jwtSecret, roomState }) {
     // Получаем функции для работы с пользователями в памяти
     const { addUserToMemory, getUserFromMemory, getUserByEmailFromMemory, updateUserInMemory } = roomState || {};
 
+    // Генерация Refresh Token (для долгосрочной авторизации)
+    function generateRefreshToken(userId, jwtSecret) {
+        return jwt.sign({ userId }, jwtSecret, { expiresIn: '7d' }); // Refresh token действует 7 дней
+    }
+
     // Middleware для проверки JWT токена
     function authenticateToken(req, res, next) {
         const authHeader = req.headers['authorization'];
@@ -120,15 +125,17 @@ function registerAuthModule({ app, db, jwtSecret, roomState }) {
             }
 
             // Генерируем JWT токен
-            const token = jwt.sign(
+            const accessToken = jwt.sign(
                 { userId: newUser.id, email: newUser.email }, 
                 jwtSecret, 
                 { expiresIn: '24h' }
             );
+            const refreshToken = generateRefreshToken(newUser.id, jwtSecret);
 
             res.status(201).json({
                 message: 'Пользователь успешно зарегистрирован',
-                token,
+                accessToken,
+                refreshToken,
                 expiresIn: '24h',
                 user: sanitizeUser(newUser)
             });
@@ -185,15 +192,17 @@ function registerAuthModule({ app, db, jwtSecret, roomState }) {
             }
 
             // Генерируем JWT токен
-            const token = jwt.sign(
+            const accessToken = jwt.sign(
                 { userId: user.id, email: user.email }, 
                 jwtSecret, 
                 { expiresIn: '24h' }
             );
+            const refreshToken = generateRefreshToken(user.id, jwtSecret);
 
             res.json({
                 message: 'Успешный вход',
-                token,
+                accessToken,
+                refreshToken,
                 expiresIn: '24h',
                 user: sanitizeUser(user)
             });
@@ -201,6 +210,60 @@ function registerAuthModule({ app, db, jwtSecret, roomState }) {
         } catch (error) {
             console.error('Ошибка авторизации:', error);
             res.status(500).json({ message: 'Ошибка сервера' });
+        }
+    });
+
+    // Эндпоинт для обновления токена
+    app.post('/api/auth/refresh-token', async (req, res) => {
+        const { refreshToken } = req.body;
+
+        if (!refreshToken) {
+            return res.status(401).json({ message: 'Refresh токен отсутствует' });
+        }
+
+        try {
+            const payload = jwt.verify(refreshToken, jwtSecret);
+            const userId = payload.userId;
+
+            // Проверяем, существует ли пользователь
+            let user = getUserFromMemory ? getUserFromMemory(userId) : null;
+            if (!user) {
+                user = await db.getUserById(userId);
+                if (user && addUserToMemory) {
+                    addUserToMemory(user);
+                }
+            }
+
+            if (!user) {
+                return res.status(401).json({ message: 'Пользователь не найден' });
+            }
+
+            // Генерируем новый Access Token
+            const newAccessToken = jwt.sign(
+                { userId: user.id, email: user.email },
+                jwtSecret,
+                { expiresIn: '24h' }
+            );
+
+            // Генерируем новый Refresh Token (для ротации)
+            const newRefreshToken = generateRefreshToken(user.id, jwtSecret);
+
+            res.json({
+                accessToken: newAccessToken,
+                refreshToken: newRefreshToken,
+                expiresIn: '24h',
+                message: 'Токены успешно обновлены'
+            });
+
+        } catch (error) {
+            console.error('Refresh token verification failed:', error.message);
+            if (error.name === 'JsonWebTokenError') {
+                return res.status(403).json({ message: 'Недействительный refresh токен' });
+            } else if (error.name === 'TokenExpiredError') {
+                return res.status(403).json({ message: 'Refresh токен истек' });
+            } else {
+                return res.status(403).json({ message: 'Ошибка проверки refresh токена' });
+            }
         }
     });
 
