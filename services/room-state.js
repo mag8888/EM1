@@ -242,11 +242,13 @@ const addPlayerToRoom = (room, { userId, name, avatar, isHost = false, isReady =
         throw new Error('Комната заполнена');
     }
 
+    console.log(`🔧 addPlayerToRoom: создание игрока с isHost=${isHost}, userId=${userId}, name=${name}`);
     const newPlayer = createPlayer({ userId, name, avatar });
     newPlayer.isHost = isHost;
     newPlayer.isReady = isReady;
     newPlayer.selectedDream = selectedDream;
     newPlayer.selectedToken = selectedToken;
+    console.log(`🔧 addPlayerToRoom: игрок создан, isHost=${newPlayer.isHost}, userId=${newPlayer.userId}`);
     room.players.push(newPlayer);
     room.game_data.player_balances.push(newPlayer.cash);
     room.game_data.credit_data.player_credits.push(0);

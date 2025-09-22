@@ -162,12 +162,14 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
                 assignProfessions: req.body?.assign_professions || req.body?.profession_mode
             });
 
+            console.log(`🔧 Создание комнаты: userId=${userId}, name=${getDisplayName(user)}, isHost=true`);
             const host = addPlayerToRoom(room, {
                 userId,
                 name: getDisplayName(user),
                 avatar: user?.avatar || null,
                 isHost: true
             });
+            console.log(`🔧 Хост создан: isHost=${host.isHost}, userId=${host.userId}`);
 
             if (isDbReady?.()) {
                 await db.createRoom({
