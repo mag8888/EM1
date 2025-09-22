@@ -22,10 +22,10 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
-        origin: "*", // Разрешаем все источники для Railway
+        origin: (origin, callback) => callback(null, origin || true),
         methods: ["GET", "POST", "PUT", "DELETE"],
-        credentials: false, // Отключаем credentials для Railway
-        allowedHeaders: ["*"]
+        credentials: true,
+        allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization", "X-User-ID", "X-User-Name"]
     },
     transports: ['polling', 'websocket'],
     allowEIO3: true,
@@ -35,18 +35,20 @@ const io = socketIo(server, {
 });
 const PORT = process.env.PORT || 8080;
 
-// Express CORS middleware
+// Express CORS middleware (reflect origin + allow credentials)
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    const origin = req.headers.origin || '*';
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Vary', 'Origin');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-User-ID, X-User-Name, Cache-Control, Pragma');
     res.header('Access-Control-Allow-Credentials', 'true');
-    
+    res.header('Access-Control-Max-Age', '86400');
+    res.header('Access-Control-Expose-Headers', 'Content-Length, X-JSON, Content-Type, Authorization');
     if (req.method === 'OPTIONS') {
-        res.sendStatus(200);
-    } else {
-        next();
+        return res.sendStatus(200);
     }
+    next();
 });
 
 // Initialize Database Connection
