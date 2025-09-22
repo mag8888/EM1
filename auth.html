@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Авторизация в игре Энергия денег">
+    <meta name="robots" content="noindex, nofollow">
     <title>Авторизация - Энергия денег</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="alternate icon" href="/favicon.ico">
@@ -368,15 +370,15 @@
             <div class="success-message" id="successMessage"></div>
 
             <!-- Форма входа -->
-            <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
+            <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)" data-form-type="login">
                 <div class="form-group">
                     <label class="form-label">Email</label>
-                    <input type="email" class="form-input" id="loginEmail" placeholder="Введите email" required>
+                    <input type="email" class="form-input" id="loginEmail" name="email" autocomplete="email" placeholder="Введите email" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Пароль</label>
                     <div class="input-group">
-                        <input type="password" class="form-input" id="loginPassword" placeholder="Введите пароль" required>
+                        <input type="password" class="form-input" id="loginPassword" name="password" autocomplete="current-password" data-lastpass-icon="disable" placeholder="Введите пароль" required>
                         <span class="input-icon password-toggle" onclick="togglePassword('loginPassword', this)">👁</span>
                     </div>
                 </div>
@@ -388,36 +390,36 @@
             </form>
 
             <!-- Форма регистрации -->
-            <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)">
+            <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)" data-form-type="signup">
                 <div class="form-group">
                     <label class="form-label">Имя</label>
-                    <input type="text" class="form-input" id="registerFirstName" placeholder="Введите имя" required>
+                    <input type="text" class="form-input" id="registerFirstName" name="firstName" autocomplete="given-name" placeholder="Введите имя" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Фамилия</label>
-                    <input type="text" class="form-input" id="registerLastName" placeholder="Введите фамилию" required>
+                    <input type="text" class="form-input" id="registerLastName" name="lastName" autocomplete="family-name" placeholder="Введите фамилию" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Email</label>
-                    <input type="email" class="form-input" id="registerEmail" placeholder="Введите email" required>
+                    <input type="email" class="form-input" id="registerEmail" name="email" autocomplete="email" placeholder="Введите email" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Пароль</label>
                     <div class="input-group">
-                        <input type="password" class="form-input" id="registerPassword" placeholder="Введите пароль" required>
+                        <input type="password" class="form-input" id="registerPassword" name="password" autocomplete="new-password" placeholder="Введите пароль" required>
                         <span class="input-icon password-toggle" onclick="togglePassword('registerPassword', this)">👁</span>
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Подтвердите пароль</label>
                     <div class="input-group">
-                        <input type="password" class="form-input" id="registerConfirmPassword" placeholder="Подтвердите пароль" required>
+                        <input type="password" class="form-input" id="registerConfirmPassword" name="confirmPassword" autocomplete="new-password" placeholder="Подтвердите пароль" required>
                         <span class="input-icon password-toggle" onclick="togglePassword('registerConfirmPassword', this)">👁</span>
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Реферальный код (необязательно)</label>
-                    <input type="text" class="form-input" id="referralCode" placeholder="Введите реферальный код">
+                    <input type="text" class="form-input" id="referralCode" name="referralCode" autocomplete="off" placeholder="Введите реферальный код">
                 </div>
                 <div class="form-checkbox">
                     <input type="checkbox" class="checkbox" id="agreeTerms" required>
@@ -506,6 +508,32 @@
             const password = document.getElementById('loginPassword').value;
             const rememberMe = document.getElementById('rememberMe').checked;
 
+            // Создаем скрытую форму для Chrome password manager
+            const hiddenForm = document.createElement('form');
+            hiddenForm.method = 'POST';
+            hiddenForm.action = '/api/auth/login';
+            hiddenForm.style.display = 'none';
+            hiddenForm.setAttribute('data-form-type', 'login');
+            
+            const emailInput = document.createElement('input');
+            emailInput.type = 'email';
+            emailInput.name = 'email';
+            emailInput.value = email;
+            emailInput.autocomplete = 'email';
+            
+            const passwordInput = document.createElement('input');
+            passwordInput.type = 'password';
+            passwordInput.name = 'password';
+            passwordInput.value = password;
+            passwordInput.autocomplete = 'current-password';
+            
+            hiddenForm.appendChild(emailInput);
+            hiddenForm.appendChild(passwordInput);
+            document.body.appendChild(hiddenForm);
+
+            // Отправляем скрытую форму для Chrome password manager
+            hiddenForm.submit();
+
             try {
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
@@ -568,6 +596,10 @@
                 console.error('Login error:', error);
             } finally {
                 toggleLoading(false);
+                // Очищаем скрытую форму
+                if (document.body.contains(hiddenForm)) {
+                    document.body.removeChild(hiddenForm);
+                }
             }
         }
 
