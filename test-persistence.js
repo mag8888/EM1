@@ -22,7 +22,41 @@ async function testPersistence() {
     
     // Загружаем существующие данные
     await roomState.loadUsersFromDatabase(db);
-    await roomState.loadRoomsFromDatabase();
+    
+    // Загружаем комнаты из базы данных
+    const allDbRooms = await db.getAllRooms();
+    for (const roomRow of allDbRooms) {
+        const roomWithPlayers = await db.getRoomWithPlayers(roomRow.id);
+        if (roomWithPlayers.room) {
+            const room = roomState.createRoomInstance({
+                id: roomWithPlayers.room.id,
+                name: roomWithPlayers.room.name,
+                creator: {},
+                maxPlayers: roomWithPlayers.room.max_players,
+                turnTime: roomWithPlayers.room.turn_time,
+                assignProfessions: roomWithPlayers.room.assign_professions
+            });
+            
+            room.creatorId = roomWithPlayers.room.creator_id;
+            room.status = roomWithPlayers.room.status;
+            room.gameStarted = Boolean(roomWithPlayers.room.game_started);
+            room.createdAt = roomWithPlayers.room.created_at;
+            room.updatedAt = roomWithPlayers.room.updated_at;
+            
+            // Добавляем игроков
+            for (const playerRow of roomWithPlayers.players || []) {
+                roomState.addPlayerToRoom(room, {
+                    userId: playerRow.user_id,
+                    name: playerRow.name,
+                    avatar: playerRow.avatar,
+                    isHost: playerRow.is_host === 1,
+                    isReady: playerRow.is_ready === 1,
+                    selectedDream: playerRow.selected_dream,
+                    selectedToken: playerRow.selected_token
+                });
+            }
+        }
+    }
     
     console.log(`📊 Текущее состояние:`);
     console.log(`   - Пользователей в памяти: ${users.size}`);
