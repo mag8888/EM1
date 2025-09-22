@@ -552,8 +552,9 @@ app.use(express.static(resolvePath('.')));
 
 // CORS
 app.use((req, res, next) => {
-    // Более агрессивные CORS настройки для Safari
-    res.header('Access-Control-Allow-Origin', '*');
+    // Специфичный для браузеров CORS: с credentials нельзя ставить '*'
+    const origin = req.headers.origin || '*';
+    res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-User-ID, X-User-Name, Cache-Control, Pragma');
     res.header('Access-Control-Allow-Credentials', 'true');
@@ -569,10 +570,9 @@ app.use((req, res, next) => {
     res.header('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
     
     if (req.method === 'OPTIONS') {
-        res.sendStatus(200);
-    } else {
-        next();
+        return res.sendStatus(200);
     }
+    next();
 });
 
 // Обработка ошибок JSON парсинга

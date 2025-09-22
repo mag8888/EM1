@@ -343,6 +343,16 @@ class RoomApi {
         }
     }
 
+    // Дополнительно: публичный профиль для проверки токена (минимальные данные)
+    async getPublicProfile() {
+        try {
+            return await this.request('/api/user/profile');
+        } catch (e) {
+            // Не валим поток — просто сообщаем, что нужен релогин
+            return null;
+        }
+    }
+
     async createRoom(payload) {
         const data = await this.request('/api/rooms', {
             method: 'POST',
