@@ -10,7 +10,7 @@ const registerAuthModule = require('./modules/auth');
 const registerRoomsModule = require('./modules/rooms');
 const { ensureAuth: createEnsureAuth } = require('./modules/rooms');
 const roomState = require('./services/room-state');
-const { GAME_CELLS } = require('./game-board/config/game-cells');
+const { GAME_CELLS, SMALL_CIRCLE_CELLS } = require('./game-board/config/game-cells');
 
 // const CreditService = require('./credit-module/CreditService');
 // const { SMALL_DEAL_CARDS, BIG_DEAL_CARDS, EXPENSE_CARDS, createDeck, shuffleDeck, drawCard } = require('./assets/js/utils/cards-config.js');
@@ -281,17 +281,41 @@ const syncCreditData = (room) => {
     });
 };
 
-const getCellByIndex = (index) => {
-    if (!Array.isArray(GAME_CELLS) || GAME_CELLS.length === 0) {
-        return null;
-    }
-    const normalized = ((index % GAME_CELLS.length) + GAME_CELLS.length) % GAME_CELLS.length;
-    return GAME_CELLS[normalized];
+const getCellArrays = (track) => {
+    const isSmall = String(track || '').toLowerCase() === 'small';
+    const cells = isSmall && Array.isArray(SMALL_CIRCLE_CELLS) && SMALL_CIRCLE_CELLS.length
+        ? SMALL_CIRCLE_CELLS
+        : GAME_CELLS;
+    return { cells, isSmall };
 };
 
-const isDealCell = (cell) => cell && (cell.type === 'business' || cell.type === 'opportunity');
-const isExpenseCell = (cell) => cell && (cell.type === 'loss' || cell.type === 'expense');
-const isIncomeCell = (cell) => cell && (cell.type === 'money');
+const getCellByIndex = (index, track) => {
+    const { cells } = getCellArrays(track);
+    if (!Array.isArray(cells) || cells.length === 0) {
+        return null;
+    }
+    const normalized = ((index % cells.length) + cells.length) % cells.length;
+    return cells[normalized];
+};
+
+// BIG circle mappings
+const isDealCellBig = (cell) => cell && (cell.type === 'business' || cell.type === 'opportunity');
+const isExpenseCellBig = (cell) => cell && (cell.type === 'loss' || cell.type === 'expense');
+const isIncomeCellBig = (cell) => cell && (cell.type === 'money');
+
+// SMALL circle mappings
+const SMALL_TYPES = {
+    DEAL: 'green_opportunity',
+    EXPENSE: 'pink_expense',
+    CHARITY: 'orange_charity',
+    PAYDAY: 'yellow_payday',
+    MARKET: 'blue_market',
+    BABY: 'purple_baby',
+    LOSS: 'black_loss'
+};
+const isDealCellSmall = (cell) => cell && cell.type === SMALL_TYPES.DEAL;
+const isExpenseCellSmall = (cell) => cell && (cell.type === SMALL_TYPES.EXPENSE || cell.type === SMALL_TYPES.LOSS);
+const isIncomeCellSmall = (cell) => cell && (cell.type === SMALL_TYPES.PAYDAY);
 
 const logGameEvent = (room, event) => {
     if (!room.gameState) return;
@@ -335,13 +359,14 @@ const setPhase = (room, phase) => {
 };
 
 const movePlayerAndResolve = (room, player, rollResult) => {
-    const totalCells = GAME_CELLS.length || 0;
+    const { cells, isSmall } = getCellArrays(player.track);
+    const totalCells = cells.length || 0;
     player.position = totalCells
         ? ((player.position + rollResult.total) % totalCells + totalCells) % totalCells
         : player.position + rollResult.total;
     player.stats.diceRolled += 1;
 
-    const cell = getCellByIndex(player.position);
+    const cell = getCellByIndex(player.position, player.track);
     const events = [];
 
     if (room.gameState) {
@@ -362,14 +387,18 @@ const movePlayerAndResolve = (room, player, rollResult) => {
             cellType: cell.type
         });
 
-        if (isDealCell(cell)) {
+        const isDeal = isSmall ? isDealCellSmall(cell) : isDealCellBig(cell);
+        const isIncome = isSmall ? isIncomeCellSmall(cell) : isIncomeCellBig(cell);
+        const isExpense = isSmall ? isExpenseCellSmall(cell) : isExpenseCellBig(cell);
+
+        if (isDeal) {
             if (room.gameState) {
                 room.gameState.pendingDeal = {
                     playerId: player.userId,
                     cellId: cell.id,
                     cell,
                     stage: 'choice',
-                    sizeOptions: ['small', 'big']
+                    sizeOptions: isSmall ? ['small'] : ['small', 'big']
                 };
             }
             setPhase(room, 'awaiting_deal_choice');
@@ -378,23 +407,33 @@ const movePlayerAndResolve = (room, player, rollResult) => {
             return { cell, events, requiresDealChoice: true };
         }
 
-        if (isIncomeCell(cell)) {
-            const income = applyIncome(player, cell.income || cell.amount || 1000);
-            events.push({ type: 'income', amount: income });
+        if (isIncome) {
+            // Для малого круга PayDay: начисляем пассивный доход игрока, если известен
+            const paydayIncome = isSmall ? (Number(player.passiveIncome) || 0) : 0;
+            const income = paydayIncome || cell.income || cell.amount || 1000;
+            const applied = applyIncome(player, income);
+            events.push({ type: 'income', amount: applied });
         }
 
-        if (isExpenseCell(cell)) {
-            const expense = applyExpense(player, cell.amount || cell.cost || 1000);
+        if (isExpense) {
+            // Для малого круга часть расходов задается диапазоном
+            let amount = cell.amount || cell.cost || 1000;
+            if (isSmall && typeof cell.minCost === 'number' && typeof cell.maxCost === 'number') {
+                const min = Math.max(0, Math.floor(cell.minCost));
+                const max = Math.max(min, Math.floor(cell.maxCost));
+                amount = Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+            const expense = applyExpense(player, amount);
             events.push({ type: 'expense', amount: expense });
         }
 
-        if (cell.type === 'charity') {
+        if ((!isSmall && cell.type === 'charity') || (isSmall && cell.type === SMALL_TYPES.CHARITY)) {
             const charityAmount = Math.max(100, Math.round(player.cash * 0.1));
             const expense = applyExpense(player, charityAmount);
             events.push({ type: 'charity', amount: expense });
         }
 
-        if (cell.type === 'dream' && player.selectedDream && Number(player.selectedDream) === Number(cell.id)) {
+        if (!isSmall && cell.type === 'dream' && player.selectedDream && Number(player.selectedDream) === Number(cell.id)) {
             player.dreamAchieved = true;
             events.push({ type: 'dream', dreamId: cell.id });
         }
