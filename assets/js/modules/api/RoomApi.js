@@ -94,15 +94,17 @@ class RoomApi {
     }
 
     createFetchConfig(method, headers, body) {
-        const config = {
-            method,
-            headers: this.buildHeaders(headers)
-        };
-
+        const built = this.buildHeaders(headers);
+        // Для GET не указываем Content-Type и пользовательские X-* чтобы не вызывать preflight
+        if (method === 'GET') {
+            delete built['Content-Type'];
+            delete built['X-User-ID'];
+            delete built['X-User-Name'];
+        }
+        const config = { method, headers: built };
         if (method !== 'GET' && body !== undefined) {
             config.body = typeof body === 'string' ? body : JSON.stringify(body);
         }
-
         return config;
     }
 
