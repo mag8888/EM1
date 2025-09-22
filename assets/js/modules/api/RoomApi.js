@@ -301,6 +301,19 @@ class RoomApi {
     }
 
     async listRooms() {
+        // Для Safari используем специальный endpoint
+        if (this.isSafariBrowser()) {
+            try {
+                console.log('Safari detected, using special rooms endpoint');
+                const data = await this.request('/api/rooms/safari');
+                return data?.rooms || [];
+            } catch (error) {
+                console.log('Safari endpoint failed, falling back to regular endpoint');
+                const data = await this.request('/api/rooms');
+                return data?.rooms || [];
+            }
+        }
+        
         const data = await this.request('/api/rooms');
         return data?.rooms || [];
     }

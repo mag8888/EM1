@@ -354,16 +354,8 @@ class LobbyModule {
                 return;
             }
             
-            const response = await fetch('/api/user/stats', {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-            if (!response.ok) {
-                console.log('User stats not available');
-                return;
-            }
-            const stats = await response.json();
+            // Используем RoomApi для загрузки статистики с Safari fallback
+            const stats = await this.api.request('/api/user/stats');
             if (this.dom.totalGames) this.dom.totalGames.textContent = stats.games_played ?? stats.gamesPlayed ?? 0;
             if (this.dom.totalWins) this.dom.totalWins.textContent = stats.wins_count ?? stats.totalWins ?? 0;
             if (this.dom.userLevel) this.dom.userLevel.textContent = stats.level ?? 1;
