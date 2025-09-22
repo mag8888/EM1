@@ -1,17 +1,52 @@
 /**
- * RoomApi — высокоуровневый API-клиент для работы с лобби и комнатами
+ * RoomApi — высокоуровневый API-клиент для лобби и игровых комнат.
+ * Содержит унифицированную обработку ошибок и резервные варианты для Safari.
  */
-console.log('=== Загрузка RoomApi.js ===');
+
+const SAFARI_UA_PATTERN = /\bVersion\/\d+.*Safari\b/i;
+const SAFARI_EXCLUDE_PATTERN = /\b(Chrome|CriOS|Chromium|Edg|OPR|SamsungBrowser)\b/i;
+const DEFAULT_REQUEST_TIMEOUT = 15000;
+
+function safeJsonParse(text) {
+    if (!text) {
+        return null;
+    }
+    try {
+        return JSON.parse(text);
+    } catch (error) {
+        return null;
+    }
+}
+
+function detectSafari() {
+    if (typeof navigator === 'undefined' || !navigator.userAgent) {
+        return false;
+    }
+    const ua = navigator.userAgent;
+    return SAFARI_UA_PATTERN.test(ua) && !SAFARI_EXCLUDE_PATTERN.test(ua);
+}
 
 class RoomApi {
     constructor(baseUrl = null) {
         if (baseUrl) {
             this.baseUrl = baseUrl.replace(/\/$/, '');
-        } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            this.baseUrl = 'http://localhost:8080';
+        } else if (typeof window !== 'undefined') {
+            const { hostname, origin } = window.location;
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                this.baseUrl = 'http://localhost:8080';
+            } else {
+                this.baseUrl = origin.replace(/\/$/, '');
+            }
         } else {
-            this.baseUrl = window.location.origin;
+            this.baseUrl = '';
         }
+
+        this.defaultHeaders = {
+            'Content-Type': 'application/json',
+            Accept: 'application/json'
+        };
+
+        this._isSafari = null;
     }
 
     getCurrentUser() {
@@ -30,18 +65,21 @@ class RoomApi {
     }
 
     buildHeaders(extra = {}) {
-        const user = this.getCurrentUser();
-        const token = localStorage.getItem('authToken');
         const headers = {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
+            ...this.defaultHeaders,
             ...extra
         };
 
-        if (token) {
-            headers.Authorization = `Bearer ${token}`;
+        try {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                headers.Authorization = `Bearer ${token}`;
+            }
+        } catch (error) {
+            console.warn('RoomApi: unable to read authToken', error);
         }
 
+        const user = this.getCurrentUser();
         if (user?.id) {
             headers['X-User-ID'] = user.id;
             headers['X-User-Name'] = user.first_name || user.username || user.email || 'Игрок';
@@ -50,254 +88,211 @@ class RoomApi {
         return headers;
     }
 
-    async request(endpoint, { method = 'GET', headers = {}, body } = {}) {
-        const url = `${this.baseUrl}${endpoint}`;
+    createFetchConfig(method, headers, body) {
         const config = {
             method,
             headers: this.buildHeaders(headers)
         };
 
-        if (body !== undefined && method !== 'GET') {
+        if (method !== 'GET' && body !== undefined) {
             config.body = typeof body === 'string' ? body : JSON.stringify(body);
         }
 
-        console.log('RoomApi request:', { url, method, headers: config.headers });
-        console.log('Fetch available:', typeof fetch !== 'undefined');
-        console.log('User agent:', navigator.userAgent);
-        
-        // Проверяем поддержку fetch
-        if (typeof fetch === 'undefined') {
-            throw new Error('Fetch API not supported in this browser');
-        }
-        
-            // Специальная обработка для Safari
-            const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
-            if (isSafari) {
-                console.log('Safari detected, trying simplified fetch first');
-                // Сохраняем Authorization заголовок для Safari
-                const authHeader = config.headers.Authorization;
-                config.headers = {
-                    'Accept': 'application/json'
-                };
-                if (authHeader) {
-                    config.headers.Authorization = authHeader;
-                    console.log('Authorization header preserved for Safari');
-                }
-                
-                try {
-                    const result = await fetch(url, config);
-                    console.log('Safari fetch succeeded, returning result');
-                    if (!result.ok) {
-                        if (result.status === 401 || result.status === 403) {
-                            localStorage.removeItem('authToken');
-                            localStorage.removeItem('user');
-                        }
-                        let message = result.statusText || `HTTP ${result.status}`;
-                        try {
-                            const data = await result.json();
-                            message = data?.message || data?.error || message;
-                        } catch (_) {
-                            // ignore body parse errors
-                        }
-                        throw new Error(message);
-                    }
-                    
-                    if (result.status === 204) {
-                        return null;
-                    }
-                    
-                    try {
-                        const data = await result.json();
-                        return data;
-                    } catch (error) {
-                        console.error('Failed to parse JSON response:', error);
-                        throw new Error(`Invalid JSON response from server: ${error.message}`);
-                    }
-                } catch (safariError) {
-                    console.log('Safari fetch failed, trying Safari endpoint fallback:', safariError);
-                    
-                    // Для Safari используем специальный endpoint без авторизации
-                    if (endpoint === '/api/rooms' && method === 'GET') {
-                        try {
-                            const safariUrl = `${this.baseUrl}/api/rooms/safari`;
-                            console.log('Trying Safari endpoint:', safariUrl);
-                            const result = await fetch(safariUrl, { method: 'GET' });
-                            if (result.ok) {
-                                const data = await result.json();
-                                console.log('Safari endpoint succeeded');
-                                return data;
-                            }
-                        } catch (safariEndpointError) {
-                            console.log('Safari endpoint failed, trying XMLHttpRequest:', safariEndpointError);
-                        }
-                    }
-                    
-                    try {
-                        const result = await this.xhrRequest(url, config);
-                        console.log('XMLHttpRequest succeeded, returning result');
-                        return result;
-                    } catch (xhrError) {
-                        console.log('XMLHttpRequest also failed, trying minimal request:', xhrError);
-                        try {
-                            // Последняя попытка - минимальный запрос без заголовков
-                            const minimalConfig = {
-                                method: config.method,
-                                headers: {}
-                            };
-                            if (config.body) {
-                                minimalConfig.body = config.body;
-                            }
-                            const result = await fetch(url, minimalConfig);
-                            if (!result.ok) {
-                                throw new Error(`HTTP ${result.status}: ${result.statusText}`);
-                            }
-                            return await result.json();
-                        } catch (minimalError) {
-                            console.log('Minimal request also failed:', minimalError);
-                            throw new Error('CORS error in Safari - please try refreshing the page');
-                        }
-                    }
-                }
-            }
-        
-        let response;
-        try {
-            response = await fetch(url, config);
-            console.log('RoomApi response:', { status: response.status, ok: response.ok, url: response.url });
-        } catch (error) {
-            console.error('RoomApi fetch error:', error);
-            
-            // Безопасная обработка свойств ошибки
-            const errorDetails = {
-                name: error?.name || 'Unknown',
-                message: error?.message || 'Unknown error',
-                stack: error?.stack || 'No stack trace',
-                cause: error?.cause || 'No cause'
-            };
-            console.error('Error details:', errorDetails);
-            
-            // Специальная обработка для Safari CORS ошибок
-            if (isSafari && (errorDetails.message === 'Type error' || errorDetails.message === 'Load failed')) {
-                console.log('Safari CORS error detected, trying XMLHttpRequest fallback');
-                try {
-                    return await this.xhrRequest(url, config);
-                } catch (xhrError) {
-                    console.error('XMLHttpRequest also failed:', xhrError);
-                    throw new Error('CORS error in Safari - please try refreshing the page');
-                }
-            }
-            
-            throw error;
-        }
+        return config;
+    }
+
+    async request(endpoint, { method = 'GET', headers = {}, body } = {}) {
+        const url = `${this.baseUrl}${endpoint}`;
+        const config = this.createFetchConfig(method, headers, body);
+        const response = await this.sendWithFallback(url, config);
 
         if (!response.ok) {
-            if (response.status === 401 || response.status === 403) {
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('user');
+            if (this.shouldDropAuthToken(response.status)) {
+                try {
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                } catch (error) {
+                    console.warn('RoomApi: failed to clear auth storage', error);
+                }
             }
-            let message = response.statusText || `HTTP ${response.status}`;
-            try {
-                const data = await response.json();
-                message = data?.message || data?.error || message;
-            } catch (_) {
-                // ignore body parse errors
-            }
-            throw new Error(message);
+            throw new Error(this.extractErrorMessage(response));
         }
 
-        if (response.status === 204) {
-            return null;
-        }
+        return response.data;
+    }
 
+    shouldDropAuthToken(status) {
+        return status === 401 || status === 403;
+    }
+
+    extractErrorMessage(response) {
+        const data = response.data;
+        if (data && typeof data === 'object') {
+            return data.message || data.error || data.detail || `HTTP ${response.status}`;
+        }
+        if (response.bodyText) {
+            const text = response.bodyText.trim();
+            return text || response.statusText || `HTTP ${response.status}`;
+        }
+        return response.statusText || `HTTP ${response.status}`;
+    }
+
+    async sendWithFallback(url, config) {
         try {
-            const data = await response.json();
-            return data;
+            return await this.sendViaFetch(url, config);
         } catch (error) {
-            console.error('Failed to parse JSON response:', error);
-            console.error('Response status:', response.status);
-            console.error('Response headers:', Object.fromEntries(response.headers.entries()));
-            throw new Error(`Invalid JSON response from server: ${error.message}`);
+            if (!this.isSafariBrowser() || !this.isLikelyCorsError(error)) {
+                throw error;
+            }
+
+            const safariConfig = this.prepareSafariConfig(config);
+            try {
+                return await this.sendViaFetch(url, safariConfig);
+            } catch (safariFetchError) {
+                try {
+                    return await this.sendViaXhr(url, safariConfig);
+                } catch (xhrError) {
+                    try {
+                        return await this.sendViaFetch(url, this.prepareMinimalConfig(config));
+                    } catch (minimalError) {
+                        const fallbackError = new Error('CORS error in Safari - please try refreshing the page');
+                        fallbackError.cause = minimalError;
+                        throw fallbackError;
+                    }
+                }
+            }
         }
     }
 
-    // Fallback метод для Safari с использованием XMLHttpRequest
-    async xhrRequest(url, config) {
+    async sendViaFetch(url, config) {
+        if (typeof fetch === 'undefined') {
+            throw new Error('Fetch API not supported in this browser');
+        }
+
+        const requestConfig = this.cloneRequestConfig(config);
+        const response = await fetch(url, requestConfig);
+        const bodyText = response.status === 204 ? '' : await response.text();
+
+        return {
+            ok: response.ok,
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+            data: safeJsonParse(bodyText),
+            bodyText
+        };
+    }
+
+    sendViaXhr(url, config) {
+        const requestConfig = this.cloneRequestConfig(config);
+
         return new Promise((resolve, reject) => {
-            console.log('Using XMLHttpRequest fallback for Safari');
-            console.log('XHR URL:', url);
-            console.log('XHR method:', config.method);
-            console.log('XHR headers:', config.headers);
-            
             const xhr = new XMLHttpRequest();
-            
+
             try {
-                xhr.open(config.method, url, true);
-                console.log('XHR opened successfully');
+                xhr.open(requestConfig.method, url, true);
             } catch (error) {
-                console.error('Failed to open XHR:', error);
                 reject(new Error('Failed to open XMLHttpRequest'));
                 return;
             }
-            
-            // Устанавливаем заголовки
-            Object.keys(config.headers).forEach(key => {
+
+            xhr.timeout = DEFAULT_REQUEST_TIMEOUT;
+
+            Object.entries(requestConfig.headers || {}).forEach(([key, value]) => {
                 try {
-                    xhr.setRequestHeader(key, config.headers[key]);
-                    console.log(`XHR header set: ${key} = ${config.headers[key]}`);
+                    xhr.setRequestHeader(key, value);
                 } catch (error) {
-                    console.warn(`Failed to set header ${key}:`, error);
+                    // Игнорируем невозможность установки заголовка
                 }
             });
-            
+
             xhr.onload = () => {
-                console.log('XHR onload triggered');
-                console.log('XHR response:', { 
-                    status: xhr.status, 
+                const bodyText = xhr.responseText || '';
+                resolve({
+                    ok: xhr.status >= 200 && xhr.status < 300,
+                    status: xhr.status,
                     statusText: xhr.statusText,
-                    responseText: xhr.responseText?.substring(0, 200) + '...'
+                    headers: null,
+                    data: safeJsonParse(bodyText),
+                    bodyText
                 });
-                
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    try {
-                        const data = xhr.responseText ? JSON.parse(xhr.responseText) : null;
-                        console.log('XHR success, data:', data);
-                        resolve(data);
-                    } catch (error) {
-                        console.error('XHR JSON parse error:', error);
-                        reject(new Error('Invalid JSON response'));
-                    }
-                } else {
-                    console.error('XHR error response:', xhr.status, xhr.statusText);
-                    reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
-                }
             };
-            
-            xhr.onerror = () => {
-                console.error('XHR onerror triggered');
-                reject(new Error('Network error'));
-            };
-            
-            xhr.ontimeout = () => {
-                console.error('XHR ontimeout triggered');
-                reject(new Error('Request timeout'));
-            };
-            
-            xhr.onabort = () => {
-                console.error('XHR onabort triggered');
-                reject(new Error('Request aborted'));
-            };
-            
-            // Устанавливаем таймаут
-            xhr.timeout = 15000;
-            
+
+            xhr.onerror = () => reject(new Error('Network error'));
+            xhr.ontimeout = () => reject(new Error('Request timeout'));
+            xhr.onabort = () => reject(new Error('Request aborted'));
+
             try {
-                xhr.send(config.body);
-                console.log('XHR send called');
+                xhr.send(requestConfig.body);
             } catch (error) {
-                console.error('Failed to send XHR:', error);
                 reject(new Error('Failed to send XMLHttpRequest'));
             }
         });
+    }
+
+    cloneRequestConfig(config) {
+        const cloned = {
+            method: config.method,
+            headers: { ...(config.headers || {}) }
+        };
+
+        if (config.body !== undefined) {
+            cloned.body = config.body;
+        }
+
+        return cloned;
+    }
+
+    prepareSafariConfig(config) {
+        const headers = {};
+
+        if (config.headers?.Authorization) {
+            headers.Authorization = config.headers.Authorization;
+        }
+
+        headers.Accept = 'application/json';
+
+        if (config.body && config.headers?.['Content-Type']) {
+            headers['Content-Type'] = config.headers['Content-Type'];
+        }
+
+        return {
+            method: config.method,
+            headers,
+            body: config.body
+        };
+    }
+
+    prepareMinimalConfig(config) {
+        const minimal = {
+            method: config.method,
+            headers: {}
+        };
+
+        if (config.body !== undefined) {
+            minimal.body = config.body;
+        }
+
+        return minimal;
+    }
+
+    isLikelyCorsError(error) {
+        if (!error) {
+            return false;
+        }
+        const message = String(error.message || error);
+        const name = error.name || '';
+        return name === 'TypeError' ||
+            message.includes('Failed to fetch') ||
+            message.includes('Load failed') ||
+            message.includes('Network request failed');
+    }
+
+    isSafariBrowser() {
+        if (this._isSafari === null) {
+            this._isSafari = detectSafari();
+        }
+        return this._isSafari;
     }
 
     async listRooms() {
@@ -416,4 +411,3 @@ class RoomApi {
 }
 
 window.RoomApi = RoomApi;
-console.log('✅ RoomApi экспортирован в window');
