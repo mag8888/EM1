@@ -594,9 +594,10 @@ class LobbyModule {
         }
         const payload = {
             name,
-            max_players: this.dom.maxPlayers?.value || 4,
-            turn_time: this.dom.turnTime?.value || 3,
-            assign_professions: this.dom.assignProfessions?.checked,
+            max_players: Number(this.dom.maxPlayers?.value || 4),
+            // Отправляем в секундах, сервер ожидает 30-600 секунд
+            turn_time: Number(this.dom.turnTime?.value || 2) * 60,
+            assign_professions: Boolean(this.dom.assignProfessions?.checked),
             password: this.dom.roomPassword?.value || null,
             profession: this.selectedProfession
         };
