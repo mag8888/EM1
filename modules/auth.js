@@ -76,6 +76,12 @@ function registerAuthModule({ app, db, jwtSecret, roomState }) {
             return res.status(400).json({ message: 'Имя пользователя (username) обязательно и должно быть не короче 3 символов' });
         }
 
+        // Проверка уникальности username
+        const existingByUsername = await db.getUserByUsername(username);
+        if (existingByUsername) {
+            return res.status(409).json({ message: 'Это имя пользователя уже занято' });
+        }
+
         try {
             // Проверяем, существует ли пользователь
             const existingUser = await db.getUserByEmail(email);
@@ -253,14 +259,21 @@ function registerAuthModule({ app, db, jwtSecret, roomState }) {
     // Обновление профиля пользователя
     app.put('/api/user/profile', authenticateToken, async (req, res) => {
         try {
-            const { first_name, last_name, username } = req.body || {};
+            const { username, first_name, last_name } = req.body || {};
             const userId = req.user.userId;
 
-            // Обновляем данные пользователя
+            // Если меняем username — проверяем уникальность
+            if (username && String(username).trim().length >= 3) {
+                const existing = await db.getUserByUsername(username);
+                if (existing && String(existing.id) !== String(userId)) {
+                    return res.status(409).json({ message: 'Это имя пользователя уже занято' });
+                }
+            }
+
             const updatedUser = await db.updateUser(userId, {
+                username: username || undefined,
                 first_name: first_name || '',
-                last_name: last_name || '',
-                username: username || ''
+                last_name: last_name || ''
             });
 
             if (!updatedUser) {

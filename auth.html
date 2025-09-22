@@ -395,14 +395,9 @@
                     <label class="form-label">Имя пользователя (username)</label>
                     <input type="text" class="form-input" id="registerUsername" name="username" autocomplete="username" placeholder="Придумайте имя пользователя" minlength="3" required>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Имя (необязательно)</label>
-                    <input type="text" class="form-input" id="registerFirstName" name="firstName" autocomplete="given-name" placeholder="Введите имя">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Фамилия (необязательно)</label>
-                    <input type="text" class="form-input" id="registerLastName" name="lastName" autocomplete="family-name" placeholder="Введите фамилию">
-                </div>
+                <!-- Удалены поля имя/фамилия -->
+                <input type="hidden" id="registerFirstName" value="">
+                <input type="hidden" id="registerLastName" value="">
                 <div class="form-group">
                     <label class="form-label">Email</label>
                     <input type="email" class="form-input" id="registerEmail" name="email" autocomplete="email" placeholder="Введите email" required>

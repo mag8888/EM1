@@ -131,6 +131,9 @@ class SQLiteDatabase {
             await this.run(table);
         }
 
+        // Индекс уникальности для username (кроме пустых значений)
+        await this.run(`CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username <> ''`);
+
         console.log('✅ Таблицы SQLite созданы/обновлены');
     }
 
@@ -193,6 +196,11 @@ class SQLiteDatabase {
     async getUserByEmail(email) {
         const sql = `SELECT * FROM users WHERE email = ?`;
         return await this.get(sql, [email.toLowerCase().trim()]);
+    }
+
+    async getUserByUsername(username) {
+        const sql = `SELECT * FROM users WHERE LOWER(username) = LOWER(?)`;
+        return await this.get(sql, [String(username || '').trim()]);
     }
 
     async getUserById(userId) {
