@@ -579,35 +579,7 @@ app.use((error, req, res, next) => {
     next(error);
 });
 
-// Регистрируем модуль авторизации после middleware
-const { sanitizeUser, authenticateToken } = registerAuthModule({ app, db, jwtSecret: JWT_SECRET, roomState });
-
-registerRoomsModule({
-    app,
-    db,
-    auth: { sanitizeUser, authenticateToken },
-    isDbReady: () => dbConnected
-});
-
-// API для принудительного сохранения
-app.post('/api/admin/force-save', (req, res) => {
-    if (!dbConnected) {
-        return res.status(503).json({ success: false, message: 'База данных недоступна' });
-    }
-    
-    forceSaveAllRooms().then(success => {
-        if (success) {
-            res.json({ success: true, message: 'Все комнаты успешно сохранены' });
-        } else {
-            res.status(500).json({ success: false, message: 'Ошибка при сохранении некоторых комнат' });
-        }
-    }).catch(error => {
-        console.error('Ошибка принудительного сохранения:', error);
-        res.status(500).json({ success: false, message: 'Ошибка принудительного сохранения' });
-    });
-});
-
-// Специальный endpoint для Safari без авторизации
+// Специальный endpoint для Safari без авторизации (должен быть ДО регистрации модулей)
 app.get('/api/rooms/safari', async (req, res) => {
     try {
         console.log('Safari rooms endpoint called');
@@ -640,6 +612,35 @@ app.get('/api/rooms/safari', async (req, res) => {
         res.status(500).json({ success: false, message: 'Ошибка сервера' });
     }
 });
+
+// Регистрируем модуль авторизации после middleware
+const { sanitizeUser, authenticateToken } = registerAuthModule({ app, db, jwtSecret: JWT_SECRET, roomState });
+
+registerRoomsModule({
+    app,
+    db,
+    auth: { sanitizeUser, authenticateToken },
+    isDbReady: () => dbConnected
+});
+
+// API для принудительного сохранения
+app.post('/api/admin/force-save', (req, res) => {
+    if (!dbConnected) {
+        return res.status(503).json({ success: false, message: 'База данных недоступна' });
+    }
+    
+    forceSaveAllRooms().then(success => {
+        if (success) {
+            res.json({ success: true, message: 'Все комнаты успешно сохранены' });
+        } else {
+            res.status(500).json({ success: false, message: 'Ошибка при сохранении некоторых комнат' });
+        }
+    }).catch(error => {
+        console.error('Ошибка принудительного сохранения:', error);
+        res.status(500).json({ success: false, message: 'Ошибка принудительного сохранения' });
+    });
+});
+
 
 // Статические директории для отдельных модулей
 app.use('/assets', express.static(resolvePath('assets')));
