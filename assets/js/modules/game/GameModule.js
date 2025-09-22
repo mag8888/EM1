@@ -6,7 +6,7 @@ import DealController from './DealController.js';
 import AssetsManager from './AssetsManager.js';
 import PlayerSummary from './PlayerSummary.js';
 
-export default class GameModule {
+class GameModule {
     constructor({ roomId }) {
         this.roomId = roomId;
         this.state = new GameState({ roomId });
@@ -101,3 +101,9 @@ export default class GameModule {
         }
     }
 }
+
+if (typeof window !== 'undefined') {
+    window.GameModule = GameModule;
+}
+
+export default GameModule;

@@ -1,4 +1,4 @@
-// GameModule будет доступен глобально
+import GameModule from './GameModule.js';
 
 function getRoomId() {
     const parts = window.location.pathname.split('/').filter(Boolean);
@@ -11,6 +11,10 @@ function getRoomId() {
         console.error('Room ID not found in URL');
         return;
     }
-    const module = new GameModule({ roomId });
-    await module.init();
+    try {
+        const module = new GameModule({ roomId });
+        await module.init();
+    } catch (error) {
+        console.error('Failed to initialize GameModule:', error);
+    }
 })();
