@@ -56,6 +56,7 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
 
                 for (const playerRow of snapshot.players || []) {
                     console.log(`🔍 ensureRoomLoaded: загружаем игрока ${playerRow.name}, is_host: ${playerRow.is_host}, is_ready: ${playerRow.is_ready}`);
+                    console.log(`🔍 ensureRoomLoaded: playerRow.is_host = ${playerRow.is_host}, Boolean(playerRow.is_host) = ${Boolean(playerRow.is_host)}`);
                     const player = addPlayerToRoom(room, {
                         userId: playerRow.user_id,
                         name: playerRow.name,
