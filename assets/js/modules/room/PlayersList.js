@@ -131,6 +131,14 @@ class PlayersList {
         const players = room.players || [];
         const currentUserId = room.currentPlayer?.userId;
 
+        console.log('🎯 PlayersList.renderSlots:', {
+            maxPlayers: maxPlayers,
+            playersCount: players.length,
+            roomName: room.name
+        });
+
+        // Устанавливаем атрибут для адаптивного CSS
+        this.slotsContainer.setAttribute('data-max-players', maxPlayers);
         this.slotsContainer.innerHTML = '';
 
         for (let i = 0; i < maxPlayers; i++) {
@@ -169,6 +177,8 @@ class PlayersList {
 
             this.slotsContainer.appendChild(slot);
         }
+        
+        console.log(`✅ PlayersList.renderSlots: создано ${maxPlayers} слотов для комнаты "${room.name}"`);
     }
 }
 

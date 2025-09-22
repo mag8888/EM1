@@ -304,6 +304,24 @@
             gap: 8px;
             margin-bottom: 16px;
             flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Адаптивные слоты в зависимости от количества */
+        .player-slots[data-max-players="2"] {
+            max-width: 120px;
+        }
+
+        .player-slots[data-max-players="4"] {
+            max-width: 200px;
+        }
+
+        .player-slots[data-max-players="6"] {
+            max-width: 300px;
+        }
+
+        .player-slots[data-max-players="8"] {
+            max-width: 400px;
         }
 
         .player-slot {
@@ -834,7 +852,7 @@
 
             <section class="panel players-panel">
                 <div class="panel-title">Игроки (<span id="playersCount">0</span>/<span id="maxPlayers">0</span>)</div>
-                <div class="player-slots" id="playerSlots">
+                <div class="player-slots" id="playerSlots" data-max-players="4">
                     <!-- Player slots will be rendered here -->
                 </div>
                 <div class="players-list" id="playersList">
