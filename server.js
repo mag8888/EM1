@@ -24,7 +24,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'em1-production-secret-key-2024-rai
 
 // --- Shared services -----------------------------------------------------
 // const creditService = new CreditService();
-const { rooms, creditRooms, users, drawFromDeck, returnCardToDeck, createRoomInstance, addPlayerToRoom, loadUsersFromDatabase, getUserByEmailFromMemory } = roomState;
+const { rooms, creditRooms, users, drawFromDeck, returnCardToDeck, createRoomInstance, addPlayerToRoom, loadUsersFromDatabase, getUserByEmailFromMemory, setDatabase, forceSaveRoom, forceSaveAllRooms } = roomState;
 
 // Инициализация базы данных
 const db = new Database();
@@ -60,6 +60,9 @@ const connectToDatabase = async () => {
             });
             console.log('✅ Создан тестовый пользователь: test@example.com / test123');
         }
+        
+        // Устанавливаем ссылку на базу данных в room-state
+        setDatabase(db);
         
         // Загружаем пользователей из базы данных
         await loadUsersFromDatabase(db);
@@ -573,6 +576,24 @@ registerRoomsModule({
     db,
     auth: { sanitizeUser, authenticateToken },
     isDbReady: () => dbConnected
+});
+
+// API для принудительного сохранения
+app.post('/api/admin/force-save', (req, res) => {
+    if (!dbConnected) {
+        return res.status(503).json({ success: false, message: 'База данных недоступна' });
+    }
+    
+    forceSaveAllRooms().then(success => {
+        if (success) {
+            res.json({ success: true, message: 'Все комнаты успешно сохранены' });
+        } else {
+            res.status(500).json({ success: false, message: 'Ошибка при сохранении некоторых комнат' });
+        }
+    }).catch(error => {
+        console.error('Ошибка принудительного сохранения:', error);
+        res.status(500).json({ success: false, message: 'Ошибка принудительного сохранения' });
+    });
 });
 
 // Специальный endpoint для Safari без авторизации

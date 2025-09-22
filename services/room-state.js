@@ -715,6 +715,79 @@ const loadUsersFromDatabase = async (db) => {
     }
 };
 
+// Глобальная ссылка на базу данных для сохранения
+let globalDb = null;
+
+// Устанавливаем ссылку на базу данных
+const setDatabase = (db) => {
+    globalDb = db;
+};
+
+// Принудительное сохранение комнаты
+const forceSaveRoom = async (roomId) => {
+    if (!globalDb) {
+        console.warn('⚠️ База данных не инициализирована для сохранения');
+        return false;
+    }
+    
+    const room = rooms.get(roomId);
+    if (!room) {
+        console.warn(`⚠️ Комната ${roomId} не найдена в памяти`);
+        return false;
+    }
+    
+    try {
+        console.log(`💾 Принудительное сохранение комнаты: ${room.name} (${roomId})`);
+        
+        // Обновляем данные комнаты
+        await globalDb.updateRoom(roomId, {
+            name: room.name,
+            status: room.gameStarted ? 'playing' : 'waiting',
+            gameStarted: room.gameStarted,
+            updated_at: new Date().toISOString()
+        });
+        
+        // Обновляем данные всех игроков
+        for (const player of room.players) {
+            await globalDb.updatePlayerSelection(roomId, player.userId, {
+                dreamId: player.selectedDream,
+                tokenId: player.selectedToken
+            });
+            await globalDb.updatePlayerReady(roomId, player.userId, player.isReady);
+        }
+        
+        console.log(`✅ Комната ${room.name} успешно сохранена`);
+        return true;
+    } catch (error) {
+        console.error(`❌ Ошибка принудительного сохранения комнаты ${roomId}:`, error);
+        return false;
+    }
+};
+
+// Принудительное сохранение всех комнат
+const forceSaveAllRooms = async () => {
+    if (!globalDb) {
+        console.warn('⚠️ База данных не инициализирована для сохранения');
+        return false;
+    }
+    
+    console.log(`💾 Принудительное сохранение всех комнат (${rooms.size} комнат)`);
+    let savedCount = 0;
+    let errorCount = 0;
+    
+    for (const [roomId, room] of rooms) {
+        const success = await forceSaveRoom(roomId);
+        if (success) {
+            savedCount++;
+        } else {
+            errorCount++;
+        }
+    }
+    
+    console.log(`✅ Сохранение завершено: ${savedCount} успешно, ${errorCount} с ошибками`);
+    return errorCount === 0;
+};
+
 module.exports = {
     rooms,
     creditRooms,
@@ -778,5 +851,9 @@ module.exports = {
     updateUserInMemory,
     removeUserFromMemory,
     getAllUsersFromMemory,
-    loadUsersFromDatabase
+    loadUsersFromDatabase,
+    // Функции для принудительного сохранения
+    setDatabase,
+    forceSaveRoom,
+    forceSaveAllRooms
 };

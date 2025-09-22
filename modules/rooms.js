@@ -12,7 +12,8 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
         toggleReadyStatus,
         sanitizeRoom,
         initializeGame,
-        MIN_PLAYERS
+        MIN_PLAYERS,
+        forceSaveRoom
     } = roomState;
 
     const authenticate = auth?.authenticateToken;
@@ -182,6 +183,10 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
                     avatar: host.avatar,
                     isHost: true
                 });
+                
+                // Принудительное сохранение после создания комнаты
+                await forceSaveRoom(room.id);
+                console.log(`💾 Комната ${room.name} принудительно сохранена после создания`);
             }
 
             res.status(201).json({ success: true, room: buildRoomResponse(room, userId) });
@@ -221,6 +226,10 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
                     avatar: newPlayer.avatar,
                     isHost: newPlayer.isHost
                 });
+                
+                // Принудительное сохранение после присоединения игрока
+                await forceSaveRoom(room.id);
+                console.log(`💾 Комната ${room.name} принудительно сохранена после присоединения игрока`);
             }
 
             res.json({ success: true, room: buildRoomResponse(room, userId) });
@@ -276,6 +285,10 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
                     dreamId: player?.selectedDream ?? dream_id,
                     tokenId: player?.selectedToken ?? null
                 });
+                
+                // Принудительное сохранение после выбора мечты
+                await forceSaveRoom(room.id);
+                console.log(`💾 Комната ${room.name} принудительно сохранена после выбора мечты игроком ${userId}`);
             }
             res.json({ success: true, room: buildRoomResponse(room, userId) });
         } catch (error) {
@@ -299,6 +312,10 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
                     dreamId: player?.selectedDream ?? null,
                     tokenId: player?.selectedToken ?? token_id
                 });
+                
+                // Принудительное сохранение после выбора фишки
+                await forceSaveRoom(room.id);
+                console.log(`💾 Комната ${room.name} принудительно сохранена после выбора фишки игроком ${userId}`);
             }
             res.json({ success: true, room: buildRoomResponse(room, userId) });
         } catch (error) {
@@ -317,6 +334,10 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
             const isReady = toggleReadyStatus(room, userId);
             if (isDbReady?.()) {
                 await db.updatePlayerReady(room.id, userId, isReady);
+                
+                // Принудительное сохранение после изменения статуса готовности
+                await forceSaveRoom(room.id);
+                console.log(`💾 Комната ${room.name} принудительно сохранена после изменения готовности игрока ${userId}`);
             }
             res.json({ success: true, room: buildRoomResponse(room, userId) });
         } catch (error) {
@@ -342,6 +363,10 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
             initializeGame(room);
             if (isDbReady?.()) {
                 await db.markRoomStatus(room.id, { status: 'playing', gameStarted: true });
+                
+                // Принудительное сохранение после запуска игры
+                await forceSaveRoom(room.id);
+                console.log(`💾 Комната ${room.name} принудительно сохранена после запуска игры`);
             }
             res.json({ success: true, room: buildRoomResponse(room, userId) });
         } catch (error) {
