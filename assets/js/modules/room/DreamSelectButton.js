@@ -63,7 +63,7 @@ class DreamSelectButton {
     update() {
         if (!this.button) return;
         
-        const room = this.state.getRoom();
+        const room = this.state.getSnapshot();
         const player = room?.currentPlayer;
         
         if (!room || !player) {
