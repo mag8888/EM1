@@ -359,8 +359,8 @@
 
             <!-- Табы авторизации -->
             <div class="auth-tabs">
-                <div class="tab active" onclick="switchTab('login')">Вход</div>
-                <div class="tab" onclick="switchTab('register')">Регистрация</div>
+                <div class="tab active" onclick="switchTab('login', this)">Вход</div>
+                <div class="tab" onclick="switchTab('register', this)">Регистрация</div>
             </div>
 
             <!-- Сообщения об ошибках/успехе -->
@@ -377,7 +377,7 @@
                     <label class="form-label">Пароль</label>
                     <div class="input-group">
                         <input type="password" class="form-input" id="loginPassword" placeholder="Введите пароль" required>
-                        <span class="input-icon password-toggle" onclick="togglePassword('loginPassword')">👁</span>
+                        <span class="input-icon password-toggle" onclick="togglePassword('loginPassword', this)">👁</span>
                     </div>
                 </div>
                 <div class="form-checkbox">
@@ -405,14 +405,14 @@
                     <label class="form-label">Пароль</label>
                     <div class="input-group">
                         <input type="password" class="form-input" id="registerPassword" placeholder="Введите пароль" required>
-                        <span class="input-icon password-toggle" onclick="togglePassword('registerPassword')">👁</span>
+                        <span class="input-icon password-toggle" onclick="togglePassword('registerPassword', this)">👁</span>
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Подтвердите пароль</label>
                     <div class="input-group">
                         <input type="password" class="form-input" id="registerConfirmPassword" placeholder="Подтвердите пароль" required>
-                        <span class="input-icon password-toggle" onclick="togglePassword('registerConfirmPassword')">👁</span>
+                        <span class="input-icon password-toggle" onclick="togglePassword('registerConfirmPassword', this)">👁</span>
                     </div>
                 </div>
                 <div class="form-group">
@@ -438,13 +438,17 @@
 
     <script>
         // Переключение между табами
-        function switchTab(tab) {
+        function switchTab(tab, element) {
             // Убираем активный класс со всех табов и форм
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
             
             // Активируем выбранный таб и форму
-            event.target.classList.add('active');
+            if (element) {
+                element.classList.add('active');
+            } else {
+                document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+            }
             document.getElementById(tab + 'Form').classList.add('active');
             
             // Очищаем сообщения
@@ -452,9 +456,9 @@
         }
 
         // Переключение видимости пароля
-        function togglePassword(inputId) {
+        function togglePassword(inputId, element) {
             const input = document.getElementById(inputId);
-            const icon = event.target;
+            const icon = element;
             
             if (input.type === 'password') {
                 input.type = 'text';
