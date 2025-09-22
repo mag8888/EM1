@@ -291,10 +291,10 @@ class SQLiteDatabase {
     }
 
     async addPlayerToRoom(roomId, playerData) {
-        const { userId, name, avatar, isHost = false, selectedDream = null, selectedToken = null, isReady = false } = playerData;
+        const { userId, name, avatar, isHost = false, selectedDream = null, selectedToken = null, isReady = false, position = 0, track = 'small', cash = 10000, passiveIncome = 0 } = playerData;
 
-        const sql = `INSERT OR REPLACE INTO room_players (room_id, user_id, name, avatar, is_host, is_ready, selected_dream, selected_token)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+        const sql = `INSERT OR REPLACE INTO room_players (room_id, user_id, name, avatar, is_host, is_ready, selected_dream, selected_token, position, track, cash, passive_income)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
         const params = [
             roomId,
@@ -304,7 +304,11 @@ class SQLiteDatabase {
             isHost ? 1 : 0,
             isReady ? 1 : 0,
             selectedDream ?? null,
-            selectedToken ?? null
+            selectedToken ?? null,
+            Math.max(0, Number(position) || 0),
+            String(track || 'small'),
+            Math.floor(Number(cash) || 10000),
+            Math.floor(Number(passiveIncome) || 0)
         ];
 
         await this.run(sql, params);

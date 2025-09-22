@@ -148,13 +148,19 @@ const saveRoomsToDatabase = async () => {
             });
             
             // Обновляем данные игроков
-            for (const player of room.players) {
-                await db.updatePlayerSelection(roomId, player.userId, {
-                    dreamId: player.selectedDream,
-                    tokenId: player.selectedToken
-                });
-                await db.updatePlayerReady(roomId, player.userId, player.isReady);
-            }
+        for (const player of room.players) {
+            await db.updatePlayerSelection(roomId, player.userId, {
+                dreamId: player.selectedDream,
+                tokenId: player.selectedToken
+            });
+            await db.updatePlayerReady(roomId, player.userId, player.isReady);
+            await db.updatePlayerState(roomId, player.userId, {
+                position: player.position,
+                track: player.track,
+                cash: player.cash,
+                passiveIncome: player.passiveIncome
+            });
+        }
         }
     } catch (error) {
         console.error('❌ Ошибка сохранения комнат в SQLite:', error);

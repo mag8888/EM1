@@ -109,7 +109,7 @@ const createPlayer = ({ userId, name, avatar, isHost = false }) => ({
     selectedToken: null,
     dreamAchieved: false,
     position: 0,
-    track: 'inner',
+    track: 'small',
     cash: STARTING_BALANCE,
     passiveIncome: 0,
     assets: [],
@@ -218,7 +218,7 @@ const getRoomById = (roomId) => rooms.get(roomId);
 
 const listRooms = () => Array.from(rooms.values());
 
-const addPlayerToRoom = (room, { userId, name, avatar, isHost = false, isReady = false, selectedDream = null, selectedToken = null }) => {
+const addPlayerToRoom = (room, { userId, name, avatar, isHost = false, isReady = false, selectedDream = null, selectedToken = null, position, track, cash, passiveIncome }) => {
     if (!room || !userId) {
         throw new Error('room and userId are required');
     }
@@ -234,6 +234,10 @@ const addPlayerToRoom = (room, { userId, name, avatar, isHost = false, isReady =
         existingPlayer.isReady = isReady !== undefined ? isReady : existingPlayer.isReady;
         existingPlayer.selectedDream = selectedDream !== undefined ? selectedDream : existingPlayer.selectedDream;
         existingPlayer.selectedToken = selectedToken !== undefined ? selectedToken : existingPlayer.selectedToken;
+        if (position !== undefined) existingPlayer.position = Number(position) || 0;
+        if (track !== undefined) existingPlayer.track = String(track);
+        if (cash !== undefined) existingPlayer.cash = Math.floor(Number(cash) || existingPlayer.cash);
+        if (passiveIncome !== undefined) existingPlayer.passiveIncome = Math.floor(Number(passiveIncome) || 0);
         console.log(`✅ addPlayerToRoom: игрок обновлен, isHost: ${existingPlayer.isHost}, isReady: ${existingPlayer.isReady}`);
         return existingPlayer;
     }
@@ -248,6 +252,10 @@ const addPlayerToRoom = (room, { userId, name, avatar, isHost = false, isReady =
     newPlayer.isReady = isReady;
     newPlayer.selectedDream = selectedDream;
     newPlayer.selectedToken = selectedToken;
+    if (position !== undefined) newPlayer.position = Number(position) || 0;
+    if (track !== undefined) newPlayer.track = String(track);
+    if (cash !== undefined) newPlayer.cash = Math.floor(Number(cash) || newPlayer.cash);
+    if (passiveIncome !== undefined) newPlayer.passiveIncome = Math.floor(Number(passiveIncome) || 0);
     console.log(`🔧 addPlayerToRoom: игрок создан, isHost=${newPlayer.isHost}, userId=${newPlayer.userId}`);
     room.players.push(newPlayer);
     room.game_data.player_balances.push(newPlayer.cash);
