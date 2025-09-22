@@ -40,10 +40,26 @@ class RoomApi {
 
     async request(endpoint, options = {}) {
         const url = `${this.baseUrl}${endpoint}`;
+        const method = (options.method || 'GET').toUpperCase();
+        const headers = this.withUserHeaders({ ...this.defaultHeaders, ...(options.headers || {}) });
+        // Avoid preflight for GET by removing Content-Type
+        if (method === 'GET') {
+            delete headers['Content-Type'];
+        }
+        // Add Authorization if token exists
+        try {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                headers.Authorization = `Bearer ${token}`;
+            }
+        } catch (_) {}
+
         const config = {
-            method: 'GET',
+            method,
             ...options,
-            headers: this.withUserHeaders({ ...this.defaultHeaders, ...(options.headers || {}) })
+            headers,
+            credentials: 'include',
+            mode: 'cors'
         };
 
         const response = await fetch(url, config);
