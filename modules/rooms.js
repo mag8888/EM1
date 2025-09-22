@@ -48,20 +48,24 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
                 room.createdAt = snapshot.room.created_at;
                 room.updatedAt = snapshot.room.updated_at;
                 room.lastActivity = snapshot.room.last_activity || Date.now();
+                
+                // Очищаем данные игроков
                 room.players = [];
                 room.game_data.player_balances = [];
                 room.game_data.credit_data.player_credits = [];
 
                 for (const playerRow of snapshot.players || []) {
+                    console.log(`🔍 ensureRoomLoaded: загружаем игрока ${playerRow.name}, is_host: ${playerRow.is_host}, is_ready: ${playerRow.is_ready}`);
                     const player = addPlayerToRoom(room, {
                         userId: playerRow.user_id,
                         name: playerRow.name,
-                        avatar: playerRow.avatar
+                        avatar: playerRow.avatar,
+                        isHost: Boolean(playerRow.is_host),
+                        isReady: Boolean(playerRow.is_ready),
+                        selectedDream: playerRow.selected_dream,
+                        selectedToken: playerRow.selected_token
                     });
-                    player.isHost = Boolean(playerRow.is_host);
-                    player.isReady = Boolean(playerRow.is_ready);
-                    player.selectedDream = playerRow.selected_dream;
-                    player.selectedToken = playerRow.selected_token;
+                    console.log(`✅ ensureRoomLoaded: игрок ${player.name} добавлен, isHost: ${player.isHost}, isReady: ${player.isReady}`);
                 }
             }
         }

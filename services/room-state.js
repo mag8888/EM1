@@ -223,14 +223,18 @@ const addPlayerToRoom = (room, { userId, name, avatar, isHost = false, isReady =
         throw new Error('room and userId are required');
     }
 
+    console.log(`🔍 addPlayerToRoom: добавляем игрока ${name} (${userId}), isHost: ${isHost}, isReady: ${isReady}`);
+
     const existingPlayer = room.players.find(player => player.userId === userId.toString());
     if (existingPlayer) {
+        console.log(`🔄 addPlayerToRoom: обновляем существующего игрока ${existingPlayer.name}, старый isHost: ${existingPlayer.isHost}, новый isHost: ${isHost}`);
         existingPlayer.name = name || existingPlayer.name;
         existingPlayer.avatar = avatar || existingPlayer.avatar;
         existingPlayer.isHost = isHost !== undefined ? isHost : existingPlayer.isHost;
         existingPlayer.isReady = isReady !== undefined ? isReady : existingPlayer.isReady;
         existingPlayer.selectedDream = selectedDream !== undefined ? selectedDream : existingPlayer.selectedDream;
         existingPlayer.selectedToken = selectedToken !== undefined ? selectedToken : existingPlayer.selectedToken;
+        console.log(`✅ addPlayerToRoom: игрок обновлен, isHost: ${existingPlayer.isHost}, isReady: ${existingPlayer.isReady}`);
         return existingPlayer;
     }
 
@@ -247,6 +251,8 @@ const addPlayerToRoom = (room, { userId, name, avatar, isHost = false, isReady =
     room.game_data.player_balances.push(newPlayer.cash);
     room.game_data.credit_data.player_credits.push(0);
     room.updatedAt = new Date().toISOString();
+    
+    console.log(`✅ addPlayerToRoom: новый игрок ${newPlayer.name} создан, isHost: ${newPlayer.isHost}, isReady: ${newPlayer.isReady}`);
     room.lastActivity = Date.now();
     return newPlayer;
 };
