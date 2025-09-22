@@ -184,9 +184,15 @@ class RoomApi {
                     try {
                         return await this.sendViaFetch(url, this.prepareMinimalConfig(config));
                     } catch (minimalError) {
-                        const fallbackError = new Error('CORS error in Safari - please try refreshing the page');
-                        fallbackError.cause = minimalError;
-                        throw fallbackError;
+                        // Последний шанс: загрузка через скрытый iframe (same-origin)
+                        try {
+                            const data = await this.sendViaIframe(url, config);
+                            return { ok: true, status: 200, statusText: 'OK', headers: null, data, bodyText: JSON.stringify(data) };
+                        } catch (iframeError) {
+                            const fallbackError = new Error('CORS error in Safari - please try refreshing the page');
+                            fallbackError.cause = iframeError;
+                            throw fallbackError;
+                        }
                     }
                 }
             }
@@ -255,6 +261,35 @@ class RoomApi {
                 xhr.send(requestConfig.body);
             } catch (error) {
                 reject(new Error('Failed to send XMLHttpRequest'));
+            }
+        });
+    }
+
+    // Фолбэк для Safari: загрузка JSON через скрытый iframe (работает на same-origin)
+    sendViaIframe(url) {
+        return new Promise((resolve, reject) => {
+            try {
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = url;
+                const cleanup = () => {
+                    try { document.body.removeChild(iframe); } catch (_) {}
+                };
+                iframe.onload = () => {
+                    try {
+                        const text = iframe.contentDocument?.body?.innerText || iframe.contentDocument?.body?.textContent || '';
+                        const json = safeJsonParse(text);
+                        cleanup();
+                        if (json) resolve(json); else reject(new Error('Iframe JSON parse failed'));
+                    } catch (e) {
+                        cleanup();
+                        reject(e);
+                    }
+                };
+                iframe.onerror = () => { cleanup(); reject(new Error('Iframe load error')); };
+                document.body.appendChild(iframe);
+            } catch (e) {
+                reject(e);
             }
         });
     }
