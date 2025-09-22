@@ -418,7 +418,8 @@ const initializeGame = (room) => {
     room.players.forEach(player => {
         player.isReady = true;
         player.position = 0;
-        player.track = 'inner';
+        // Все начинают с малого круга
+        player.track = 'small';
         player.cash = STARTING_BALANCE;
         player.passiveIncome = 0;
         player.assets = [];
