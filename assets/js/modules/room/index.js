@@ -1,6 +1,20 @@
 // RoomModule будет доступен глобально
 
 function extractRoomId() {
+    // 1) Если на vanity-роуте /room/u/:username — берем из localStorage
+    if (window.location.pathname.startsWith('/room/u/')) {
+        const stored = localStorage.getItem('currentRoomId');
+        if (stored) return stored;
+    }
+
+    // 2) Попробуем взять из query (?roomId=...)
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const q = params.get('roomId');
+        if (q) return q;
+    } catch(_) {}
+
+    // 3) Фолбэк: последний сегмент пути как roomId
     const parts = window.location.pathname.split('/').filter(Boolean);
     return parts.pop();
 }
