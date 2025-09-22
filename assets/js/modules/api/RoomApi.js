@@ -301,21 +301,21 @@ class RoomApi {
     }
 
     async listRooms() {
-        // Для Safari используем специальный endpoint
-        if (this.isSafariBrowser()) {
+        try {
+            // Сначала пробуем обычный endpoint
+            const data = await this.request('/api/rooms');
+            return data?.rooms || [];
+        } catch (error) {
+            // Если обычный endpoint не работает, пробуем Safari endpoint
+            console.log('Regular rooms endpoint failed, trying Safari endpoint:', error.message);
             try {
-                console.log('Safari detected, using special rooms endpoint');
                 const data = await this.request('/api/rooms/safari');
                 return data?.rooms || [];
-            } catch (error) {
-                console.log('Safari endpoint failed, falling back to regular endpoint');
-                const data = await this.request('/api/rooms');
-                return data?.rooms || [];
+            } catch (safariError) {
+                console.log('Safari endpoint also failed:', safariError.message);
+                throw error; // Возвращаем оригинальную ошибку
             }
         }
-        
-        const data = await this.request('/api/rooms');
-        return data?.rooms || [];
     }
 
     async createRoom(payload) {
