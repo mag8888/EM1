@@ -1,3 +1,8 @@
+// Проверяем, не загружен ли уже модуль
+if (window.TokenSelector) {
+    console.log('TokenSelector уже загружен, пропускаем повторную загрузку');
+} else {
+
 const DEFAULT_TOKENS = [
     { id: 'lion', icon: '🦁', name: 'Лев' },
     { id: 'tiger', icon: '🐯', name: 'Тигр' },

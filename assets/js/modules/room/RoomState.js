@@ -1,3 +1,8 @@
+// Проверяем, не загружен ли уже модуль
+if (window.RoomState) {
+    console.log('RoomState уже загружен, пропускаем повторную загрузку');
+} else {
+
 // EventEmitter будет доступен глобально
 
 class RoomState extends EventEmitter {
