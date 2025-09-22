@@ -1,3 +1,8 @@
+// Проверяем, не загружен ли уже модуль
+if (window.ErrorDisplay) {
+    console.log('ErrorDisplay уже загружен, пропускаем повторную загрузку');
+} else {
+
 class ErrorDisplay {
     constructor(element) {
         this.element = element;
@@ -27,3 +32,5 @@ class ErrorDisplay {
 }
 
 window.ErrorDisplay = ErrorDisplay;
+
+} // Конец блока else для проверки существования модуля

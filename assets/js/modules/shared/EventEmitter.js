@@ -1,3 +1,8 @@
+// Проверяем, не загружен ли уже модуль
+if (window.EventEmitter) {
+    console.log('EventEmitter уже загружен, пропускаем повторную загрузку');
+} else {
+
 class EventEmitter {
     constructor() {
         this.listeners = new Map();
@@ -49,3 +54,5 @@ class EventEmitter {
 }
 
 window.EventEmitter = EventEmitter;
+
+} // Конец блока else для проверки существования модуля

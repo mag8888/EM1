@@ -96,3 +96,5 @@ class DreamSelector {
 }
 
 window.DreamSelector = DreamSelector;
+
+} // Конец блока else для проверки существования модуля

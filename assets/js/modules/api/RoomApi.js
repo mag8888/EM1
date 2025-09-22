@@ -3,6 +3,11 @@
  * Содержит унифицированную обработку ошибок и резервные варианты для Safari.
  */
 
+// Проверяем, не загружен ли уже модуль
+if (window.RoomApi) {
+    console.log('RoomApi уже загружен, пропускаем повторную загрузку');
+} else {
+
 const SAFARI_UA_PATTERN = /\bVersion\/\d+.*Safari\b/i;
 const SAFARI_EXCLUDE_PATTERN = /\b(Chrome|CriOS|Chromium|Edg|OPR|SamsungBrowser)\b/i;
 const DEFAULT_REQUEST_TIMEOUT = 15000;
@@ -411,3 +416,5 @@ class RoomApi {
 }
 
 window.RoomApi = RoomApi;
+
+} // Конец блока else для проверки существования модуля

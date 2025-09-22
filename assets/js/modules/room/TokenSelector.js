@@ -94,3 +94,5 @@ class TokenSelector {
 }
 
 window.TokenSelector = TokenSelector;
+
+} // Конец блока else для проверки существования модуля

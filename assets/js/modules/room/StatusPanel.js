@@ -1,3 +1,8 @@
+// Проверяем, не загружен ли уже модуль
+if (window.StatusPanel) {
+    console.log('StatusPanel уже загружен, пропускаем повторную загрузку');
+} else {
+
 class StatusPanel {
     constructor({ state, elements }) {
         this.state = state;
@@ -77,3 +82,5 @@ class StatusPanel {
 }
 
 window.StatusPanel = StatusPanel;
+
+} // Конец блока else для проверки существования модуля

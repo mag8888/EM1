@@ -1,3 +1,8 @@
+// Проверяем, не загружен ли уже модуль
+if (window.ReadyButton) {
+    console.log('ReadyButton уже загружен, пропускаем повторную загрузку');
+} else {
+
 class ReadyButton {
     constructor({ state, button }) {
         this.state = state;
@@ -78,3 +83,5 @@ class ReadyButton {
 }
 
 window.ReadyButton = ReadyButton;
+
+} // Конец блока else для проверки существования модуля

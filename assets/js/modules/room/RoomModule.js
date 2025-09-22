@@ -135,3 +135,5 @@ class RoomModule {
 
 // Экспортируем в window для совместимости
 window.RoomModule = RoomModule;
+
+} // Конец блока else для проверки существования модуля

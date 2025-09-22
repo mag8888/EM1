@@ -1,3 +1,8 @@
+// Проверяем, не загружен ли уже модуль
+if (window.PlayersList) {
+    console.log('PlayersList уже загружен, пропускаем повторную загрузку');
+} else {
+
 class PlayersList {
     constructor({ container, state }) {
         this.container = container;
@@ -115,3 +120,5 @@ class PlayersList {
 }
 
 window.PlayersList = PlayersList;
+
+} // Конец блока else для проверки существования модуля

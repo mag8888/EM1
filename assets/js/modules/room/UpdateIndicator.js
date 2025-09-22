@@ -1,3 +1,8 @@
+// Проверяем, не загружен ли уже модуль
+if (window.UpdateIndicator) {
+    console.log('UpdateIndicator уже загружен, пропускаем повторную загрузку');
+} else {
+
 class UpdateIndicator {
     constructor({ state, element }) {
         this.state = state;
@@ -33,3 +38,5 @@ class UpdateIndicator {
 }
 
 window.UpdateIndicator = UpdateIndicator;
+
+} // Конец блока else для проверки существования модуля

@@ -154,3 +154,5 @@ class RoomState extends EventEmitter {
 
 // Экспортируем в window для совместимости
 window.RoomState = RoomState;
+
+} // Конец блока else для проверки существования модуля
