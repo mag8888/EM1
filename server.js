@@ -1019,6 +1019,11 @@ app.get('/game/:roomId', (req, res) => {
     res.sendFile(resolvePath('game-board/game.html'));
 });
 
+// Vanity route: game board by username
+app.get('/game/u/:username', (req, res) => {
+    res.sendFile(resolvePath('game-board/game.html'));
+});
+
 // ---------------------------- Health Check ----------------------------------
 app.get('/api/health', (req, res) => {
     res.json({

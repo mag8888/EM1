@@ -75,7 +75,11 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
 
     const getDisplayName = (user) => {
         if (!user) return 'Игрок';
-        return [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || user.email || 'Игрок';
+        // Предпочитаем username
+        if (user.username && String(user.username).trim() !== '') {
+            return user.username;
+        }
+        return [user.first_name, user.last_name].filter(Boolean).join(' ') || user.email || 'Игрок';
     };
 
     const buildRoomResponse = (room, userId) => sanitizeRoom(room, { includePlayers: true, userId });

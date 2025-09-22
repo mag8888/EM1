@@ -616,7 +616,8 @@ class LobbyModule {
                     console.warn('Auto-join after creation failed:', joinError);
                 }
                 this.hideCreateRoomModal();
-                window.location.assign(`/room/${room.id}`);
+                const username = (this.currentUser?.username || this.currentUser?.email?.split('@')[0] || 'player').toString();
+                window.location.assign(`/game/u/${encodeURIComponent(username)}`);
                 return;
             }
             this.showError(this.dom.createRoomError, 'Комната создана, но отсутствует идентификатор');
@@ -638,7 +639,8 @@ class LobbyModule {
             if (roomData) {
                 localStorage.setItem('currentRoom', JSON.stringify(roomData));
             }
-            window.location.assign(`/room/${roomId}`);
+            const username = (this.currentUser?.username || this.currentUser?.email?.split('@')[0] || 'player').toString();
+            window.location.assign(`/game/u/${encodeURIComponent(username)}`);
         } catch (error) {
             if (room?.requiresPassword) {
                 this.showJoinRoomModal(roomId);
@@ -662,7 +664,8 @@ class LobbyModule {
             if (room) {
                 localStorage.setItem('currentRoom', JSON.stringify(room));
             }
-            window.location.assign(`/room/${this.selectedRoomId}`);
+            const username = (this.currentUser?.username || this.currentUser?.email?.split('@')[0] || 'player').toString();
+            window.location.assign(`/game/u/${encodeURIComponent(username)}`);
         } catch (error) {
             this.showError(this.dom.joinRoomError, error.message || 'Не удалось присоединиться к комнате');
         } finally {
@@ -683,7 +686,8 @@ class LobbyModule {
             if (room) {
                 localStorage.setItem('currentRoom', JSON.stringify(room));
             }
-            window.location.assign(`/room/${available.id}`);
+            const username = (this.currentUser?.username || this.currentUser?.email?.split('@')[0] || 'player').toString();
+            window.location.assign(`/game/u/${encodeURIComponent(username)}`);
         } catch (error) {
             this.showError(this.dom.createRoomError, error.message || 'Не удалось присоединиться к комнате');
         }
