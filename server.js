@@ -631,6 +631,319 @@ registerRoomsModule({
 // Создаем ensureAuth middleware для игровых endpoints
 const ensureAuth = createEnsureAuth(authenticateToken);
 
+// ==================== ИГРОВЫЕ ENDPOINTS ====================
+
+// Получение состояния игры
+app.get('/api/rooms/:roomId/game-state', ensureAuth, (req, res) => {
+    try {
+        console.log(`🔍 Запрос game-state для комнаты: ${req.params.roomId}`);
+        const room = requireRoom(req.params.roomId);
+        console.log(`📊 Комната найдена: ${room ? 'да' : 'нет'}, игра началась: ${room?.gameStarted}, состояние: ${room?.gameState ? 'есть' : 'нет'}`);
+        
+        if (!room.gameStarted || !room.gameState) {
+            throw new Error('Игра еще не началась');
+        }
+        
+        // Проверяем, что пользователь находится в комнате
+        const userId = req.user?.userId || req.headers['x-user-id'];
+        const player = room.players.find(p => p.userId === userId);
+        if (!player) {
+            throw new Error('Вы не находитесь в этой комнате');
+        }
+        
+        res.json({ success: true, state: serializeGameState(room, userId) });
+    } catch (error) {
+        console.error(`❌ Ошибка game-state для комнаты ${req.params.roomId}:`, error.message);
+        buildErrorResponse(res, error);
+    }
+});
+
+// Бросок кубиков
+app.post('/api/rooms/:roomId/roll', ensureAuth, (req, res) => {
+    try {
+        const room = requireRoom(req.params.roomId);
+        if (!room.gameStarted || !room.gameState) {
+            throw new Error('Игра еще не началась');
+        }
+        const userId = getRequestUserId(req);
+        const player = room.players.find(p => p.userId === userId.toString());
+        if (!player) {
+            throw new Error('Игрок не найден в комнате');
+        }
+        const activePlayer = getActivePlayer(room);
+        if (!activePlayer || activePlayer.userId !== player.userId) {
+            throw new Error('Сейчас не ваш ход');
+        }
+        if (room.gameState.phase !== 'awaiting_roll') {
+            throw new Error('Бросок кубиков сейчас недоступен');
+        }
+
+        const rollResult = rollDice();
+        const moveResult = movePlayerAndResolve(room, player, rollResult);
+        res.json({
+            success: true,
+            roll: rollResult,
+            move: moveResult,
+            state: serializeGameState(room, userId)
+        });
+    } catch (error) {
+        buildErrorResponse(res, error);
+    }
+});
+
+// Выбор сделки
+app.post('/api/rooms/:roomId/deals/choose', ensureAuth, (req, res) => {
+    try {
+        const room = requireRoom(req.params.roomId);
+        const userId = getRequestUserId(req);
+        const player = room.players.find(p => p.userId === userId.toString());
+        if (!player) {
+            throw new Error('Игрок не найден в комнате');
+        }
+        if (!room.gameState || room.gameState.phase !== 'awaiting_deal_choice') {
+            throw new Error('Нет активного выбора сделки');
+        }
+        const card = chooseDeal(room, player, req.body?.size);
+        res.json({ success: true, card, state: serializeGameState(room, userId) });
+    } catch (error) {
+        buildErrorResponse(res, error);
+    }
+});
+
+// Разрешение сделки
+app.post('/api/rooms/:roomId/deals/resolve', ensureAuth, (req, res) => {
+    try {
+        const room = requireRoom(req.params.roomId);
+        const userId = getRequestUserId(req);
+        const player = room.players.find(p => p.userId === userId.toString());
+        if (!player) {
+            throw new Error('Игрок не найден в комнате');
+        }
+        if (!room.gameState || room.gameState.phase !== 'awaiting_deal_resolution') {
+            throw new Error('Нет сделки для обработки');
+        }
+        const action = req.body?.action === 'buy' ? 'buy' : 'skip';
+        const result = resolveDeal(room, player, action);
+        res.json({ success: true, result, state: serializeGameState(room, userId) });
+    } catch (error) {
+        buildErrorResponse(res, error);
+    }
+});
+
+// Передача актива
+app.post('/api/rooms/:roomId/assets/transfer', ensureAuth, (req, res) => {
+    try {
+        const room = requireRoom(req.params.roomId);
+        const userId = getRequestUserId(req);
+        const player = room.players.find(p => p.userId === userId.toString());
+        if (!player) {
+            throw new Error('Игрок не найден в комнате');
+        }
+        const targetId = req.body?.target_user_id || req.body?.targetUserId;
+        if (!targetId) {
+            throw new Error('Не указан получатель актива');
+        }
+        const targetPlayer = room.players.find(p => p.userId === targetId.toString());
+        if (!targetPlayer) {
+            throw new Error('Получатель не найден');
+        }
+        const assetId = req.body?.asset_id || req.body?.assetId;
+        const asset = transferAsset(room, player, targetPlayer, assetId);
+        res.json({ success: true, asset, state: serializeGameState(room, userId) });
+    } catch (error) {
+        buildErrorResponse(res, error);
+    }
+});
+
+// Продажа актива
+app.post('/api/rooms/:roomId/assets/sell', ensureAuth, (req, res) => {
+    try {
+        const room = requireRoom(req.params.roomId);
+        const userId = getRequestUserId(req);
+        const player = room.players.find(p => p.userId === userId.toString());
+        if (!player) {
+            throw new Error('Игрок не найден в комнате');
+        }
+        const assetId = req.body?.asset_id || req.body?.assetId;
+        const asset = sellAsset(room, player, assetId);
+        res.json({ success: true, asset, state: serializeGameState(room, userId) });
+    } catch (error) {
+        buildErrorResponse(res, error);
+    }
+});
+
+// Завершение хода
+app.post('/api/rooms/:roomId/end-turn', ensureAuth, (req, res) => {
+    try {
+        const room = requireRoom(req.params.roomId);
+        const userId = getRequestUserId(req);
+        const player = room.players.find(p => p.userId === userId.toString());
+        if (!player) {
+            throw new Error('Игрок не найден в комнате');
+        }
+        const activePlayer = getActivePlayer(room);
+        if (!activePlayer || activePlayer.userId !== player.userId) {
+            throw new Error('Сейчас не ваш ход');
+        }
+        if (!room.gameState || !['awaiting_end', 'awaiting_roll'].includes(room.gameState.phase)) {
+            throw new Error('Невозможно завершить ход сейчас');
+        }
+
+        player.stats.turnsTaken += 1;
+        advanceTurn(room);
+        res.json({ success: true, state: serializeGameState(room, userId) });
+    } catch (error) {
+        buildErrorResponse(res, error);
+    }
+});
+
+// Кредитная система
+app.get('/api/rooms/:roomId/credit', (req, res) => {
+    const { roomId } = req.params;
+    const playerIndex = Number(req.query.playerIndex || 0);
+
+    try {
+        const room = ensureCreditRoom(roomId, playerIndex);
+        const info = creditService.getPlayerCredit(room, playerIndex);
+        res.json({ success: true, roomId, playerIndex, ...info });
+    } catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+});
+
+app.post('/api/rooms/:roomId/credit/take', ensureAuth, async (req, res) => {
+    const { roomId } = req.params;
+    const { playerIndex = 0, amount, playerName } = req.body;
+
+    const numericPlayerIndex = Number(playerIndex);
+    const numericAmount = Number(amount);
+
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+        return res.status(400).json({ success: false, message: 'Amount must be a positive number' });
+    }
+    if (!Number.isInteger(numericPlayerIndex) || numericPlayerIndex < 0) {
+        return res.status(400).json({ success: false, message: 'playerIndex must be a non-negative integer' });
+    }
+
+    try {
+        const room = ensureCreditRoom(roomId, numericPlayerIndex, playerName);
+        const result = await creditService.takeCredit(room, numericPlayerIndex, numericAmount);
+        res.json({ success: true, roomId, playerIndex: numericPlayerIndex, ...result });
+    } catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+});
+
+app.post('/api/rooms/:roomId/credit/payoff', ensureAuth, async (req, res) => {
+    const { roomId } = req.params;
+    const { playerIndex = 0, amount } = req.body;
+
+    const numericPlayerIndex = Number(playerIndex);
+    const numericAmount = amount !== undefined ? Number(amount) : undefined;
+
+    if (!Number.isInteger(numericPlayerIndex) || numericPlayerIndex < 0) {
+        return res.status(400).json({ success: false, message: 'playerIndex must be a non-negative integer' });
+    }
+    if (numericAmount !== undefined && (!Number.isFinite(numericAmount) || numericAmount <= 0)) {
+        return res.status(400).json({ success: false, message: 'amount must be a positive number when provided' });
+    }
+
+    try {
+        const room = ensureCreditRoom(roomId, numericPlayerIndex);
+        const result = await creditService.payoffCredit(room, numericPlayerIndex, numericAmount);
+        res.json({ success: true, roomId, playerIndex: numericPlayerIndex, ...result });
+    } catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+});
+
+app.get('/api/rooms/:roomId/credit/history', (req, res) => {
+    const { roomId } = req.params;
+
+    const room = creditRooms.get(roomId);
+    if (!room) {
+        return res.json({ success: true, roomId, history: [] });
+    }
+
+    const history = room.game_data.credit_data?.credit_history || [];
+    res.json({ success: true, roomId, history });
+});
+
+// ==================== API ДЛЯ TELEGRAM БОТА ====================
+
+app.get('/api/user/:userId/balance', (req, res) => {
+    const { userId } = req.params;
+    res.json({ balance: 0 });
+});
+
+app.post('/api/user/:userId/balance', (req, res) => {
+    const { userId } = req.params;
+    const { amount, description, type } = req.body;
+    
+    console.log(`Updating balance for user ${userId}: +${amount} (${description})`);
+    res.json({ success: true, newBalance: amount });
+});
+
+app.get('/api/user/:userId', (req, res) => {
+    const { userId } = req.params;
+    res.json({ 
+        id: userId, 
+        balance: 0, 
+        referralCode: `EM${userId}`, 
+        createdAt: new Date().toISOString() 
+    });
+});
+
+app.post('/api/user/create', (req, res) => {
+    const { telegramId, username, firstName, lastName, referralCode } = req.body;
+    
+    console.log(`Creating game user: ${telegramId} (${username})`);
+    res.json({ success: true, userId: telegramId });
+});
+
+app.post('/api/notification', (req, res) => {
+    const { userId, message, type } = req.body;
+    
+    console.log(`Notification for user ${userId}: ${message}`);
+    res.json({ success: true });
+});
+
+app.post('/api/sync', (req, res) => {
+    const { userId, botData } = req.body;
+    
+    console.log(`Syncing data for user ${userId}`);
+    res.json({ success: true });
+});
+
+app.get('/api/user/:userId/referrals', (req, res) => {
+    const { userId } = req.params;
+    
+    res.json({
+        totalReferrals: 0,
+        totalBonus: 0,
+        referrals: []
+    });
+});
+
+app.post('/api/user/:userId/referrals', (req, res) => {
+    const { userId } = req.params;
+    const { referralData } = req.body;
+    
+    console.log(`Updating referral stats for user ${userId}`);
+    res.json({ success: true });
+});
+
+app.get('/api/players/active', (req, res) => {
+    res.json({ players: [] });
+});
+
+app.post('/api/notifications/mass', (req, res) => {
+    const { message, userIds } = req.body;
+    
+    console.log(`Mass notification: ${message} to ${userIds.length} users`);
+    res.json({ success: true });
+});
+
 // API для принудительного сохранения
 app.post('/api/admin/force-save', (req, res) => {
     if (!dbConnected) {
@@ -722,326 +1035,11 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// Тестовый endpoint для создания комнаты
-app.get('/api/rooms/:roomId/game-state', ensureAuth, (req, res) => {
-    try {
-        console.log(`🔍 Запрос game-state для комнаты: ${req.params.roomId}`);
-        const room = requireRoom(req.params.roomId);
-        console.log(`📊 Комната найдена: ${room ? 'да' : 'нет'}, игра началась: ${room?.gameStarted}, состояние: ${room?.gameState ? 'есть' : 'нет'}`);
-        
-        if (!room.gameStarted || !room.gameState) {
-            throw new Error('Игра еще не началась');
-        }
-        
-        // Проверяем, что пользователь находится в комнате
-        const userId = req.user?.userId || req.headers['x-user-id'];
-        const player = room.players.find(p => p.userId === userId);
-        if (!player) {
-            throw new Error('Вы не находитесь в этой комнате');
-        }
-        
-        res.json({ success: true, state: serializeGameState(room, userId) });
-    } catch (error) {
-        console.error(`❌ Ошибка game-state для комнаты ${req.params.roomId}:`, error.message);
-        buildErrorResponse(res, error);
-    }
-});
+// Игровые endpoints будут определены после ensureAuth
 
-app.post('/api/rooms/:roomId/roll', ensureAuth, (req, res) => {
-    try {
-        const room = requireRoom(req.params.roomId);
-        if (!room.gameStarted || !room.gameState) {
-            throw new Error('Игра еще не началась');
-        }
-        const userId = getRequestUserId(req);
-        const player = room.players.find(p => p.userId === userId.toString());
-        if (!player) {
-            throw new Error('Игрок не найден в комнате');
-        }
-        const activePlayer = getActivePlayer(room);
-        if (!activePlayer || activePlayer.userId !== player.userId) {
-            throw new Error('Сейчас не ваш ход');
-        }
-        if (room.gameState.phase !== 'awaiting_roll') {
-            throw new Error('Бросок кубиков сейчас недоступен');
-        }
+// Игровые endpoints будут определены после ensureAuth
 
-        const rollResult = rollDice();
-        const moveResult = movePlayerAndResolve(room, player, rollResult);
-        res.json({
-            success: true,
-            roll: rollResult,
-            move: moveResult,
-            state: serializeGameState(room, userId)
-        });
-    } catch (error) {
-        buildErrorResponse(res, error);
-    }
-});
-
-app.post('/api/rooms/:roomId/deals/choose', ensureAuth, (req, res) => {
-    try {
-        const room = requireRoom(req.params.roomId);
-        const userId = getRequestUserId(req);
-        const player = room.players.find(p => p.userId === userId.toString());
-        if (!player) {
-            throw new Error('Игрок не найден в комнате');
-        }
-        if (!room.gameState || room.gameState.phase !== 'awaiting_deal_choice') {
-            throw new Error('Нет активного выбора сделки');
-        }
-        const card = chooseDeal(room, player, req.body?.size);
-        res.json({ success: true, card, state: serializeGameState(room, userId) });
-    } catch (error) {
-        buildErrorResponse(res, error);
-    }
-});
-
-app.post('/api/rooms/:roomId/deals/resolve', ensureAuth, (req, res) => {
-    try {
-        const room = requireRoom(req.params.roomId);
-        const userId = getRequestUserId(req);
-        const player = room.players.find(p => p.userId === userId.toString());
-        if (!player) {
-            throw new Error('Игрок не найден в комнате');
-        }
-        if (!room.gameState || room.gameState.phase !== 'awaiting_deal_resolution') {
-            throw new Error('Нет сделки для обработки');
-        }
-        const action = req.body?.action === 'buy' ? 'buy' : 'skip';
-        const result = resolveDeal(room, player, action);
-        res.json({ success: true, result, state: serializeGameState(room, userId) });
-    } catch (error) {
-        buildErrorResponse(res, error);
-    }
-});
-
-app.post('/api/rooms/:roomId/assets/transfer', ensureAuth, (req, res) => {
-    try {
-        const room = requireRoom(req.params.roomId);
-        const userId = getRequestUserId(req);
-        const player = room.players.find(p => p.userId === userId.toString());
-        if (!player) {
-            throw new Error('Игрок не найден в комнате');
-        }
-        const targetId = req.body?.target_user_id || req.body?.targetUserId;
-        if (!targetId) {
-            throw new Error('Не указан получатель актива');
-        }
-        const targetPlayer = room.players.find(p => p.userId === targetId.toString());
-        if (!targetPlayer) {
-            throw new Error('Получатель не найден');
-        }
-        const assetId = req.body?.asset_id || req.body?.assetId;
-        const asset = transferAsset(room, player, targetPlayer, assetId);
-        res.json({ success: true, asset, state: serializeGameState(room, userId) });
-    } catch (error) {
-        buildErrorResponse(res, error);
-    }
-});
-
-app.post('/api/rooms/:roomId/assets/sell', ensureAuth, (req, res) => {
-    try {
-        const room = requireRoom(req.params.roomId);
-        const userId = getRequestUserId(req);
-        const player = room.players.find(p => p.userId === userId.toString());
-        if (!player) {
-            throw new Error('Игрок не найден в комнате');
-        }
-        const assetId = req.body?.asset_id || req.body?.assetId;
-        const asset = sellAsset(room, player, assetId);
-        res.json({ success: true, asset, state: serializeGameState(room, userId) });
-    } catch (error) {
-        buildErrorResponse(res, error);
-    }
-});
-
-app.post('/api/rooms/:roomId/end-turn', ensureAuth, (req, res) => {
-    try {
-        const room = requireRoom(req.params.roomId);
-        const userId = getRequestUserId(req);
-        const player = room.players.find(p => p.userId === userId.toString());
-        if (!player) {
-            throw new Error('Игрок не найден в комнате');
-        }
-        const activePlayer = getActivePlayer(room);
-        if (!activePlayer || activePlayer.userId !== player.userId) {
-            throw new Error('Сейчас не ваш ход');
-        }
-        if (!room.gameState || !['awaiting_end', 'awaiting_roll'].includes(room.gameState.phase)) {
-            throw new Error('Невозможно завершить ход сейчас');
-        }
-
-        player.stats.turnsTaken += 1;
-        advanceTurn(room);
-        res.json({ success: true, state: serializeGameState(room, userId) });
-    } catch (error) {
-        buildErrorResponse(res, error);
-    }
-});
-
-app.get('/api/rooms/:roomId/credit', (req, res) => {
-    const { roomId } = req.params;
-    const playerIndex = Number(req.query.playerIndex || 0);
-
-    try {
-        const room = ensureCreditRoom(roomId, playerIndex);
-        const info = creditService.getPlayerCredit(room, playerIndex);
-        res.json({ success: true, roomId, playerIndex, ...info });
-    } catch (error) {
-        res.status(400).json({ success: false, message: error.message });
-    }
-});
-
-app.post('/api/rooms/:roomId/credit/take', ensureAuth, async (req, res) => {
-    const { roomId } = req.params;
-    const { playerIndex = 0, amount, playerName } = req.body;
-
-    const numericPlayerIndex = Number(playerIndex);
-    const numericAmount = Number(amount);
-
-    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-        return res.status(400).json({ success: false, message: 'Amount must be a positive number' });
-    }
-    if (!Number.isInteger(numericPlayerIndex) || numericPlayerIndex < 0) {
-        return res.status(400).json({ success: false, message: 'playerIndex must be a non-negative integer' });
-    }
-
-    try {
-        const room = ensureCreditRoom(roomId, numericPlayerIndex, playerName);
-        const result = await creditService.takeCredit(room, numericPlayerIndex, numericAmount);
-        res.json({ success: true, roomId, playerIndex: numericPlayerIndex, ...result });
-    } catch (error) {
-        res.status(400).json({ success: false, message: error.message });
-    }
-});
-
-app.post('/api/rooms/:roomId/credit/payoff', ensureAuth, async (req, res) => {
-    const { roomId } = req.params;
-    const { playerIndex = 0, amount } = req.body;
-
-    const numericPlayerIndex = Number(playerIndex);
-    const numericAmount = amount !== undefined ? Number(amount) : undefined;
-
-    if (!Number.isInteger(numericPlayerIndex) || numericPlayerIndex < 0) {
-        return res.status(400).json({ success: false, message: 'playerIndex must be a non-negative integer' });
-    }
-    if (numericAmount !== undefined && (!Number.isFinite(numericAmount) || numericAmount <= 0)) {
-        return res.status(400).json({ success: false, message: 'amount must be a positive number when provided' });
-    }
-
-    try {
-        const room = ensureCreditRoom(roomId, numericPlayerIndex);
-        const result = await creditService.payoffCredit(room, numericPlayerIndex, numericAmount);
-        res.json({ success: true, roomId, playerIndex: numericPlayerIndex, ...result });
-    } catch (error) {
-        res.status(400).json({ success: false, message: error.message });
-    }
-});
-
-app.get('/api/rooms/:roomId/credit/history', (req, res) => {
-    const { roomId } = req.params;
-
-    const room = creditRooms.get(roomId);
-    if (!room) {
-        return res.json({ success: true, roomId, history: [] });
-    }
-
-    const history = room.game_data.credit_data?.credit_history || [];
-    res.json({ success: true, roomId, history });
-});
-
-// API для Telegram бота
-app.get('/api/user/:userId/balance', (req, res) => {
-    const { userId } = req.params;
-    // Здесь должна быть логика получения баланса из базы данных
-    res.json({ balance: 0 });
-});
-
-app.post('/api/user/:userId/balance', (req, res) => {
-    const { userId } = req.params;
-    const { amount, description, type } = req.body;
-    
-    console.log(`Updating balance for user ${userId}: +${amount} (${description})`);
-    
-    // Здесь должна быть логика обновления баланса
-    res.json({ success: true, newBalance: amount });
-});
-
-app.get('/api/user/:userId', (req, res) => {
-    const { userId } = req.params;
-    // Здесь должна быть логика получения информации о пользователе
-    res.json({ 
-        id: userId, 
-        balance: 0, 
-        referralCode: `EM${userId}`, 
-        createdAt: new Date().toISOString() 
-    });
-});
-
-app.post('/api/user/create', (req, res) => {
-    const { telegramId, username, firstName, lastName, referralCode } = req.body;
-    
-    console.log(`Creating game user: ${telegramId} (${username})`);
-    
-    // Здесь должна быть логика создания пользователя
-    res.json({ success: true, userId: telegramId });
-});
-
-app.post('/api/notification', (req, res) => {
-    const { userId, message, type } = req.body;
-    
-    console.log(`Notification for user ${userId}: ${message}`);
-    
-    // Здесь должна быть логика отправки уведомления
-    res.json({ success: true });
-});
-
-// Duplicate endpoint removed - using /api/user/stats instead
-
-app.post('/api/sync', (req, res) => {
-    const { userId, botData } = req.body;
-    
-    console.log(`Syncing data for user ${userId}`);
-    
-    // Здесь должна быть логика синхронизации данных
-    res.json({ success: true });
-});
-
-app.get('/api/user/:userId/referrals', (req, res) => {
-    const { userId } = req.params;
-    
-    // Здесь должна быть логика получения реферальной статистики
-    res.json({
-        totalReferrals: 0,
-        totalBonus: 0,
-        referrals: []
-    });
-});
-
-app.post('/api/user/:userId/referrals', (req, res) => {
-    const { userId } = req.params;
-    const { referralData } = req.body;
-    
-    console.log(`Updating referral stats for user ${userId}`);
-    
-    // Здесь должна быть логика обновления реферальной статистики
-    res.json({ success: true });
-});
-
-app.get('/api/players/active', (req, res) => {
-    // Здесь должна быть логика получения активных игроков
-    res.json({ players: [] });
-});
-
-app.post('/api/notifications/mass', (req, res) => {
-    const { message, userIds } = req.body;
-    
-    console.log(`Mass notification: ${message} to ${userIds.length} users`);
-    
-    // Здесь должна быть логика отправки массовых уведомлений
-    res.json({ success: true });
-});
+// Игровые endpoints будут определены после ensureAuth
 
 let httpServer;
 
