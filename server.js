@@ -1024,6 +1024,11 @@ app.get('/game/u/:username', (req, res) => {
     res.sendFile(resolvePath('game-board/game.html'));
 });
 
+// Vanity route: room (dream/token selection) by username
+app.get('/room/u/:username', (req, res) => {
+    res.sendFile(resolvePath('room.html'));
+});
+
 // ---------------------------- Health Check ----------------------------------
 app.get('/api/health', (req, res) => {
     res.json({

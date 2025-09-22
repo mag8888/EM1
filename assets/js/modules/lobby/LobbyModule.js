@@ -617,7 +617,7 @@ class LobbyModule {
                 }
                 this.hideCreateRoomModal();
                 const username = (this.currentUser?.username || this.currentUser?.email?.split('@')[0] || 'player').toString();
-                window.location.assign(`/game/u/${encodeURIComponent(username)}`);
+                window.location.assign(`/room/u/${encodeURIComponent(username)}`);
                 return;
             }
             this.showError(this.dom.createRoomError, 'Комната создана, но отсутствует идентификатор');
@@ -640,7 +640,7 @@ class LobbyModule {
                 localStorage.setItem('currentRoom', JSON.stringify(roomData));
             }
             const username = (this.currentUser?.username || this.currentUser?.email?.split('@')[0] || 'player').toString();
-            window.location.assign(`/game/u/${encodeURIComponent(username)}`);
+            window.location.assign(`/room/u/${encodeURIComponent(username)}`);
         } catch (error) {
             if (room?.requiresPassword) {
                 this.showJoinRoomModal(roomId);
@@ -665,7 +665,7 @@ class LobbyModule {
                 localStorage.setItem('currentRoom', JSON.stringify(room));
             }
             const username = (this.currentUser?.username || this.currentUser?.email?.split('@')[0] || 'player').toString();
-            window.location.assign(`/game/u/${encodeURIComponent(username)}`);
+            window.location.assign(`/room/u/${encodeURIComponent(username)}`);
         } catch (error) {
             this.showError(this.dom.joinRoomError, error.message || 'Не удалось присоединиться к комнате');
         } finally {
@@ -687,7 +687,7 @@ class LobbyModule {
                 localStorage.setItem('currentRoom', JSON.stringify(room));
             }
             const username = (this.currentUser?.username || this.currentUser?.email?.split('@')[0] || 'player').toString();
-            window.location.assign(`/game/u/${encodeURIComponent(username)}`);
+            window.location.assign(`/room/u/${encodeURIComponent(username)}`);
         } catch (error) {
             this.showError(this.dom.createRoomError, error.message || 'Не удалось присоединиться к комнате');
         }
