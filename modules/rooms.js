@@ -220,10 +220,15 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
             if (isDbReady?.()) {
                 user = await db.getUserById(userId);
             }
+            // Проверяем, является ли пользователь создателем комнаты
+            const isCreator = room.creatorId === userId;
+            console.log(`🔍 Вход в комнату: userId=${userId}, creatorId=${room.creatorId}, isCreator=${isCreator}`);
+            
             const newPlayer = addPlayerToRoom(room, {
                 userId,
                 name: getDisplayName(user),
-                avatar: user?.avatar || null
+                avatar: user?.avatar || null,
+                isHost: isCreator // Если это создатель комнаты, то isHost = true
             });
 
             if (isDbReady?.()) {
@@ -231,7 +236,7 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
                     userId,
                     name: newPlayer.name,
                     avatar: newPlayer.avatar,
-                    isHost: newPlayer.isHost
+                    isHost: isCreator // Используем isCreator вместо newPlayer.isHost
                 });
                 
                 // Принудительное сохранение после присоединения игрока
