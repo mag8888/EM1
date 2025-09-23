@@ -2,10 +2,10 @@
   "name": "em1-game-board",
   "version": "2.0.0",
   "description": "Игра 'Энергия денег' - развивающая финансовая грамотность с обновленной игровой логикой",
-  "main": "server-main.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node server-main.js",
-    "dev": "nodemon server-main.js",
+    "start": "node server.js",
+    "dev": "nodemon server.js",
     "build": "echo 'No build step required for static HTML'",
     "test": "echo 'Run test-game-integration.html in browser'",
     "deploy": "echo 'Deploying to Railway...'",
