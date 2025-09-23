@@ -29,7 +29,7 @@ class GameState extends EventEmitter {
             console.log('Токен недействителен, перенаправляем на авторизацию:', error.message);
             localStorage.removeItem('authToken');
             localStorage.removeItem('user');
-            window.location.assign('/auth');
+            window.location.assign('/auth.html');
             return;
         }
         
@@ -74,7 +74,7 @@ class GameState extends EventEmitter {
             
             // Проверяем, что игра началась
             if (!room.gameStarted && this.redirectOnMissingGame) {
-                window.location.assign(`/room/${this.roomId}`);
+                window.location.assign(`/room/u/${this.user.username || 'user'}`);
                 return;
             }
             
