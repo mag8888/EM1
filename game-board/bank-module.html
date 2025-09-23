@@ -357,7 +357,17 @@
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
             // Получаем данные из localStorage
-            currentUser = localStorage.getItem('username') || 'Гость';
+            try {
+                const storedUser = localStorage.getItem('user');
+                if (storedUser) {
+                    const parsed = JSON.parse(storedUser);
+                    currentUser = parsed.username || (parsed.email ? parsed.email.split('@')[0] : 'Гость');
+                } else {
+                    currentUser = localStorage.getItem('username') || 'Гость';
+                }
+            } catch (_) {
+                currentUser = localStorage.getItem('username') || 'Гость';
+            }
             const roomData = localStorage.getItem('currentRoom');
             
             if (!roomData) {

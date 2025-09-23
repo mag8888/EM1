@@ -46,6 +46,9 @@ app.use('/game-board', express.static(path.join(__dirname, 'game-board')));
 // In-memory storage for minimal functionality
 const users = new Map();
 const rooms = new Map();
+// In-memory banking
+const bankBalances = new Map(); // key: roomId:username -> { amount }
+const bankHistory = new Map();  // key: roomId -> [ { from, to, amount, timestamp } ]
 
 // Health Check endpoint
 app.get('/health', (req, res) => {
@@ -356,6 +359,72 @@ app.post('/api/rooms/:roomId/ready', (req, res) => {
     } catch (error) {
         console.error('Ошибка готовности:', error);
         res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
+// ===== Banking API (minimal) =====
+function getBalanceKey(roomId, username) {
+    return `${roomId}:${username}`;
+}
+
+function ensureBalance(roomId, username, initial = 1000) {
+    const key = getBalanceKey(roomId, username);
+    if (!bankBalances.has(key)) {
+        bankBalances.set(key, { amount: initial });
+    }
+    return bankBalances.get(key);
+}
+
+function pushHistory(roomId, record) {
+    if (!bankHistory.has(roomId)) bankHistory.set(roomId, []);
+    bankHistory.get(roomId).push(record);
+}
+
+// Get balance
+app.get('/api/bank/balance/:username/:roomId', (req, res) => {
+    try {
+        const { username, roomId } = req.params;
+        const balance = ensureBalance(roomId, username);
+        res.json({ amount: balance.amount });
+    } catch (error) {
+        console.error('Ошибка баланса:', error);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Get transfer history (last 100)
+app.get('/api/bank/history/:roomId', (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const history = bankHistory.get(roomId) || [];
+        res.json(history.slice(-100));
+    } catch (error) {
+        console.error('Ошибка истории переводов:', error);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Make transfer
+app.post('/api/bank/transfer', (req, res) => {
+    try {
+        const { from, to, amount, roomId } = req.body || {};
+        const sum = Number(amount);
+        if (!roomId || !from || !to || !Number.isFinite(sum) || sum <= 0) {
+            return res.status(400).json({ error: 'Неверные параметры перевода' });
+        }
+        const fromBal = ensureBalance(roomId, from);
+        const toBal = ensureBalance(roomId, to);
+        if (fromBal.amount < sum) {
+            return res.status(400).json({ error: 'Недостаточно средств' });
+        }
+        fromBal.amount -= sum;
+        toBal.amount += sum;
+        const record = { from, to, amount: sum, roomId, timestamp: Date.now() };
+        pushHistory(roomId, record);
+        res.json({ success: true, newBalance: { amount: fromBal.amount }, record });
+    } catch (error) {
+        console.error('Ошибка перевода:', error);
+        res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
 
