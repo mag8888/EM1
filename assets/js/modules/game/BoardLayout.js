@@ -46,9 +46,18 @@ function placeAlongPerimeter(container, total, insetPx, isInner) {
 }
 
 export function renderTracks() {
+    console.log('🎯 renderTracks called');
     const outer = document.getElementById('outerTrack');
     const inner = document.getElementById('innerTrack');
-    if (!outer || !inner) return;
+    
+    console.log('🎯 outerTrack found:', !!outer);
+    console.log('🎯 innerTrack found:', !!inner);
+    
+    if (!outer || !inner) {
+        console.log('❌ Track elements not found, retrying in 100ms');
+        setTimeout(renderTracks, 100);
+        return;
+    }
 
     // Очистим
     outer.innerHTML = '';
@@ -64,8 +73,12 @@ export function renderTracks() {
     // Рассчитать позиции после layout
     // Используем requestAnimationFrame, чтобы размеры были актуальны
     requestAnimationFrame(() => {
+        console.log('🎯 Creating track cells...');
         const outerPositions = placeAlongPerimeter(outer.parentElement, outerCount, 18, false);
         const innerPositions = placeAlongPerimeter(inner.parentElement, innerCount, 110, true);
+
+        console.log('🎯 Outer positions:', outerPositions.length);
+        console.log('🎯 Inner positions:', innerPositions.length);
 
         outerPositions.forEach((pos, i) => {
             const el = createCellElement(i, '');
@@ -84,6 +97,8 @@ export function renderTracks() {
             el.style.top = `${pos.y}px`;
             inner.appendChild(el);
         });
+        
+        console.log('✅ Track cells created');
     });
 }
 
