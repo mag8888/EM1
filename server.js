@@ -597,6 +597,217 @@ app.get('/game', (req, res) => {
     res.sendFile(path.join(__dirname, 'game-board', 'game.html'));
 });
 
+// Game state endpoints
+app.get('/api/rooms/:roomId/game-state', (req, res) => {
+    try {
+        const room = rooms.get(req.params.roomId);
+        if (!room) {
+            return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        }
+        
+        // Return minimal game state for now
+        const gameState = {
+            roomId: room.id,
+            status: room.status,
+            activePlayerId: room.players?.[0]?.userId || null,
+            players: room.players || [],
+            currentTurn: 1,
+            phase: 'waiting',
+            diceResult: null,
+            pendingDeal: null
+        };
+        
+        res.json({ success: true, state: gameState });
+    } catch (error) {
+        console.error('Ошибка получения состояния игры:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
+app.post('/api/rooms/:roomId/roll', (req, res) => {
+    try {
+        const room = rooms.get(req.params.roomId);
+        if (!room) {
+            return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        }
+        
+        // Simple dice roll simulation
+        const dice1 = Math.floor(Math.random() * 6) + 1;
+        const dice2 = Math.floor(Math.random() * 6) + 1;
+        const total = dice1 + dice2;
+        const isDouble = dice1 === dice2;
+        
+        res.json({ 
+            success: true, 
+            result: { dice1, dice2, total, isDouble },
+            state: {
+                roomId: room.id,
+                status: room.status,
+                activePlayerId: room.players?.[0]?.userId || null,
+                players: room.players || [],
+                currentTurn: 1,
+                phase: 'moving',
+                diceResult: { dice1, dice2, total, isDouble },
+                pendingDeal: null
+            }
+        });
+    } catch (error) {
+        console.error('Ошибка броска кубика:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
+app.post('/api/rooms/:roomId/end-turn', (req, res) => {
+    try {
+        const room = rooms.get(req.params.roomId);
+        if (!room) {
+            return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        }
+        
+        // Simple turn end - just return current state
+        const gameState = {
+            roomId: room.id,
+            status: room.status,
+            activePlayerId: room.players?.[0]?.userId || null,
+            players: room.players || [],
+            currentTurn: 1,
+            phase: 'waiting',
+            diceResult: null,
+            pendingDeal: null
+        };
+        
+        res.json({ success: true, state: gameState });
+    } catch (error) {
+        console.error('Ошибка завершения хода:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
+app.post('/api/rooms/:roomId/deals/choose', (req, res) => {
+    try {
+        const room = rooms.get(req.params.roomId);
+        if (!room) {
+            return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        }
+        
+        const { size } = req.body;
+        
+        // Simple deal simulation
+        const deal = {
+            id: Date.now().toString(),
+            type: size === 'small' ? 'small_deal' : 'big_deal',
+            name: size === 'small' ? 'Малая сделка' : 'Большая сделка',
+            amount: size === 'small' ? 5000 : 50000,
+            income: size === 'small' ? 500 : 5000,
+            description: `Это ${size === 'small' ? 'малая' : 'большая'} сделка`
+        };
+        
+        res.json({ 
+            success: true, 
+            deal,
+            state: {
+                roomId: room.id,
+                status: room.status,
+                activePlayerId: room.players?.[0]?.userId || null,
+                players: room.players || [],
+                currentTurn: 1,
+                phase: 'dealing',
+                diceResult: null,
+                pendingDeal: {
+                    stage: 'resolution',
+                    card: deal,
+                    playerId: room.players?.[0]?.userId || null
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Ошибка выбора сделки:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
+app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
+    try {
+        const room = rooms.get(req.params.roomId);
+        if (!room) {
+            return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        }
+        
+        const { action } = req.body;
+        
+        // Simple deal resolution
+        res.json({ 
+            success: true, 
+            action,
+            state: {
+                roomId: room.id,
+                status: room.status,
+                activePlayerId: room.players?.[0]?.userId || null,
+                players: room.players || [],
+                currentTurn: 1,
+                phase: 'waiting',
+                diceResult: null,
+                pendingDeal: null
+            }
+        });
+    } catch (error) {
+        console.error('Ошибка разрешения сделки:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
+app.post('/api/rooms/:roomId/assets/transfer', (req, res) => {
+    try {
+        const room = rooms.get(req.params.roomId);
+        if (!room) {
+            return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        }
+        
+        res.json({ 
+            success: true, 
+            state: {
+                roomId: room.id,
+                status: room.status,
+                activePlayerId: room.players?.[0]?.userId || null,
+                players: room.players || [],
+                currentTurn: 1,
+                phase: 'waiting',
+                diceResult: null,
+                pendingDeal: null
+            }
+        });
+    } catch (error) {
+        console.error('Ошибка передачи актива:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
+app.post('/api/rooms/:roomId/assets/sell', (req, res) => {
+    try {
+        const room = rooms.get(req.params.roomId);
+        if (!room) {
+            return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        }
+        
+        res.json({ 
+            success: true, 
+            state: {
+                roomId: room.id,
+                status: room.status,
+                activePlayerId: room.players?.[0]?.userId || null,
+                players: room.players || [],
+                currentTurn: 1,
+                phase: 'waiting',
+                diceResult: null,
+                pendingDeal: null
+            }
+        });
+    } catch (error) {
+        console.error('Ошибка продажи актива:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
 // Main routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
