@@ -22,15 +22,12 @@ class GameState extends EventEmitter {
             return;
         }
         
-        // Проверяем валидность токена, пытаясь получить данные пользователя
+        // Проверяем пользователя с мягким фоллбэком (как в лобби)
         try {
-            await this.api.request('/api/user/profile');
+            await this.api.getPublicProfile();
         } catch (error) {
-            console.log('Токен недействителен, перенаправляем на авторизацию:', error.message);
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user');
-            window.location.assign('/auth.html');
-            return;
+            // Не разлогиниваем на 404/отсутствии данных, продолжаем с кэшем
+            console.log('Профиль недоступен, продолжаем с локальными данными:', error?.message || error);
         }
         
         await this.ensureJoined();
