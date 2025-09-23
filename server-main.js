@@ -214,13 +214,27 @@ app.get('/test', (req, res) => {
     res.sendFile(path.join(__dirname, 'test-game-integration.html'));
 });
 
+// Health Check endpoints
+app.get('/health', (req, res) => {
+    const dbStatus = getConnectionStatus();
+    res.json({
+        status: 'ok',
+        service: 'EM1 Game Board v2.0',
+        version: '2.1.0',
+        timestamp: new Date().toISOString(),
+        database: dbStatus.isConnected ? 'MongoDB Atlas' : 'Memory',
+        rooms: serverRooms.length,
+        users: connectedUsers.size
+    });
+});
+
 // API Health Check
 app.get('/api/health', (req, res) => {
     const dbStatus = getConnectionStatus();
     res.json({
         status: 'ok',
         service: 'EM1 Game Board v2.0',
-        version: '2.0.0',
+        version: '2.1.0',
         timestamp: new Date().toISOString(),
         database: {
             connected: dbStatus.isConnected,
@@ -601,40 +615,49 @@ async function startServer() {
         await initializeDatabase();
         
         // Initialize auth module with app after database connection
-        const jwtSecret = process.env.JWT_SECRET || 'your-secret-key-here';
+        const jwtSecret = process.env.JWT_SECRET || 'em1-production-secret-key-2024-railway';
         console.log('🔐 Initializing auth module...');
-        authModule({ 
-            app, 
-            db: { 
-                createUser: async (userData) => {
-                    try {
-                        const userModel = new UserModel(userData);
-                        return await userModel.save();
-                    } catch (error) {
-                        console.error('Error creating user:', error);
-                        throw error;
-                    }
-                },
-                getUserByEmail: async (email) => {
-                    try {
-                        return await UserModel.findByEmail(email);
-                    } catch (error) {
-                        console.error('Error finding user by email:', error);
-                        return null;
-                    }
-                },
-                getUserByUsername: async (username) => {
-                    try {
-                        return await UserModel.findByUsername(username);
-                    } catch (error) {
-                        console.error('Error finding user by username:', error);
-                        return null;
-                    }
+        
+        // Create database wrapper for auth module
+        const dbWrapper = {
+            createUser: async (userData) => {
+                try {
+                    console.log('Creating user:', userData.username);
+                    const userModel = new UserModel(userData);
+                    const savedUser = await userModel.save();
+                    console.log('User created successfully:', savedUser.username);
+                    return savedUser;
+                } catch (error) {
+                    console.error('Error creating user:', error);
+                    throw error;
                 }
-            }, 
-            jwtSecret 
-        });
-        console.log('✅ Auth module initialized');
+            },
+            getUserByEmail: async (email) => {
+                try {
+                    console.log('Finding user by email:', email);
+                    const user = await UserModel.findByEmail(email);
+                    console.log('User found by email:', user ? user.username : 'not found');
+                    return user;
+                } catch (error) {
+                    console.error('Error finding user by email:', error);
+                    return null;
+                }
+            },
+            getUserByUsername: async (username) => {
+                try {
+                    console.log('Finding user by username:', username);
+                    const user = await UserModel.findByUsername(username);
+                    console.log('User found by username:', user ? user.username : 'not found');
+                    return user;
+                } catch (error) {
+                    console.error('Error finding user by username:', error);
+                    return null;
+                }
+            }
+        };
+        
+        authModule({ app, db: dbWrapper, jwtSecret });
+        console.log('✅ Auth module initialized with database wrapper');
         
         // Load existing rooms from MongoDB
         await loadRoomsFromMongoDB();
