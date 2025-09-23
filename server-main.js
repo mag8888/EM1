@@ -656,8 +656,23 @@ async function startServer() {
             }
         };
         
-        authModule({ app, db: dbWrapper, jwtSecret });
-        console.log('✅ Auth module initialized with database wrapper');
+        const authResult = authModule({ 
+            app, 
+            db: dbWrapper, 
+            jwtSecret,
+            roomState: {
+                addUserToMemory: (user) => connectedUsers.set(user.id, user),
+                getUserFromMemory: (userId) => connectedUsers.get(userId),
+                getUserByEmailFromMemory: (email) => {
+                    for (let user of connectedUsers.values()) {
+                        if (user.email === email) return user;
+                    }
+                    return null;
+                },
+                updateUserInMemory: (userId, userData) => connectedUsers.set(userId, userData)
+            }
+        });
+        console.log('✅ Auth module initialized with database wrapper and room state');
         
         // Load existing rooms from MongoDB
         await loadRoomsFromMongoDB();
