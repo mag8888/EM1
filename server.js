@@ -664,6 +664,40 @@ app.get('/api/rooms/safari', async (req, res) => {
     }
 });
 
+// Публичный endpoint для получения конкретной комнаты (без JWT)
+app.get('/api/rooms/:roomId/safari', async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const room = rooms.get(roomId);
+        if (!room) {
+            return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        }
+        const result = {
+            id: room.id,
+            name: room.name,
+            creatorId: room.creatorId,
+            creatorName: room.creatorName,
+            maxPlayers: room.maxPlayers,
+            turnTime: room.turnTime,
+            assignProfessions: room.assignProfessions,
+            gameStarted: room.gameStarted,
+            players: room.players.map(player => ({
+                userId: player.userId,
+                name: player.name,
+                avatar: player.avatar,
+                isHost: player.isHost,
+                isReady: player.isReady,
+                selectedDream: player.selectedDream,
+                selectedToken: player.selectedToken
+            }))
+        };
+        res.json({ success: true, room: result });
+    } catch (error) {
+        console.error('Ошибка получения комнаты для Safari:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
 // Регистрируем модуль авторизации после middleware
 const { sanitizeUser, authenticateToken } = registerAuthModule({ app, db, jwtSecret: JWT_SECRET, roomState });
 
