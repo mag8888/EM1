@@ -387,10 +387,19 @@ class RoomApi {
     // Дополнительно: публичный профиль для проверки токена (минимальные данные)
     async getPublicProfile() {
         try {
+            // Полноценный сервер: защищённый эндпоинт
             return await this.request('/api/user/profile');
         } catch (e) {
-            // Не валим поток — просто сообщаем, что нужен релогин
-            return null;
+            // Фолбэк для минимального сервера (нет /api/user/profile, есть /api/user/profile/:username)
+            try {
+                const user = this.getCurrentUser();
+                const username = user?.username || (user?.email ? user.email.split('@')[0] : null);
+                if (!username) return null;
+                // Публичный GET без лишних заголовков, чтобы избежать preflight
+                return await this.requestPublic(`/api/user/profile/${encodeURIComponent(username)}`);
+            } catch (_) {
+                return null;
+            }
         }
     }
 
