@@ -87,8 +87,11 @@ export function renderTracks() {
     });
 }
 
-// Автозапуск, если подгружается напрямую
+// Экспорт в глобальную область для прямого вызова
 if (typeof window !== 'undefined') {
+    window.renderTracks = renderTracks;
+    
+    // Автозапуск, если подгружается напрямую
     window.addEventListener('DOMContentLoaded', () => {
         const hasTracks = document.getElementById('outerTrack') && document.getElementById('innerTrack');
         if (hasTracks) {
