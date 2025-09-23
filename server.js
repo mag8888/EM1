@@ -132,6 +132,10 @@ app.post('/api/rooms', (req, res) => {
 // Helper to sanitize room for response
 function sanitizeRoom(room) {
     if (!room) return null;
+    const players = room.players || [];
+    const readyCount = players.filter(p => p.isReady).length;
+    const playersCount = players.length;
+    const canStart = playersCount >= 2 && readyCount >= 2;
     return {
         id: room.id,
         name: room.name,
@@ -140,7 +144,11 @@ function sanitizeRoom(room) {
         status: room.status,
         createdAt: room.createdAt,
         updatedAt: room.updatedAt,
-        players: (room.players || []).map(p => ({
+        playersCount,
+        readyCount,
+        canStart,
+        gameStarted: room.status === 'playing',
+        players: players.map(p => ({
             userId: p.userId,
             name: p.name,
             isHost: !!p.isHost,
@@ -214,6 +222,34 @@ app.post('/api/rooms/:roomId/join', (req, res) => {
         res.json({ success: true, room: sanitizeRoom(room) });
     } catch (error) {
         console.error('Ошибка присоединения к комнате:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
+// Start game (requires JWT and host, and canStart)
+app.post('/api/rooms/:roomId/start', (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'] || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+        if (!token) return res.status(401).json({ success: false, message: 'Требуется авторизация' });
+        let payload;
+        try { payload = jwt.verify(token, JWT_SECRET); } catch { return res.status(403).json({ success: false, message: 'Недействительный токен' }); }
+        const room = rooms.get(req.params.roomId);
+        if (!room) return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        const userId = String(payload.userId || payload.id || 'guest');
+        const hostId = String(room.players?.[0]?.userId || '');
+        const s = sanitizeRoom(room);
+        if (userId !== hostId) {
+            return res.status(403).json({ success: false, message: 'Только создатель комнаты может начать игру' });
+        }
+        if (!s.canStart) {
+            return res.status(400).json({ success: false, message: 'Недостаточно готовых игроков' });
+        }
+        room.status = 'playing';
+        room.updatedAt = new Date().toISOString();
+        return res.json({ success: true, room: sanitizeRoom(room) });
+    } catch (error) {
+        console.error('Ошибка запуска игры:', error);
         res.status(500).json({ success: false, message: 'Ошибка сервера' });
     }
 });
