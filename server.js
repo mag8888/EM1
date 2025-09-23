@@ -190,8 +190,25 @@ app.get('/api/rooms/:roomId', (req, res) => {
         if (!room) {
             return res.status(404).json({ success: false, message: 'Комната не найдена' });
         }
+        // Try to identify current user
+        let currentUserId = null;
+        const authHeader = req.headers['authorization'] || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+        if (token) {
+            try {
+                const payload = jwt.verify(token, JWT_SECRET);
+                currentUserId = String(payload.userId || payload.id || '') || null;
+            } catch (_) {}
+        }
+        if (!currentUserId) {
+            currentUserId = String(req.query.user_id || req.headers['x-user-id'] || '') || null;
+        }
+
+        const sanitized = sanitizeRoom(room);
+        const currentPlayer = (room.players || []).find(p => currentUserId && String(p.userId) === String(currentUserId)) || null;
+
         res.set('Cache-Control', 'no-store');
-        res.json({ success: true, room: sanitizeRoom(room) });
+        res.json({ success: true, room: { ...sanitized, currentPlayer } });
     } catch (error) {
         console.error('Ошибка получения комнаты:', error);
         res.status(500).json({ success: false, message: 'Ошибка сервера' });
@@ -589,6 +606,11 @@ app.get('/game/u/:username', (req, res) => {
 
 // Room page route (for minimal prod)
 app.get('/room/u/:username', (req, res) => {
+    res.sendFile(path.join(__dirname, 'room.html'));
+});
+
+// Direct room route by id (used by older links)
+app.get('/room/:roomId', (req, res) => {
     res.sendFile(path.join(__dirname, 'room.html'));
 });
 
