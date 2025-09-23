@@ -200,3 +200,4 @@ class GameState extends EventEmitter {
 
 // Экспортируем в window для совместимости
 window.GameState = GameState;
+export default GameState;
