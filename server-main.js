@@ -20,6 +20,9 @@ const { GAME_CELLS, GameCellsUtils } = require('./game-board/config/game-cells')
 const { MARKET_CARDS, EXPENSE_CARDS, SMALL_DEALS, BIG_DEALS } = require('./game-board/config/cards-config');
 const userManager = require('./game-board/utils/userManager');
 
+// Initialize auth module
+const authModule = require('./modules/auth');
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -596,6 +599,42 @@ app.use((err, req, res, next) => {
 async function startServer() {
     try {
         await initializeDatabase();
+        
+        // Initialize auth module with app after database connection
+        const jwtSecret = process.env.JWT_SECRET || 'your-secret-key-here';
+        console.log('🔐 Initializing auth module...');
+        authModule({ 
+            app, 
+            db: { 
+                createUser: async (userData) => {
+                    try {
+                        const userModel = new UserModel(userData);
+                        return await userModel.save();
+                    } catch (error) {
+                        console.error('Error creating user:', error);
+                        throw error;
+                    }
+                },
+                getUserByEmail: async (email) => {
+                    try {
+                        return await UserModel.findByEmail(email);
+                    } catch (error) {
+                        console.error('Error finding user by email:', error);
+                        return null;
+                    }
+                },
+                getUserByUsername: async (username) => {
+                    try {
+                        return await UserModel.findByUsername(username);
+                    } catch (error) {
+                        console.error('Error finding user by username:', error);
+                        return null;
+                    }
+                }
+            }, 
+            jwtSecret 
+        });
+        console.log('✅ Auth module initialized');
         
         // Load existing rooms from MongoDB
         await loadRoomsFromMongoDB();

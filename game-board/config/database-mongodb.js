@@ -55,10 +55,60 @@ const getConnectionStatus = () => ({
     name: 'MongoDB'
 });
 
+let UserModel;
+let RoomModel;
+
+const setModels = (userModel, roomModel) => {
+    UserModel = userModel;
+    RoomModel = roomModel;
+};
+
+const dbWrapper = {
+    async createUser(userData) {
+        if (!UserModel) throw new Error("UserModel not set");
+        return await UserModel.createUser(userData);
+    },
+    async getUserByEmail(email) {
+        if (!UserModel) throw new Error("UserModel not set");
+        return await UserModel.findByEmail(email);
+    },
+    async getUserByUsername(username) {
+        if (!UserModel) throw new Error("UserModel not set");
+        return await UserModel.findByUsername(username);
+    },
+    async getUserById(id) {
+        if (!UserModel) throw new Error("UserModel not set");
+        return await UserModel.findById(id);
+    },
+    async updateUser(id, updateData) {
+        if (!UserModel) throw new Error("UserModel not set");
+        return await UserModel.updateOne(id, updateData);
+    },
+    async getAllUsers() {
+        if (!UserModel) throw new Error("UserModel not set");
+        return await UserModel.getAllUsers();
+    },
+    async createRoom(roomData) {
+        if (!RoomModel) throw new Error("RoomModel not set");
+        const room = new RoomModel(roomData);
+        return await room.save();
+    },
+    async getRoom(roomId) {
+        if (!RoomModel) throw new Error("RoomModel not set");
+        return await RoomModel.findById(roomId);
+    },
+    async getAllRooms() {
+        if (!RoomModel) throw new Error("RoomModel not set");
+        return await RoomModel.find();
+    }
+};
+
 module.exports = {
     connectToMongoDB,
     getDb,
     closeMongoDBConnection,
-    getConnectionStatus
+    getConnectionStatus,
+    setModels,
+    dbWrapper
 };
 

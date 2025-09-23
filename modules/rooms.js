@@ -136,7 +136,7 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
                 status: room.status,
                 gameStarted: room.gameStarted,
                 canStart: room.canStart
-            });
+            }));
             res.set('Cache-Control', 'no-store');
             res.json({ success: true, rooms: simplified });
         } catch (error) {
