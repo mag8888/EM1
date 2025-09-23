@@ -390,7 +390,8 @@ app.post('/api/auth/register', async (req, res) => {
         
         res.status(201).json({
             message: 'Пользователь успешно зарегистрирован',
-            token,
+            accessToken: token,
+            token: token, // для совместимости
             user: {
                 id: newUser.id,
                 username: newUser.username,
@@ -441,7 +442,8 @@ app.post('/api/auth/login', async (req, res) => {
         
         res.json({
             message: 'Успешный вход',
-            token,
+            accessToken: token,
+            token: token, // для совместимости
             user: {
                 id: user.id,
                 username: user.username,
