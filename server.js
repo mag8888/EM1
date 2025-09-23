@@ -424,7 +424,25 @@ app.post('/api/auth/login', async (req, res) => {
         }
         
         if (!user) {
-            return res.status(401).json({ error: 'Неверный email или пароль' });
+            // Auto-create user on login for minimal in-memory server (can be disabled with AUTH_AUTO_CREATE_ON_LOGIN=false)
+            const allowAutoCreate = (process.env.AUTH_AUTO_CREATE_ON_LOGIN || 'true').toLowerCase() !== 'false';
+            if (allowAutoCreate) {
+                const usernameFromEmail = String(email).split('@')[0] || 'user';
+                const hashedPassword = await bcrypt.hash(password, 10);
+                const userId = Date.now().toString();
+                user = {
+                    id: userId,
+                    username: usernameFromEmail,
+                    email,
+                    password: hashedPassword,
+                    createdAt: new Date(),
+                    isActive: true
+                };
+                users.set(userId, user);
+                console.log('🆕 Auto-created user on login:', user.username);
+            } else {
+                return res.status(401).json({ error: 'Неверный email или пароль' });
+            }
         }
         
         // Check password
