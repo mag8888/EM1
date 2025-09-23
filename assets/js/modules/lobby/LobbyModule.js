@@ -400,15 +400,10 @@ class LobbyModule {
         console.log('API available:', !!this.api);
         console.log('API baseUrl:', this.api?.baseUrl);
         
-        // Дополнительная проверка токена перед загрузкой
+        // Проверяем токен, но не блокируем загрузку если его нет
         const authToken = localStorage.getItem('authToken');
         if (!authToken) {
-            console.log('❌ No auth token found in loadRooms, redirecting to login');
-            this.showError(null, 'Сессия истекла. Необходимо войти в систему');
-            setTimeout(() => {
-                window.location.href = '/auth.html';
-            }, 2000);
-            return;
+            console.log('⚠️ No auth token found, but continuing with room loading');
         }
         
         try {

@@ -570,20 +570,9 @@ app.get('/api/user/profile', (req, res) => {
     }
 });
 
-// Minimal user stats endpoint (requires JWT)
+// Minimal user stats endpoint (public, no auth required)
 app.get('/api/user/stats', (req, res) => {
     try {
-        const authHeader = req.headers['authorization'] || '';
-        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-        if (!token) {
-            return res.status(401).json({ message: 'Токен доступа отсутствует' });
-        }
-        let payload;
-        try {
-            payload = jwt.verify(token, JWT_SECRET);
-        } catch (e) {
-            return res.status(403).json({ message: 'Недействительный токен' });
-        }
         // Возвращаем базовые нули для минимальной реализации
         res.json({
             games_played: 0,
@@ -591,7 +580,7 @@ app.get('/api/user/stats', (req, res) => {
             level: 1,
             experience: 0,
             balance: 10000,
-            userId: payload.userId
+            userId: 'guest'
         });
     } catch (error) {
         console.error('Ошибка получения статистики пользователя:', error);
