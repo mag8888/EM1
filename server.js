@@ -467,6 +467,52 @@ app.get('/api/user/profile/:username', (req, res) => {
     }
 });
 
+// Minimal current user profile (tries token first, then X-User-Name header)
+app.get('/api/user/profile', (req, res) => {
+    try {
+        let username = null;
+        // Try JWT
+        const authHeader = req.headers['authorization'] || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+        if (token) {
+            try {
+                const payload = jwt.verify(token, JWT_SECRET);
+                // Find by email or id
+                for (let user of users.values()) {
+                    if ((payload.email && user.email === payload.email) || String(user.id) === String(payload.userId)) {
+                        return res.json({
+                            id: user.id,
+                            username: user.username,
+                            email: user.email,
+                            createdAt: user.createdAt,
+                            isActive: user.isActive
+                        });
+                    }
+                }
+            } catch (_) { /* ignore */ }
+        }
+        // Try header fallback
+        username = req.headers['x-user-name'] || null;
+        if (username) {
+            for (let u of users.values()) {
+                if (u.username === username || u.email === username) {
+                    return res.json({
+                        id: u.id,
+                        username: u.username,
+                        email: u.email,
+                        createdAt: u.createdAt,
+                        isActive: u.isActive
+                    });
+                }
+            }
+        }
+        return res.status(404).json({ message: 'Пользователь не найден' });
+    } catch (error) {
+        console.error('Ошибка профиля:', error);
+        res.status(500).json({ message: 'Ошибка сервера' });
+    }
+});
+
 // Minimal user stats endpoint (requires JWT)
 app.get('/api/user/stats', (req, res) => {
     try {
