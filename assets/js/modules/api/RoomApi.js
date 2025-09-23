@@ -95,9 +95,10 @@ class RoomApi {
 
     createFetchConfig(method, headers, body) {
         const built = this.buildHeaders(headers);
-        // Для GET не указываем Content-Type и пользовательские X-* чтобы не вызывать preflight
+        // Для GET не указываем Content-Type/Authorization и пользовательские X-* чтобы не вызывать preflight
         if (method === 'GET') {
             delete built['Content-Type'];
+            delete built['Authorization'];
             delete built['X-User-ID'];
             delete built['X-User-Name'];
         }
@@ -415,7 +416,8 @@ class RoomApi {
     async getRoom(roomId, params = {}) {
         const query = new URLSearchParams({ ...params }).toString();
         const url = query ? `/api/rooms/${roomId}?${query}` : `/api/rooms/${roomId}`;
-        const data = await this.request(url);
+        // Публичный GET без Authorization/X-* чтобы избежать CORS preflight
+        const data = await this.requestPublic(url);
         return data.room;
     }
 
