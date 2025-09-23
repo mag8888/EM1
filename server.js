@@ -279,6 +279,11 @@ app.get('/game/u/:username', (req, res) => {
     res.sendFile(path.join(__dirname, 'game-board', 'profile.html'));
 });
 
+// Room page route (for minimal prod)
+app.get('/room/u/:username', (req, res) => {
+    res.sendFile(path.join(__dirname, 'room.html'));
+});
+
 // Main routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
