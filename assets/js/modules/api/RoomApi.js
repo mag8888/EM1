@@ -207,8 +207,8 @@ class RoomApi {
         }
 
         const requestConfig = this.cloneRequestConfig(config);
-        // Ensure cookies and CORS are allowed
-        requestConfig.credentials = 'include';
+        // Do not send cookies with wildcard CORS; tokens go via Authorization header
+        requestConfig.credentials = 'omit';
         requestConfig.mode = 'cors';
         const response = await fetch(url, requestConfig);
         const bodyText = response.status === 204 ? '' : await response.text();
@@ -237,7 +237,8 @@ class RoomApi {
             }
 
             xhr.timeout = DEFAULT_REQUEST_TIMEOUT;
-            xhr.withCredentials = true;
+            // Do not send cookies with wildcard CORS
+            xhr.withCredentials = false;
 
             Object.entries(requestConfig.headers || {}).forEach(([key, value]) => {
                 try {
