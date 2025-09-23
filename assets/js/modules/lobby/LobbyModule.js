@@ -310,20 +310,27 @@ class LobbyModule {
             console.log('Current origin:', window.location.origin);
             console.log('API base URL:', this.roomApi.baseUrl);
             
-            const data = await this.roomApi.request('/api/user/profile');
+            // Профиль может отсутствовать на минимальном сервере: используем API-клиент с фолбэком
+            const data = await this.roomApi.getPublicProfile();
             console.log('Profile data received:', data);
             console.log('Profile data type:', typeof data);
             console.log('Profile data keys:', data ? Object.keys(data) : 'null/undefined');
             
-            if (!data.id && data._id) {
-                data.id = data._id;
+            if (data) {
+                if (!data.id && data._id) {
+                    data.id = data._id;
+                }
+                if (!data.id) {
+                    console.log('Invalid user data received');
+                    // Мягкий успех: используем уже сохранённого пользователя
+                    return true;
+                }
+                localStorage.setItem('user', JSON.stringify(data));
+                this.currentUser = data;
+            } else {
+                // Мягкий режим: профиль недоступен (404) на минимальном сервере
+                console.log('Public profile not available, continue with cached user');
             }
-            if (!data.id) {
-                console.log('Invalid user data received');
-                return false;
-            }
-            localStorage.setItem('user', JSON.stringify(data));
-            this.currentUser = data;
             return true;
         } catch (error) {
             console.error('Failed to validate user', error);
@@ -339,7 +346,7 @@ class LobbyModule {
                 status: errorStatus
             });
             
-            // Удаляем токен только при явных ошибках авторизации
+            // Удаляем токен только при явных ошибках авторизации (не при 404)
             if (errorMessage.includes('401') || errorMessage.includes('403') || 
                 errorMessage.includes('Unauthorized') || errorMessage.includes('Forbidden') ||
                 errorMessage.includes('Недействительный токен') || errorMessage.includes('Токен истек') ||
@@ -350,13 +357,13 @@ class LobbyModule {
                 return false;
             }
             
-            // Для других ошибок (сеть, сервер) не удаляем токен
+            // Для других ошибок (сеть, сервер, 404) — не удаляем токен, продолжаем
             if (errorMessage.includes('Load failed') || errorMessage.includes('Network error')) {
                 console.log('Network error detected, keeping tokens for retry');
             } else {
                 console.log('Server error, keeping tokens for retry');
             }
-            return false;
+            return true;
         }
     }
 
