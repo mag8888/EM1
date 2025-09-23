@@ -675,6 +675,70 @@ async function startServer() {
         });
         console.log('✅ Auth module initialized with database wrapper and room state');
         
+        // Add direct registration API endpoint as fallback
+        const bcrypt = require('bcryptjs');
+        const jwt = require('jsonwebtoken');
+        
+        app.post('/api/auth/register', async (req, res) => {
+            try {
+                console.log('📝 Registration request received:', req.body);
+                const { username, email, password, confirmPassword } = req.body;
+                
+                // Validation
+                if (!username || !email || !password) {
+                    return res.status(400).json({ error: 'Все поля обязательны' });
+                }
+                
+                if (password !== confirmPassword) {
+                    return res.status(400).json({ error: 'Пароли не совпадают' });
+                }
+                
+                // Check if user exists
+                const existingUser = await dbWrapper.findUserByEmail(email);
+                if (existingUser) {
+                    return res.status(400).json({ error: 'Пользователь с таким email уже существует' });
+                }
+                
+                // Hash password
+                const hashedPassword = await bcrypt.hash(password, 10);
+                
+                // Create user
+                const newUser = {
+                    username,
+                    email,
+                    password: hashedPassword,
+                    createdAt: new Date(),
+                    isActive: true
+                };
+                
+                const savedUser = await dbWrapper.createUser(newUser);
+                console.log('✅ User created successfully:', savedUser.username);
+                
+                // Generate JWT token
+                const token = jwt.sign(
+                    { userId: savedUser._id || savedUser.id, email: savedUser.email },
+                    jwtSecret,
+                    { expiresIn: '7d' }
+                );
+                
+                res.status(201).json({
+                    message: 'Пользователь успешно зарегистрирован',
+                    token,
+                    user: {
+                        id: savedUser._id || savedUser.id,
+                        username: savedUser.username,
+                        email: savedUser.email
+                    }
+                });
+                
+            } catch (error) {
+                console.error('❌ Registration error:', error);
+                res.status(500).json({ error: 'Ошибка сервера при регистрации' });
+            }
+        });
+        
+        console.log('✅ Direct registration API endpoint added');
+        
         // Load existing rooms from MongoDB
         await loadRoomsFromMongoDB();
         
