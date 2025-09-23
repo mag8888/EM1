@@ -129,6 +129,95 @@ app.post('/api/rooms', (req, res) => {
     }
 });
 
+// Helper to sanitize room for response
+function sanitizeRoom(room) {
+    if (!room) return null;
+    return {
+        id: room.id,
+        name: room.name,
+        maxPlayers: room.maxPlayers,
+        turnTime: room.turnTime,
+        status: room.status,
+        createdAt: room.createdAt,
+        updatedAt: room.updatedAt,
+        players: (room.players || []).map(p => ({
+            userId: p.userId,
+            name: p.name,
+            isHost: !!p.isHost,
+            isReady: !!p.isReady,
+            selectedToken: p.selectedToken ?? null,
+            selectedDream: p.selectedDream ?? null,
+            position: p.position ?? 0,
+            cash: p.cash ?? 10000,
+            passiveIncome: p.passiveIncome ?? 0,
+            assets: Array.isArray(p.assets) ? p.assets : []
+        }))
+    };
+}
+
+// Get room by id (public GET without auth)
+app.get('/api/rooms/:roomId', (req, res) => {
+    try {
+        const room = rooms.get(req.params.roomId);
+        if (!room) {
+            return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        }
+        res.set('Cache-Control', 'no-store');
+        res.json({ success: true, room: sanitizeRoom(room) });
+    } catch (error) {
+        console.error('Ошибка получения комнаты:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
+// Join room (requires JWT)
+app.post('/api/rooms/:roomId/join', (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'] || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+        if (!token) {
+            return res.status(401).json({ success: false, message: 'Требуется авторизация' });
+        }
+        let payload;
+        try {
+            payload = jwt.verify(token, JWT_SECRET);
+        } catch (e) {
+            return res.status(403).json({ success: false, message: 'Недействительный токен' });
+        }
+
+        const room = rooms.get(req.params.roomId);
+        if (!room) {
+            return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        }
+
+        const userId = String(payload.userId || payload.id || 'guest');
+        const already = (room.players || []).some(p => String(p.userId) === userId);
+        if (!already) {
+            if ((room.players || []).length >= room.maxPlayers) {
+                return res.status(400).json({ success: false, message: 'Комната заполнена' });
+            }
+            room.players.push({
+                userId,
+                name: req.headers['x-user-name'] || (payload.email ? payload.email.split('@')[0] : 'Игрок'),
+                isHost: false,
+                isReady: false,
+                selectedToken: null,
+                selectedDream: null,
+                position: 0,
+                cash: 10000,
+                passiveIncome: 0,
+                assets: []
+            });
+            room.updatedAt = new Date().toISOString();
+        }
+
+        res.json({ success: true, room: sanitizeRoom(room) });
+    } catch (error) {
+        console.error('Ошибка присоединения к комнате:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
 // Registration API endpoint
 app.post('/api/auth/register', async (req, res) => {
     try {
