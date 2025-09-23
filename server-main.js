@@ -10,10 +10,10 @@ const path = require('path');
 const cors = require('cors');
 
 // Database imports
-const { connectToDatabase, getConnectionStatus } = require('./game-board/config/database');
-const Room = require('./game-board/models/Room');
-const User = require('./game-board/models/User');
-const BankAccount = require('./game-board/models/BankAccount');
+const { connectToMongoDB, getDb, getConnectionStatus } = require('./game-board/config/database-mongodb');
+const RoomModel = require('./game-board/models/RoomModel');
+const UserModel = require('./game-board/models/UserModel');
+const BankAccountModel = require('./game-board/models/BankAccountModel');
 
 // Game configuration
 const { GAME_CELLS, GameCellsUtils } = require('./game-board/config/game-cells');
@@ -54,17 +54,70 @@ app.use(express.json());
 // Initialize Database Connection
 async function initializeDatabase() {
     try {
-        await connectToDatabase();
-        console.log('✅ Database connection established');
+        await connectToMongoDB();
+        console.log("✅ MongoDB Atlas connection established");
     } catch (error) {
-        console.error('❌ Database connection failed:', error.message);
-        console.log('🔄 Continuing with in-memory storage...');
+        console.error("❌ MongoDB Atlas connection failed:", error.message);
+        console.log("🔄 Continuing with in-memory storage for local testing...");
+        // Don't exit the process for local testing, allow fallback to in-memory storage
     }
 }
 
-// In-memory storage for rooms and game data
+// In-memory storage for rooms and game data (with MongoDB persistence)
 let serverRooms = [];
 let connectedUsers = new Map();
+
+// MongoDB persistence functions
+const saveRoomToMongoDB = async (room) => {
+    try {
+        const dbStatus = getConnectionStatus();
+        if (dbStatus.isConnected) {
+            const roomModel = new RoomModel(room);
+            await roomModel.save();
+        }
+    } catch (error) {
+        console.error('❌ Error saving room to MongoDB:', error);
+    }
+};
+
+const loadRoomsFromMongoDB = async () => {
+    try {
+        const dbStatus = getConnectionStatus();
+        if (dbStatus.isConnected) {
+            const rooms = await RoomModel.find();
+            serverRooms = rooms.map(room => ({
+                id: room._id.toString(),
+                name: room.name,
+                maxPlayers: room.maxPlayers,
+                turnTime: room.turnTime,
+                players: room.players || [],
+                status: room.status,
+                createdAt: room.createdAt,
+                updatedAt: room.updatedAt,
+                assignProfessions: room.assignProfessions,
+                password: room.password,
+                creatorId: room.creatorId,
+                creatorEmail: room.creatorEmail,
+                gameState: room.gameState || {}
+            }));
+            console.log(`✅ Loaded ${serverRooms.length} rooms from MongoDB`);
+        }
+    } catch (error) {
+        console.error('❌ Error loading rooms from MongoDB:', error);
+    }
+};
+
+const saveUserToMongoDB = async (user) => {
+    try {
+        const dbStatus = getConnectionStatus();
+        if (dbStatus.isConnected) {
+            const userModel = new UserModel(user);
+            await userModel.save();
+        }
+    } catch (error) {
+        console.error('❌ Error saving user to MongoDB:', error);
+    }
+};
 
 // Helper functions
 const getPlayerIdentifier = (player) => player?.userId || player?.id || null;
@@ -253,6 +306,7 @@ app.get('/api/dreams', (req, res) => {
 // API для комнат
 app.get('/api/rooms', (req, res) => {
     try {
+        res.set('Cache-Control', 'no-store');
         res.json({
             success: true,
             rooms: serverRooms.map(room => sanitizeRoom(room)),
@@ -267,7 +321,7 @@ app.get('/api/rooms', (req, res) => {
     }
 });
 
-app.post('/api/rooms', (req, res) => {
+app.post('/api/rooms', async (req, res) => {
     try {
         const { name, max_players, turn_time, assign_professions, password } = req.body;
         
@@ -301,8 +355,12 @@ app.post('/api/rooms', (req, res) => {
         
         serverRooms.push(newRoom);
         
+        // Save to MongoDB
+        await saveRoomToMongoDB(newRoom);
+        
         console.log(`🏠 Комната "${name}" создана пользователем ${user.username} (${user.id})`);
 
+        res.set('Cache-Control', 'no-store');
         res.json({
             success: true,
             room: sanitizeRoom(newRoom, { requestingUserId: user.id })
@@ -539,6 +597,9 @@ async function startServer() {
     try {
         await initializeDatabase();
         
+        // Load existing rooms from MongoDB
+        await loadRoomsFromMongoDB();
+        
         server.listen(PORT, () => {
             console.log('🎮 EM1 Game Board v2.0 Server запущен!');
             console.log(`🚀 Сервер работает на порту ${PORT}`);
@@ -550,7 +611,7 @@ async function startServer() {
             
             const dbStatus = getConnectionStatus();
             if (dbStatus.isConnected) {
-                console.log(`📊 База данных подключена: ${dbStatus.name}@${dbStatus.host}`);
+                console.log(`📊 База данных подключена: ${dbStatus.name}`);
             } else {
                 console.log('⚠️  База данных недоступна - используется локальное хранилище');
             }

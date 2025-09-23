@@ -116,6 +116,7 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
         try {
             const userId = req.user?.userId || null;
             const result = await loadRooms({ userId, includePlayers: true });
+            res.set('Cache-Control', 'no-store');
             res.json({ success: true, rooms: result });
         } catch (error) {
             console.error('Ошибка получения списка комнат:', error);
@@ -135,7 +136,8 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
                 status: room.status,
                 gameStarted: room.gameStarted,
                 canStart: room.canStart
-            }));
+            });
+            res.set('Cache-Control', 'no-store');
             res.json({ success: true, rooms: simplified });
         } catch (error) {
             console.error('Ошибка получения простого списка комнат:', error);
@@ -159,6 +161,7 @@ function registerRoomsModule({ app, db, auth, isDbReady }) {
             }
             const sanitizedRoom = sanitizeRoom(room, { includePlayers: true, userId });
             console.log(`🔍 API getRoom: возвращаем комнату с ${sanitizedRoom.players?.length} игроками`);
+            res.set('Cache-Control', 'no-store');
             res.json({ success: true, room: sanitizedRoom });
         } catch (error) {
             console.error('Ошибка получения комнаты:', error);
