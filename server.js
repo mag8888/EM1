@@ -53,6 +53,82 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// List rooms (minimal implementation)
+app.get('/api/rooms', (req, res) => {
+    try {
+        const list = Array.from(rooms.values()).map(room => ({
+            id: room.id,
+            name: room.name,
+            maxPlayers: room.maxPlayers,
+            turnTime: room.turnTime,
+            status: room.status,
+            createdAt: room.createdAt,
+            updatedAt: room.updatedAt,
+            players: room.players || []
+        }));
+        res.set('Cache-Control', 'no-store');
+        res.json({ success: true, rooms: list });
+    } catch (error) {
+        console.error('Ошибка получения списка комнат:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
+// Create room (requires JWT)
+app.post('/api/rooms', (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'] || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+        if (!token) {
+            return res.status(401).json({ success: false, message: 'Требуется авторизация' });
+        }
+        let payload;
+        try {
+            payload = jwt.verify(token, JWT_SECRET);
+        } catch (e) {
+            return res.status(403).json({ success: false, message: 'Недействительный токен' });
+        }
+
+        const name = String(req.body?.name || '').trim();
+        const maxPlayers = Number(req.body?.max_players || req.body?.maxPlayers || 4);
+        const turnTimeSec = Number(req.body?.turn_time || req.body?.turnTime || 120);
+        if (name.length < 3 || name.length > 48) {
+            return res.status(400).json({ success: false, message: 'Название комнаты должно быть 3-48 символов' });
+        }
+        if (!Number.isInteger(maxPlayers) || maxPlayers < 2 || maxPlayers > 8) {
+            return res.status(400).json({ success: false, message: 'maxPlayers должен быть от 2 до 8' });
+        }
+        const room = {
+            id: Date.now().toString(),
+            name,
+            maxPlayers,
+            turnTime: Math.max(1, Math.round((turnTimeSec || 120) / 60)),
+            status: 'waiting',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            players: [
+                {
+                    userId: String(payload.userId || payload.id || 'host'),
+                    name: req.headers['x-user-name'] || (payload.email ? payload.email.split('@')[0] : 'Игрок'),
+                    isHost: true,
+                    isReady: false,
+                    selectedToken: null,
+                    selectedDream: null,
+                    position: 0,
+                    cash: 10000,
+                    passiveIncome: 0,
+                    assets: []
+                }
+            ]
+        };
+        rooms.set(room.id, room);
+        res.status(201).json({ success: true, room });
+    } catch (error) {
+        console.error('Ошибка создания комнаты:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
 // Registration API endpoint
 app.post('/api/auth/register', async (req, res) => {
     try {
