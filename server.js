@@ -467,6 +467,35 @@ app.get('/api/user/profile/:username', (req, res) => {
     }
 });
 
+// Minimal user stats endpoint (requires JWT)
+app.get('/api/user/stats', (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'] || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+        if (!token) {
+            return res.status(401).json({ message: 'Токен доступа отсутствует' });
+        }
+        let payload;
+        try {
+            payload = jwt.verify(token, JWT_SECRET);
+        } catch (e) {
+            return res.status(403).json({ message: 'Недействительный токен' });
+        }
+        // Возвращаем базовые нули для минимальной реализации
+        res.json({
+            games_played: 0,
+            wins_count: 0,
+            level: 1,
+            experience: 0,
+            balance: 10000,
+            userId: payload.userId
+        });
+    } catch (error) {
+        console.error('Ошибка получения статистики пользователя:', error);
+        res.status(500).json({ message: 'Ошибка сервера' });
+    }
+});
+
 // Profile page route
 app.get('/game/u/:username', (req, res) => {
     res.sendFile(path.join(__dirname, 'game-board', 'profile.html'));
