@@ -3,8 +3,15 @@
  */
 
 export class TurnController {
-    constructor(gameCore) {
-        this.gameCore = gameCore;
+    constructor({ state, rollButton, endTurnButton, phaseLabel, lastRollLabel, notifier, statusChip }) {
+        this.state = state;
+        this.rollButton = rollButton;
+        this.endTurnButton = endTurnButton;
+        this.phaseLabel = phaseLabel;
+        this.lastRollLabel = lastRollLabel;
+        this.notifier = notifier;
+        this.statusChip = statusChip;
+        
         this.turnOrder = [];
         this.currentPlayerIndex = 0;
         this.currentPhase = 'waiting';
@@ -23,11 +30,90 @@ export class TurnController {
     async init() {
         console.log('🎮 TurnController инициализирован');
         
-        if (this.gameCore && this.gameCore.eventBus) {
-            this.gameCore.eventBus.on('gameStarted', this.onGameStarted.bind(this));
-            this.gameCore.eventBus.on('diceRolled', this.onDiceRolled.bind(this));
-        } else {
-            console.warn('⚠️ TurnController: gameCore или eventBus недоступны');
+        this.setupUI();
+        this.state?.on('change', (snapshot) => this.updateFromState(snapshot));
+    }
+
+    setupUI() {
+        if (this.rollButton) {
+            this.rollButton.addEventListener('click', () => this.handleRollDice());
+        }
+        if (this.endTurnButton) {
+            this.endTurnButton.addEventListener('click', () => this.handleEndTurn());
+        }
+    }
+
+    updateFromState(snapshot) {
+        if (!snapshot) return;
+        
+        const currentPlayer = this.state?.getCurrentPlayer();
+        const isMyTurn = this.state?.isMyTurn() || false;
+        
+        this.updateUI(isMyTurn, currentPlayer);
+    }
+
+    updateUI(isMyTurn, currentPlayer) {
+        if (this.phaseLabel) {
+            this.phaseLabel.textContent = isMyTurn ? 'Ваш ход' : 'Ожидание хода';
+        }
+        
+        if (this.rollButton) {
+            this.rollButton.disabled = !isMyTurn;
+        }
+        
+        if (this.endTurnButton) {
+            this.endTurnButton.disabled = !isMyTurn;
+        }
+        
+        if (this.statusChip) {
+            this.statusChip.classList.toggle('is-my-turn', isMyTurn);
+        }
+    }
+
+    async handleRollDice() {
+        if (!this.state) return;
+        
+        try {
+            this.rollButton.disabled = true;
+            const result = await this.state.rollDice();
+            
+            if (result?.result) {
+                const { dice1, dice2, total, isDouble } = result.result;
+                if (this.lastRollLabel) {
+                    this.lastRollLabel.textContent = `${dice1} + ${dice2} = ${total}`;
+                }
+                
+                if (this.notifier) {
+                    this.notifier.show(`Выпало: ${total}${isDouble ? ' (дубль!)' : ''}`, { type: 'info' });
+                }
+            }
+        } catch (error) {
+            console.error('Ошибка броска кубика:', error);
+            if (this.notifier) {
+                this.notifier.show('Ошибка броска кубика', { type: 'error' });
+            }
+        } finally {
+            this.rollButton.disabled = false;
+        }
+    }
+
+    async handleEndTurn() {
+        if (!this.state) return;
+        
+        try {
+            this.endTurnButton.disabled = true;
+            await this.state.endTurn();
+            
+            if (this.notifier) {
+                this.notifier.show('Ход завершен', { type: 'success' });
+            }
+        } catch (error) {
+            console.error('Ошибка завершения хода:', error);
+            if (this.notifier) {
+                this.notifier.show('Ошибка завершения хода', { type: 'error' });
+            }
+        } finally {
+            this.endTurnButton.disabled = false;
         }
     }
 
