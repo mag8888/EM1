@@ -57,6 +57,8 @@ const initializeDatabase = async () => {
 // Modules
 const registerAuthModule = require('./modules/auth');
 const registerRoomsModule = require('./modules/rooms');
+// Hold auth module reference for other modules
+let authModuleRef = null;
 const roomState = require('./services/room-state');
 
 // --- Shared services -----------------------------------------------------
@@ -136,7 +138,7 @@ initializeDatabase()
 setTimeout(() => {
     if (dbConnected) {
         try {
-            const authModule = registerAuthModule({
+            authModuleRef = registerAuthModule({
                 app,
                 db,
                 jwtSecret: JWT_SECRET,
@@ -155,7 +157,12 @@ setTimeout(() => {
 setTimeout(() => {
     if (dbConnected) {
         try {
-            registerRoomsModule(app, db, roomState);
+            registerRoomsModule({
+                app,
+                db,
+                auth: authModuleRef,
+                isDbReady: () => dbConnected
+            });
             console.log('✅ Rooms module registered successfully');
         } catch (error) {
             console.error('❌ Failed to register rooms module:', error);
