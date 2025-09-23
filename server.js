@@ -218,6 +218,74 @@ app.post('/api/rooms/:roomId/join', (req, res) => {
     }
 });
 
+// Select dream (requires JWT)
+app.post('/api/rooms/:roomId/dream', (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'] || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+        if (!token) return res.status(401).json({ success: false, message: 'Требуется авторизация' });
+        let payload;
+        try { payload = jwt.verify(token, JWT_SECRET); } catch { return res.status(403).json({ success: false, message: 'Недействительный токен' }); }
+        const room = rooms.get(req.params.roomId);
+        if (!room) return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        const userId = String(payload.userId || payload.id || 'guest');
+        const player = (room.players || []).find(p => String(p.userId) === userId);
+        if (!player) return res.status(400).json({ success: false, message: 'Игрок не в комнате' });
+        const dreamId = req.body?.dream_id ?? req.body?.dreamId;
+        player.selectedDream = dreamId ?? null;
+        room.updatedAt = new Date().toISOString();
+        return res.json({ success: true, room: sanitizeRoom(room) });
+    } catch (error) {
+        console.error('Ошибка выбора мечты:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
+// Select token (requires JWT)
+app.post('/api/rooms/:roomId/token', (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'] || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+        if (!token) return res.status(401).json({ success: false, message: 'Требуется авторизация' });
+        let payload;
+        try { payload = jwt.verify(token, JWT_SECRET); } catch { return res.status(403).json({ success: false, message: 'Недействительный токен' }); }
+        const room = rooms.get(req.params.roomId);
+        if (!room) return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        const userId = String(payload.userId || payload.id || 'guest');
+        const player = (room.players || []).find(p => String(p.userId) === userId);
+        if (!player) return res.status(400).json({ success: false, message: 'Игрок не в комнате' });
+        const tokenId = req.body?.token_id ?? req.body?.tokenId;
+        player.selectedToken = tokenId ?? null;
+        room.updatedAt = new Date().toISOString();
+        return res.json({ success: true, room: sanitizeRoom(room) });
+    } catch (error) {
+        console.error('Ошибка выбора фишки:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
+// Toggle ready (requires JWT)
+app.post('/api/rooms/:roomId/ready', (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'] || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+        if (!token) return res.status(401).json({ success: false, message: 'Требуется авторизация' });
+        let payload;
+        try { payload = jwt.verify(token, JWT_SECRET); } catch { return res.status(403).json({ success: false, message: 'Недействительный токен' }); }
+        const room = rooms.get(req.params.roomId);
+        if (!room) return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        const userId = String(payload.userId || payload.id || 'guest');
+        const player = (room.players || []).find(p => String(p.userId) === userId);
+        if (!player) return res.status(400).json({ success: false, message: 'Игрок не в комнате' });
+        player.isReady = !player.isReady;
+        room.updatedAt = new Date().toISOString();
+        return res.json({ success: true, room: sanitizeRoom(room) });
+    } catch (error) {
+        console.error('Ошибка готовности:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
 // Registration API endpoint
 app.post('/api/auth/register', async (req, res) => {
     try {
