@@ -51,7 +51,7 @@ class RoomState extends EventEmitter {
     async ensureJoined() {
         try {
             console.log(`🔍 RoomState.ensureJoined: проверяем комнату ${this.roomId} для пользователя ${this.user.id}`);
-            const room = await this.api.getRoom(this.roomId, { user_id: this.user.id });
+            const room = await this.api.getRoom(this.roomId);
             console.log(`🔍 RoomState.ensureJoined: получена комната:`, {
                 roomId: room?.id,
                 hasCurrentPlayer: !!room?.currentPlayer,
@@ -93,7 +93,7 @@ class RoomState extends EventEmitter {
             if (!silent) {
                 this.emit('loading', true);
             }
-            const room = await this.api.getRoom(this.roomId, { user_id: this.user.id });
+            const room = await this.api.getRoom(this.roomId);
             this.handleUpdate(room);
         } catch (error) {
             this.emit('error', error);

@@ -1122,8 +1122,16 @@
 
     <!-- Globals required by game modules -->
     <script src="/assets/js/modules/shared/EventEmitter.js"></script>
-    <script src="/assets/js/modules/api/RoomApi.js"></script>
-    <script src="/assets/js/modules/game/BoardLayout.js"></script>
+    <script src="/assets/js/modules/api/RoomApi.js?v=6"></script>
+    <script src="/assets/js/modules/game/BoardLayout.js?v=6"></script>
+    <script>
+        // Инициализация доски сразу после загрузки
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof window.renderTracks === 'function') {
+                window.renderTracks();
+            }
+        });
+    </script>
     <script type="module" src="/assets/js/modules/game/index.js"></script>
 
 </body>

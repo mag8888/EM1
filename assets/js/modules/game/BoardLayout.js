@@ -45,7 +45,7 @@ function placeAlongPerimeter(container, total, insetPx, isInner) {
     return positions.slice(0, total);
 }
 
-export function renderTracks() {
+function renderTracks() {
     console.log('🎯 renderTracks called');
     const outer = document.getElementById('outerTrack');
     const inner = document.getElementById('innerTrack');

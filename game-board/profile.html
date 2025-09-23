@@ -206,7 +206,15 @@
         
         async function loadProfile() {
             try {
-                const response = await fetch(`/api/user/profile/${username}`);
+                // Try current-user endpoint with Authorization header
+                const token = localStorage.getItem('authToken');
+                let response = await fetch('/api/user/profile', {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+                // Fallback to public username endpoint if 404
+                if (response.status === 404 || response.status === 401) {
+                    response = await fetch(`/api/user/profile/${username}`);
+                }
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);

@@ -1136,6 +1136,7 @@
     
     <!-- Загружаем игровые модули -->
     <script src="assets/js/modules/game/Board.js"></script>
+    <script src="assets/js/modules/game/BoardLayout.js?v=6"></script>
     
     <!-- Инициализируем игру -->
     <script>
@@ -1150,6 +1151,11 @@
                 await window.gameCore.init();
                 
                 console.log('✅ Game initialized successfully');
+                
+                // Рендерим клетки доски
+                if (typeof window.renderTracks === 'function') {
+                    window.renderTracks();
+                }
                 
                 // Обновляем статус
                 const statusElement = document.getElementById('turnState');

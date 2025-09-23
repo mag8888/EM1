@@ -632,6 +632,7 @@ app.get('/api/user/profile', (req, res) => {
                 }
             }
         }
+        // Если нет токена и нет username в заголовках, возвращаем 404
         return res.status(404).json({ message: 'Пользователь не найден' });
     } catch (error) {
         console.error('Ошибка профиля:', error);

@@ -414,8 +414,8 @@ class RoomApi {
     }
 
     async getRoom(roomId, params = {}) {
-        const query = new URLSearchParams({ ...params }).toString();
-        const url = query ? `/api/rooms/${roomId}?${query}` : `/api/rooms/${roomId}`;
+        // Для GET запросов не передаем user_id чтобы избежать CORS preflight
+        const url = `/api/rooms/${roomId}`;
         // Публичный GET без Authorization/X-* чтобы избежать CORS preflight
         const data = await this.requestPublic(url);
         return data.room;
