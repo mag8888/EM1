@@ -572,8 +572,13 @@
                         normalizedUser.first_name = normalizedUser.email || 'Игрок';
                     }
                     
-                    // Сохраняем токен и данные пользователя
-                    localStorage.setItem('authToken', data.accessToken);
+                    // Сохраняем токен и данные пользователя (prod/minimal: token, full: accessToken)
+                    const accessToken = data.accessToken || data.token;
+                    if (!accessToken) {
+                        showError('Ошибка: не получен токен авторизации');
+                        return;
+                    }
+                    localStorage.setItem('authToken', accessToken);
                     localStorage.setItem('user', JSON.stringify(normalizedUser));
                     
                     // Сохраняем email и rememberMe если выбрано
@@ -651,6 +656,7 @@
                         lastName,
                         email,
                         password,
+                        confirmPassword,
                         referralCode
                     })
                 });
