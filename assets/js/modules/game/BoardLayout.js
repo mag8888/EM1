@@ -53,23 +53,24 @@ if (typeof window !== 'undefined' && window.BIG_CIRCLE_CELLS && window.BIG_CIRCL
 if (typeof window.getIconForType === 'undefined') {
     window.getIconForType = function(cellType, style = 'emoji') {
         const icons = {
-            'green_opportunity': '💚',
-            'pink_expense': '🛒',
-            'blue_opportunity': '💙',
-            'yellow_expense': '💛',
-            'red_expense': '❤️',
-            'purple_opportunity': '💜',
-            'orange_charity': '❤️',
-            'blue_dividend': '💰',
-            'purple_business': '🏪',
-            'yellow_baby': '👶',
-            'red_downsize': '💸',
-            // Missing types from small-circle-cells config
-            'yellow_payday': '🟡',
-            'blue_market': '🛍️',
-            'black_loss': '💣'
+            'green_opportunity': 'green_opportunity.svg',
+            'pink_expense': 'pink_expense.svg',
+            'blue_opportunity': 'blue_opportunity.svg',
+            'yellow_expense': 'yellow_expense.svg',
+            'red_expense': 'red_expense.svg',
+            'purple_opportunity': 'purple_opportunity.svg',
+            'orange_charity': 'orange_charity.svg',
+            'blue_dividend': 'blue_dividend.svg',
+            'purple_business': 'purple_business.svg',
+            'yellow_baby': 'yellow_baby.svg',
+            'red_downsize': 'red_downsize.svg',
+            'yellow_payday': 'yellow_payday.svg',
+            'blue_market': 'blue_market.svg',
+            'black_loss': 'black_loss.svg'
         };
-        return icons[cellType] || '⬤';
+        const filename = icons[cellType];
+        if (!filename) return '⬤';
+        return `<img src="/assets/images/icons/${filename}" alt="" style="width:1.1em;height:1.1em;object-fit:contain;" />`;
     };
 }
 
@@ -340,22 +341,24 @@ function renderTracks(room = null) {
     if (!window.getIconForType) {
         window.getIconForType = function(cellType, style = 'emoji') {
             const icons = {
-                'green_opportunity': '💚',
-                'pink_expense': '🛒',
-                'blue_opportunity': '💙',
-                'yellow_expense': '💛',
-                'red_expense': '❤️',
-                'purple_opportunity': '💜',
-                'yellow_payday': '🟡',
-                'blue_market': '🛍️',
-                'black_loss': '💣',
-                'orange_charity': '❤️',
-                'blue_dividend': '💰',
-                'purple_business': '🏪',
-                'yellow_baby': '👶',
-                'red_downsize': '💸'
+                'green_opportunity': 'green_opportunity.svg',
+                'pink_expense': 'pink_expense.svg',
+                'blue_opportunity': 'blue_opportunity.svg',
+                'yellow_expense': 'yellow_expense.svg',
+                'red_expense': 'red_expense.svg',
+                'purple_opportunity': 'purple_opportunity.svg',
+                'yellow_payday': 'yellow_payday.svg',
+                'blue_market': 'blue_market.svg',
+                'black_loss': 'black_loss.svg',
+                'orange_charity': 'orange_charity.svg',
+                'blue_dividend': 'blue_dividend.svg',
+                'purple_business': 'purple_business.svg',
+                'yellow_baby': 'yellow_baby.svg',
+                'red_downsize': 'red_downsize.svg'
             };
-            return icons[cellType] || '⬤';
+            const filename = icons[cellType];
+            if (!filename) return '⬤';
+            return `<img src="/assets/images/icons/${filename}" alt="" style="width:1.1em;height:1.1em;object-fit:contain;" />`;
         };
     }
     
@@ -404,7 +407,7 @@ function renderTracks(room = null) {
     requestAnimationFrame(() => {
         console.log('🎯 Creating track cells...');
         const outerPositions = placeAlongPerimeter(outer.parentElement, outerCount, 18, false);
-        const innerPositions = placeInCircle(inner.parentElement, innerCount, 110);
+        const innerPositions = placeInCircle(inner.parentElement, innerCount, 100);
 
         console.log('🎯 Outer positions:', outerPositions.length);
         console.log('🎯 Inner positions:', innerPositions.length);
