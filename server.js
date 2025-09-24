@@ -228,9 +228,7 @@ function sanitizeRoom(room) {
         .filter(p => p.selectedToken)
         .map(p => p.selectedToken);
     
-    const takenDreams = players
-        .filter(p => p.selectedDream)
-        .map(p => p.selectedDream);
+    // Мечты теперь можно выбирать нескольким игрокам, поэтому takenDreams не нужен
     
     return {
         id: room.id,
@@ -245,7 +243,6 @@ function sanitizeRoom(room) {
         canStart,
         gameStarted: room.status === 'playing',
         takenTokens, // Занятые фишки
-        takenDreams, // Занятые мечты
         players: players.map(p => ({
             userId: p.userId,
             name: p.name,
@@ -413,19 +410,7 @@ app.post('/api/rooms/:roomId/dream', (req, res) => {
         
         const dreamId = req.body?.dream_id ?? req.body?.dreamId;
         
-        // Проверяем, что мечта не выбрана другим игроком
-        if (dreamId) {
-            const isDreamTaken = (room.players || []).some(p => 
-                String(p.userId) !== String(userId) && p.selectedDream === dreamId
-            );
-            
-            if (isDreamTaken) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Эта мечта уже выбрана другим игроком' 
-                });
-            }
-        }
+        // Разрешаем мечты выбирать нескольким игрокам
         
         player.selectedDream = dreamId ?? null;
         room.updatedAt = new Date().toISOString();

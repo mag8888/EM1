@@ -52,11 +52,7 @@ class DreamSelector {
         }
         this.lastRoom = room;
         
-        console.log('🔍 DreamSelector: Rendering with room data:', {
-            availableDreams: room.availableDreams,
-            takenDreams: room.takenDreams,
-            currentPlayer: room.currentPlayer
-        });
+        // Мечты теперь можно выбирать нескольким игрокам
         
         const dreams = Array.isArray(room.availableDreams) && room.availableDreams.length
             ? room.availableDreams
@@ -88,15 +84,7 @@ class DreamSelector {
                 <span class="dream-cost">$${Number(dream.cost || 0).toLocaleString()}</span>
             `;
 
-            // Проверяем, занята ли мечта другим игроком
-            const takenByOther = room.takenDreams && room.takenDreams.includes(dream.id) && dream.id !== this.currentDreamId;
-            console.log('🔍 DreamSelector: Checking dream', dream.id, 'takenByOther:', takenByOther, 'takenDreams:', room.takenDreams);
-            if (takenByOther) {
-                item.disabled = true;
-                item.classList.add('taken');
-                item.innerHTML += '<span class="taken-indicator">ЗАНЯТО</span>';
-                console.log('🔍 DreamSelector: Marked dream', dream.id, 'as taken');
-            }
+            // Мечты теперь можно выбирать нескольким игрокам
 
             item.addEventListener('click', () => this.handleSelection(dream.id));
             this.container.appendChild(item);

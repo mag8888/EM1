@@ -1209,6 +1209,10 @@
             try {
                 console.log('🎮 Initializing game...');
                 
+                // Ждем загрузки всех конфигурационных файлов
+                await waitForConfigs();
+                console.log('✅ Configs loaded successfully');
+                
                 // Создаем экземпляр GameCore
                 window.gameCore = new GameCore();
                 
@@ -1244,6 +1248,24 @@
                 }
             }
         })();
+        
+        // Функция ожидания загрузки конфигураций
+        async function waitForConfigs() {
+            const maxAttempts = 50;
+            let attempts = 0;
+            
+            while (attempts < maxAttempts) {
+                if (typeof SMALL_CIRCLE_CELLS !== 'undefined' && SMALL_CIRCLE_CELLS.length > 0) {
+                    console.log('✅ SMALL_CIRCLE_CELLS loaded:', SMALL_CIRCLE_CELLS.length);
+                    return;
+                }
+                console.log('⏳ Waiting for configs...', attempts + 1);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            console.error('❌ Failed to load SMALL_CIRCLE_CELLS after', maxAttempts, 'attempts');
+        }
         
         // Инициализация панели выбора стиля иконок
         function initIconStylePanel() {
