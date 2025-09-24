@@ -393,6 +393,11 @@ app.post('/api/rooms/:roomId/start', (req, res) => {
             p.tokenOffset = idx; // для визуального сдвига на клиенте
             p.passiveIncome = Number(p.passiveIncome || 0); // гарантируем число
             if (p.passiveIncome < 0 || !Number.isFinite(p.passiveIncome)) p.passiveIncome = 0;
+
+            // Начальные сбережения: начисляем $3000 каждому игроку и пишем в историю
+            const bal = ensureBalance(room.id, p.name, 0);
+            bal.amount += 3000;
+            pushHistory(room.id, { from: 'Банк', to: p.name, amount: 3000, roomId: room.id, timestamp: Date.now(), type: 'initial_deposit' });
         });
         room.updatedAt = new Date().toISOString();
         return res.json({ success: true, room: sanitizeRoom(room) });
@@ -584,7 +589,7 @@ function getBalanceKey(roomId, username) {
     return `${roomId}:${username}`;
 }
 
-function ensureBalance(roomId, username, initial = 1000) {
+function ensureBalance(roomId, username, initial = 0) {
     const key = getBalanceKey(roomId, username);
     if (!bankBalances.has(key)) {
         bankBalances.set(key, { amount: initial });

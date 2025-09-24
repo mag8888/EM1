@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="/socket.io/socket.io.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -312,7 +312,7 @@
 
         <div class="balance-section">
             <div class="balance-label">Ваш баланс</div>
-            <div class="balance-amount" id="currentBalance">$1000</div>
+            <div class="balance-amount" id="currentBalance">$0</div>
         </div>
 
         <div class="error-message" id="errorMessage"></div>
@@ -376,10 +376,9 @@
 
     <script>
         // Глобальные переменные
-        let socket;
         let currentUser;
         let currentRoom;
-        let currentBalance = 1000;
+        let currentBalance = 0;
         let roomPlayers = [];
         let creditStatus = { loanAmount: 0, maxAvailable: 0, cashflow: 0 };
 
@@ -406,18 +405,6 @@
             
             currentRoom = JSON.parse(roomData);
             roomPlayers = currentRoom.players || [];
-            
-            // Подключаемся к WebSocket
-            socket = io();
-            
-            // Подписываемся на события
-            socket.on('connect', () => {
-                console.log('Подключен к серверу');
-                socket.emit('joinRoom', currentRoom.id);
-            });
-            
-            socket.on('bankUpdate', handleBankUpdate);
-            socket.on('roomUpdate', handleRoomUpdate);
             
             // Инициализируем модуль
             initializeBankModule();
@@ -635,34 +622,6 @@
             }
         }
 
-        function handleBankUpdate(data) {
-            console.log('Получено обновление банка:', data);
-            
-            if (data.type === 'transfer') {
-                // Обновляем баланс если это касается текущего пользователя
-                if (data.from === currentUser || data.to === currentUser) {
-                    loadBalance();
-                }
-                
-                // Обновляем историю
-                loadTransferHistory();
-                
-                // Показываем уведомление
-                if (data.to === currentUser) {
-                    showSuccess(`Получен перевод $${data.amount} от ${data.from}`);
-                }
-            }
-        }
-
-        function handleRoomUpdate(data) {
-            console.log('Получено обновление комнаты:', data);
-            
-            if (data.type === 'userJoined') {
-                // Обновляем список игроков если нужно
-                loadPlayers();
-            }
-        }
-
         function showError(message) {
             const errorDiv = document.getElementById('errorMessage');
             errorDiv.textContent = message;
@@ -683,20 +642,7 @@
             }, 3000);
         }
 
-        function closeBankModule() {
-            if (socket) {
-                socket.emit('leaveRoom', currentRoom.id);
-                socket.disconnect();
-            }
-            window.close();
-        }
-
-        // Обработка закрытия окна
-        window.addEventListener('beforeunload', () => {
-            if (socket) {
-                socket.emit('leaveRoom', currentRoom.id);
-            }
-        });
+        function closeBankModule() { window.close(); }
     </script>
 </body>
 </html>
