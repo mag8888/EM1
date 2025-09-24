@@ -2,6 +2,7 @@ export default class PlayerSummary {
     constructor({ state }) {
         this.state = state;
         this.incomeEl = document.getElementById('incomeValue');
+        this.passiveIncomeEl = document.getElementById('passiveIncomeValue');
         this.expenseEl = document.getElementById('expenseValue');
         this.paydayEl = document.getElementById('paydayValue');
         this.loanEl = document.getElementById('loanValue');
@@ -10,6 +11,7 @@ export default class PlayerSummary {
         this.professionIconEl = document.getElementById('professionIcon');
         this.professionSalaryEl = document.getElementById('professionSalary');
         this.professionExpensesEl = document.getElementById('professionExpenses');
+        this.professionPassiveEl = document.getElementById('professionPassive');
         this.professionCashflowEl = document.getElementById('professionCashflow');
     }
 
@@ -23,10 +25,16 @@ export default class PlayerSummary {
             return;
         }
         const passiveIncome = Number(player.passiveIncome || 0);
+        // Общий доход = пассивный доход (пока)
         this.setText(this.incomeEl, `$${passiveIncome.toLocaleString()}`);
+        // Отдельно показываем пассивный доход
+        if (this.passiveIncomeEl) {
+            this.passiveIncomeEl.textContent = `$${passiveIncome.toLocaleString()}`;
+        }
         this.setText(this.paydayEl, `$${passiveIncome.toLocaleString()}/мес`);
         // Расходы и кредиты пока не синхронизированы с сервером
-        this.setText(this.expenseEl, '$0');
+        const expenses = Number(player.profession?.expenses || 0);
+        this.setText(this.expenseEl, `$${expenses.toLocaleString()}`);
         this.setText(this.loanEl, '$0');
 
         const profession = player.profession || {};
@@ -45,8 +53,19 @@ export default class PlayerSummary {
         if (this.professionExpensesEl) {
             this.professionExpensesEl.textContent = `$${Number(profession.expenses || 0).toLocaleString()}`;
         }
+        if (this.professionPassiveEl) {
+            this.professionPassiveEl.textContent = `$${passiveIncome.toLocaleString()}`;
+        }
         if (this.professionCashflowEl) {
-            this.professionCashflowEl.textContent = `$${Number(profession.cashFlow || 0).toLocaleString()}`;
+            const cashflow = Number(profession.cashFlow || 0);
+            this.professionCashflowEl.textContent = `$${cashflow.toLocaleString()}`;
+        }
+
+        // Условие перехода на большой круг: пассивный доход > расходы
+        // Здесь только отображение; сам переход запустим отдельным контроллером
+        const canGoOuter = passiveIncome > expenses;
+        if (canGoOuter) {
+            console.log('✅ Условие перехода на большой круг выполнено');
         }
     }
 

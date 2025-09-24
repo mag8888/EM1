@@ -391,6 +391,8 @@ app.post('/api/rooms/:roomId/start', (req, res) => {
             p.position = 0; // клетка 1 малого круга
             p.track = 'inner';
             p.tokenOffset = idx; // для визуального сдвига на клиенте
+            p.passiveIncome = Number(p.passiveIncome || 0); // гарантируем число
+            if (p.passiveIncome < 0 || !Number.isFinite(p.passiveIncome)) p.passiveIncome = 0;
         });
         room.updatedAt = new Date().toISOString();
         return res.json({ success: true, room: sanitizeRoom(room) });
