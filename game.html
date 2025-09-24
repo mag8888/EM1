@@ -1156,6 +1156,25 @@
                 </div>
             </div>
 
+            <div class="panel profession-panel">
+                <h3>💼 Карты профессий</h3>
+                <div class="profession-ui">
+                    <div class="profession-ui-header">
+                        <h3>Выберите профессию</h3>
+                    </div>
+                    <div class="profession-cards" id="professionCards">
+                        <!-- Карты профессий будут добавлены динамически -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel cards-panel">
+                <h3>🃏 Карты сделок</h3>
+                <div class="card-ui" id="cardUI">
+                    <!-- UI для карт будет добавлен динамически -->
+                </div>
+            </div>
+
             <div class="panel profile-panel">
                 <h3>👤 Профиль</h3>
                 <div class="user-info">
@@ -1297,6 +1316,7 @@
     <script src="assets/js/modules/game/CellPopup.js"></script>
     <script src="assets/js/modules/game/CardManager.js"></script>
     <script src="assets/js/modules/game/CardUI.js"></script>
+    <script src="game-board/professions-data.js"></script>
     
     <!-- Инициализируем игру -->
     <script>
@@ -1411,13 +1431,29 @@
                     console.warn('⚠️ CardManager not found');
                 }
                 
-                // Инициализируем CardUI
-                if (typeof CardUI !== 'undefined' && window.cardManager) {
-                    window.cardUI = new CardUI(window.cardManager);
-                    console.log('✅ CardUI initialized');
-                } else {
-                    console.warn('⚠️ CardUI not found or CardManager not initialized');
-                }
+                  // Инициализируем CardUI
+                  if (typeof CardUI !== 'undefined' && window.cardManager) {
+                      window.cardUI = new CardUI(window.cardManager);
+                      console.log('✅ CardUI initialized');
+                  } else {
+                      console.warn('⚠️ CardUI not found or CardManager not initialized');
+                  }
+                  
+                  // Инициализируем ProfessionManager
+                  if (typeof ProfessionManager !== 'undefined') {
+                      window.professionManager = new ProfessionManager();
+                      console.log('✅ ProfessionManager initialized');
+                  } else {
+                      console.warn('⚠️ ProfessionManager not found');
+                  }
+                  
+                  // Инициализируем ProfessionUI
+                  if (typeof ProfessionUI !== 'undefined' && window.professionManager) {
+                      window.professionUI = new ProfessionUI(window.professionManager);
+                      console.log('✅ ProfessionUI initialized');
+                  } else {
+                      console.warn('⚠️ ProfessionUI not found or ProfessionManager not initialized');
+                  }
                 
             } catch (error) {
                 console.error('❌ Failed to initialize game:', error);

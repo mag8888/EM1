@@ -22,7 +22,8 @@ class PlayersList {
 
     render(room) {
         if (!room || !Array.isArray(room.players)) {
-            this.container.innerHTML = '';
+            console.log('🔍 PlayersList: No room or players data, showing fallback');
+            this.showFallbackData();
             return;
         }
         const dreamsById = new Map((room.availableDreams || []).map((dream) => [dream.id, dream]));

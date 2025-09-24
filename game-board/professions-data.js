@@ -464,3 +464,17 @@ export function getCardByType(type) {
             return getRandomDream();
     }
 }
+
+// Экспорт для использования в браузере
+if (typeof window !== 'undefined') {
+    window.PROFESSIONS = PROFESSIONS;
+    window.DREAMS = DREAMS;
+    window.LOSSES = LOSSES;
+    window.INVESTMENT_CARDS = INVESTMENT_CARDS;
+    window.getRandomProfession = getRandomProfession;
+    window.getRandomDream = getRandomDream;
+    window.getRandomLoss = getRandomLoss;
+    window.getRandomInvestment = getRandomInvestment;
+    window.getCardByType = getCardByType;
+    console.log('✅ Professions data loaded to window:', PROFESSIONS.length, 'professions');
+}
