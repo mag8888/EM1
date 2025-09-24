@@ -3,7 +3,7 @@
  */
 
 export class TurnController {
-    constructor({ state, rollButton, endTurnButton, phaseLabel, lastRollLabel, notifier, statusChip }) {
+    constructor({ state, rollButton, endTurnButton, phaseLabel, lastRollLabel, notifier, statusChip, timerLabel }) {
         this.state = state;
         this.rollButton = rollButton;
         this.endTurnButton = endTurnButton;
@@ -11,6 +11,7 @@ export class TurnController {
         this.lastRollLabel = lastRollLabel;
         this.notifier = notifier;
         this.statusChip = statusChip;
+        this.timerLabel = timerLabel;
         
         this.turnOrder = [];
         this.currentPlayerIndex = 0;

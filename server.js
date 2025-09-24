@@ -312,7 +312,8 @@ app.post('/api/rooms', async (req, res) => {
             id: Date.now().toString(),
             name,
             maxPlayers,
-            turnTime: Math.max(1, Math.round((turnTimeSec || 120) / 60)),
+            // Store turn time in SECONDS consistently across the server
+            turnTime: Math.max(5, Math.round(turnTimeSec || 120)),
             status: 'waiting',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
