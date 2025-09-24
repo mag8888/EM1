@@ -2,10 +2,10 @@ import GameState from './GameState.js';
 import NotificationCenter from './NotificationCenter.js';
 import PlayersPanel from './PlayersPanel.js';
 import TurnController from './TurnController.js';
+import GameFlowController from './GameFlowController.js';
 import DealController from './DealController.js';
 import AssetsManager from './AssetsManager.js';
 import PlayerSummary from './PlayerSummary.js';
-import GameFlowController from './GameFlowController.js';
 
 class GameModule {
     constructor({ roomId }) {
@@ -52,6 +52,8 @@ class GameModule {
                 if (name === 'movementModule') {
                     return {
                         movePlayer: async (playerId, steps) => {
+                            // Клиентского движения нет — возвращаем целевую позицию как текущую
+                            // Серверная логика может расшириться позже
                             const snapshot = this.state.getSnapshot();
                             return { from: 0, to: (snapshot?.currentTurn || 1), steps, cell: null };
                         }
@@ -59,7 +61,10 @@ class GameModule {
                 }
                 if (name === 'eventModule') {
                     return {
-                        queueEvent: async (evt) => ({ handled: true, type: evt.type })
+                        queueEvent: async (evt) => {
+                            // Простейшая обработка: если это выбор сделки, открыть модал через DealController
+                            return { handled: true, type: evt.type };
+                        }
                     };
                 }
                 return null;
@@ -103,15 +108,6 @@ class GameModule {
     setupListeners() {
         this.state.on('error', (error) => {
             this.notifier.show(error.message || 'Произошла ошибка', { type: 'error' });
-        });
-        // Перерисовываем треки и фишки при изменении состояния
-        this.state.on('change', (snapshot) => {
-            try {
-                const roomLike = {
-                    players: snapshot?.players || this.state.room?.players || []
-                };
-                window.renderTracks?.(roomLike);
-            } catch (_) {}
         });
     }
 

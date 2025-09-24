@@ -15,9 +15,6 @@ class GameState extends EventEmitter {
     }
 
     async init() {
-        try {
-            await this.api.ensureUserId?.();
-        } catch (_) {}
         this.user = this.api?.getCurrentUser?.() || null;
         if (!this.user?.id) {
             console.log('Пользователь не найден, перенаправляем на авторизацию');
@@ -58,12 +55,6 @@ class GameState extends EventEmitter {
         return this.user?.id || null;
     }
 
-    getTurnTimeSec(defaultSec = 120) {
-        const mins = Number(this.room?.turnTime || 0);
-        if (Number.isFinite(mins) && mins > 0) return Math.round(mins * 60);
-        return defaultSec;
-    }
-
     isMyTurn() {
         if (!this.state) return false;
         return this.state.activePlayerId === this.user.id;
@@ -71,16 +62,11 @@ class GameState extends EventEmitter {
 
     async ensureJoined() {
         try {
-            let room = await this.api.getRoom(this.roomId, { user_id: this.user.id });
+            const room = await this.api.getRoom(this.roomId, { user_id: this.user.id });
             
-            // Если пользователь не в комнате — пробуем присоединиться автоматически
+            // Проверяем, что пользователь находится в комнате
             if (!room?.currentPlayer) {
-                try {
-                    await this.api.joinRoom(this.roomId, { user_id: this.user.id });
-                    room = await this.api.getRoom(this.roomId, { user_id: this.user.id });
-                } catch (e) {
-                    throw new Error('Вы не находитесь в этой комнате. Пожалуйста, присоединитесь к комнате сначала.');
-                }
+                throw new Error('Вы не находитесь в этой комнате. Пожалуйста, присоединитесь к комнате сначала.');
             }
             
             // Проверяем, что игра началась

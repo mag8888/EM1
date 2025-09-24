@@ -5,18 +5,12 @@
 
 require('dotenv').config();
 const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
 const path = require('path');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-    cors: { origin: ["http://localhost:8080", "http://localhost:3000", /\.railway\.app$/], credentials: false }
-});
 const PORT = process.env.PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET || 'em1-production-secret-key-2024-railway';
 
@@ -534,16 +528,32 @@ app.post('/api/rooms/:roomId/ready', (req, res) => {
 app.get('/api/rooms/:roomId/game-state', (req, res) => {
     try {
         const userId = req.headers['x-user-id'] || req.query.user_id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User ID required' });
+        }
+
+        // Find user by ID
+        let user = null;
+        for (let u of users.values()) {
+            if (String(u.id) === String(userId)) {
+                user = u;
+                break;
+            }
+        }
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
 
         const room = rooms.get(req.params.roomId);
         if (!room) {
             return res.status(404).json({ success: false, message: 'Комната не найдена' });
         }
 
-        // Try to find player by userId if передан
-        let player = null;
-        if (userId) {
-            player = (room.players || []).find(p => String(p.userId) === String(userId));
+        // Check if user is in the room
+        const player = (room.players || []).find(p => String(p.userId) === userId);
+        if (!player) {
+            return res.status(400).json({ success: false, message: 'Вы не находитесь в этой комнате. Пожалуйста, присоединитесь к комнате сначала.' });
         }
 
         // Return game state
@@ -556,13 +566,11 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
             turnTime: room.turnTime,
             maxPlayers: room.maxPlayers,
             createdAt: room.createdAt,
-            updatedAt: room.updatedAt,
-            activePlayerId: room.players?.[room.activeIndex || 0]?.userId || null
+            updatedAt: room.updatedAt
         };
 
         res.set('Cache-Control', 'no-store');
-        // Для совместимости отдаём поле state
-        res.json({ success: true, state: gameState });
+        res.json({ success: true, gameState });
     } catch (error) {
         console.error('Ошибка получения состояния игры:', error);
         res.status(500).json({ success: false, message: 'Ошибка сервера' });
@@ -634,9 +642,8 @@ app.post('/api/bank/transfer', (req, res) => {
         }
         fromBal.amount -= sum;
         toBal.amount += sum;
-        const record = { from, to, amount: sum, roomId, timestamp: Date.now(), type: 'transfer' };
+        const record = { from, to, amount: sum, roomId, timestamp: Date.now() };
         pushHistory(roomId, record);
-        try { io.to(roomId).emit('bankUpdate', record); } catch (_) {}
         res.json({ success: true, newBalance: { amount: fromBal.amount }, record });
     } catch (error) {
         console.error('Ошибка перевода:', error);
@@ -705,9 +712,7 @@ app.post('/api/bank/credit/take', (req, res) => {
         // Credit funds to balance
         const bal = ensureBalance(roomId, username);
         bal.amount += sum;
-        const rec = { from: 'Банк', to: username, amount: sum, roomId, timestamp: Date.now(), type: 'credit_take' };
-        pushHistory(roomId, rec);
-        try { io.to(roomId).emit('bankUpdate', rec); } catch (_) {}
+        pushHistory(roomId, { from: 'Банк', to: username, amount: sum, roomId, timestamp: Date.now(), type: 'credit_take' });
 
         res.json({ success: true, loanAmount: loan.amount, newBalance: bal, cashflow: player.passiveIncome });
     } catch (error) {
@@ -747,9 +752,7 @@ app.post('/api/bank/credit/repay', (req, res) => {
             player.passiveIncome = Number(player.passiveIncome || 0) + (sum / 1000) * 100;
         }
 
-        const rec = { from: username, to: 'Банк', amount: sum, roomId, timestamp: Date.now(), type: 'credit_repay' };
-        pushHistory(roomId, rec);
-        try { io.to(roomId).emit('bankUpdate', rec); } catch (_) {}
+        pushHistory(roomId, { from: username, to: 'Банк', amount: sum, roomId, timestamp: Date.now(), type: 'credit_repay' });
         res.json({ success: true, loanAmount: loan.amount, newBalance: bal, cashflow: player?.passiveIncome || 0 });
     } catch (error) {
         console.error('Credit repay error:', error);
@@ -1111,29 +1114,17 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
         activePlayer.position = path[path.length - 1];
         room.updatedAt = new Date().toISOString();
 
-        const payload = {
+        res.json({
             success: true,
             from,
             to: activePlayer.position,
             path,
             players: room.players || []
-        };
-        try { io.to(req.params.roomId).emit('playerMove', { roomId: req.params.roomId, userId, path, to: activePlayer.position }); } catch (_) {}
-        res.json(payload);
+        });
     } catch (error) {
         console.error('Ошибка перемещения:', error);
         res.status(500).json({ success: false, message: 'Ошибка сервера' });
     }
-});
-
-// Socket.IO
-io.on('connection', (socket) => {
-    socket.on('joinRoom', (roomId) => {
-        try { socket.join(roomId); } catch (_) {}
-    });
-    socket.on('leaveRoom', (roomId) => {
-        try { socket.leave(roomId); } catch (_) {}
-    });
 });
 
 app.post('/api/rooms/:roomId/end-turn', (req, res) => {
@@ -1347,7 +1338,7 @@ const startServer = async () => {
     try {
         await initializeDatabase();
         
-        server.listen(PORT, () => {
+        app.listen(PORT, () => {
             console.log('🎮 EM1 Game Board v2.0 Production Server запущен!');
             console.log(`🚀 Сервер работает на порту ${PORT}`);
             console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);

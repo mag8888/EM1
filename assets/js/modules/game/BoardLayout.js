@@ -428,14 +428,89 @@ function renderTracks(room = null) {
         });
         
         console.log('✅ Track cells created');
-    });
 
-    // После построения треков рендерим фишки игроков на внутреннем круге
-    if (room && Array.isArray(room.players)) {
-        renderPlayerTokens(room, innerPositions);
-    }
+        // Кэшируем позиции для анимации фишек
+        window._innerPositionsCache = innerPositions;
+
+        // Рендер фишек игроков, если доступны данные комнаты
+        let playersRoom = room;
+        if (!playersRoom) {
+            try {
+                const stored = localStorage.getItem('currentRoom');
+                if (stored) playersRoom = JSON.parse(stored);
+            } catch (_) {}
+        }
+        if (playersRoom && Array.isArray(playersRoom.players)) {
+            renderPlayerTokens(playersRoom, innerPositions);
+        }
+    });
 }
 
+// Анимация перемещения фишки по внутреннему кругу
+function animateInnerMove(pathIndices, delayMs = 500, userId = null) {
+    // В простом варианте подсвечиваем клетки по пути
+    const inner = document.getElementById('innerTrack');
+    if (!inner || !Array.isArray(pathIndices) || pathIndices.length === 0) return;
+    const cells = Array.from(inner.children);
+    let idx = 0;
+    const timer = setInterval(() => {
+        cells.forEach(c => c.style.outline = '');
+        const cellIndex = pathIndices[idx];
+        const cell = cells[cellIndex];
+        if (cell) cell.style.outline = '2px solid #16f79e';
+        idx++;
+        if (idx >= pathIndices.length) {
+            clearInterval(timer);
+            setTimeout(() => cells.forEach(c => c.style.outline = ''), delayMs);
+        }
+    }, delayMs);
+
+    // Двигаем фишку игрока по точкам пути
+    const positions = window._innerPositionsCache || [];
+    const tokensLayer = document.getElementById('playerTokens');
+    if (!tokensLayer || positions.length === 0) return;
+    // Если не указан userId, пробуем текущего пользователя
+    let targetId = userId;
+    if (!targetId) {
+        try { targetId = window.GameState?.getUserId?.() || null; } catch (_) {}
+    }
+    const token = targetId
+        ? tokensLayer.querySelector(`.player-token[data-user-id="${String(targetId)}"]`)
+        : tokensLayer.querySelector('.player-token');
+    if (!token) return;
+    let moveIdx = 0;
+    const mvTimer = setInterval(() => {
+        const cellIndex = pathIndices[moveIdx];
+        const pos = positions[cellIndex];
+        if (pos) {
+            token.style.left = `${pos.x}px`;
+            token.style.top = `${pos.y}px`;
+        }
+        moveIdx++;
+        if (moveIdx >= pathIndices.length) {
+            clearInterval(mvTimer);
+        }
+    }, delayMs);
+}
+
+if (typeof window !== 'undefined') {
+    window.animateInnerMove = animateInnerMove;
+}
+
+// Экспорт в глобальную область для прямого вызова
+if (typeof window !== 'undefined') {
+    window.renderTracks = renderTracks;
+    
+    // Автозапуск, если подгружается напрямую
+    window.addEventListener('DOMContentLoaded', () => {
+        const hasTracks = document.getElementById('outerTrack') && document.getElementById('innerTrack');
+        if (hasTracks) {
+            renderTracks();
+        }
+    });
+}
+
+// Рендер фишек игроков на внутреннем треке по их выбранным токенам и позициям
 function renderPlayerTokens(room, innerPositions) {
     const container = document.getElementById('playerTokens');
     if (!container) return;
@@ -450,65 +525,13 @@ function renderPlayerTokens(room, innerPositions) {
         token.className = 'player-token';
         token.dataset.userId = p.userId;
         token.textContent = tokenEmojiMap[p.selectedToken] || '🔷';
-        const posIndex = Number(p.position || 0) % innerPositions.length;
-        const { x, y } = innerPositions[posIndex];
-        const offset = (idx % 4) * 8; // небольшой сдвиг, если несколько в одной клетке
-        token.style.left = `${x + offset}px`;
-        token.style.top = `${y + offset}px`;
+        const posIndex = Number(p.position || 0) % (innerPositions.length || 1);
+        const pos = innerPositions[posIndex] || { x: 0, y: 0 };
+        const offsetStep = 8;
+        const offset = (Number(p.tokenOffset ?? idx) % 4) * offsetStep;
+        token.style.left = `${pos.x + offset}px`;
+        token.style.top = `${pos.y + offset}px`;
         container.appendChild(token);
-    });
-
-    window._innerPositionsCache = innerPositions; // для анимации
-}
-
-// Анимация перемещения фишки по внутреннему кругу
-function animateInnerMove(pathIndices, delayMs = 500) {
-    const inner = document.getElementById('innerTrack');
-    const tokensLayer = document.getElementById('playerTokens');
-    if (!inner || !tokensLayer || !Array.isArray(pathIndices) || pathIndices.length === 0) return;
-    const cells = Array.from(inner.children);
-    const positions = window._innerPositionsCache || [];
-
-    // Подсветка
-    let idx = 0;
-    const hiTimer = setInterval(() => {
-        cells.forEach(c => c.style.outline = '');
-        const cellIndex = pathIndices[idx];
-        const cell = cells[cellIndex];
-        if (cell) cell.style.outline = '2px solid #16f79e';
-        idx++;
-        if (idx >= pathIndices.length) {
-            clearInterval(hiTimer);
-            setTimeout(() => cells.forEach(c => c.style.outline = ''), delayMs);
-        }
-    }, delayMs);
-
-    // Двигаем фишку текущего игрока (предполагаем 1 локальный игрок)
-    const token = tokensLayer.querySelector('.player-token');
-    if (!token || positions.length === 0) return;
-    let moveIdx = 0;
-    const mvTimer = setInterval(() => {
-        const cellIndex = pathIndices[moveIdx];
-        const { x, y } = positions[cellIndex] || {};
-        if (x != null && y != null) {
-            token.style.left = `${x}px`;
-            token.style.top = `${y}px`;
-        }
-        moveIdx++;
-        if (moveIdx >= pathIndices.length) {
-            clearInterval(mvTimer);
-        }
-    }, delayMs);
-}
-
-if (typeof window !== 'undefined') {
-    window.renderTracks = renderTracks;
-    window.animateInnerMove = animateInnerMove;
-    window.addEventListener('DOMContentLoaded', () => {
-        const hasTracks = document.getElementById('outerTrack') && document.getElementById('innerTrack');
-        if (hasTracks) {
-            renderTracks();
-        }
     });
 }
 

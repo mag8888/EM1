@@ -71,34 +71,6 @@ class RoomApi {
         }
     }
 
-    async ensureUserId() {
-        try {
-            const current = this.getCurrentUser();
-            const storedId = localStorage.getItem('userId');
-            if (current?.id) return current.id;
-            if (storedId) return storedId;
-
-            // Автологин/авторегистрация гостя
-            const email = `guest_${Date.now()}@example.com`;
-            const password = 'guest123';
-            const data = await this.request('/api/auth/login', {
-                method: 'POST',
-                body: { email, password }
-            });
-            const user = data?.user;
-            if (user?.id) {
-                try {
-                    localStorage.setItem('user', JSON.stringify(user));
-                    localStorage.setItem('userId', user.id);
-                } catch (_) {}
-                return user.id;
-            }
-        } catch (e) {
-            console.warn('RoomApi.ensureUserId failed:', e.message || e);
-        }
-        return null;
-    }
-
     buildHeaders(extra = {}) {
         const headers = {
             ...this.defaultHeaders,
@@ -424,12 +396,6 @@ class RoomApi {
             // Фолбэк для минимального сервера (нет /api/user/profile, есть /api/user/profile/:username)
             try {
                 const user = this.getCurrentUser();
-                // Если есть userId в локальном хранилище, считаем, что он авторизован
-                const storedId = localStorage.getItem('userId');
-                if (storedId && user && !user.id) {
-                    user.id = storedId;
-                    localStorage.setItem('user', JSON.stringify(user));
-                }
                 const username = user?.username || (user?.email ? user.email.split('@')[0] : null);
                 if (!username) return null;
                 // Публичный GET без лишних заголовков, чтобы избежать preflight
@@ -449,10 +415,9 @@ class RoomApi {
     }
 
     async getRoom(roomId, params = {}) {
-        const user = this.getCurrentUser();
-        const userId = user?.id || localStorage.getItem('userId') || params.user_id;
-        const q = userId ? `?user_id=${encodeURIComponent(userId)}` : '';
-        const data = await this.request(`/api/rooms/${roomId}${q}`);
+        // Используем обычный request с X-User-ID для проверки принадлежности к комнате
+        const url = `/api/rooms/${roomId}`;
+        const data = await this.request(url);
         return data.room;
     }
 
@@ -511,17 +476,14 @@ class RoomApi {
     }
 
     async getGameState(roomId) {
-        const userId = (await this.ensureUserId()) || this.getCurrentUser()?.id || localStorage.getItem('userId') || '';
-        const q = userId ? `?user_id=${encodeURIComponent(userId)}` : '';
-        const data = await this.request(`/api/rooms/${roomId}/game-state${q}`);
+        const data = await this.request(`/api/rooms/${roomId}/game-state`);
         return data.state;
     }
 
-    async rollDice(roomId, opts = {}) {
-        const userId = (await this.ensureUserId()) || this.getCurrentUser()?.id || localStorage.getItem('userId');
+    async rollDice(roomId) {
         return this.request(`/api/rooms/${roomId}/roll`, {
             method: 'POST',
-            body: { user_id: userId, ...(opts || {}) }
+            body: {}
         });
     }
 
@@ -554,10 +516,9 @@ class RoomApi {
     }
 
     async endTurn(roomId) {
-        const userId = (await this.ensureUserId()) || this.getCurrentUser()?.id || localStorage.getItem('userId');
         const data = await this.request(`/api/rooms/${roomId}/end-turn`, {
             method: 'POST',
-            body: { user_id: userId }
+            body: {}
         });
         return data.state;
     }
