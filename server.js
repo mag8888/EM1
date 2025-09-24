@@ -154,19 +154,25 @@ app.get('/api/rooms', (req, res) => {
     }
 });
 
-// Create room (requires JWT)
+// Create room (requires user ID)
 app.post('/api/rooms', (req, res) => {
     try {
-        const authHeader = req.headers['authorization'] || '';
-        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-        if (!token) {
-            return res.status(401).json({ success: false, message: 'Требуется авторизация' });
+        const userId = req.headers['x-user-id'] || req.body.user_id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User ID required' });
         }
-        let payload;
-        try {
-            payload = jwt.verify(token, JWT_SECRET);
-        } catch (e) {
-            return res.status(403).json({ success: false, message: 'Недействительный токен' });
+
+        // Find user by ID
+        let user = null;
+        for (let u of users.values()) {
+            if (String(u.id) === String(userId)) {
+                user = u;
+                break;
+            }
+        }
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
         }
 
         const name = String(req.body?.name || '').trim();
@@ -188,8 +194,8 @@ app.post('/api/rooms', (req, res) => {
             updatedAt: new Date().toISOString(),
             players: [
                 {
-                    userId: String(payload.userId || payload.id || 'host'),
-                    name: req.headers['x-user-name'] || (payload.email ? payload.email.split('@')[0] : 'Игрок'),
+                    userId: String(user.id),
+                    name: req.headers['x-user-name'] || user.username || user.email || 'Игрок',
                     isHost: true,
                     isReady: false,
                     selectedToken: null,
@@ -275,35 +281,39 @@ app.get('/api/rooms/:roomId', (req, res) => {
     }
 });
 
-// Join room (requires JWT)
+// Join room (requires user ID)
 app.post('/api/rooms/:roomId/join', (req, res) => {
     try {
-        const authHeader = req.headers['authorization'] || '';
-        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-        if (!token) {
-            return res.status(401).json({ success: false, message: 'Требуется авторизация' });
+        const userId = req.headers['x-user-id'] || req.body.user_id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User ID required' });
         }
-        let payload;
-        try {
-            payload = jwt.verify(token, JWT_SECRET);
-        } catch (e) {
-            return res.status(403).json({ success: false, message: 'Недействительный токен' });
+
+        // Find user by ID
+        let user = null;
+        for (let u of users.values()) {
+            if (String(u.id) === String(userId)) {
+                user = u;
+                break;
+            }
+        }
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
         }
 
         const room = rooms.get(req.params.roomId);
         if (!room) {
             return res.status(404).json({ success: false, message: 'Комната не найдена' });
         }
-
-        const userId = String(payload.userId || payload.id || 'guest');
         const already = (room.players || []).some(p => String(p.userId) === userId);
         if (!already) {
             if ((room.players || []).length >= room.maxPlayers) {
                 return res.status(400).json({ success: false, message: 'Комната заполнена' });
             }
             room.players.push({
-                userId,
-                name: req.headers['x-user-name'] || (payload.email ? payload.email.split('@')[0] : 'Игрок'),
+                userId: String(user.id),
+                name: req.headers['x-user-name'] || user.username || user.email || 'Игрок',
                 isHost: false,
                 isReady: false,
                 selectedToken: null,
@@ -323,20 +333,32 @@ app.post('/api/rooms/:roomId/join', (req, res) => {
     }
 });
 
-// Start game (requires JWT and host, and canStart)
+// Start game (requires user ID and host, and canStart)
 app.post('/api/rooms/:roomId/start', (req, res) => {
     try {
-        const authHeader = req.headers['authorization'] || '';
-        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-        if (!token) return res.status(401).json({ success: false, message: 'Требуется авторизация' });
-        let payload;
-        try { payload = jwt.verify(token, JWT_SECRET); } catch { return res.status(403).json({ success: false, message: 'Недействительный токен' }); }
+        const userId = req.headers['x-user-id'] || req.body.user_id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User ID required' });
+        }
+
+        // Find user by ID
+        let user = null;
+        for (let u of users.values()) {
+            if (String(u.id) === String(userId)) {
+                user = u;
+                break;
+            }
+        }
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
         const room = rooms.get(req.params.roomId);
         if (!room) return res.status(404).json({ success: false, message: 'Комната не найдена' });
-        const userId = String(payload.userId || payload.id || 'guest');
         const hostId = String(room.players?.[0]?.userId || '');
         const s = sanitizeRoom(room);
-        if (userId !== hostId) {
+        if (String(userId) !== hostId) {
             return res.status(403).json({ success: false, message: 'Только создатель комнаты может начать игру' });
         }
         if (!s.canStart) {
@@ -351,17 +373,29 @@ app.post('/api/rooms/:roomId/start', (req, res) => {
     }
 });
 
-// Select dream (requires JWT)
+// Select dream (requires user ID)
 app.post('/api/rooms/:roomId/dream', (req, res) => {
     try {
-        const authHeader = req.headers['authorization'] || '';
-        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-        if (!token) return res.status(401).json({ success: false, message: 'Требуется авторизация' });
-        let payload;
-        try { payload = jwt.verify(token, JWT_SECRET); } catch { return res.status(403).json({ success: false, message: 'Недействительный токен' }); }
+        const userId = req.headers['x-user-id'] || req.body.user_id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User ID required' });
+        }
+
+        // Find user by ID
+        let user = null;
+        for (let u of users.values()) {
+            if (String(u.id) === String(userId)) {
+                user = u;
+                break;
+            }
+        }
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
         const room = rooms.get(req.params.roomId);
         if (!room) return res.status(404).json({ success: false, message: 'Комната не найдена' });
-        const userId = String(payload.userId || payload.id || 'guest');
         const player = (room.players || []).find(p => String(p.userId) === userId);
         if (!player) return res.status(400).json({ success: false, message: 'Игрок не в комнате' });
         const dreamId = req.body?.dream_id ?? req.body?.dreamId;
@@ -374,17 +408,29 @@ app.post('/api/rooms/:roomId/dream', (req, res) => {
     }
 });
 
-// Select token (requires JWT)
+// Select token (requires user ID)
 app.post('/api/rooms/:roomId/token', (req, res) => {
     try {
-        const authHeader = req.headers['authorization'] || '';
-        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-        if (!token) return res.status(401).json({ success: false, message: 'Требуется авторизация' });
-        let payload;
-        try { payload = jwt.verify(token, JWT_SECRET); } catch { return res.status(403).json({ success: false, message: 'Недействительный токен' }); }
+        const userId = req.headers['x-user-id'] || req.body.user_id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User ID required' });
+        }
+
+        // Find user by ID
+        let user = null;
+        for (let u of users.values()) {
+            if (String(u.id) === String(userId)) {
+                user = u;
+                break;
+            }
+        }
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
         const room = rooms.get(req.params.roomId);
         if (!room) return res.status(404).json({ success: false, message: 'Комната не найдена' });
-        const userId = String(payload.userId || payload.id || 'guest');
         const player = (room.players || []).find(p => String(p.userId) === userId);
         if (!player) return res.status(400).json({ success: false, message: 'Игрок не в комнате' });
         const tokenId = req.body?.token_id ?? req.body?.tokenId;
@@ -397,17 +443,29 @@ app.post('/api/rooms/:roomId/token', (req, res) => {
     }
 });
 
-// Toggle ready (requires JWT)
+// Toggle ready (requires user ID)
 app.post('/api/rooms/:roomId/ready', (req, res) => {
     try {
-        const authHeader = req.headers['authorization'] || '';
-        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-        if (!token) return res.status(401).json({ success: false, message: 'Требуется авторизация' });
-        let payload;
-        try { payload = jwt.verify(token, JWT_SECRET); } catch { return res.status(403).json({ success: false, message: 'Недействительный токен' }); }
+        const userId = req.headers['x-user-id'] || req.body.user_id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User ID required' });
+        }
+
+        // Find user by ID
+        let user = null;
+        for (let u of users.values()) {
+            if (String(u.id) === String(userId)) {
+                user = u;
+                break;
+            }
+        }
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
         const room = rooms.get(req.params.roomId);
         if (!room) return res.status(404).json({ success: false, message: 'Комната не найдена' });
-        const userId = String(payload.userId || payload.id || 'guest');
         const player = (room.players || []).find(p => String(p.userId) === userId);
         if (!player) return res.status(400).json({ success: false, message: 'Игрок не в комнате' });
         player.isReady = !player.isReady;

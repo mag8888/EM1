@@ -78,17 +78,19 @@ class RoomApi {
         };
 
         try {
-            const token = localStorage.getItem('authToken');
-            if (token) {
-                headers.Authorization = `Bearer ${token}`;
+            const userId = localStorage.getItem('userId');
+            if (userId) {
+                headers['X-User-ID'] = userId;
             }
         } catch (error) {
-            console.warn('RoomApi: unable to read authToken', error);
+            console.warn('RoomApi: unable to read userId', error);
         }
 
         const user = this.getCurrentUser();
-        if (user?.id) {
+        if (user?.id && !headers['X-User-ID']) {
             headers['X-User-ID'] = user.id;
+        }
+        if (user?.first_name || user?.username || user?.email) {
             headers['X-User-Name'] = user.first_name || user.username || user.email || 'Игрок';
         }
 
@@ -97,12 +99,9 @@ class RoomApi {
 
     createFetchConfig(method, headers, body) {
         const built = this.buildHeaders(headers);
-        // Для GET не указываем Content-Type/Authorization и пользовательские X-* чтобы не вызывать preflight
+        // Для GET не указываем Content-Type чтобы не вызывать preflight
         if (method === 'GET') {
             delete built['Content-Type'];
-            delete built['Authorization'];
-            delete built['X-User-ID'];
-            delete built['X-User-Name'];
         }
         const config = { method, headers: built };
         if (method !== 'GET' && body !== undefined) {
@@ -117,12 +116,12 @@ class RoomApi {
         const response = await this.sendWithFallback(url, config);
 
         if (!response.ok) {
-            if (this.shouldDropAuthToken(response.status)) {
+            if (this.shouldDropUserData(response.status)) {
                 try {
-                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('userId');
                     localStorage.removeItem('user');
                 } catch (error) {
-                    console.warn('RoomApi: failed to clear auth storage', error);
+                    console.warn('RoomApi: failed to clear user storage', error);
                 }
             }
             throw new Error(this.extractErrorMessage(response));
@@ -155,7 +154,7 @@ class RoomApi {
         return response.data;
     }
 
-    shouldDropAuthToken(status) {
+    shouldDropUserData(status) {
         return status === 401 || status === 403;
     }
 
