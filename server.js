@@ -278,7 +278,7 @@ app.get('/api/rooms/safari', (req, res) => {
 });
 
 // Create room (requires user ID)
-app.post('/api/rooms', (req, res) => {
+app.post('/api/rooms', async (req, res) => {
     try {
         const userId = req.headers['x-user-id'] || req.body.user_id;
         if (!userId) {
@@ -307,6 +307,7 @@ app.post('/api/rooms', (req, res) => {
         if (!Number.isInteger(maxPlayers) || maxPlayers < 2 || maxPlayers > 8) {
             return res.status(400).json({ success: false, message: 'maxPlayers должен быть от 2 до 8' });
         }
+        const creatorName = req.headers['x-user-name'] || user.username || user.email || 'Игрок';
         const room = {
             id: Date.now().toString(),
             name,
@@ -316,6 +317,7 @@ app.post('/api/rooms', (req, res) => {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             activeIndex: 0,
+            creatorName: creatorName,
             players: [
                 {
                     userId: String(user.id),
@@ -334,7 +336,26 @@ app.post('/api/rooms', (req, res) => {
         rooms.set(room.id, room);
         
         // Save to database
-        saveRoomToDatabase(room);
+        if (db) {
+            try {
+                await db.createRoom({
+                    id: room.id,
+                    name: room.name,
+                    creatorId: String(user.id),
+                    creatorName: creatorName,
+                    creatorAvatar: user.avatar || null,
+                    maxPlayers: room.maxPlayers,
+                    minPlayers: 2,
+                    turnTime: room.turnTime,
+                    assignProfessions: false
+                });
+                
+                // Create host player in database
+                await db.addPlayerToRoom(room.id, String(user.id), creatorName, user.avatar || null, true);
+            } catch (dbError) {
+                console.error('❌ Failed to save room to database:', dbError);
+            }
+        }
         
         res.status(201).json({ success: true, room });
     } catch (error) {
@@ -419,7 +440,7 @@ app.get('/api/rooms/:roomId', (req, res) => {
 });
 
 // Join room (requires user ID)
-app.post('/api/rooms/:roomId/join', (req, res) => {
+app.post('/api/rooms/:roomId/join', async (req, res) => {
     try {
         const userId = req.headers['x-user-id'] || req.body.user_id;
         if (!userId) {
@@ -463,6 +484,14 @@ app.post('/api/rooms/:roomId/join', (req, res) => {
             room.updatedAt = new Date().toISOString();
             
             // Save to database
+            if (db) {
+                try {
+                    const playerName = req.headers['x-user-name'] || user.username || user.email || 'Игрок';
+                    await db.addPlayerToRoom(room.id, String(user.id), playerName, user.avatar || null, false);
+                } catch (dbError) {
+                    console.error('❌ Failed to add player to database:', dbError);
+                }
+            }
             saveRoomToDatabase(room);
         }
 
