@@ -172,6 +172,7 @@ function createCellElement(index, sizeClass, isInner = false) {
         // Внутренний круг - используем SMALL_CIRCLE_CELLS
         cellData = smallCircleCellsData[index];
         iconText = window.getIconForType ? window.getIconForType(cellData.type) : cellData.icon;
+        console.log('🔍 Icon lookup - cellData.type:', cellData.type, 'iconText:', iconText, 'getIconForType exists:', !!window.getIconForType);
         
         // Для теста: каждая 3-я клетка использует монохромный стиль
         if (index % 3 === 0) {
