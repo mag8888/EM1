@@ -424,6 +424,12 @@ class RoomApi {
             // Фолбэк для минимального сервера (нет /api/user/profile, есть /api/user/profile/:username)
             try {
                 const user = this.getCurrentUser();
+                // Если есть userId в локальном хранилище, считаем, что он авторизован
+                const storedId = localStorage.getItem('userId');
+                if (storedId && user && !user.id) {
+                    user.id = storedId;
+                    localStorage.setItem('user', JSON.stringify(user));
+                }
                 const username = user?.username || (user?.email ? user.email.split('@')[0] : null);
                 if (!username) return null;
                 // Публичный GET без лишних заголовков, чтобы избежать preflight

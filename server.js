@@ -556,11 +556,13 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
             turnTime: room.turnTime,
             maxPlayers: room.maxPlayers,
             createdAt: room.createdAt,
-            updatedAt: room.updatedAt
+            updatedAt: room.updatedAt,
+            activePlayerId: room.players?.[room.activeIndex || 0]?.userId || null
         };
 
         res.set('Cache-Control', 'no-store');
-        res.json({ success: true, gameState });
+        // Для совместимости отдаём поле state
+        res.json({ success: true, state: gameState });
     } catch (error) {
         console.error('Ошибка получения состояния игры:', error);
         res.status(500).json({ success: false, message: 'Ошибка сервера' });

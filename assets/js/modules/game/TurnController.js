@@ -27,6 +27,7 @@ export class TurnController {
         this.turnTimer = null;
         this.rollMade = false;
         this.timerLabel = document.getElementById('turnTimerValue');
+        this.activeNameLabel = document.getElementById('activePlayerName');
         this.socket = null;
     }
 
@@ -67,8 +68,9 @@ export class TurnController {
     updateFromState(snapshot) {
         if (!snapshot) return;
         
+        const snapshotState = this.state?.getSnapshot?.() || null;
         const isMyTurn = this.state?.isMyTurn() || false;
-        this.updateUI(isMyTurn);
+        this.updateUI(isMyTurn, snapshotState);
 
         // Перезапуск таймера при смене хода
         if (isMyTurn) {
@@ -80,13 +82,20 @@ export class TurnController {
         }
     }
 
-    updateUI(isMyTurn) {
+    updateUI(isMyTurn, snapshotState) {
         if (this.phaseLabel) {
             this.phaseLabel.textContent = isMyTurn ? 'Ваш ход' : 'Ожидание хода';
         }
         if (this.rollButton) this.rollButton.disabled = !isMyTurn || this.rollMade;
         if (this.endTurnButton) this.endTurnButton.disabled = !isMyTurn;
         if (this.statusChip) this.statusChip.classList.toggle('is-my-turn', isMyTurn);
+        try {
+            const activeId = snapshotState?.activePlayerId;
+            if (this.activeNameLabel && Array.isArray(snapshotState?.players)) {
+                const p = snapshotState.players.find(x => String(x.userId) === String(activeId));
+                this.activeNameLabel.textContent = p ? (p.name || 'Игрок') : '—';
+            }
+        } catch (_) {}
     }
 
     async handleRollDice() {
