@@ -603,6 +603,19 @@
             font-size: 12px;
             color: var(--text-secondary);
         }
+        
+        /* Анимация сердечка для выбранной мечты */
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.1); }
+            50% { transform: scale(1.2); }
+            75% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .dream-heart {
+            pointer-events: none;
+        }
 
         .btn-exit {
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
@@ -1232,7 +1245,7 @@
                 console.log('🔍 Game: Checking renderTracks function...');
                 if (typeof window.renderTracks === 'function') {
                     console.log('🔍 Game: Calling renderTracks...');
-                    window.renderTracks();
+                    window.renderTracks(window.currentRoom);
                 } else {
                     console.warn('⚠️ Game: renderTracks function not found');
                 }
@@ -1279,6 +1292,36 @@
             console.error('❌ Failed to load SMALL_CIRCLE_CELLS after', maxAttempts, 'attempts');
             console.log('🔍 Final check - SMALL_CIRCLE_CELLS:', typeof SMALL_CIRCLE_CELLS, 'length:', SMALL_CIRCLE_CELLS?.length);
         }
+        
+        // Функция для обновления доски с информацией о комнате
+        function updateBoardWithRoom(room) {
+            console.log('🔍 Game: Updating board with room data:', room);
+            if (typeof window.renderTracks === 'function') {
+                window.renderTracks(room);
+            }
+        }
+        
+        // Экспортируем функцию глобально для доступа из других модулей
+        window.updateBoardWithRoom = updateBoardWithRoom;
+        
+        // Слушаем изменения в localStorage для обновления доски
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'currentRoom' && e.newValue) {
+                try {
+                    const room = JSON.parse(e.newValue);
+                    updateBoardWithRoom(room);
+                } catch (error) {
+                    console.error('Error parsing room data:', error);
+                }
+            }
+        });
+        
+        // Также слушаем события от RoomState
+        window.addEventListener('roomUpdated', (e) => {
+            if (e.detail && e.detail.room) {
+                updateBoardWithRoom(e.detail.room);
+            }
+        });
         
         // Инициализация панели выбора стиля иконок
         function initIconStylePanel() {
@@ -1331,7 +1374,7 @@
                     
                     // Перерисовываем доску с новым стилем
                     if (typeof window.renderTracks === 'function') {
-                        window.renderTracks();
+                        window.renderTracks(window.currentRoom);
                     }
                 });
                 

@@ -51,6 +51,7 @@ function createCellElement(index, sizeClass, isInner = false) {
     let cellData = null;
     let iconText = '⬤';
     let iconClass = '';
+    let isSelectedDream = false;
     
     console.log('🔍 BoardLayout: Creating cell', index, 'isInner:', isInner, 'SMALL_CIRCLE_CELLS length:', SMALL_CIRCLE_CELLS.length);
     
@@ -58,12 +59,41 @@ function createCellElement(index, sizeClass, isInner = false) {
         cellData = SMALL_CIRCLE_CELLS[index];
         iconText = getIconForType ? getIconForType(cellData.type) : cellData.icon;
         iconClass = getIconStyleClass ? getIconStyleClass() : '';
-        console.log('🔍 BoardLayout: Cell data:', cellData, 'iconText:', iconText, 'iconClass:', iconClass);
+        
+        // Проверяем, является ли эта клетка выбранной мечтой
+        if (window.currentRoom?.currentPlayer?.selectedDream) {
+            isSelectedDream = cellData.id === window.currentRoom.currentPlayer.selectedDream;
+            console.log('🔍 BoardLayout: Checking dream match:', {
+                cellId: cellData.id,
+                selectedDream: window.currentRoom.currentPlayer.selectedDream,
+                isSelectedDream
+            });
+        }
+        
+        console.log('🔍 BoardLayout: Cell data:', cellData, 'iconText:', iconText, 'iconClass:', iconClass, 'isSelectedDream:', isSelectedDream);
     }
     
     icon.textContent = iconText;
     if (iconClass) {
         icon.className += ` ${iconClass}`;
+    }
+    
+    // Добавляем сердечко для выбранной мечты
+    if (isSelectedDream) {
+        const heart = document.createElement('div');
+        heart.className = 'dream-heart';
+        heart.textContent = '❤️';
+        heart.style.cssText = `
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            font-size: 16px;
+            z-index: 20;
+            animation: heartbeat 1.5s ease-in-out infinite;
+            filter: drop-shadow(0 2px 4px rgba(255, 0, 0, 0.3));
+        `;
+        el.appendChild(heart);
+        console.log('🔍 BoardLayout: Added heart for selected dream:', cellData.id);
     }
     
     // Добавляем обработчик клика
@@ -142,16 +172,28 @@ function placeInCircle(container, total, insetPx) {
     return positions;
 }
 
-function renderTracks() {
+// Глобальная переменная для хранения информации о комнате
+window.currentRoom = null;
+
+function renderTracks(room = null) {
     console.log('🎯 renderTracks called');
     console.log('🔍 BoardLayout: SMALL_CIRCLE_CELLS available:', typeof SMALL_CIRCLE_CELLS, 'length:', SMALL_CIRCLE_CELLS?.length);
     console.log('🔍 BoardLayout: getIconForType available:', typeof getIconForType);
     console.log('🔍 BoardLayout: getIconStyleClass available:', typeof getIconStyleClass);
     
+    // Сохраняем информацию о комнате
+    if (room) {
+        window.currentRoom = room;
+        console.log('🔍 BoardLayout: Room data saved:', {
+            currentPlayer: room.currentPlayer,
+            selectedDream: room.currentPlayer?.selectedDream
+        });
+    }
+    
     // Если конфигурации не загружены, ждем
     if (typeof SMALL_CIRCLE_CELLS === 'undefined' || SMALL_CIRCLE_CELLS.length === 0) {
         console.log('⏳ BoardLayout: Configs not loaded, retrying in 100ms');
-        setTimeout(renderTracks, 100);
+        setTimeout(() => renderTracks(room), 100);
         return;
     }
     

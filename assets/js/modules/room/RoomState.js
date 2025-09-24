@@ -195,6 +195,11 @@ class RoomState extends EventEmitter {
         localStorage.setItem('currentRoom', JSON.stringify(room));
         this.emit('change', this.getSnapshot());
         console.log('✅ RoomState.handleUpdate: событие change отправлено');
+        
+        // Отправляем событие для обновления доски
+        window.dispatchEvent(new CustomEvent('roomUpdated', {
+            detail: { room }
+        }));
     }
 }
 
