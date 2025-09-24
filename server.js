@@ -534,32 +534,16 @@ app.post('/api/rooms/:roomId/ready', (req, res) => {
 app.get('/api/rooms/:roomId/game-state', (req, res) => {
     try {
         const userId = req.headers['x-user-id'] || req.query.user_id;
-        if (!userId) {
-            return res.status(401).json({ success: false, message: 'User ID required' });
-        }
-
-        // Find user by ID
-        let user = null;
-        for (let u of users.values()) {
-            if (String(u.id) === String(userId)) {
-                user = u;
-                break;
-            }
-        }
-        
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
 
         const room = rooms.get(req.params.roomId);
         if (!room) {
             return res.status(404).json({ success: false, message: 'Комната не найдена' });
         }
 
-        // Check if user is in the room
-        const player = (room.players || []).find(p => String(p.userId) === userId);
-        if (!player) {
-            return res.status(400).json({ success: false, message: 'Вы не находитесь в этой комнате. Пожалуйста, присоединитесь к комнате сначала.' });
+        // Try to find player by userId if передан
+        let player = null;
+        if (userId) {
+            player = (room.players || []).find(p => String(p.userId) === String(userId));
         }
 
         // Return game state

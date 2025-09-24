@@ -15,6 +15,9 @@ class GameState extends EventEmitter {
     }
 
     async init() {
+        try {
+            await this.api.ensureUserId?.();
+        } catch (_) {}
         this.user = this.api?.getCurrentUser?.() || null;
         if (!this.user?.id) {
             console.log('Пользователь не найден, перенаправляем на авторизацию');
