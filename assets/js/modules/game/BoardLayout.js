@@ -50,26 +50,30 @@ if (typeof window !== 'undefined' && window.BIG_CIRCLE_CELLS && window.BIG_CIRCL
 }
 
 // Загружаем функции иконок
-let getIconForType = window.getIconForType || function(cellType, style = 'emoji') {
-    const icons = {
-        'green_opportunity': '💚',
-        'pink_expense': '🛒',
-        'blue_opportunity': '💙',
-        'yellow_expense': '💛',
-        'red_expense': '❤️',
-        'purple_opportunity': '💜',
-        'orange_charity': '❤️',
-        'blue_dividend': '💰',
-        'purple_business': '🏪',
-        'yellow_baby': '👶',
-        'red_downsize': '💸'
+if (typeof window.getIconForType === 'undefined') {
+    window.getIconForType = function(cellType, style = 'emoji') {
+        const icons = {
+            'green_opportunity': '💚',
+            'pink_expense': '🛒',
+            'blue_opportunity': '💙',
+            'yellow_expense': '💛',
+            'red_expense': '❤️',
+            'purple_opportunity': '💜',
+            'orange_charity': '❤️',
+            'blue_dividend': '💰',
+            'purple_business': '🏪',
+            'yellow_baby': '👶',
+            'red_downsize': '💸'
+        };
+        return icons[cellType] || '⬤';
     };
-    return icons[cellType] || '⬤';
-};
+}
 
-let getIconStyleClass = window.getIconStyleClass || function(style = 'emoji') {
-    return style === 'monochrome' ? 'icon-monochrome' : '';
-};
+if (typeof window.getIconStyleClass === 'undefined') {
+    window.getIconStyleClass = function(style = 'emoji') {
+        return style === 'monochrome' ? 'icon-monochrome' : '';
+    };
+}
 
 // Функция для получения иконок большого круга
 function getBigCircleIcon(cellType) {
@@ -137,7 +141,7 @@ function showSimplePopup(cellData) {
     });
 }
 
-console.log('🔍 BoardLayout: Config loaded - SMALL_CIRCLE_CELLS:', smallCircleCellsData?.length || 0, 'BIG_CIRCLE_CELLS:', bigCircleCellsData?.length || 0, 'getIconForType:', typeof getIconForType, 'getIconStyleClass:', typeof getIconStyleClass);
+console.log('🔍 BoardLayout: Config loaded - SMALL_CIRCLE_CELLS:', smallCircleCellsData?.length || 0, 'BIG_CIRCLE_CELLS:', bigCircleCellsData?.length || 0, 'getIconForType:', typeof window.getIconForType, 'getIconStyleClass:', typeof window.getIconStyleClass);
 console.log('🔍 BoardLayout: BIG_CIRCLE_CELLS sample:', bigCircleCellsData?.slice(0, 3) || []);
 
 function createCellElement(index, sizeClass, isInner = false) {
@@ -163,13 +167,13 @@ function createCellElement(index, sizeClass, isInner = false) {
     if (isInner && smallCircleCellsData && index < smallCircleCellsData.length) {
         // Внутренний круг - используем SMALL_CIRCLE_CELLS
         cellData = smallCircleCellsData[index];
-        iconText = getIconForType ? getIconForType(cellData.type) : cellData.icon;
+        iconText = window.getIconForType ? window.getIconForType(cellData.type) : cellData.icon;
         
         // Для теста: каждая 3-я клетка использует монохромный стиль
         if (index % 3 === 0) {
             iconClass = 'icon-monochrome';
         } else {
-            iconClass = getIconStyleClass ? getIconStyleClass() : '';
+            iconClass = window.getIconStyleClass ? window.getIconStyleClass() : '';
         }
         
         // Проверяем, является ли эта клетка выбранной мечтой
@@ -187,7 +191,7 @@ function createCellElement(index, sizeClass, isInner = false) {
         // Внешний круг - используем BIG_CIRCLE_CELLS
         cellData = bigCircleCellsData[index];
         iconText = getBigCircleIcon(cellData.type);
-        iconClass = getIconStyleClass ? getIconStyleClass() : '';
+        iconClass = window.getIconStyleClass ? window.getIconStyleClass() : '';
         
         console.log('🔍 BoardLayout: Outer cell data:', cellData, 'iconText:', iconText, 'iconClass:', iconClass);
     }
@@ -292,8 +296,8 @@ function renderTracks(room = null) {
     console.log('🎯 renderTracks called');
     console.log('🔍 BoardLayout: SMALL_CIRCLE_CELLS available:', typeof smallCircleCellsData, 'length:', smallCircleCellsData?.length);
     console.log('🔍 BoardLayout: BIG_CIRCLE_CELLS available:', typeof bigCircleCellsData, 'length:', bigCircleCellsData?.length);
-    console.log('🔍 BoardLayout: getIconForType available:', typeof getIconForType);
-    console.log('🔍 BoardLayout: getIconStyleClass available:', typeof getIconStyleClass);
+    console.log('🔍 BoardLayout: getIconForType available:', typeof window.getIconForType);
+    console.log('🔍 BoardLayout: getIconStyleClass available:', typeof window.getIconStyleClass);
     
     // Проверяем, загружены ли конфигурации
     if (!smallCircleCellsData || smallCircleCellsData.length === 0) {
@@ -327,8 +331,8 @@ function renderTracks(room = null) {
         ];
     }
     
-    if (!getIconForType) {
-        getIconForType = function(cellType, style = 'emoji') {
+    if (!window.getIconForType) {
+        window.getIconForType = function(cellType, style = 'emoji') {
             const icons = {
                 'green_opportunity': '💚',
                 'pink_expense': '🛒',
@@ -341,8 +345,8 @@ function renderTracks(room = null) {
         };
     }
     
-    if (!getIconStyleClass) {
-        getIconStyleClass = function(style = 'emoji') {
+    if (!window.getIconStyleClass) {
+        window.getIconStyleClass = function(style = 'emoji') {
             return style === 'monochrome' ? 'icon-monochrome' : '';
         };
     }
