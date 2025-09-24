@@ -50,6 +50,13 @@ export class TurnController {
         const isMyTurn = this.state?.isMyTurn() || false;
         
         this.updateUI(isMyTurn, currentPlayer);
+
+        // Перезапуск таймера, когда ход переходит ко мне
+        if (isMyTurn) {
+            this.startTurnTimer();
+        } else {
+            this.clearTimers();
+        }
     }
 
     updateUI(isMyTurn, currentPlayer) {

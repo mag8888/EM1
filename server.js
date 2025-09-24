@@ -595,7 +595,8 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
             turnTime: room.turnTime,
             maxPlayers: room.maxPlayers,
             createdAt: room.createdAt,
-            updatedAt: room.updatedAt
+            updatedAt: room.updatedAt,
+            activePlayerId: room.players?.[room.activeIndex || 0]?.userId || null
         };
 
         res.set('Cache-Control', 'no-store');
@@ -1073,7 +1074,7 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
         const gameState = {
             roomId: room.id,
             status: room.status,
-            activePlayerId: room.players?.[0]?.userId || null,
+            activePlayerId: room.players?.[room.activeIndex || 0]?.userId || null,
             players: room.players || [],
             currentTurn: 1,
             phase: 'waiting',
