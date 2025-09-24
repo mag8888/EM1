@@ -156,9 +156,12 @@
             font-weight: 800;
             color: rgba(255, 255, 255, 0.92);
             text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+            z-index: 2; /* Поверх иконки */
         }
 
         .cell-icon {
+            position: relative;
+            z-index: 1;
             font-size: 22px;
             filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.35));
         }
