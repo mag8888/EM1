@@ -1113,6 +1113,11 @@ body {
     font-weight: bold;
 }
 
+.icon-emoji {
+    font-size: 1.2em;
+    filter: none;
+}
+
 /* Поп-ап для клеток */
 .cell-popup {
     position: fixed;

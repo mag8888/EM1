@@ -71,7 +71,7 @@ if (typeof window.getIconForType === 'undefined') {
 
 if (typeof window.getIconStyleClass === 'undefined') {
     window.getIconStyleClass = function(style = 'emoji') {
-        return style === 'monochrome' ? 'icon-monochrome' : '';
+        return style === 'monochrome' ? 'icon-monochrome' : 'icon-emoji';
     };
 }
 
@@ -173,7 +173,7 @@ function createCellElement(index, sizeClass, isInner = false) {
         if (index % 3 === 0) {
             iconClass = 'icon-monochrome';
         } else {
-            iconClass = window.getIconStyleClass ? window.getIconStyleClass() : '';
+            iconClass = window.getIconStyleClass ? window.getIconStyleClass() : 'icon-emoji';
         }
         
         // Проверяем, является ли эта клетка выбранной мечтой
@@ -191,7 +191,7 @@ function createCellElement(index, sizeClass, isInner = false) {
         // Внешний круг - используем BIG_CIRCLE_CELLS
         cellData = bigCircleCellsData[index];
         iconText = getBigCircleIcon(cellData.type);
-        iconClass = window.getIconStyleClass ? window.getIconStyleClass() : '';
+        iconClass = window.getIconStyleClass ? window.getIconStyleClass() : 'icon-emoji';
         
         console.log('🔍 BoardLayout: Outer cell data:', cellData, 'iconText:', iconText, 'iconClass:', iconClass);
     }
@@ -347,7 +347,7 @@ function renderTracks(room = null) {
     
     if (!window.getIconStyleClass) {
         window.getIconStyleClass = function(style = 'emoji') {
-            return style === 'monochrome' ? 'icon-monochrome' : '';
+            return style === 'monochrome' ? 'icon-monochrome' : 'icon-emoji';
         };
     }
     
