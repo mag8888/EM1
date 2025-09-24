@@ -431,6 +431,30 @@ function renderTracks(room = null) {
     });
 }
 
+// Анимация перемещения фишки по внутреннему кругу
+function animateInnerMove(pathIndices, delayMs = 500) {
+    // В простом варианте подсвечиваем клетки по пути
+    const inner = document.getElementById('innerTrack');
+    if (!inner || !Array.isArray(pathIndices) || pathIndices.length === 0) return;
+    const cells = Array.from(inner.children);
+    let idx = 0;
+    const timer = setInterval(() => {
+        cells.forEach(c => c.style.outline = '');
+        const cellIndex = pathIndices[idx];
+        const cell = cells[cellIndex];
+        if (cell) cell.style.outline = '2px solid #16f79e';
+        idx++;
+        if (idx >= pathIndices.length) {
+            clearInterval(timer);
+            setTimeout(() => cells.forEach(c => c.style.outline = ''), delayMs);
+        }
+    }, delayMs);
+}
+
+if (typeof window !== 'undefined') {
+    window.animateInnerMove = animateInnerMove;
+}
+
 // Экспорт в глобальную область для прямого вызова
 if (typeof window !== 'undefined') {
     window.renderTracks = renderTracks;

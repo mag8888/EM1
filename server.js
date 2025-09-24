@@ -385,6 +385,13 @@ app.post('/api/rooms/:roomId/start', (req, res) => {
             return res.status(400).json({ success: false, message: 'Недостаточно готовых игроков' });
         }
         room.status = 'playing';
+        // Инициализация стартовых позиций на малом круге
+        const order = (room.players || []).length;
+        (room.players || []).forEach((p, idx) => {
+            p.position = 0; // клетка 1 малого круга
+            p.track = 'inner';
+            p.tokenOffset = idx; // для визуального сдвига на клиенте
+        });
         room.updatedAt = new Date().toISOString();
         return res.json({ success: true, room: sanitizeRoom(room) });
     } catch (error) {
@@ -1080,6 +1087,42 @@ app.post('/api/rooms/:roomId/roll', (req, res) => {
         });
     } catch (error) {
         console.error('Ошибка броска кубика:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
+// Move active player by steps on inner circle (24 cells)
+app.post('/api/rooms/:roomId/move', (req, res) => {
+    try {
+        const room = rooms.get(req.params.roomId);
+        if (!room) return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        const userId = req.headers['x-user-id'] || req.body?.user_id;
+        const activePlayer = room.players?.[room.activeIndex || 0] || null;
+        if (!userId || !activePlayer || String(activePlayer.userId) !== String(userId)) {
+            return res.status(403).json({ success: false, message: 'Сейчас не ваш ход' });
+        }
+        const steps = Number(req.body?.steps || req.query.steps || 0);
+        if (!Number.isFinite(steps) || steps <= 0) {
+            return res.status(400).json({ success: false, message: 'Некорректные шаги' });
+        }
+        const INNER_COUNT = 24;
+        const from = Number(activePlayer.position || 0);
+        const path = [];
+        for (let i = 1; i <= steps; i++) {
+            path.push((from + i) % INNER_COUNT);
+        }
+        activePlayer.position = path[path.length - 1];
+        room.updatedAt = new Date().toISOString();
+
+        res.json({
+            success: true,
+            from,
+            to: activePlayer.position,
+            path,
+            players: room.players || []
+        });
+    } catch (error) {
+        console.error('Ошибка перемещения:', error);
         res.status(500).json({ success: false, message: 'Ошибка сервера' });
     }
 });

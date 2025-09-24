@@ -80,16 +80,24 @@ export class TurnController {
             if (result?.result) {
                 const { dice1, dice2, total, isDouble } = result.result;
                 if (this.lastRollLabel) {
-                    this.lastRollLabel.textContent = `${dice1} + ${dice2} = ${total}`;
+                    this.lastRollLabel.textContent = dice2 ? `${dice1} + ${dice2} = ${total}` : `${dice1}`;
                 }
                 
                 if (this.notifier) {
                     this.notifier.show(`Выпало: ${total}${isDouble ? ' (дубль!)' : ''}`, { type: 'info' });
                 }
 
-                // Запросим выбор сделки как демонстрацию событий клетки
+                // Двигаем фишку сервером и анимируем путь
                 try {
-                    await this.state.chooseDeal(total % 2 === 0 ? 'small' : 'big');
+                    const moveRes = await fetch(`/api/rooms/${this.state.roomId}/move`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-user-id': this.state.getUserId() },
+                        body: JSON.stringify({ steps: total, user_id: this.state.getUserId() })
+                    });
+                    const moveData = await moveRes.json();
+                    if (moveRes.ok && Array.isArray(moveData.path)) {
+                        window.animateInnerMove?.(moveData.path, 500);
+                    }
                 } catch (_) {}
             }
         } catch (error) {
