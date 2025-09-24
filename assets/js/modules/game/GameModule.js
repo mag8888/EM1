@@ -148,6 +148,15 @@ class GameModule {
             window.open(`/game-board/deals-module.html?v=${v}`, 'dealsModule', 'width=960,height=820,scrollbars=yes');
         });
 
+        // Клики по карточкам полоски сделок
+        document.querySelectorAll('.special-card[data-deal-tab]')?.forEach(card => {
+            card.addEventListener('click', () => {
+                const tab = card.getAttribute('data-deal-tab');
+                const v = Date.now();
+                window.open(`/game-board/deals-module.html?v=${v}#${tab}`, 'dealsModule', 'width=960,height=820,scrollbars=yes');
+            });
+        });
+
         const leaveBtn = document.getElementById('leaveRoomBtn');
         leaveBtn?.addEventListener('click', () => {
             window.location.assign(`/room/${this.roomId}`);
@@ -164,6 +173,24 @@ class GameModule {
                 avatarEl.textContent = (user.first_name || user.username || 'U').slice(0, 1).toUpperCase();
             }
         }
+
+        // Обновляем счетчики карт на карточках из /api/cards
+        try {
+            fetch('/api/cards')
+                .then(r => r.json())
+                .then(data => {
+                    const market = Array.isArray(data?.marketCards) ? data.marketCards.length : 0;
+                    const expense = Array.isArray(data?.expenseCards) ? data.expenseCards.length : 0;
+                    const small = Array.isArray(data?.smallDeals) ? data.smallDeals.length : 0;
+                    const big = Array.isArray(data?.bigDeals) ? data.bigDeals.length : 0;
+                    const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = String(val); };
+                    setText('marketCardCount', market);
+                    setText('expenseCardCount', expense);
+                    setText('smallDealCount', small);
+                    setText('bigDealCount', big);
+                })
+                .catch(() => {});
+        } catch (_) {}
     }
 }
 

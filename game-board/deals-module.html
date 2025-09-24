@@ -708,6 +708,12 @@
             // Кнопки действий
             const actionsContainer = document.getElementById('current-actions');
             actionsContainer.innerHTML = renderCardActions(currentCard);
+            // Добавляем кнопку Отбой (закрыть модал без действий)
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn btn-decline';
+            cancelBtn.innerHTML = '<span>⏹️</span><span>Отбой</span>';
+            cancelBtn.onclick = () => hideCurrentCard();
+            actionsContainer.appendChild(cancelBtn);
             
             document.getElementById('current-card').classList.add('show');
         }
