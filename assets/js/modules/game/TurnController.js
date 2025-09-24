@@ -29,6 +29,7 @@ export class TurnController {
         this.timerLabel = document.getElementById('turnTimerValue');
         this.activeNameLabel = document.getElementById('activePlayerName');
         this.socket = null;
+        this.lastActiveId = null;
     }
 
     async init() {
@@ -72,13 +73,17 @@ export class TurnController {
         const isMyTurn = this.state?.isMyTurn() || false;
         this.updateUI(isMyTurn, snapshotState);
 
-        // Перезапуск таймера при смене хода
-        if (isMyTurn) {
-            this.rollMade = false;
-            const sec = this.state.getTurnTimeSec(120);
-            this.startTimer(sec);
-        } else {
+        // Перезапуск таймера только при смене активного игрока
+        const currentActiveId = snapshotState?.activePlayerId || null;
+        const activeChanged = String(currentActiveId) !== String(this.lastActiveId);
+        if (activeChanged) {
+            this.lastActiveId = currentActiveId;
             this.clearTimer();
+            if (isMyTurn) {
+                this.rollMade = false;
+                const sec = this.state.getTurnTimeSec(120);
+                this.startTimer(sec);
+            }
         }
     }
 
