@@ -1316,6 +1316,11 @@ app.get('/auth.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'auth.html'));
 });
 
+// Alias: /auth → /auth.html
+app.get('/auth', (req, res) => {
+    res.sendFile(path.join(__dirname, 'auth.html'));
+});
+
 // Catch-all route
 app.get('*', (req, res) => {
     res.status(404).json({
