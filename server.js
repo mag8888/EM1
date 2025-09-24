@@ -61,15 +61,27 @@ const loadUsersFromDatabase = async () => {
 
 // Middleware
 app.use(cors({
-    origin: '*',
+    origin: [
+        "http://localhost:8080",
+        "http://localhost:3000", 
+        "https://em1-production.up.railway.app",
+        "https://em1-production.railway.app"
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-User-ID', 'X-User-Name']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-User-ID', 'X-User-Name'],
+    credentials: true
 }));
 // Ensure preflight requests are handled
 app.options('*', cors({
-    origin: '*',
+    origin: [
+        "http://localhost:8080",
+        "http://localhost:3000", 
+        "https://em1-production.up.railway.app",
+        "https://em1-production.railway.app"
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-User-ID', 'X-User-Name']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-User-ID', 'X-User-Name'],
+    credentials: true
 }));
 // Extra headers for some browsers (Safari)
 app.use((req, res, next) => {
@@ -638,50 +650,46 @@ app.get('/api/user/profile/:username', (req, res) => {
     }
 });
 
-// Minimal current user profile (tries token first, then X-User-Name header)
+// Current user profile (requires user ID)
 app.get('/api/user/profile', (req, res) => {
     try {
-        let username = null;
-        // Try JWT
-        const authHeader = req.headers['authorization'] || '';
-        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-        if (token) {
-            try {
-                const payload = jwt.verify(token, JWT_SECRET);
-                // Find by email or id
-                for (let user of users.values()) {
-                    if ((payload.email && user.email === payload.email) || String(user.id) === String(payload.userId)) {
-                        return res.json({
-                            id: user.id,
-                            username: user.username,
-                            email: user.email,
-                            createdAt: user.createdAt,
-                            isActive: user.isActive
-                        });
-                    }
-                }
-            } catch (_) { /* ignore */ }
+        // Get user ID from headers
+        const userId = req.headers['x-user-id'] || req.query.user_id;
+        if (!userId) {
+            return res.status(401).json({ error: 'User ID required' });
         }
-        // Try header fallback
-        username = req.headers['x-user-name'] || null;
-        if (username) {
-            for (let u of users.values()) {
-                if (u.username === username || u.email === username) {
-                    return res.json({
-                        id: u.id,
-                        username: u.username,
-                        email: u.email,
-                        createdAt: u.createdAt,
-                        isActive: u.isActive
-                    });
-                }
+
+        // Find user by ID
+        let user = null;
+        for (let u of users.values()) {
+            if (String(u.id) === String(userId)) {
+                user = u;
+                break;
             }
         }
-        // Если нет токена и нет username в заголовках, возвращаем 404
-        return res.status(404).json({ message: 'Пользователь не найден' });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        res.json({
+            id: user.id,
+            username: user.username,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            email: user.email,
+            level: user.level || 1,
+            experience: user.experience || 0,
+            games_played: user.games_played || 0,
+            wins_count: user.wins_count || 0,
+            balance: user.balance || 0,
+            createdAt: user.createdAt,
+            isActive: user.isActive
+        });
+        
     } catch (error) {
-        console.error('Ошибка профиля:', error);
-        res.status(500).json({ message: 'Ошибка сервера' });
+        console.error('❌ Profile error:', error);
+        res.status(500).json({ error: 'Ошибка сервера при получении профиля' });
     }
 });
 

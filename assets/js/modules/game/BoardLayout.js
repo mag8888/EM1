@@ -113,7 +113,7 @@ function renderTracks() {
     requestAnimationFrame(() => {
         console.log('🎯 Creating track cells...');
         const outerPositions = placeAlongPerimeter(outer.parentElement, outerCount, 18, false);
-        const innerPositions = placeAlongPerimeter(inner.parentElement, innerCount, 110, true);
+        const innerPositions = placeInCircle(inner.parentElement, innerCount, 110);
 
         console.log('🎯 Outer positions:', outerPositions.length);
         console.log('🎯 Inner positions:', innerPositions.length);

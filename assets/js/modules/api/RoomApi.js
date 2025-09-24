@@ -39,6 +39,8 @@ class RoomApi {
             const { hostname, origin } = window.location;
             if (hostname === 'localhost' || hostname === '127.0.0.1') {
                 this.baseUrl = 'http://localhost:8080';
+            } else if (hostname.includes('railway.app') || hostname.includes('railway')) {
+                this.baseUrl = 'https://em1-production.up.railway.app';
             } else {
                 this.baseUrl = origin.replace(/\/$/, '');
             }

@@ -169,10 +169,16 @@ class LobbyModule {
                 return false;
             }
 
-            // Получаем профиль пользователя с токеном
+            // Получаем профиль пользователя с user ID
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                console.error('❌ User ID not found in localStorage');
+                return false;
+            }
+
             const response = await fetch('/api/user/profile', {
                 headers: { 
-                    'Authorization': `Bearer ${authToken}`,
+                    'X-User-ID': userId,
                     'Content-Type': 'application/json'
                 }
             });
