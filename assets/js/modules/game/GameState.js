@@ -21,6 +21,8 @@ class GameState extends EventEmitter {
             window.location.assign('/auth');
             return;
         }
+        // Продублируем userId в localStorage для RoomApi заголовков
+        try { localStorage.setItem('userId', String(this.user.id)); } catch (_) {}
         
         // Проверяем пользователя с мягким фоллбэком (как в лобби)
         try {

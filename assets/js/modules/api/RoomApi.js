@@ -481,14 +481,12 @@ class RoomApi {
 
     async getGameState(roomId) {
         const data = await this.request(`/api/rooms/${roomId}/game-state`);
-        return data.state;
+        return data.state || data.gameState;
     }
 
     async rollDice(roomId) {
-        return this.request(`/api/rooms/${roomId}/roll`, {
-            method: 'POST',
-            body: {}
-        });
+        // передаём X-User-ID в заголовках через this.request
+        return this.request(`/api/rooms/${roomId}/roll`, { method: 'POST', body: {} });
     }
 
     async chooseDeal(roomId, size) {

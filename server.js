@@ -1088,6 +1088,21 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
     }
 });
 
+// Simple cards endpoint for deals module
+app.get('/api/cards', (req, res) => {
+    try {
+        // Minimal mock lists (IDs only) to provide counts to the UI
+        const makeArray = (n, type) => Array.from({ length: n }, (_, i) => ({ id: `${type}_${i+1}` }));
+        const marketCards = makeArray(24, 'market');
+        const expenseCards = makeArray(24, 'expense');
+        const smallDeals = makeArray(32, 'small');
+        const bigDeals = makeArray(24, 'big');
+        res.json({ success: true, marketCards, expenseCards, smallDeals, bigDeals });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Ошибка загрузки карт' });
+    }
+});
+
 app.post('/api/rooms/:roomId/roll', (req, res) => {
     try {
         const room = rooms.get(req.params.roomId);
