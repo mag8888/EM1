@@ -1,4 +1,5 @@
-import GameModule from './GameModule.js';
+// Cache-bust to ensure clients always load the latest GameModule
+import GameModule from './GameModule.js?v=2';
 
 function getRoomId() {
     try {
