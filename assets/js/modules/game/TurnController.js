@@ -53,12 +53,22 @@ export class TurnController {
         this.updateUI(isMyTurn, currentPlayer);
 
         // Use server time if available, otherwise fallback to client timer
+        console.log('🔍 TurnController.updateFromState:', {
+            isMyTurn,
+            turnTimeLeft: snapshot.turnTimeLeft,
+            turnTime: snapshot.turnTime,
+            activeIndex: snapshot.activeIndex
+        });
+        
         if (isMyTurn && snapshot.turnTimeLeft !== undefined && snapshot.turnTimeLeft > 0) {
+            console.log('🕒 Starting server timer with', snapshot.turnTimeLeft, 'seconds');
             this.startServerTimer(snapshot.turnTimeLeft);
         } else if (isMyTurn) {
             const turnTime = this.state.getTurnTimeSec(120);
+            console.log('🕒 Starting client timer with', turnTime, 'seconds');
             this.startTurnTimer(turnTime);
         } else {
+            console.log('🕒 Clearing timers - not my turn');
             this.clearTimers();
         }
     }
@@ -124,9 +134,10 @@ export class TurnController {
             if (this.notifier) {
                 this.notifier.show('Ошибка броска кубика', { type: 'error' });
             }
-        } finally {
+            // Разблокируем кнопку только при ошибке
             this.rollButton.disabled = false;
         }
+        // НЕ разблокируем кнопку после успешного хода - только после завершения хода
     }
 
     async handleEndTurn() {
@@ -146,6 +157,8 @@ export class TurnController {
             }
         } finally {
             this.endTurnButton.disabled = false;
+            // Разблокируем кнопку броска кубика при завершении хода
+            this.rollButton.disabled = false;
         }
     }
 

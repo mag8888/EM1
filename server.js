@@ -1227,6 +1227,9 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
         const activePlayer = room.players?.[room.activeIndex || 0] || null;
         console.log('🔍 Game state - activeIndex:', room.activeIndex, 'activePlayer:', activePlayer, 'allPlayers:', room.players?.map(p => ({ userId: p.userId, name: p.name })));
         
+        const turnTimeLeft = getTurnTimeLeft(room.id);
+        console.log('🔍 Game state - room.turnTime:', room.turnTime, 'turnTimeLeft:', turnTimeLeft, 'roomId:', room.id);
+        
         const gameState = {
             roomId: room.id,
             status: room.status,
@@ -1244,7 +1247,7 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
             phase: 'waiting',
             diceResult: null,
             pendingDeal: null,
-            turnTimeLeft: getTurnTimeLeft(room.id),
+            turnTimeLeft: turnTimeLeft,
             turnTime: room.turnTime || 120
         };
         
