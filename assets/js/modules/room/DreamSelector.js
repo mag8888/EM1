@@ -86,7 +86,7 @@ class DreamSelector {
             if (takenByOther) {
                 item.disabled = true;
                 item.classList.add('taken');
-                item.innerHTML += '<span class="taken-indicator">ЗАНЯТА</span>';
+                item.innerHTML += '<span class="taken-indicator">ЗАНЯТО</span>';
             }
 
             item.addEventListener('click', () => this.handleSelection(dream.id));

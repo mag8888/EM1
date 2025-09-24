@@ -75,7 +75,7 @@ class TokenSelector {
             if (takenByOther) {
                 button.disabled = true;
                 button.classList.add('taken');
-                button.innerHTML += '<span class="taken-indicator">ЗАНЯТА</span>';
+                button.innerHTML += '<span class="taken-indicator">ЗАНЯТО</span>';
             }
             if (token.id === this.currentTokenId) {
                 button.classList.add('selected');
