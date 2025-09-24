@@ -161,18 +161,11 @@ class LobbyModule {
 
     async validateAndUpdateUser() {
         try {
-            // Проверяем, есть ли токен авторизации
-            const authToken = localStorage.getItem('authToken');
-            if (!authToken) {
-                console.log('❌ No auth token found, redirecting to auth');
-                this.logout();
-                return false;
-            }
-
-            // Получаем профиль пользователя с user ID
+            // Проверяем, есть ли user ID
             const userId = localStorage.getItem('userId');
             if (!userId) {
-                console.error('❌ User ID not found in localStorage');
+                console.log('❌ No user ID found, redirecting to auth');
+                this.logout();
                 return false;
             }
 
@@ -207,15 +200,15 @@ class LobbyModule {
 
     async loadUserStats() {
         try {
-            const authToken = localStorage.getItem('authToken');
-            if (!authToken) {
-                console.log('❌ No auth token for stats request');
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                console.log('❌ No user ID for stats request');
                 return;
             }
 
             const response = await fetch('/api/user/stats', {
                 headers: {
-                    'Authorization': `Bearer ${authToken}`,
+                    'X-User-ID': userId,
                     'Content-Type': 'application/json'
                 }
             });
@@ -513,6 +506,8 @@ class LobbyModule {
     logout() {
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
+        localStorage.removeItem('userId');
+        this.currentUser = null;
         window.location.href = '/auth';
     }
 }

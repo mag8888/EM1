@@ -693,17 +693,35 @@ app.get('/api/user/profile', (req, res) => {
     }
 });
 
-// Minimal user stats endpoint (public, no auth required)
+// User stats endpoint (requires user ID)
 app.get('/api/user/stats', (req, res) => {
     try {
-        // Возвращаем базовые нули для минимальной реализации
+        // Get user ID from headers
+        const userId = req.headers['x-user-id'] || req.query.user_id;
+        if (!userId) {
+            return res.status(401).json({ error: 'User ID required' });
+        }
+
+        // Find user by ID
+        let user = null;
+        for (let u of users.values()) {
+            if (String(u.id) === String(userId)) {
+                user = u;
+                break;
+            }
+        }
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
         res.json({
-            games_played: 0,
-            wins_count: 0,
-            level: 1,
-            experience: 0,
-            balance: 10000,
-            userId: 'guest'
+            games_played: user.games_played || 0,
+            wins_count: user.wins_count || 0,
+            level: user.level || 1,
+            experience: user.experience || 0,
+            balance: user.balance || 10000,
+            online_users: users.size
         });
     } catch (error) {
         console.error('Ошибка получения статистики пользователя:', error);
