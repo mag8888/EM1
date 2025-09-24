@@ -1295,6 +1295,8 @@
     <script src="assets/js/modules/game/Board.js"></script>
     <script src="assets/js/modules/game/BoardLayout.js?v=6"></script>
     <script src="assets/js/modules/game/CellPopup.js"></script>
+    <script src="assets/js/modules/game/CardManager.js"></script>
+    <script src="assets/js/modules/game/CardUI.js"></script>
     
     <!-- Инициализируем игру -->
     <script>
@@ -1399,6 +1401,22 @@
                     console.log('✅ CellPopup initialized');
                 } else {
                     console.warn('⚠️ CellPopup not found');
+                }
+                
+                // Инициализируем CardManager
+                if (typeof CardManager !== 'undefined') {
+                    window.cardManager = new CardManager();
+                    console.log('✅ CardManager initialized');
+                } else {
+                    console.warn('⚠️ CardManager not found');
+                }
+                
+                // Инициализируем CardUI
+                if (typeof CardUI !== 'undefined' && window.cardManager) {
+                    window.cardUI = new CardUI(window.cardManager);
+                    console.log('✅ CardUI initialized');
+                } else {
+                    console.warn('⚠️ CardUI not found or CardManager not initialized');
                 }
                 
             } catch (error) {
