@@ -78,7 +78,8 @@ class GameState extends EventEmitter {
 
     getCurrentPlayer() {
         if (!this.state) return null;
-        return this.state.players?.find(player => player.userId === this.user.id) || null;
+        const myId = this.user?.id != null ? String(this.user.id) : null;
+        return this.state.players?.find(player => String(player.userId) === myId) || null;
     }
 
     getUserId() {
@@ -92,7 +93,7 @@ class GameState extends EventEmitter {
 
     isMyTurn() {
         if (!this.state) return false;
-        return this.state.activePlayerId === this.user.id;
+        return String(this.state.activePlayerId) === String(this.user.id);
     }
 
     async ensureJoined() {
@@ -148,6 +149,18 @@ class GameState extends EventEmitter {
     applyState(state) {
         if (!state) return;
         this.state = state;
+        try {
+            const debugPlayers = Array.isArray(state.players)
+                ? state.players.map(p => ({ userId: String(p.userId), name: p.name }))
+                : [];
+            console.log('🔍 GameState.applyState:', {
+                activePlayerId: String(state.activePlayerId),
+                activeIndex: state.activeIndex,
+                me: String(this.user?.id),
+                isMyTurn: String(state.activePlayerId) === String(this.user?.id),
+                players: debugPlayers
+            });
+        } catch (_) {}
         this.emit('change', this.getSnapshot());
     }
 
