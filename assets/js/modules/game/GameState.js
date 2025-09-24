@@ -55,6 +55,12 @@ class GameState extends EventEmitter {
         return this.user?.id || null;
     }
 
+    getTurnTimeSec(defaultSec = 120) {
+        const mins = Number(this.room?.turnTime || 0);
+        if (Number.isFinite(mins) && mins > 0) return Math.round(mins * 60);
+        return defaultSec;
+    }
+
     isMyTurn() {
         if (!this.state) return false;
         return this.state.activePlayerId === this.user.id;

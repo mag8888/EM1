@@ -25,6 +25,8 @@ export class TurnController {
         };
         
         this.turnTimer = null;
+        this.rollMade = false;
+        this.timerLabel = document.getElementById('turnTimerValue');
     }
 
     async init() {
@@ -46,48 +48,44 @@ export class TurnController {
     updateFromState(snapshot) {
         if (!snapshot) return;
         
-        const currentPlayer = this.state?.getCurrentPlayer();
         const isMyTurn = this.state?.isMyTurn() || false;
-        
-        this.updateUI(isMyTurn, currentPlayer);
+        this.updateUI(isMyTurn);
+
+        // Перезапуск таймера при смене хода
+        if (isMyTurn) {
+            this.rollMade = false;
+            const sec = this.state.getTurnTimeSec(120);
+            this.startTimer(sec);
+        } else {
+            this.clearTimer();
+        }
     }
 
-    updateUI(isMyTurn, currentPlayer) {
+    updateUI(isMyTurn) {
         if (this.phaseLabel) {
             this.phaseLabel.textContent = isMyTurn ? 'Ваш ход' : 'Ожидание хода';
         }
-        
-        if (this.rollButton) {
-            this.rollButton.disabled = !isMyTurn;
-        }
-        
-        if (this.endTurnButton) {
-            this.endTurnButton.disabled = !isMyTurn;
-        }
-        
-        if (this.statusChip) {
-            this.statusChip.classList.toggle('is-my-turn', isMyTurn);
-        }
+        if (this.rollButton) this.rollButton.disabled = !isMyTurn || this.rollMade;
+        if (this.endTurnButton) this.endTurnButton.disabled = !isMyTurn;
+        if (this.statusChip) this.statusChip.classList.toggle('is-my-turn', isMyTurn);
     }
 
     async handleRollDice() {
-        if (!this.state) return;
+        if (!this.state || this.rollMade) return;
         
         try {
             this.rollButton.disabled = true;
             const result = await this.state.rollDice();
+            this.rollMade = true;
+            this.updateUI(true);
             
             if (result?.result) {
                 const { dice1, dice2, total, isDouble } = result.result;
                 if (this.lastRollLabel) {
                     this.lastRollLabel.textContent = dice2 ? `${dice1} + ${dice2} = ${total}` : `${dice1}`;
                 }
-                
-                if (this.notifier) {
-                    this.notifier.show(`Выпало: ${total}${isDouble ? ' (дубль!)' : ''}`, { type: 'info' });
-                }
+                if (this.notifier) this.notifier.show(`Выпало: ${total}${isDouble ? ' (дубль!)' : ''}`, { type: 'info' });
 
-                // Двигаем фишку сервером и анимируем путь
                 try {
                     const moveRes = await fetch(`/api/rooms/${this.state.roomId}/move`, {
                         method: 'POST',
@@ -102,29 +100,19 @@ export class TurnController {
             }
         } catch (error) {
             console.error('Ошибка броска кубика:', error);
-            if (this.notifier) {
-                this.notifier.show('Ошибка броска кубика', { type: 'error' });
-            }
-        } finally {
-            this.rollButton.disabled = false;
+            if (this.notifier) this.notifier.show('Ошибка броска кубика', { type: 'error' });
         }
     }
 
     async handleEndTurn() {
         if (!this.state) return;
-        
         try {
             this.endTurnButton.disabled = true;
             await this.state.endTurn();
-            
-            if (this.notifier) {
-                this.notifier.show('Ход завершен', { type: 'success' });
-            }
+            if (this.notifier) this.notifier.show('Ход завершен', { type: 'success' });
         } catch (error) {
             console.error('Ошибка завершения хода:', error);
-            if (this.notifier) {
-                this.notifier.show('Ошибка завершения хода', { type: 'error' });
-            }
+            if (this.notifier) this.notifier.show('Ошибка завершения хода', { type: 'error' });
         } finally {
             this.endTurnButton.disabled = false;
         }
@@ -299,6 +287,30 @@ export class TurnController {
             clearTimeout(this.turnTimer);
             this.turnTimer = null;
         }
+    }
+
+    startTimer(totalSec) {
+        this.clearTimer();
+        let left = totalSec;
+        const tick = () => {
+            if (this.timerLabel) this.timerLabel.textContent = `${left}s`;
+            left -= 1;
+            if (left < 0) {
+                this.clearTimer();
+                this.handleEndTurn();
+                return;
+            }
+            this.turnTimer = setTimeout(tick, 1000);
+        };
+        tick();
+    }
+
+    clearTimer() {
+        if (this.turnTimer) {
+            clearTimeout(this.turnTimer);
+            this.turnTimer = null;
+        }
+        if (this.timerLabel) this.timerLabel.textContent = '';
     }
 
     getTurnsStats() {

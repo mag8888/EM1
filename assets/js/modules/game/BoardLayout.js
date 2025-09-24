@@ -429,37 +429,81 @@ function renderTracks(room = null) {
         
         console.log('✅ Track cells created');
     });
+
+    // После построения треков рендерим фишки игроков на внутреннем круге
+    if (room && Array.isArray(room.players)) {
+        renderPlayerTokens(room, innerPositions);
+    }
+}
+
+function renderPlayerTokens(room, innerPositions) {
+    const container = document.getElementById('playerTokens');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const tokenEmojiMap = {
+        lion: '🦁', tiger: '🐯', fox: '🦊', panda: '🐼', frog: '🐸', owl: '🦉', octopus: '🐙', whale: '🐋'
+    };
+
+    (room.players || []).forEach((p, idx) => {
+        const token = document.createElement('div');
+        token.className = 'player-token';
+        token.dataset.userId = p.userId;
+        token.textContent = tokenEmojiMap[p.selectedToken] || '🔷';
+        const posIndex = Number(p.position || 0) % innerPositions.length;
+        const { x, y } = innerPositions[posIndex];
+        const offset = (idx % 4) * 8; // небольшой сдвиг, если несколько в одной клетке
+        token.style.left = `${x + offset}px`;
+        token.style.top = `${y + offset}px`;
+        container.appendChild(token);
+    });
+
+    window._innerPositionsCache = innerPositions; // для анимации
 }
 
 // Анимация перемещения фишки по внутреннему кругу
 function animateInnerMove(pathIndices, delayMs = 500) {
-    // В простом варианте подсвечиваем клетки по пути
     const inner = document.getElementById('innerTrack');
-    if (!inner || !Array.isArray(pathIndices) || pathIndices.length === 0) return;
+    const tokensLayer = document.getElementById('playerTokens');
+    if (!inner || !tokensLayer || !Array.isArray(pathIndices) || pathIndices.length === 0) return;
     const cells = Array.from(inner.children);
+    const positions = window._innerPositionsCache || [];
+
+    // Подсветка
     let idx = 0;
-    const timer = setInterval(() => {
+    const hiTimer = setInterval(() => {
         cells.forEach(c => c.style.outline = '');
         const cellIndex = pathIndices[idx];
         const cell = cells[cellIndex];
         if (cell) cell.style.outline = '2px solid #16f79e';
         idx++;
         if (idx >= pathIndices.length) {
-            clearInterval(timer);
+            clearInterval(hiTimer);
             setTimeout(() => cells.forEach(c => c.style.outline = ''), delayMs);
+        }
+    }, delayMs);
+
+    // Двигаем фишку текущего игрока (предполагаем 1 локальный игрок)
+    const token = tokensLayer.querySelector('.player-token');
+    if (!token || positions.length === 0) return;
+    let moveIdx = 0;
+    const mvTimer = setInterval(() => {
+        const cellIndex = pathIndices[moveIdx];
+        const { x, y } = positions[cellIndex] || {};
+        if (x != null && y != null) {
+            token.style.left = `${x}px`;
+            token.style.top = `${y}px`;
+        }
+        moveIdx++;
+        if (moveIdx >= pathIndices.length) {
+            clearInterval(mvTimer);
         }
     }, delayMs);
 }
 
 if (typeof window !== 'undefined') {
-    window.animateInnerMove = animateInnerMove;
-}
-
-// Экспорт в глобальную область для прямого вызова
-if (typeof window !== 'undefined') {
     window.renderTracks = renderTracks;
-    
-    // Автозапуск, если подгружается напрямую
+    window.animateInnerMove = animateInnerMove;
     window.addEventListener('DOMContentLoaded', () => {
         const hasTracks = document.getElementById('outerTrack') && document.getElementById('innerTrack');
         if (hasTracks) {
