@@ -986,6 +986,144 @@
             }
         }
 
+        /* Стили для панели игроков */
+        .players-panel {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .players-queue {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .player-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid #4299e1;
+            transition: all 0.3s ease;
+        }
+
+        .player-item.active {
+            background: rgba(72, 187, 120, 0.2);
+            border-left-color: #48bb78;
+            transform: scale(1.02);
+        }
+
+        .player-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .player-status {
+            font-size: 0.8rem;
+            color: #a0aec0;
+        }
+
+        .current-player {
+            padding: 16px;
+            background: rgba(72, 187, 120, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(72, 187, 120, 0.3);
+        }
+
+        .current-player-title {
+            font-size: 0.9rem;
+            color: #68d391;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        /* Стили для модуля сделок */
+        .deals-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .deal-tab {
+            flex: 1;
+            padding: 8px 12px;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: #a0aec0;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .deal-tab.active {
+            background: rgba(72, 187, 120, 0.2);
+            color: #68d391;
+        }
+
+        .deal-tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+        }
+
+        .deals-content {
+            min-height: 200px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        /* Стили для кнопок банка и сделок */
+        .btn-bank, .btn-deals {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .btn-deals {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        }
+
+        .btn-bank:hover, .btn-deals:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
         @media (max-width: 768px) {
             :root {
                 --board-size: 520px;
@@ -1156,6 +1294,16 @@
                 </div>
             </div>
 
+            <div class="panel players-panel">
+                <h3>👥 Игроки</h3>
+                <div class="players-queue" id="playersQueue">
+                    <!-- Список игроков в очереди будет добавлен динамически -->
+                </div>
+                <div class="current-player" id="currentPlayer">
+                    <!-- Текущий игрок -->
+                </div>
+            </div>
+
             <div class="panel profession-panel">
                 <h3>💼 Карты профессий</h3>
                 <div class="profession-ui">
@@ -1171,7 +1319,15 @@
             <div class="panel cards-panel">
                 <h3>🃏 Карты сделок</h3>
                 <div class="card-ui" id="cardUI">
-                    <!-- UI для карт будет добавлен динамически -->
+                    <div class="deals-tabs">
+                        <button class="deal-tab active" data-deal-type="big">Большая сделка</button>
+                        <button class="deal-tab" data-deal-type="small">Малая сделка</button>
+                        <button class="deal-tab" data-deal-type="market">Рынок</button>
+                        <button class="deal-tab" data-deal-type="expenses">Расходы</button>
+                    </div>
+                    <div class="deals-content" id="dealsContent">
+                        <!-- Содержимое сделок будет загружено динамически -->
+                    </div>
                 </div>
             </div>
 
@@ -1185,6 +1341,14 @@
                     </div>
                 </div>
                 <div class="profile-actions">
+                    <button class="btn btn-bank" id="bankBtn">
+                        <span>🏦</span>
+                        <span>Банк</span>
+                    </button>
+                    <button class="btn btn-deals" id="dealsBtn">
+                        <span>📝</span>
+                        <span>Сделки</span>
+                    </button>
                     <button class="btn btn-exit" id="leaveRoomBtn">
                         <span>🚪</span>
                         <span>Выйти</span>
@@ -1309,13 +1473,17 @@
     <!-- Загружаем API клиент -->
     <script src="assets/js/modules/api/ApiClient.js"></script>
     
-    <!-- Загружаем игровые модули -->
-    <script src="assets/js/modules/game/Board.js"></script>
-    <script src="assets/js/modules/game/BoardLayout.js?v=7"></script>
-    <script src="assets/js/modules/game/CellPopup.js"></script>
-    <script src="assets/js/modules/game/CardManager.js"></script>
-    <script src="assets/js/modules/game/CardUI.js"></script>
-    <script src="game-board/professions-data.js"></script>
+        <!-- Загружаем игровые модули -->
+        <script src="assets/js/modules/game/Board.js"></script>
+        <script src="assets/js/modules/game/BoardLayout.js?v=7"></script>
+        <script src="assets/js/modules/game/CellPopup.js"></script>
+        <script src="assets/js/modules/game/CardManager.js"></script>
+        <script src="assets/js/modules/game/CardUI.js"></script>
+        <script src="assets/js/modules/game/PlayersManager.js?v=8"></script>
+        <script src="assets/js/modules/game/ProfessionCard.js?v=8"></script>
+        <script src="assets/js/modules/game/DealsManager.js?v=8"></script>
+        <script src="assets/js/modules/game/BankManager.js?v=8"></script>
+        <script src="game-board/professions-data.js"></script>
     
     <!-- Инициализируем игру -->
     <script>
