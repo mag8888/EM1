@@ -1230,6 +1230,7 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
             roomId: room.id,
             status: room.status,
             activePlayerId: activePlayer?.userId || null,
+            activeIndex: room.activeIndex || 0,
             players: room.players || [],
             currentTurn: 1,
             phase: 'waiting',
