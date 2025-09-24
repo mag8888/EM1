@@ -29,6 +29,21 @@ class SQLiteDatabase {
     }
 
     async createTables() {
+        // Migration: Add missing columns to existing tables
+        try {
+            // Check if active_index column exists
+            const tableInfo = await this.all(`PRAGMA table_info(rooms)`);
+            const hasActiveIndex = tableInfo.some(col => col.name === 'active_index');
+            
+            if (!hasActiveIndex) {
+                console.log('🔄 Adding active_index column to rooms table...');
+                await this.run(`ALTER TABLE rooms ADD COLUMN active_index INTEGER DEFAULT 0`);
+                console.log('✅ Added active_index column to rooms table');
+            }
+        } catch (error) {
+            console.warn('⚠️ Migration failed (non-critical):', error.message);
+        }
+
         // Migration: Update existing rooms to have creator_name from host player
         try {
             const roomsWithoutCreator = await this.all(`SELECT id FROM rooms WHERE creator_name IS NULL OR creator_name = ''`);
