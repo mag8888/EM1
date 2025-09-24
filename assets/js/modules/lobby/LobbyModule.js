@@ -44,12 +44,29 @@ class LobbyModule {
         this.exposeLegacyBridges();
         
         // Проверяем user ID
-        const userId = localStorage.getItem('userId');
+        let userId = localStorage.getItem('userId');
         console.log('🔍 Checking localStorage for user ID...');
         console.log('🔍 All localStorage keys:', Object.keys(localStorage));
         console.log('🔍 userId from localStorage:', userId);
         console.log('🔍 user from localStorage:', localStorage.getItem('user'));
         console.log('🔍 isAuthenticated from localStorage:', localStorage.getItem('isAuthenticated'));
+        
+        // Fallback: попробуем извлечь user ID из сохраненного объекта user
+        if (!userId) {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    if (user && user.id) {
+                        console.log('🔍 Fallback: Found user ID in user object:', user.id);
+                        localStorage.setItem('userId', user.id);
+                        userId = user.id;
+                    }
+                } catch (error) {
+                    console.error('❌ Error parsing user object:', error);
+                }
+            }
+        }
         
         if (!userId) {
             console.log('❌ No user ID found. Trying soft flow: show UI, no stats/rooms until login.');

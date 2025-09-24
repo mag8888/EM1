@@ -418,7 +418,18 @@
                 })
                 .then(response => response.json())
                 .then(data => {
+                    console.log('🔍 Auth: Full response data:', data);
+                    console.log('🔍 Auth: data.user:', data.user);
+                    console.log('🔍 Auth: data.user.id:', data.user?.id);
+                    
                     if (data.accessToken) {
+                        // Проверяем, что user.id существует
+                        if (!data.user || !data.user.id) {
+                            console.error('❌ Auth: No user ID in response!');
+                            showError('Ошибка: не получен ID пользователя');
+                            return;
+                        }
+                        
                         // Сохраняем токен и данные пользователя
                         localStorage.setItem('authToken', data.accessToken);
                         localStorage.setItem('user', JSON.stringify(data.user));
