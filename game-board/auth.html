@@ -425,10 +425,20 @@
                         localStorage.setItem('userId', data.user.id);
                         localStorage.setItem('isAuthenticated', 'true');
                         
+                        console.log('🔍 Auth: Saved user ID:', data.user.id);
+                        console.log('🔍 Auth: Saved user:', data.user);
+                        console.log('🔍 Auth: All localStorage keys:', Object.keys(localStorage));
+                        
                         showSuccess('Авторизация успешна! Переход в лобби...');
                         
                         // Переход в лобби через 2 секунды
                         setTimeout(() => {
+                            console.log('🔍 Auth: Redirecting to lobby.html...');
+                            console.log('🔍 Auth: Final localStorage check:', {
+                                userId: localStorage.getItem('userId'),
+                                user: localStorage.getItem('user'),
+                                isAuthenticated: localStorage.getItem('isAuthenticated')
+                            });
                             window.location.href = 'lobby.html';
                         }, 2000);
                     } else {

@@ -45,6 +45,12 @@ class LobbyModule {
         
         // Проверяем user ID
         const userId = localStorage.getItem('userId');
+        console.log('🔍 Checking localStorage for user ID...');
+        console.log('🔍 All localStorage keys:', Object.keys(localStorage));
+        console.log('🔍 userId from localStorage:', userId);
+        console.log('🔍 user from localStorage:', localStorage.getItem('user'));
+        console.log('🔍 isAuthenticated from localStorage:', localStorage.getItem('isAuthenticated'));
+        
         if (!userId) {
             console.log('❌ No user ID found. Trying soft flow: show UI, no stats/rooms until login.');
             this.updateUserDisplay();
