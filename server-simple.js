@@ -124,7 +124,9 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname)));
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
+app.use('/game-board', express.static(path.join(__dirname, 'game-board')));
 
 // --- Database Initialization ---------------------------------------------
 initializeDatabase()
@@ -202,7 +204,29 @@ app.get('/game/u/:username', async (req, res) => {
     }
 });
 
-// API endpoint to get user profile data
+// API endpoint to get current user profile data
+app.get('/api/user/profile', async (req, res) => {
+    try {
+        // For now, return a default profile or handle authentication
+        // This should be enhanced with proper JWT authentication
+        res.json({
+            id: 'current_user',
+            username: 'guest',
+            first_name: 'Guest',
+            last_name: 'User',
+            level: 1,
+            experience: 0,
+            games_played: 0,
+            wins_count: 0,
+            created_at: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error fetching current user profile:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// API endpoint to get user profile data by username
 app.get('/api/user/profile/:username', async (req, res) => {
     try {
         const { username } = req.params;
@@ -235,6 +259,40 @@ app.get('/api/user/profile/:username', async (req, res) => {
         console.error('Error fetching user profile:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
+});
+
+// API endpoint for cards
+app.get('/api/cards', (req, res) => {
+    res.json([
+        { id: 1, name: 'Карта 1', description: 'Описание карты 1' },
+        { id: 2, name: 'Карта 2', description: 'Описание карты 2' }
+    ]);
+});
+
+// API endpoint for game cells
+app.get('/api/game-cells', (req, res) => {
+    res.json([
+        { id: 1, name: 'Ячейка 1', type: 'start' },
+        { id: 2, name: 'Ячейка 2', type: 'property' }
+    ]);
+});
+
+// API endpoint for dreams
+app.get('/api/dreams', (req, res) => {
+    res.json([
+        { id: 1, name: 'Мечта 1', description: 'Описание мечты 1' },
+        { id: 2, name: 'Мечта 2', description: 'Описание мечты 2' }
+    ]);
+});
+
+// API endpoint for room dream selection
+app.post('/api/room/select-dream', (req, res) => {
+    res.json({ success: true, message: 'Мечта выбрана' });
+});
+
+// API endpoint for bank transfer
+app.post('/api/bank/transfer', (req, res) => {
+    res.json({ success: true, message: 'Перевод выполнен' });
 });
 
 // --- Health Check --------------------------------------------------------

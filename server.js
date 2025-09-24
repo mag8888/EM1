@@ -1,6 +1,6 @@
 /**
- * EM1 Game Board v2.0 - Minimal Server for Railway
- * Упрощенный сервер для стабильного развертывания
+ * EM1 Game Board v2.0 - Production Server for Railway.app with MongoDB Atlas
+ * Все процессы работают только на сервере Railway.app через MongoDB
  */
 
 require('dotenv').config();
@@ -13,6 +13,51 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const PORT = process.env.PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET || 'em1-production-secret-key-2024-railway';
+
+// MongoDB Configuration
+let dbConnected = false;
+let db = null;
+
+// Try MongoDB Atlas connection
+const initializeDatabase = async () => {
+    try {
+        console.log('🔄 Attempting MongoDB Atlas connection...');
+        const { connectToMongoDB, setModels, dbWrapper } = require('./game-board/config/database-mongodb');
+        const UserModel = require('./game-board/models/UserModel');
+        const RoomModel = require('./game-board/models/RoomModel');
+        
+        await connectToMongoDB();
+        setModels(UserModel, RoomModel);
+        db = dbWrapper;
+        dbConnected = true;
+        console.log('✅ Connected to MongoDB Atlas');
+        
+        // Load users from MongoDB
+        await loadUsersFromDatabase();
+        
+    } catch (error) {
+        console.error('❌ MongoDB connection failed:', error.message);
+        console.error('❌ Server will not start without MongoDB connection');
+        process.exit(1); // Exit if MongoDB connection fails
+    }
+};
+
+// Load users from MongoDB
+const loadUsersFromDatabase = async () => {
+    try {
+        console.log('🔄 Загружаем пользователей из MongoDB...');
+        const users = await db.getAllUsers();
+        console.log(`📋 Найдено пользователей в MongoDB: ${users.length}`);
+        
+        users.forEach(user => {
+            console.log(`👤 Загружаем пользователя: ${user.email} (ID: ${user._id || user.id})`);
+        });
+        
+        console.log(`✅ Загружено пользователей в память: ${users.length}`);
+    } catch (error) {
+        console.error('❌ Ошибка загрузки пользователей:', error);
+    }
+};
 
 // Middleware
 app.use(cors({
@@ -917,15 +962,26 @@ app.get('*', (req, res) => {
     });
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log('🎮 EM1 Game Board v2.0 Minimal Server запущен!');
-    console.log(`🚀 Сервер работает на порту ${PORT}`);
-    console.log(`📱 Локальный адрес: http://localhost:${PORT}`);
-    console.log(`🌐 Railway адрес: https://em1-production.up.railway.app`);
-    console.log('✅ Готов к обслуживанию файлов');
-    console.log('💾 Используется in-memory хранилище');
-});
+// Initialize database and start server
+const startServer = async () => {
+    try {
+        await initializeDatabase();
+        
+        app.listen(PORT, () => {
+            console.log('🎮 EM1 Game Board v2.0 Production Server запущен!');
+            console.log(`🚀 Сервер работает на порту ${PORT}`);
+            console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+            console.log(`🔗 URL: ${process.env.RAILWAY_ENVIRONMENT ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : `http://localhost:${PORT}`}`);
+            console.log(`💾 Database: MongoDB Atlas`);
+            console.log('✅ Готов к обслуживанию файлов');
+        });
+    } catch (error) {
+        console.error('❌ Failed to start server:', error);
+        process.exit(1);
+    }
+};
+
+startServer();
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

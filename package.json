@@ -9,7 +9,8 @@
     "build": "echo 'No build step required for static HTML'",
     "test": "echo 'Run test-game-integration.html in browser'",
     "deploy": "echo 'Deploying to Railway...'",
-    "railway:start": "npm start"
+    "railway:start": "npm start",
+    "railway:deploy": "git push origin main"
   },
   "keywords": [
     "html",
