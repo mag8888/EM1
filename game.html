@@ -6,7 +6,39 @@
     <title>Игровая доска — Game Board v2.0</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" onerror="console.warn('⚠️ Failed to load Google Fonts, using system fonts')">
+    
+    <!-- Fallback for fonts loading issues -->
+    <script>
+        // Check if fonts loaded successfully
+        document.fonts.ready.then(() => {
+            const interFont = document.fonts.check('16px Inter');
+            if (!interFont) {
+                console.warn('⚠️ Inter font not loaded, using system fonts');
+                document.body.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif';
+            }
+        }).catch(() => {
+            console.warn('⚠️ Font loading failed, using system fonts');
+            document.body.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif';
+        });
+
+        // Alternative font loading with timeout
+        setTimeout(() => {
+            const interFont = document.fonts.check('16px Inter');
+            if (!interFont) {
+                console.log('🔄 Trying alternative font loading...');
+                // Try to load from alternative CDN
+                const link = document.createElement('link');
+                link.href = 'https://fonts.bunny.net/css?family=inter:400,500,600,700,800';
+                link.rel = 'stylesheet';
+                link.onerror = () => {
+                    console.warn('⚠️ Alternative font CDN also failed, using system fonts');
+                    document.body.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif';
+                };
+                document.head.appendChild(link);
+            }
+        }, 3000);
+    </script>
     <style>
         :root {
             --board-size: 700px;
@@ -26,7 +58,7 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
             min-height: 100vh;
             background: radial-gradient(circle at 15% 20%, rgba(0, 234, 255, 0.18) 0%, transparent 55%),
                         radial-gradient(circle at 78% 82%, rgba(255, 0, 128, 0.18) 0%, transparent 55%),
