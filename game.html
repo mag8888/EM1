@@ -1197,18 +1197,85 @@
     <div class="game-toast" id="gameToast"></div>
 
     <!-- Загружаем конфигурацию игры -->
-    <script src="config/test-config.js"></script>
-    <script src="config/game-config.js"></script>
-    <script src="config/big-circle-cells.js"></script>
-    <script src="config/small-circle-cells.js"></script>
-    <script src="config/icon-styles.js"></script>
+    <script src="config/test-config.js" onerror="console.error('❌ Failed to load test-config.js')"></script>
+    <script src="config/game-config.js" onerror="console.error('❌ Failed to load game-config.js')"></script>
+    <script src="config/big-circle-cells.js" onerror="console.error('❌ Failed to load big-circle-cells.js')"></script>
+    <script src="config/small-circle-cells.js" onerror="console.error('❌ Failed to load small-circle-cells.js')"></script>
+    <script src="config/icon-styles.js" onerror="console.error('❌ Failed to load icon-styles.js')"></script>
     
     <!-- Проверяем загрузку конфигураций -->
     <script>
+        // Проверяем загрузку скриптов
+        const scriptTags = document.querySelectorAll('script[src*="config/"]');
+        console.log('🔍 Found config scripts:', scriptTags.length);
+        scriptTags.forEach(script => {
+            console.log('🔍 Script:', script.src, 'loaded:', script.readyState);
+        });
+        
         console.log('🔍 Config check - TEST_CONFIG:', typeof TEST_CONFIG, 'length:', TEST_CONFIG?.length);
         console.log('🔍 Config check - SMALL_CIRCLE_CELLS:', typeof SMALL_CIRCLE_CELLS, 'length:', SMALL_CIRCLE_CELLS?.length);
         console.log('🔍 Config check - getIconForType:', typeof getIconForType);
         console.log('🔍 Config check - getIconStyleClass:', typeof getIconStyleClass);
+        
+        // Если конфигурации не загружены, загружаем их встроенными
+        if (typeof SMALL_CIRCLE_CELLS === 'undefined' || SMALL_CIRCLE_CELLS.length === 0) {
+            console.log('⚠️ Configs not loaded from files, loading embedded fallback...');
+            loadEmbeddedConfigs();
+        }
+    </script>
+    
+    <!-- Встроенные конфигурации как fallback -->
+    <script>
+        function loadEmbeddedConfigs() {
+            console.log('🔍 Loading embedded configs...');
+            
+            // Встроенная конфигурация SMALL_CIRCLE_CELLS
+            window.SMALL_CIRCLE_CELLS = [
+                { id: 1, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+                { id: 2, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$ на разные нужды', color: 'pink', icon: '🛒', action: 'draw_expense' },
+                { id: 3, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+                { id: 4, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$ на разные нужды', color: 'pink', icon: '🛒', action: 'draw_expense' },
+                { id: 5, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+                { id: 6, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$ на разные нужды', color: 'pink', icon: '🛒', action: 'draw_expense' },
+                { id: 7, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+                { id: 8, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$ на разные нужды', color: 'pink', icon: '🛒', action: 'draw_expense' },
+                { id: 9, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+                { id: 10, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$ на разные нужды', color: 'pink', icon: '🛒', action: 'draw_expense' },
+                { id: 11, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+                { id: 12, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$ на разные нужды', color: 'pink', icon: '🛒', action: 'draw_expense' },
+                { id: 13, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+                { id: 14, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$ на разные нужды', color: 'pink', icon: '🛒', action: 'draw_expense' },
+                { id: 15, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+                { id: 16, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$ на разные нужды', color: 'pink', icon: '🛒', action: 'draw_expense' },
+                { id: 17, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+                { id: 18, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$ на разные нужды', color: 'pink', icon: '🛒', action: 'draw_expense' },
+                { id: 19, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+                { id: 20, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$ на разные нужды', color: 'pink', icon: '🛒', action: 'draw_expense' },
+                { id: 21, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+                { id: 22, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$ на разные нужды', color: 'pink', icon: '🛒', action: 'draw_expense' },
+                { id: 23, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+                { id: 24, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$ на разные нужды', color: 'pink', icon: '🛒', action: 'draw_expense' }
+            ];
+            
+            // Встроенные функции для иконок
+            window.getIconForType = function(cellType, style = 'emoji') {
+                const icons = {
+                    'green_opportunity': '💚',
+                    'pink_expense': '🛒',
+                    'blue_opportunity': '💙',
+                    'yellow_expense': '💛',
+                    'red_expense': '❤️',
+                    'purple_opportunity': '💜'
+                };
+                return icons[cellType] || '⬤';
+            };
+            
+            window.getIconStyleClass = function(style = 'emoji') {
+                return style === 'monochrome' ? 'icon-monochrome' : '';
+            };
+            
+            console.log('✅ Embedded configs loaded:', window.SMALL_CIRCLE_CELLS.length, 'cells');
+        }
     </script>
     
     <!-- Загружаем основные модули -->
