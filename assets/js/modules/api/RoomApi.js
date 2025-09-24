@@ -370,19 +370,23 @@ class RoomApi {
 
     async listRooms() {
         try {
-            // Сначала пробуем обычный endpoint
             const data = await this.request('/api/rooms');
             return data?.rooms || [];
         } catch (error) {
-            // Если обычный endpoint не работает, пробуем Safari endpoint
-            console.log('Regular rooms endpoint failed, trying Safari endpoint:', error.message);
+            console.log('Regular rooms endpoint failed, trying Safari/public endpoint:', error.message);
             try {
-                // Публичный запрос без авторизационных заголовков, чтобы избежать CORS-блокировок
                 const data = await this.requestPublic('/api/rooms/safari');
                 return data?.rooms || [];
             } catch (safariError) {
-                console.log('Safari endpoint also failed:', safariError.message);
-                throw error; // Возвращаем оригинальную ошибку
+                console.log('Safari endpoint also failed, trying last-resort fetch without headers');
+                try {
+                    const res = await fetch(`${this.baseUrl}/api/rooms/safari`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        return data?.rooms || [];
+                    }
+                } catch (_) {}
+                throw error;
             }
         }
     }

@@ -164,6 +164,28 @@ app.get('/api/rooms', (req, res) => {
     }
 });
 
+// CORS-friendly public endpoint for Safari fallback (no auth headers expected)
+app.get('/api/rooms/safari', (req, res) => {
+    try {
+        const list = Array.from(rooms.values()).map(room => ({
+            id: room.id,
+            name: room.name,
+            maxPlayers: room.maxPlayers,
+            turnTime: room.turnTime,
+            status: room.status,
+            createdAt: room.createdAt,
+            updatedAt: room.updatedAt,
+            players: room.players || []
+        }));
+        res.set('Access-Control-Allow-Origin', '*');
+        res.set('Cache-Control', 'no-store');
+        res.json({ success: true, rooms: list });
+    } catch (error) {
+        console.error('Ошибка получения списка комнат (safari):', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
 // Create room (requires user ID)
 app.post('/api/rooms', (req, res) => {
     try {
