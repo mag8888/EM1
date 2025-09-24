@@ -222,6 +222,16 @@ function sanitizeRoom(room) {
     const readyCount = players.filter(p => p.isReady).length;
     const playersCount = players.length;
     const canStart = playersCount >= 2 && readyCount >= 2;
+    
+    // Собираем занятые фишки и мечты
+    const takenTokens = players
+        .filter(p => p.selectedToken)
+        .map(p => p.selectedToken);
+    
+    const takenDreams = players
+        .filter(p => p.selectedDream)
+        .map(p => p.selectedDream);
+    
     return {
         id: room.id,
         name: room.name,
@@ -234,6 +244,8 @@ function sanitizeRoom(room) {
         readyCount,
         canStart,
         gameStarted: room.status === 'playing',
+        takenTokens, // Занятые фишки
+        takenDreams, // Занятые мечты
         players: players.map(p => ({
             userId: p.userId,
             name: p.name,
@@ -398,7 +410,23 @@ app.post('/api/rooms/:roomId/dream', (req, res) => {
         if (!room) return res.status(404).json({ success: false, message: 'Комната не найдена' });
         const player = (room.players || []).find(p => String(p.userId) === userId);
         if (!player) return res.status(400).json({ success: false, message: 'Игрок не в комнате' });
+        
         const dreamId = req.body?.dream_id ?? req.body?.dreamId;
+        
+        // Проверяем, что мечта не выбрана другим игроком
+        if (dreamId) {
+            const isDreamTaken = (room.players || []).some(p => 
+                String(p.userId) !== String(userId) && p.selectedDream === dreamId
+            );
+            
+            if (isDreamTaken) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Эта мечта уже выбрана другим игроком' 
+                });
+            }
+        }
+        
         player.selectedDream = dreamId ?? null;
         room.updatedAt = new Date().toISOString();
         return res.json({ success: true, room: sanitizeRoom(room) });
@@ -433,7 +461,23 @@ app.post('/api/rooms/:roomId/token', (req, res) => {
         if (!room) return res.status(404).json({ success: false, message: 'Комната не найдена' });
         const player = (room.players || []).find(p => String(p.userId) === userId);
         if (!player) return res.status(400).json({ success: false, message: 'Игрок не в комнате' });
+        
         const tokenId = req.body?.token_id ?? req.body?.tokenId;
+        
+        // Проверяем, что фишка не выбрана другим игроком
+        if (tokenId) {
+            const isTokenTaken = (room.players || []).some(p => 
+                String(p.userId) !== String(userId) && p.selectedToken === tokenId
+            );
+            
+            if (isTokenTaken) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Эта фишка уже выбрана другим игроком' 
+                });
+            }
+        }
+        
         player.selectedToken = tokenId ?? null;
         room.updatedAt = new Date().toISOString();
         return res.json({ success: true, room: sanitizeRoom(room) });
