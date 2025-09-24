@@ -22,6 +22,8 @@ class GameModule {
         this.setupUiShortcuts();
         try {
             await this.state.init();
+            // Делаем GameState доступным глобально для обновления фишек
+            window.gameState = this.state;
         } catch (error) {
             this.notifier.show(error.message || 'Не удалось загрузить игру', { type: 'error' });
         }

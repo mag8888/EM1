@@ -1231,7 +1231,14 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
             status: room.status,
             activePlayerId: activePlayer?.userId || null,
             activeIndex: room.activeIndex || 0,
-            players: room.players || [],
+            players: (room.players || []).map(player => ({
+                userId: player.userId,
+                name: player.name,
+                position: player.position || 0,
+                track: player.track || 'inner',
+                tokenOffset: player.tokenOffset || 0,
+                selectedToken: player.selectedToken || null
+            })),
             currentTurn: 1,
             phase: 'waiting',
             diceResult: null,
@@ -1328,12 +1335,41 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
         // Save to database
         saveRoomToSQLite(room);
 
+        // Return updated game state
+        const updatedGameState = {
+            roomId: room.id,
+            status: room.status,
+            activePlayerId: activePlayer.userId,
+            activeIndex: room.activeIndex || 0,
+            players: room.players.map(player => ({
+                userId: player.userId,
+                name: player.name,
+                position: player.position || 0,
+                track: player.track || 'inner',
+                tokenOffset: player.tokenOffset || 0,
+                selectedToken: player.selectedToken || null
+            })),
+            currentTurn: 1,
+            phase: 'waiting',
+            diceResult: null,
+            pendingDeal: null,
+            turnTimeLeft: getTurnTimeLeft(room.id),
+            turnTime: room.turnTime || 120,
+            moveResult: {
+                from,
+                to: activePlayer.position,
+                path,
+                steps
+            }
+        };
+
         res.json({
             success: true,
+            state: updatedGameState,
             from,
             to: activePlayer.position,
             path,
-            players: room.players || []
+            message: `Игрок ${activePlayer.name} прошел ${steps} шагов`
         });
     } catch (error) {
         console.error('Ошибка перемещения:', error);

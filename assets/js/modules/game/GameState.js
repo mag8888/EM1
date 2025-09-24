@@ -170,6 +170,11 @@ class GameState extends EventEmitter {
             );
         }
         this.emit('change', this.getSnapshot());
+        
+        // Обновляем позиции фишек на доске
+        if (window.renderPlayerTokensFromState && window._innerPositionsCache) {
+            window.renderPlayerTokensFromState(window._innerPositionsCache);
+        }
     }
 
     async rollDice() {

@@ -413,17 +413,8 @@ function renderTracks(room = null) {
         // Кэшируем позиции для анимации фишек
         window._innerPositionsCache = innerPositions;
 
-        // Рендер фишек игроков, если доступны данные комнаты
-        let playersRoom = room;
-        if (!playersRoom) {
-            try {
-                const stored = localStorage.getItem('currentRoom');
-                if (stored) playersRoom = JSON.parse(stored);
-            } catch (_) {}
-        }
-        if (playersRoom && Array.isArray(playersRoom.players)) {
-            renderPlayerTokens(playersRoom, innerPositions);
-        }
+        // Рендер фишек игроков из текущего состояния игры
+        renderPlayerTokensFromState(innerPositions);
     });
 }
 
@@ -504,6 +495,17 @@ if (typeof window !== 'undefined') {
         }
     });
 }
+
+// Рендер фишек игроков из текущего состояния игры
+function renderPlayerTokensFromState(innerPositions) {
+    // Получаем состояние игры из глобального объекта GameState
+    if (window.gameState && window.gameState.state && Array.isArray(window.gameState.state.players)) {
+        renderPlayerTokens(window.gameState.state, innerPositions);
+    }
+}
+
+// Делаем функцию глобальной
+window.renderPlayerTokensFromState = renderPlayerTokensFromState;
 
 // Рендер фишек игроков на внутреннем треке по их выбранным токенам и позициям
 function renderPlayerTokens(room, innerPositions) {

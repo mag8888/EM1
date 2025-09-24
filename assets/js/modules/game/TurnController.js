@@ -97,7 +97,7 @@ export class TurnController {
                     this.notifier.show(`Выпало: ${total}${isDouble ? ' (дубль!)' : ''}`, { type: 'info' });
                 }
 
-                // Двигаем фишку сервером и анимируем путь
+                // Двигаем фишку сервером и обновляем состояние
                 try {
                     const moveRes = await fetch(`/api/rooms/${this.state.roomId}/move`, {
                         method: 'POST',
@@ -105,10 +105,18 @@ export class TurnController {
                         body: JSON.stringify({ steps: total, user_id: this.state.getUserId() })
                     });
                     const moveData = await moveRes.json();
-                    if (moveRes.ok && Array.isArray(moveData.path)) {
-                        window.animateInnerMove?.(moveData.path, 500);
+                    if (moveRes.ok && moveData.state) {
+                        // Обновляем состояние игры с сервера
+                        this.state.applyState(moveData.state);
+                        
+                        // Анимируем движение фишки
+                        if (Array.isArray(moveData.path)) {
+                            window.animateInnerMove?.(moveData.path, 500);
+                        }
                     }
-                } catch (_) {}
+                } catch (error) {
+                    console.error('Ошибка движения:', error);
+                }
             }
         } catch (error) {
             console.error('Ошибка броска кубика:', error);
