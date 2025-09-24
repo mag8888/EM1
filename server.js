@@ -120,17 +120,17 @@ const bankLoans = new Map();    // key: roomId:username -> { amount }
 const turnTimers = new Map(); // roomId -> { timeout, deadline }
 
 // SQLite Database
-let db = null;
+let sqliteDb = null;
 
 // Initialize database and load rooms
-async function initializeDatabase() {
+async function initializeSQLite() {
     try {
-        db = new SQLiteDatabase();
-        await db.init();
+        sqliteDb = new SQLiteDatabase();
+        await sqliteDb.init();
         console.log('✅ SQLite database initialized');
         
         // Load existing rooms from database
-        await loadRoomsFromDatabase();
+        await loadRoomsFromSQLite();
         console.log('✅ Rooms loaded from database');
     } catch (error) {
         console.error('❌ Failed to initialize database:', error);
@@ -138,11 +138,11 @@ async function initializeDatabase() {
 }
 
 // Load rooms from database into memory
-async function loadRoomsFromDatabase() {
+async function loadRoomsFromSQLite() {
     try {
-        const allRooms = await db.getAllRooms();
+        const allRooms = await sqliteDb.getAllRooms();
         for (const roomData of allRooms) {
-            const roomState = await db.loadRoomState(roomData.id);
+            const roomState = await sqliteDb.loadRoomState(roomData.id);
             if (roomState) {
                 rooms.set(roomState.id, roomState);
                 console.log(`✅ Loaded room: ${roomState.id} (${roomState.status})`);
@@ -154,10 +154,10 @@ async function loadRoomsFromDatabase() {
 }
 
 // Save room state to database
-async function saveRoomToDatabase(room) {
-    if (!db) return;
+async function saveRoomToSQLite(room) {
+    if (!sqliteDb) return;
     try {
-        await db.saveRoomState(room);
+        await sqliteDb.saveRoomState(room);
     } catch (error) {
         console.error('❌ Failed to save room to database:', error);
     }
@@ -336,9 +336,9 @@ app.post('/api/rooms', async (req, res) => {
         rooms.set(room.id, room);
         
         // Save to database
-        if (db) {
+        if (sqliteDb) {
             try {
-                await db.createRoom({
+                await sqliteDb.createRoom({
                     id: room.id,
                     name: room.name,
                     creatorId: String(user.id),
@@ -351,7 +351,7 @@ app.post('/api/rooms', async (req, res) => {
                 });
                 
                 // Create host player in database
-                await db.addPlayerToRoom(room.id, String(user.id), creatorName, user.avatar || null, true);
+                await sqliteDb.addPlayerToRoom(room.id, String(user.id), creatorName, user.avatar || null, true);
             } catch (dbError) {
                 console.error('❌ Failed to save room to database:', dbError);
             }
@@ -484,15 +484,15 @@ app.post('/api/rooms/:roomId/join', async (req, res) => {
             room.updatedAt = new Date().toISOString();
             
             // Save to database
-            if (db) {
+            if (sqliteDb) {
                 try {
                     const playerName = req.headers['x-user-name'] || user.username || user.email || 'Игрок';
-                    await db.addPlayerToRoom(room.id, String(user.id), playerName, user.avatar || null, false);
+                    await sqliteDb.addPlayerToRoom(room.id, String(user.id), playerName, user.avatar || null, false);
                 } catch (dbError) {
                     console.error('❌ Failed to add player to database:', dbError);
                 }
             }
-            saveRoomToDatabase(room);
+            saveRoomToSQLite(room);
         }
 
         res.json({ success: true, room: sanitizeRoom(room) });
@@ -555,7 +555,7 @@ app.post('/api/rooms/:roomId/start', (req, res) => {
         startTurnTimer(room.id, room.turnTime || 120);
         
         // Save to database
-        saveRoomToDatabase(room);
+        saveRoomToSQLite(room);
         
         return res.json({ success: true, room: sanitizeRoom(room) });
     } catch (error) {
@@ -598,7 +598,7 @@ app.post('/api/rooms/:roomId/dream', (req, res) => {
         room.updatedAt = new Date().toISOString();
         
         // Save to database
-        saveRoomToDatabase(room);
+        saveRoomToSQLite(room);
         
         return res.json({ success: true, room: sanitizeRoom(room) });
     } catch (error) {
@@ -653,7 +653,7 @@ app.post('/api/rooms/:roomId/token', (req, res) => {
         room.updatedAt = new Date().toISOString();
         
         // Save to database
-        saveRoomToDatabase(room);
+        saveRoomToSQLite(room);
         
         return res.json({ success: true, room: sanitizeRoom(room) });
     } catch (error) {
@@ -691,7 +691,7 @@ app.post('/api/rooms/:roomId/ready', (req, res) => {
         room.updatedAt = new Date().toISOString();
         
         // Save to database
-        saveRoomToDatabase(room);
+        saveRoomToSQLite(room);
         
         return res.json({ success: true, room: sanitizeRoom(room) });
     } catch (error) {
@@ -1317,7 +1317,7 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
         room.updatedAt = new Date().toISOString();
 
         // Save to database
-        saveRoomToDatabase(room);
+        saveRoomToSQLite(room);
 
         res.json({
             success: true,
@@ -1357,7 +1357,7 @@ app.post('/api/rooms/:roomId/end-turn', (req, res) => {
         startTurnTimer(room.id, room.turnTime || 120);
         
         // Save to database
-        saveRoomToDatabase(room);
+        saveRoomToSQLite(room);
         
         // Return updated state
         const gameState = {
@@ -1447,7 +1447,7 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
         }
 
         // Save to database
-        saveRoomToDatabase(room);
+        saveRoomToSQLite(room);
 
         // Simple deal resolution
         res.json({ 
@@ -1559,7 +1559,7 @@ app.get('*', (req, res) => {
 const startServer = async () => {
     try {
         // Initialize database first
-        await initializeDatabase();
+        await initializeSQLite();
         
         app.listen(PORT, () => {
             console.log('🎮 EM1 Game Board v2.0 Production Server запущен!');
