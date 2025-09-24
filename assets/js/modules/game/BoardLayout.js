@@ -2,17 +2,17 @@
 // Рисуем 44 клетки по периметру внешнего квадрата и 24 клетки в круглом внутреннем треке
 
 // Загружаем конфигурацию клеток
-let SMALL_CIRCLE_CELLS = [];
+let smallCircleCellsData = [];
 let bigCircleCellsData = null;
 
 // Сначала проверяем window.SMALL_CIRCLE_CELLS
 if (typeof window !== 'undefined' && window.SMALL_CIRCLE_CELLS && window.SMALL_CIRCLE_CELLS.length > 0) {
     console.log('🔍 BoardLayout: Using window.SMALL_CIRCLE_CELLS:', window.SMALL_CIRCLE_CELLS.length);
-    SMALL_CIRCLE_CELLS = window.SMALL_CIRCLE_CELLS;
+    smallCircleCellsData = window.SMALL_CIRCLE_CELLS;
 } else {
     console.log('🔍 BoardLayout: Using fallback config for small circle');
     // Fallback конфигурация
-    SMALL_CIRCLE_CELLS = [
+    smallCircleCellsData = [
         { id: 1, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
         { id: 2, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$', color: 'pink', icon: '🛒', action: 'mandatory_expense', minCost: 100, maxCost: 4000 },
         { id: 3, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
@@ -137,7 +137,7 @@ function showSimplePopup(cellData) {
     });
 }
 
-console.log('🔍 BoardLayout: Config loaded - SMALL_CIRCLE_CELLS:', SMALL_CIRCLE_CELLS.length, 'BIG_CIRCLE_CELLS:', bigCircleCellsData?.length || 0, 'getIconForType:', typeof getIconForType, 'getIconStyleClass:', typeof getIconStyleClass);
+console.log('🔍 BoardLayout: Config loaded - SMALL_CIRCLE_CELLS:', smallCircleCellsData?.length || 0, 'BIG_CIRCLE_CELLS:', bigCircleCellsData?.length || 0, 'getIconForType:', typeof getIconForType, 'getIconStyleClass:', typeof getIconStyleClass);
 console.log('🔍 BoardLayout: BIG_CIRCLE_CELLS sample:', bigCircleCellsData?.slice(0, 3) || []);
 
 function createCellElement(index, sizeClass, isInner = false) {
@@ -158,11 +158,11 @@ function createCellElement(index, sizeClass, isInner = false) {
     let iconClass = '';
     let isSelectedDream = false;
     
-    console.log('🔍 BoardLayout: Creating cell', index, 'isInner:', isInner, 'SMALL_CIRCLE_CELLS length:', SMALL_CIRCLE_CELLS.length, 'BIG_CIRCLE_CELLS length:', bigCircleCellsData?.length || 0);
+    console.log('🔍 BoardLayout: Creating cell', index, 'isInner:', isInner, 'SMALL_CIRCLE_CELLS length:', smallCircleCellsData?.length || 0, 'BIG_CIRCLE_CELLS length:', bigCircleCellsData?.length || 0);
     
-    if (isInner && index < SMALL_CIRCLE_CELLS.length) {
+    if (isInner && smallCircleCellsData && index < smallCircleCellsData.length) {
         // Внутренний круг - используем SMALL_CIRCLE_CELLS
-        cellData = SMALL_CIRCLE_CELLS[index];
+        cellData = smallCircleCellsData[index];
         iconText = getIconForType ? getIconForType(cellData.type) : cellData.icon;
         
         // Для теста: каждая 3-я клетка использует монохромный стиль
@@ -290,16 +290,16 @@ window.currentRoom = null;
 
 function renderTracks(room = null) {
     console.log('🎯 renderTracks called');
-    console.log('🔍 BoardLayout: SMALL_CIRCLE_CELLS available:', typeof SMALL_CIRCLE_CELLS, 'length:', SMALL_CIRCLE_CELLS?.length);
+    console.log('🔍 BoardLayout: SMALL_CIRCLE_CELLS available:', typeof smallCircleCellsData, 'length:', smallCircleCellsData?.length);
     console.log('🔍 BoardLayout: BIG_CIRCLE_CELLS available:', typeof bigCircleCellsData, 'length:', bigCircleCellsData?.length);
     console.log('🔍 BoardLayout: getIconForType available:', typeof getIconForType);
     console.log('🔍 BoardLayout: getIconStyleClass available:', typeof getIconStyleClass);
     
     // Проверяем, загружены ли конфигурации
-    if (!SMALL_CIRCLE_CELLS || SMALL_CIRCLE_CELLS.length === 0) {
+    if (!smallCircleCellsData || smallCircleCellsData.length === 0) {
         console.log('🔍 BoardLayout: Configs not loaded, using fallback');
         // Используем fallback конфигурацию
-        SMALL_CIRCLE_CELLS = [
+        smallCircleCellsData = [
             { id: 1, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
             { id: 2, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$', color: 'pink', icon: '🛒', action: 'mandatory_expense', minCost: 100, maxCost: 4000 },
             { id: 3, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
