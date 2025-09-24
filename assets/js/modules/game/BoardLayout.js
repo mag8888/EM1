@@ -52,10 +52,13 @@ function createCellElement(index, sizeClass, isInner = false) {
     let iconText = '⬤';
     let iconClass = '';
     
+    console.log('🔍 BoardLayout: Creating cell', index, 'isInner:', isInner, 'SMALL_CIRCLE_CELLS length:', SMALL_CIRCLE_CELLS.length);
+    
     if (isInner && index < SMALL_CIRCLE_CELLS.length) {
         cellData = SMALL_CIRCLE_CELLS[index];
         iconText = getIconForType ? getIconForType(cellData.type) : cellData.icon;
         iconClass = getIconStyleClass ? getIconStyleClass() : '';
+        console.log('🔍 BoardLayout: Cell data:', cellData, 'iconText:', iconText, 'iconClass:', iconClass);
     }
     
     icon.textContent = iconText;
@@ -141,6 +144,10 @@ function placeInCircle(container, total, insetPx) {
 
 function renderTracks() {
     console.log('🎯 renderTracks called');
+    console.log('🔍 BoardLayout: SMALL_CIRCLE_CELLS available:', typeof SMALL_CIRCLE_CELLS, 'length:', SMALL_CIRCLE_CELLS?.length);
+    console.log('🔍 BoardLayout: getIconForType available:', typeof getIconForType);
+    console.log('🔍 BoardLayout: getIconStyleClass available:', typeof getIconStyleClass);
+    
     const outer = document.getElementById('outerTrack');
     const inner = document.getElementById('innerTrack');
     

@@ -71,7 +71,7 @@ class TokenSelector {
 
             // Проверяем, занята ли фишка другим игроком
             const takenByOther = (room.takenTokens && room.takenTokens.includes(token.id) && token.id !== this.currentTokenId) ||
-                                (token.taken && token.id !== this.currentTokenId);
+                                (token.taken === true && token.id !== this.currentTokenId);
             console.log('🔍 TokenSelector: Checking token', token.id, 'takenByOther:', takenByOther, 'takenTokens:', room.takenTokens);
             if (takenByOther) {
                 button.disabled = true;
