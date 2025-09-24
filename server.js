@@ -318,6 +318,7 @@ app.post('/api/rooms', async (req, res) => {
             updatedAt: new Date().toISOString(),
             activeIndex: 0,
             creatorName: creatorName,
+            lastActivity: Date.now(),
             players: [
                 {
                     userId: String(user.id),
@@ -482,6 +483,7 @@ app.post('/api/rooms/:roomId/join', async (req, res) => {
                 assets: []
             });
             room.updatedAt = new Date().toISOString();
+            room.lastActivity = Date.now();
             
             // Save to database
             if (sqliteDb) {
@@ -596,6 +598,7 @@ app.post('/api/rooms/:roomId/dream', (req, res) => {
         
         player.selectedDream = dreamId ?? null;
         room.updatedAt = new Date().toISOString();
+        room.lastActivity = Date.now();
         
         // Save to database
         saveRoomToSQLite(room);
@@ -651,6 +654,7 @@ app.post('/api/rooms/:roomId/token', (req, res) => {
         
         player.selectedToken = tokenId ?? null;
         room.updatedAt = new Date().toISOString();
+        room.lastActivity = Date.now();
         
         // Save to database
         saveRoomToSQLite(room);
@@ -689,6 +693,7 @@ app.post('/api/rooms/:roomId/ready', (req, res) => {
         if (!player) return res.status(400).json({ success: false, message: 'Игрок не в комнате' });
         player.isReady = !player.isReady;
         room.updatedAt = new Date().toISOString();
+        room.lastActivity = Date.now();
         
         // Save to database
         saveRoomToSQLite(room);

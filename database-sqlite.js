@@ -431,7 +431,8 @@ class SQLiteDatabase {
                 WHERE id = ?`;
             
             const gameStarted = room.status === 'playing' ? 1 : 0;
-            await this.run(roomSql, [room.status, gameStarted, room.activeIndex || 0, room.creatorName || 'Игрок', Date.now(), room.id]);
+            const lastActivity = room.lastActivity || Date.now();
+            await this.run(roomSql, [room.status, gameStarted, room.activeIndex || 0, room.creatorName || 'Игрок', lastActivity, room.id]);
 
             // Обновляем игроков
             if (room.players && room.players.length > 0) {
@@ -486,6 +487,7 @@ class SQLiteDatabase {
                 updatedAt: room.updated_at,
                 activeIndex: room.active_index || 0,
                 creatorName: room.creator_name || 'Игрок',
+                lastActivity: room.last_activity || Date.now(),
                 players: players.map(p => ({
                     userId: p.user_id,
                     name: p.name,
