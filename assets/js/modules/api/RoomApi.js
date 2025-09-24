@@ -476,14 +476,19 @@ class RoomApi {
     }
 
     async getGameState(roomId) {
-        const data = await this.request(`/api/rooms/${roomId}/game-state`);
+        const user = this.getCurrentUser();
+        const userId = user?.id || localStorage.getItem('userId') || '';
+        const q = userId ? `?user_id=${encodeURIComponent(userId)}` : '';
+        const data = await this.request(`/api/rooms/${roomId}/game-state${q}`);
         return data.state;
     }
 
-    async rollDice(roomId) {
+    async rollDice(roomId, opts = {}) {
+        const user = this.getCurrentUser();
+        const userId = user?.id || localStorage.getItem('userId');
         return this.request(`/api/rooms/${roomId}/roll`, {
             method: 'POST',
-            body: {}
+            body: { user_id: userId, ...(opts || {}) }
         });
     }
 
@@ -516,9 +521,11 @@ class RoomApi {
     }
 
     async endTurn(roomId) {
+        const user = this.getCurrentUser();
+        const userId = user?.id || localStorage.getItem('userId');
         const data = await this.request(`/api/rooms/${roomId}/end-turn`, {
             method: 'POST',
-            body: {}
+            body: { user_id: userId }
         });
         return data.state;
     }
