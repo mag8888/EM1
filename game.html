@@ -8,8 +8,19 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" onerror="console.warn('⚠️ Failed to load Google Fonts, using system fonts')">
     
-    <!-- Fallback for fonts loading issues -->
+    <!-- Force cache busting and debugging -->
     <script>
+        console.log('🚀 Game: Starting with cache bust v=10');
+        
+        // Force clear any cached modules
+        if (window.playersManager) delete window.playersManager;
+        if (window.professionCard) delete window.professionCard;
+        if (window.dealsManager) delete window.dealsManager;
+        if (window.bankManager) delete window.bankManager;
+        if (window.gameDataApi) delete window.gameDataApi;
+        
+        console.log('🧹 Game: Cleared cached modules');
+        
         // Check if fonts loaded successfully
         document.fonts.ready.then(() => {
             const interFont = document.fonts.check('16px Inter');
@@ -1413,9 +1424,9 @@
 
     <!-- Загружаем конфигурацию игры -->
     <script src="config/game-config.js" onerror="console.error('❌ Failed to load game-config.js')"></script>
-    <script src="config/big-circle-cells.js?v=9" onerror="console.error('❌ Failed to load big-circle-cells.js')"></script>
-    <script src="config/small-circle-cells.js?v=9" onerror="console.error('❌ Failed to load small-circle-cells.js')"></script>
-    <script src="config/icon-styles.js?v=9" onerror="console.error('❌ Failed to load icon-styles.js')"></script>
+    <script src="config/big-circle-cells.js?v=10" onerror="console.error('❌ Failed to load big-circle-cells.js')"></script>
+    <script src="config/small-circle-cells.js?v=10" onerror="console.error('❌ Failed to load small-circle-cells.js')"></script>
+    <script src="config/icon-styles.js?v=10" onerror="console.error('❌ Failed to load icon-styles.js')"></script>
     
     <!-- Проверяем загрузку конфигураций -->
     <script>
@@ -1504,18 +1515,18 @@
     
     <!-- Загружаем API клиент -->
     <script src="assets/js/modules/api/ApiClient.js"></script>
-    <script src="assets/js/modules/api/GameDataApi.js?v=9"></script>
+        <script src="assets/js/modules/api/GameDataApi.js?v=10"></script>
     
         <!-- Загружаем игровые модули -->
         <script src="assets/js/modules/game/Board.js"></script>
-        <script src="assets/js/modules/game/BoardLayout.js?v=8"></script>
+        <script src="assets/js/modules/game/BoardLayout.js?v=10"></script>
         <script src="assets/js/modules/game/CellPopup.js"></script>
         <script src="assets/js/modules/game/CardManager.js"></script>
         <script src="assets/js/modules/game/CardUI.js"></script>
-        <script src="assets/js/modules/game/PlayersManager.js?v=9"></script>
-        <script src="assets/js/modules/game/ProfessionCard.js?v=9"></script>
-        <script src="assets/js/modules/game/DealsManager.js?v=9"></script>
-        <script src="assets/js/modules/game/BankManager.js?v=9"></script>
+        <script src="assets/js/modules/game/PlayersManager.js?v=10"></script>
+        <script src="assets/js/modules/game/ProfessionCard.js?v=10"></script>
+        <script src="assets/js/modules/game/DealsManager.js?v=10"></script>
+        <script src="assets/js/modules/game/BankManager.js?v=10"></script>
         <script src="game-board/professions-data.js"></script>
     
     <!-- Инициализируем игру -->
@@ -1783,6 +1794,34 @@
                 activeOption.classList.add('active');
             }
         }
+    </script>
+
+    <!-- Дополнительная диагностика -->
+    <script>
+        // Финальная проверка всех модулей через 2 секунды
+        setTimeout(() => {
+            console.log('🔍 FINAL CHECK - All modules status:');
+            console.log('🔍 Game: BIG_CIRCLE_CELLS:', typeof window.BIG_CIRCLE_CELLS, 'length:', window.BIG_CIRCLE_CELLS?.length);
+            console.log('🔍 Game: SMALL_CIRCLE_CELLS:', typeof window.SMALL_CIRCLE_CELLS, 'length:', window.SMALL_CIRCLE_CELLS?.length);
+            console.log('🔍 Game: getIconForType:', typeof window.getIconForType);
+            console.log('🔍 Game: getIconStyleClass:', typeof window.getIconStyleClass);
+            if (window.getIconStyleClass) {
+                console.log('🔍 Game: getIconStyleClass test result:', window.getIconStyleClass('emoji'));
+            }
+            
+            console.log('🔍 Game: playersManager:', typeof window.playersManager);
+            console.log('🔍 Game: professionCard:', typeof window.professionCard);
+            console.log('🔍 Game: dealsManager:', typeof window.dealsManager);
+            console.log('🔍 Game: bankManager:', typeof window.bankManager);
+            console.log('🔍 Game: gameDataApi:', typeof window.gameDataApi);
+            
+            // Проверяем DOM элементы
+            const playersQueue = document.getElementById('playersQueue');
+            console.log('🔍 Game: playersQueue element:', playersQueue);
+            if (playersQueue) {
+                console.log('🔍 Game: playersQueue children:', playersQueue.children.length);
+            }
+        }, 2000);
     </script>
 
 </body>
