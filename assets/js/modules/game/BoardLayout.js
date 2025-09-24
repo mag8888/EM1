@@ -201,7 +201,12 @@ function createCellElement(index, sizeClass, isInner = false) {
         console.log('🔍 BoardLayout: Outer cell data:', cellData, 'iconText:', iconText, 'iconClass:', iconClass);
     }
     
-    icon.textContent = iconText;
+    // Вставляем либо текст, либо html-иконку (svg/img)
+    if (typeof iconText === 'string' && iconText.trim().startsWith('<')) {
+        icon.innerHTML = iconText;
+    } else {
+        icon.textContent = iconText;
+    }
     // Ensure iconClass is never empty
     if (!iconClass) {
         iconClass = 'icon-emoji';
