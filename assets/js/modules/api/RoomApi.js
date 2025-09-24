@@ -443,9 +443,10 @@ class RoomApi {
     }
 
     async getRoom(roomId, params = {}) {
-        // Используем обычный request с X-User-ID для проверки принадлежности к комнате
-        const url = `/api/rooms/${roomId}`;
-        const data = await this.request(url);
+        const user = this.getCurrentUser();
+        const userId = user?.id || localStorage.getItem('userId') || params.user_id;
+        const q = userId ? `?user_id=${encodeURIComponent(userId)}` : '';
+        const data = await this.request(`/api/rooms/${roomId}${q}`);
         return data.room;
     }
 

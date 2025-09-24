@@ -68,11 +68,16 @@ class GameState extends EventEmitter {
 
     async ensureJoined() {
         try {
-            const room = await this.api.getRoom(this.roomId, { user_id: this.user.id });
+            let room = await this.api.getRoom(this.roomId, { user_id: this.user.id });
             
-            // Проверяем, что пользователь находится в комнате
+            // Если пользователь не в комнате — пробуем присоединиться автоматически
             if (!room?.currentPlayer) {
-                throw new Error('Вы не находитесь в этой комнате. Пожалуйста, присоединитесь к комнате сначала.');
+                try {
+                    await this.api.joinRoom(this.roomId, { user_id: this.user.id });
+                    room = await this.api.getRoom(this.roomId, { user_id: this.user.id });
+                } catch (e) {
+                    throw new Error('Вы не находитесь в этой комнате. Пожалуйста, присоединитесь к комнате сначала.');
+                }
             }
             
             // Проверяем, что игра началась
