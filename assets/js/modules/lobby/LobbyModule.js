@@ -534,7 +534,7 @@ class LobbyModule {
                 <div class="room-header">
                     <div>
                         <div class="room-title">${room.name}</div>
-                        <div class="room-meta">Создатель: ${room.creatorName || 'Неизвестно'}</div>
+                        <div class="room-meta">Создатель: ${room.creatorName || (room.players?.find(p => p.isHost)?.name) || 'Неизвестно'}</div>
                     </div>
                     <div class="room-status ${statusClass}">${statusText}</div>
                 </div>

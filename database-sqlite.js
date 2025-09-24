@@ -29,6 +29,20 @@ class SQLiteDatabase {
     }
 
     async createTables() {
+        // Migration: Update existing rooms to have creator_name from host player
+        try {
+            const roomsWithoutCreator = await this.all(`SELECT id FROM rooms WHERE creator_name IS NULL OR creator_name = ''`);
+            for (const room of roomsWithoutCreator) {
+                const hostPlayer = await this.get(`SELECT name FROM room_players WHERE room_id = ? AND is_host = 1 LIMIT 1`, [room.id]);
+                if (hostPlayer?.name) {
+                    await this.run(`UPDATE rooms SET creator_name = ? WHERE id = ?`, [hostPlayer.name, room.id]);
+                    console.log(`✅ Updated creator_name for room ${room.id}: ${hostPlayer.name}`);
+                }
+            }
+        } catch (error) {
+            console.warn('⚠️ Migration failed (non-critical):', error.message);
+        }
+
         const tables = [
             // Таблица пользователей
             `CREATE TABLE IF NOT EXISTS users (
@@ -486,7 +500,7 @@ class SQLiteDatabase {
                 createdAt: room.created_at,
                 updatedAt: room.updated_at,
                 activeIndex: room.active_index || 0,
-                creatorName: room.creator_name || 'Игрок',
+                creatorName: room.creator_name || (players.find(p => p.is_host)?.name) || 'Игрок',
                 lastActivity: room.last_activity || Date.now(),
                 players: players.map(p => ({
                     userId: p.user_id,
