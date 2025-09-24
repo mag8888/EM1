@@ -1,8 +1,10 @@
 // Конфигурация клеток малого круга игры "Денежный поток"
 // 24 клетки с различными типами событий и иконками
 
+console.log('🔍 Loading small-circle-cells.js...');
+
 // Явно объявляем в глобальной области
-window.SMALL_CIRCLE_CELLS = [
+const SMALL_CIRCLE_CELLS = [
   // 1-6
   {
     id: 1,
@@ -284,8 +286,10 @@ if (typeof module !== 'undefined' && module.exports) {
     CELL_ICONS
   };
 } else if (typeof window !== 'undefined') {
+  console.log('🔍 Setting window globals for small-circle-cells...');
   window.SMALL_CIRCLE_CELLS = SMALL_CIRCLE_CELLS;
   window.CELL_TYPES = CELL_TYPES;
   window.CELL_COLORS = CELL_COLORS;
   window.CELL_ICONS = CELL_ICONS;
+  console.log('✅ Small-circle-cells loaded:', SMALL_CIRCLE_CELLS.length, 'cells');
 }

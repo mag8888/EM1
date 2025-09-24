@@ -1271,7 +1271,7 @@
         
         // Функция ожидания загрузки конфигураций
         async function waitForConfigs() {
-            const maxAttempts = 50;
+            const maxAttempts = 10; // Уменьшаем количество попыток
             let attempts = 0;
             
             while (attempts < maxAttempts) {
@@ -1285,12 +1285,13 @@
                 // Проверяем, загружены ли другие скрипты
                 console.log('🔍 Available globals:', Object.keys(window).filter(k => k.includes('CELLS') || k.includes('CONFIG')));
                 
-                await new Promise(resolve => setTimeout(resolve, 100));
+                await new Promise(resolve => setTimeout(resolve, 200)); // Увеличиваем интервал
                 attempts++;
             }
             
             console.error('❌ Failed to load SMALL_CIRCLE_CELLS after', maxAttempts, 'attempts');
             console.log('🔍 Final check - SMALL_CIRCLE_CELLS:', typeof SMALL_CIRCLE_CELLS, 'length:', SMALL_CIRCLE_CELLS?.length);
+            console.log('🔍 All available globals:', Object.keys(window));
         }
         
         // Функция для обновления доски с информацией о комнате

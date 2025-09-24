@@ -190,9 +190,21 @@ function renderTracks(room = null) {
         });
     }
     
-    // Если конфигурации не загружены, ждем
+    // Если конфигурации не загружены, ждем (но не бесконечно)
     if (typeof SMALL_CIRCLE_CELLS === 'undefined' || SMALL_CIRCLE_CELLS.length === 0) {
-        console.log('⏳ BoardLayout: Configs not loaded, retrying in 100ms');
+        // Добавляем счетчик попыток
+        if (!window.renderTracksAttempts) {
+            window.renderTracksAttempts = 0;
+        }
+        window.renderTracksAttempts++;
+        
+        if (window.renderTracksAttempts > 20) {
+            console.error('❌ BoardLayout: Too many retry attempts, giving up');
+            console.log('🔍 BoardLayout: Available globals:', Object.keys(window).filter(k => k.includes('CELLS') || k.includes('CONFIG')));
+            return;
+        }
+        
+        console.log(`⏳ BoardLayout: Configs not loaded, retrying in 100ms (attempt ${window.renderTracksAttempts}/20)`);
         setTimeout(() => renderTracks(room), 100);
         return;
     }

@@ -1,6 +1,8 @@
 // Стили иконок для клеток игры
 // Поддерживает разные визуальные стили: эмодзи, однотонные, контурные и т.д.
 
+console.log('🔍 Loading icon-styles.js...');
+
 const ICON_STYLES = {
     emoji: {
         name: 'Эмодзи',
@@ -82,7 +84,9 @@ function getIconStyleClass(style = 'emoji') {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { ICON_STYLES, getIconForType, getIconStyleClass };
 } else if (typeof window !== 'undefined') {
+    console.log('🔍 Setting window globals for icon-styles...');
     window.ICON_STYLES = ICON_STYLES;
     window.getIconForType = getIconForType;
     window.getIconStyleClass = getIconStyleClass;
+    console.log('✅ Icon-styles loaded:', Object.keys(ICON_STYLES).length, 'styles');
 }
