@@ -504,7 +504,18 @@ class LobbyModule {
             return;
         }
 
-        this.dom.roomsList.innerHTML = this.rooms.map(room => this.renderRoomCard(room)).join('');
+        // Sort: newest rooms first (by updatedAt, last_activity, createdAt)
+        const parseTs = (r) => {
+            const lastActivity = Number(r.last_activity || r.lastActivity || 0);
+            const updated = r.updatedAt || r.updated_at || null;
+            const created = r.createdAt || r.created_at || null;
+            const updatedTs = updated ? Date.parse(updated) : 0;
+            const createdTs = created ? Date.parse(created) : 0;
+            return Math.max(lastActivity || 0, updatedTs || 0, createdTs || 0);
+        };
+        const sorted = [...this.rooms].sort((a, b) => parseTs(b) - parseTs(a));
+
+        this.dom.roomsList.innerHTML = sorted.map(room => this.renderRoomCard(room)).join('');
         this.bindRoomActions();
     }
 
