@@ -1050,16 +1050,23 @@ app.post('/api/rooms/:roomId/roll', (req, res) => {
         if (!room) {
             return res.status(404).json({ success: false, message: 'Комната не найдена' });
         }
-        
-        // Simple dice roll simulation
-        const dice1 = Math.floor(Math.random() * 6) + 1;
-        const dice2 = Math.floor(Math.random() * 6) + 1;
-        const total = dice1 + dice2;
-        const isDouble = dice1 === dice2;
-        
+        // Only active player can roll
+        const userId = req.headers['x-user-id'] || req.body?.user_id;
+        const activePlayer = room.players?.[room.activeIndex || 0] || null;
+        if (!userId || !activePlayer || String(activePlayer.userId) !== String(userId)) {
+            return res.status(403).json({ success: false, message: 'Сейчас не ваш ход' });
+        }
+
+        // Dice roll: single by default; double=true for charity
+        const useDouble = String(req.query.double || req.body?.double || '').toLowerCase() === 'true';
+        const d1 = Math.floor(Math.random() * 6) + 1;
+        const d2 = useDouble ? (Math.floor(Math.random() * 6) + 1) : null;
+        const total = useDouble ? d1 + (d2 || 0) : d1;
+        const isDouble = useDouble && d1 === d2;
+
         res.json({ 
             success: true, 
-            result: { dice1, dice2, total, isDouble },
+            result: { dice1: d1, dice2: d2, total, isDouble },
             state: {
                 roomId: room.id,
                 status: room.status,
@@ -1067,7 +1074,7 @@ app.post('/api/rooms/:roomId/roll', (req, res) => {
                 players: room.players || [],
                 currentTurn: 1,
                 phase: 'moving',
-                diceResult: { dice1, dice2, total, isDouble },
+                diceResult: { dice1: d1, dice2: d2, total, isDouble },
                 pendingDeal: null
             }
         });
@@ -1083,7 +1090,13 @@ app.post('/api/rooms/:roomId/end-turn', (req, res) => {
         if (!room) {
             return res.status(404).json({ success: false, message: 'Комната не найдена' });
         }
-        
+        // Only active player can end turn
+        const userId = req.headers['x-user-id'] || req.body?.user_id;
+        const activePlayer = room.players?.[room.activeIndex || 0] || null;
+        if (!userId || !activePlayer || String(activePlayer.userId) !== String(userId)) {
+            return res.status(403).json({ success: false, message: 'Сейчас не ваш ход' });
+        }
+
         // Advance active player in round-robin
         if (typeof room.activeIndex !== 'number') room.activeIndex = 0;
         const count = (room.players || []).length || 1;
