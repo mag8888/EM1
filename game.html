@@ -1217,9 +1217,8 @@
         console.log('🔍 Config check - getIconForType:', typeof getIconForType);
         console.log('🔍 Config check - getIconStyleClass:', typeof getIconStyleClass);
         
-        // Всегда загружаем встроенные конфигурации как fallback
-        console.log('🔍 Loading embedded configs as fallback...');
-        loadEmbeddedConfigs();
+        // Проверяем, загружены ли конфигурации
+        console.log('🔍 Config check - SMALL_CIRCLE_CELLS:', typeof SMALL_CIRCLE_CELLS, 'length:', SMALL_CIRCLE_CELLS?.length);
     </script>
     
     <!-- Встроенные конфигурации как fallback -->
@@ -1303,6 +1302,12 @@
             try {
                 console.log('🎮 Initializing game...');
                 
+                // Сначала загружаем встроенные конфигурации
+                console.log('🔍 Game: Loading embedded configs first...');
+                if (typeof loadEmbeddedConfigs === 'function') {
+                    loadEmbeddedConfigs();
+                }
+                
                 // Ждем загрузки всех конфигурационных файлов
                 await waitForConfigs();
                 console.log('✅ Configs loaded successfully');
@@ -1362,7 +1367,7 @@
                 return;
             }
             
-            console.log('⚠️ External configs not loaded, using embedded fallback');
+            console.log('⚠️ External configs not loaded, embedded configs should be available');
             console.log('🔍 Available globals:', Object.keys(window).filter(k => k.includes('CELLS') || k.includes('CONFIG')));
         }
         
