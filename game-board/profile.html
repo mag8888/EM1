@@ -242,6 +242,40 @@
             font-weight: 500;
         }
 
+        /* Стили кнопок */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: var(--background-dark);
+            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 229, 255, 0.4);
+            background: linear-gradient(135deg, #00d4ff 0%, #ff00ff 100%);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
+        }
+
         /* Адаптивность */
         @media (max-width: 768px) {
             .container {
@@ -317,7 +351,7 @@
         </div>
         
         <div class="content">
-            <a href="/game" class="btn btn-primary">к игре</a>
+            <a href="/game" class="btn btn-primary">🎮 к игре</a>
             
             <div id="loadingState" class="loading">
                 <p>Загрузка профиля...</p>
