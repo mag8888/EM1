@@ -204,14 +204,26 @@ class CellPopup {
 
     close() {
         if (this.currentPopup) {
+            // Плавно скрываем
             this.currentPopup.style.opacity = '0';
             this.currentPopup.style.transform = 'translate(-50%, -50%) scale(0.8)';
-            
+
             setTimeout(() => {
                 const container = document.getElementById('cell-popup-container');
                 if (container) {
+                    // Полностью очищаем контейнер и скрываем его,
+                    // чтобы исключить оставшуюся тёмную маску
+                    container.innerHTML = '';
                     container.style.display = 'none';
                 }
+
+                // На всякий случай удаляем все лишние оверлеи
+                document.querySelectorAll('.cell-popup-overlay').forEach(el => {
+                    if (el && el.parentElement) {
+                        el.parentElement.removeChild(el);
+                    }
+                });
+
                 this.currentPopup = null;
             }, 300);
         }
