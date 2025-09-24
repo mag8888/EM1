@@ -3,13 +3,14 @@
 
 // Загружаем конфигурацию клеток
 let SMALL_CIRCLE_CELLS = [];
+let BIG_CIRCLE_CELLS = [];
 
 // Сначала проверяем window.SMALL_CIRCLE_CELLS
 if (typeof window !== 'undefined' && window.SMALL_CIRCLE_CELLS && window.SMALL_CIRCLE_CELLS.length > 0) {
     console.log('🔍 BoardLayout: Using window.SMALL_CIRCLE_CELLS:', window.SMALL_CIRCLE_CELLS.length);
     SMALL_CIRCLE_CELLS = window.SMALL_CIRCLE_CELLS;
 } else {
-    console.log('🔍 BoardLayout: Using fallback config');
+    console.log('🔍 BoardLayout: Using fallback config for small circle');
     // Fallback конфигурация
     SMALL_CIRCLE_CELLS = [
         { id: 1, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
@@ -39,6 +40,14 @@ if (typeof window !== 'undefined' && window.SMALL_CIRCLE_CELLS && window.SMALL_C
     ];
 }
 
+// Загружаем BIG_CIRCLE_CELLS
+if (typeof window !== 'undefined' && window.BIG_CIRCLE_CELLS && window.BIG_CIRCLE_CELLS.length > 0) {
+    console.log('🔍 BoardLayout: Using window.BIG_CIRCLE_CELLS:', window.BIG_CIRCLE_CELLS.length);
+    BIG_CIRCLE_CELLS = window.BIG_CIRCLE_CELLS;
+} else {
+    console.log('🔍 BoardLayout: BIG_CIRCLE_CELLS not loaded from window');
+}
+
 // Загружаем функции иконок
 let getIconForType = window.getIconForType || function(cellType, style = 'emoji') {
     const icons = {
@@ -61,6 +70,72 @@ let getIconStyleClass = window.getIconStyleClass || function(style = 'emoji') {
     return style === 'monochrome' ? 'icon-monochrome' : '';
 };
 
+// Функция для получения иконок большого круга
+function getBigCircleIcon(cellType) {
+    const icons = {
+        'money': '💰',
+        'dream': '🌟',
+        'business': '🏢',
+        'loss': '💸',
+        'charity': '❤️'
+    };
+    return icons[cellType] || '⬤';
+}
+
+// Простой поп-ап для клеток
+function showSimplePopup(cellData) {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    `;
+    
+    content.innerHTML = `
+        <h3 style="margin: 0 0 15px 0; color: #333;">${cellData.name}</h3>
+        <p style="margin: 0 0 15px 0; color: #666; line-height: 1.5;">${cellData.description}</p>
+        ${cellData.income ? `<p style="margin: 0 0 10px 0; color: #28a745;"><strong>Доход:</strong> $${cellData.income.toLocaleString()}</p>` : ''}
+        ${cellData.cost ? `<p style="margin: 0 0 10px 0; color: #dc3545;"><strong>Стоимость:</strong> $${cellData.cost.toLocaleString()}</p>` : ''}
+        <button onclick="this.closest('div').remove()" style="
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        ">Закрыть</button>
+    `;
+    
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    
+    // Закрытие по клику вне модального окна
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
 console.log('🔍 BoardLayout: Config loaded - SMALL_CIRCLE_CELLS:', SMALL_CIRCLE_CELLS.length, 'getIconForType:', typeof getIconForType, 'getIconStyleClass:', typeof getIconStyleClass);
 
 function createCellElement(index, sizeClass, isInner = false) {
@@ -81,9 +156,10 @@ function createCellElement(index, sizeClass, isInner = false) {
     let iconClass = '';
     let isSelectedDream = false;
     
-    console.log('🔍 BoardLayout: Creating cell', index, 'isInner:', isInner, 'SMALL_CIRCLE_CELLS length:', SMALL_CIRCLE_CELLS.length);
+    console.log('🔍 BoardLayout: Creating cell', index, 'isInner:', isInner, 'SMALL_CIRCLE_CELLS length:', SMALL_CIRCLE_CELLS.length, 'BIG_CIRCLE_CELLS length:', BIG_CIRCLE_CELLS.length);
     
     if (isInner && index < SMALL_CIRCLE_CELLS.length) {
+        // Внутренний круг - используем SMALL_CIRCLE_CELLS
         cellData = SMALL_CIRCLE_CELLS[index];
         iconText = getIconForType ? getIconForType(cellData.type) : cellData.icon;
         
@@ -104,7 +180,14 @@ function createCellElement(index, sizeClass, isInner = false) {
             });
         }
         
-        console.log('🔍 BoardLayout: Cell data:', cellData, 'iconText:', iconText, 'iconClass:', iconClass, 'isSelectedDream:', isSelectedDream);
+        console.log('🔍 BoardLayout: Inner cell data:', cellData, 'iconText:', iconText, 'iconClass:', iconClass, 'isSelectedDream:', isSelectedDream);
+    } else if (!isInner && index < BIG_CIRCLE_CELLS.length) {
+        // Внешний круг - используем BIG_CIRCLE_CELLS
+        cellData = BIG_CIRCLE_CELLS[index];
+        iconText = getBigCircleIcon(cellData.type);
+        iconClass = getIconStyleClass ? getIconStyleClass() : '';
+        
+        console.log('🔍 BoardLayout: Outer cell data:', cellData, 'iconText:', iconText, 'iconClass:', iconClass);
     }
     
     icon.textContent = iconText;
@@ -134,6 +217,9 @@ function createCellElement(index, sizeClass, isInner = false) {
     el.addEventListener('click', () => {
         if (cellData && window.cellPopup) {
             window.cellPopup.show(cellData);
+        } else if (cellData) {
+            // Fallback поп-ап если cellPopup не доступен
+            showSimplePopup(cellData);
         }
     });
     
@@ -203,6 +289,7 @@ window.currentRoom = null;
 function renderTracks(room = null) {
     console.log('🎯 renderTracks called');
     console.log('🔍 BoardLayout: SMALL_CIRCLE_CELLS available:', typeof SMALL_CIRCLE_CELLS, 'length:', SMALL_CIRCLE_CELLS?.length);
+    console.log('🔍 BoardLayout: BIG_CIRCLE_CELLS available:', typeof BIG_CIRCLE_CELLS, 'length:', BIG_CIRCLE_CELLS?.length);
     console.log('🔍 BoardLayout: getIconForType available:', typeof getIconForType);
     console.log('🔍 BoardLayout: getIconStyleClass available:', typeof getIconStyleClass);
     
