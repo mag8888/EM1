@@ -103,6 +103,30 @@ class GameModule {
         const playerSummary = new PlayerSummary({ state: this.state });
         playerSummary.init();
         this.modules.push(playerSummary);
+
+        // Обновляем баланс из банковского API при каждом изменении состояния
+        this.state.on('change', async () => {
+            try {
+                const user = this.state.api?.getCurrentUser?.();
+                const roomId = this.roomId;
+                if (!user?.username || !roomId) return;
+                const res = await fetch(`/api/bank/balance/${encodeURIComponent(user.username)}/${encodeURIComponent(roomId)}`);
+                const data = await res.json();
+                const el = document.getElementById('bankBalanceValue');
+                if (el && data && typeof data.amount === 'number') {
+                    el.textContent = `$${Number(data.amount).toLocaleString()}`;
+                }
+                // Кредит: для учета в расходах и PAYDAY
+                try {
+                    const cr = await fetch(`/api/bank/credit/status/${encodeURIComponent(user.username)}/${encodeURIComponent(roomId)}`);
+                    const cs = await cr.json();
+                    const loanMonthly = Number(cs?.loanAmount || 0) / 1000 * 100; // 100$ за каждую 1000
+                    window._creditExpense = Number.isFinite(loanMonthly) ? loanMonthly : 0;
+                } catch (_) {
+                    window._creditExpense = 0;
+                }
+            } catch (_) {}
+        });
     }
 
     setupListeners() {

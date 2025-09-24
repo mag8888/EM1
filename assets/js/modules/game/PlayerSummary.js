@@ -25,17 +25,23 @@ export default class PlayerSummary {
             return;
         }
         const passiveIncome = Number(player.passiveIncome || 0);
-        // Общий доход = пассивный доход (пока)
-        this.setText(this.incomeEl, `$${passiveIncome.toLocaleString()}`);
+        // Общий доход = зарплата + пассивный доход (если доступны данные профессии)
+        const salary = Number(player.profession?.salary || 0);
+        const totalIncome = salary + passiveIncome;
+        this.setText(this.incomeEl, `$${totalIncome.toLocaleString()}`);
         // Отдельно показываем пассивный доход
         if (this.passiveIncomeEl) {
             this.passiveIncomeEl.textContent = `$${passiveIncome.toLocaleString()}`;
         }
-        this.setText(this.paydayEl, `$${passiveIncome.toLocaleString()}/мес`);
-        // Расходы и кредиты пока не синхронизированы с сервером
-        const expenses = Number(player.profession?.expenses || 0);
+        // Расходы = базовые расходы профессии + ежемесячный платёж по кредитам
+        const baseExpenses = Number(player.profession?.expenses || 0);
+        const creditExpense = Number(window._creditExpense || 0);
+        const expenses = baseExpenses + creditExpense;
         this.setText(this.expenseEl, `$${expenses.toLocaleString()}`);
         this.setText(this.loanEl, '$0');
+        // PAYDAY = (зарплата + пассивный доход) - расходы
+        const payday = totalIncome - expenses;
+        this.setText(this.paydayEl, `$${payday.toLocaleString()}/мес`);
 
         const profession = player.profession || {};
         if (this.professionNameEl) {
@@ -57,8 +63,7 @@ export default class PlayerSummary {
             this.professionPassiveEl.textContent = `$${passiveIncome.toLocaleString()}`;
         }
         if (this.professionCashflowEl) {
-            const cashflow = Number(profession.cashFlow || 0);
-            this.professionCashflowEl.textContent = `$${cashflow.toLocaleString()}`;
+            this.professionCashflowEl.textContent = `$${payday.toLocaleString()}`;
         }
 
         // Условие перехода на большой круг: пассивный доход > расходы
