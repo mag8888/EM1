@@ -1189,6 +1189,13 @@
     <script src="config/small-circle-cells.js"></script>
     <script src="config/icon-styles.js"></script>
     
+    <!-- Проверяем загрузку конфигураций -->
+    <script>
+        console.log('🔍 Config check - SMALL_CIRCLE_CELLS:', typeof SMALL_CIRCLE_CELLS, 'length:', SMALL_CIRCLE_CELLS?.length);
+        console.log('🔍 Config check - getIconForType:', typeof getIconForType);
+        console.log('🔍 Config check - getIconStyleClass:', typeof getIconStyleClass);
+    </script>
+    
     <!-- Загружаем основные модули -->
     <script src="assets/js/core/EventBus.js"></script>
     <script src="assets/js/core/StateManager.js"></script>
@@ -1255,16 +1262,22 @@
             let attempts = 0;
             
             while (attempts < maxAttempts) {
+                console.log('🔍 Checking configs...', attempts + 1, 'SMALL_CIRCLE_CELLS:', typeof SMALL_CIRCLE_CELLS, 'length:', SMALL_CIRCLE_CELLS?.length);
+                
                 if (typeof SMALL_CIRCLE_CELLS !== 'undefined' && SMALL_CIRCLE_CELLS.length > 0) {
                     console.log('✅ SMALL_CIRCLE_CELLS loaded:', SMALL_CIRCLE_CELLS.length);
                     return;
                 }
-                console.log('⏳ Waiting for configs...', attempts + 1);
+                
+                // Проверяем, загружены ли другие скрипты
+                console.log('🔍 Available globals:', Object.keys(window).filter(k => k.includes('CELLS') || k.includes('CONFIG')));
+                
                 await new Promise(resolve => setTimeout(resolve, 100));
                 attempts++;
             }
             
             console.error('❌ Failed to load SMALL_CIRCLE_CELLS after', maxAttempts, 'attempts');
+            console.log('🔍 Final check - SMALL_CIRCLE_CELLS:', typeof SMALL_CIRCLE_CELLS, 'length:', SMALL_CIRCLE_CELLS?.length);
         }
         
         // Инициализация панели выбора стиля иконок

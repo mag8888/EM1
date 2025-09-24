@@ -148,6 +148,13 @@ function renderTracks() {
     console.log('🔍 BoardLayout: getIconForType available:', typeof getIconForType);
     console.log('🔍 BoardLayout: getIconStyleClass available:', typeof getIconStyleClass);
     
+    // Если конфигурации не загружены, ждем
+    if (typeof SMALL_CIRCLE_CELLS === 'undefined' || SMALL_CIRCLE_CELLS.length === 0) {
+        console.log('⏳ BoardLayout: Configs not loaded, retrying in 100ms');
+        setTimeout(renderTracks, 100);
+        return;
+    }
+    
     const outer = document.getElementById('outerTrack');
     const inner = document.getElementById('innerTrack');
     
