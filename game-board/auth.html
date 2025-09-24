@@ -420,11 +420,13 @@
                 .then(data => {
                     console.log('🔍 Auth: Full response data:', data);
                     console.log('🔍 Auth: data.user:', data.user);
-                    console.log('🔍 Auth: data.user.id:', data.user?.id);
                     
                     if (data.accessToken) {
-                        // Проверяем, что user.id существует
-                        if (!data.user || !data.user.id) {
+                        // Извлекаем userId из ответа
+                        const userId = data.user?.id;
+                        
+                        // Проверяем, что userId существует
+                        if (!userId) {
                             console.error('❌ Auth: No user ID in response!');
                             showError('Ошибка: не получен ID пользователя');
                             return;
@@ -433,10 +435,10 @@
                         // Сохраняем токен и данные пользователя
                         localStorage.setItem('authToken', data.accessToken);
                         localStorage.setItem('user', JSON.stringify(data.user));
-                        localStorage.setItem('userId', data.user.id);
+                        localStorage.setItem('userId', userId);
                         localStorage.setItem('isAuthenticated', 'true');
                         
-                        console.log('🔍 Auth: Saved user ID:', data.user.id);
+                        console.log('🔍 Auth: Saved userId:', userId);
                         console.log('🔍 Auth: Saved user:', data.user);
                         console.log('🔍 Auth: All localStorage keys:', Object.keys(localStorage));
                         
