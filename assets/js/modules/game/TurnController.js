@@ -86,6 +86,11 @@ export class TurnController {
                 if (this.notifier) {
                     this.notifier.show(`Выпало: ${total}${isDouble ? ' (дубль!)' : ''}`, { type: 'info' });
                 }
+
+                // Запросим выбор сделки как демонстрацию событий клетки
+                try {
+                    await this.state.chooseDeal(total % 2 === 0 ? 'small' : 'big');
+                } catch (_) {}
             }
         } catch (error) {
             console.error('Ошибка броска кубика:', error);
