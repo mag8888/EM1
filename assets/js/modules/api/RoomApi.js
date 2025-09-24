@@ -159,7 +159,7 @@ class RoomApi {
     }
 
     shouldDropUserData(status) {
-        return status === 401 || status === 403;
+        return status === 401; // Only clear on 401 (unauthorized), not on 403 (forbidden)
     }
 
     extractErrorMessage(response) {
