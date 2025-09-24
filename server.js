@@ -1223,10 +1223,13 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
         }
         
         // Return minimal game state for now
+        const activePlayer = room.players?.[room.activeIndex || 0] || null;
+        console.log('🔍 Game state - activeIndex:', room.activeIndex, 'activePlayer:', activePlayer, 'allPlayers:', room.players?.map(p => ({ userId: p.userId, name: p.name })));
+        
         const gameState = {
             roomId: room.id,
             status: room.status,
-            activePlayerId: room.players?.[room.activeIndex || 0]?.userId || null,
+            activePlayerId: activePlayer?.userId || null,
             players: room.players || [],
             currentTurn: 1,
             phase: 'waiting',
@@ -1347,6 +1350,7 @@ app.post('/api/rooms/:roomId/end-turn', (req, res) => {
         const userId = req.headers['x-user-id'] || req.body?.user_id;
         const activePlayer = room.players?.[room.activeIndex || 0] || null;
         console.log('🔍 End turn check - userId:', userId, 'activePlayer:', activePlayer, 'activeIndex:', room.activeIndex);
+        console.log('🔍 All players:', room.players?.map(p => ({ userId: p.userId, name: p.name, isHost: p.isHost })));
         if (!userId || !activePlayer || String(activePlayer.userId) !== String(userId)) {
             console.log('🔍 End turn denied - userId mismatch or missing');
             return res.status(403).json({ success: false, message: 'Сейчас не ваш ход' });
