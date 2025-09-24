@@ -1218,8 +1218,12 @@
                 console.log('✅ Game initialized successfully');
                 
                 // Рендерим клетки доски
+                console.log('🔍 Game: Checking renderTracks function...');
                 if (typeof window.renderTracks === 'function') {
+                    console.log('🔍 Game: Calling renderTracks...');
                     window.renderTracks();
+                } else {
+                    console.warn('⚠️ Game: renderTracks function not found');
                 }
                 
                 // Обновляем статус

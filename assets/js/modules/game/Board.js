@@ -223,6 +223,10 @@ class Board {
     }
 
     loadConfig() {
+        console.log('🔍 Board: Loading configuration...');
+        console.log('🔍 Board: window.BIG_CIRCLE_CELLS:', window.BIG_CIRCLE_CELLS);
+        console.log('🔍 Board: window.SMALL_CIRCLE_CELLS:', window.SMALL_CIRCLE_CELLS);
+        
         const outer = Array.isArray(window.BIG_CIRCLE_CELLS) ? window.BIG_CIRCLE_CELLS : [];
         const inner = Array.isArray(window.SMALL_CIRCLE_CELLS) ? window.SMALL_CIRCLE_CELLS : [];
 
@@ -235,6 +239,8 @@ class Board {
 
         this.outerCellsConfig = outer.map((cell) => ({ ...cell }));
         this.innerCellsConfig = inner.map((cell) => ({ ...cell }));
+        
+        console.log('🔍 Board: Loaded config - outer:', this.outerCellsConfig.length, 'inner:', this.innerCellsConfig.length);
     }
 
     initializeCells() {

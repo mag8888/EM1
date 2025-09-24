@@ -55,7 +55,9 @@ class GameCore {
             this.setupEvents();
             
             // Инициализация модулей
+            console.log('🔍 GameCore: Initializing modules...');
             await this.modules.initAll();
+            console.log('🔍 GameCore: All modules initialized');
             
             this.isInitialized = true;
             console.log('✅ GameCore initialized');
@@ -85,12 +87,16 @@ class GameCore {
      * Регистрация модулей
      */
     async registerModules() {
+        console.log('🔍 GameCore: Registering modules...');
+        
         // Регистрируем модули в порядке зависимостей
         // Создаем экземпляры модулей
         const apiClient = new window.ApiClient();
         const board = new window.Board(this, 'outerTrack');
         const dice = new window.Dice(this);
         const player = new window.Player(this);
+        
+        console.log('🔍 GameCore: Created modules:', { apiClient, board, dice, player });
 
         this.modules.register('apiClient', apiClient, {
             dependencies: [],
