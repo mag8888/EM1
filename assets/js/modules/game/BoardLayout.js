@@ -173,7 +173,7 @@ function createCellElement(index, sizeClass, isInner = false) {
         if (index % 3 === 0) {
             iconClass = 'icon-monochrome';
         } else {
-            iconClass = window.getIconStyleClass ? window.getIconStyleClass() : 'icon-emoji';
+            iconClass = window.getIconStyleClass ? window.getIconStyleClass('emoji') : 'icon-emoji';
         }
         
         // Проверяем, является ли эта клетка выбранной мечтой
@@ -191,15 +191,17 @@ function createCellElement(index, sizeClass, isInner = false) {
         // Внешний круг - используем BIG_CIRCLE_CELLS
         cellData = bigCircleCellsData[index];
         iconText = getBigCircleIcon(cellData.type);
-        iconClass = window.getIconStyleClass ? window.getIconStyleClass() : 'icon-emoji';
+        iconClass = window.getIconStyleClass ? window.getIconStyleClass('emoji') : 'icon-emoji';
         
         console.log('🔍 BoardLayout: Outer cell data:', cellData, 'iconText:', iconText, 'iconClass:', iconClass);
     }
     
     icon.textContent = iconText;
-    if (iconClass) {
-        icon.className += ` ${iconClass}`;
+    // Ensure iconClass is never empty
+    if (!iconClass) {
+        iconClass = 'icon-emoji';
     }
+    icon.className += ` ${iconClass}`;
     
     // Добавляем сердечко для выбранной мечты
     if (isSelectedDream) {

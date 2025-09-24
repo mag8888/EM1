@@ -10,7 +10,7 @@
     
     <!-- Force cache busting and debugging -->
     <script>
-        console.log('🚀 Game: Starting with cache bust v=11');
+                console.log('🚀 Game: Starting with cache bust v=12');
         console.log('🚀 Game: Current timestamp:', Date.now());
         
         // Force clear any cached modules
@@ -28,8 +28,8 @@
         
         // Add timestamp to all script tags to force reload
         document.addEventListener('DOMContentLoaded', () => {
-            const scripts = document.querySelectorAll('script[src*="v=11"]');
-            console.log('🔍 Game: Found', scripts.length, 'scripts with v=11');
+                    const scripts = document.querySelectorAll('script[src*="v=12"]');
+                    console.log('🔍 Game: Found', scripts.length, 'scripts with v=12');
             scripts.forEach((script, index) => {
                 console.log(`🔍 Game: Script ${index + 1}:`, script.src);
             });
@@ -1533,7 +1533,7 @@
     
         <!-- Загружаем игровые модули -->
         <script src="assets/js/modules/game/Board.js"></script>
-        <script src="assets/js/modules/game/BoardLayout.js?v=11"></script>
+            <script src="assets/js/modules/game/BoardLayout.js?v=12"></script>
         <script src="assets/js/modules/game/CellPopup.js"></script>
         <script src="assets/js/modules/game/CardManager.js"></script>
         <script src="assets/js/modules/game/CardUI.js"></script>
@@ -1850,8 +1850,8 @@
             // Проверяем загруженные скрипты
             const allScripts = document.querySelectorAll('script[src]');
             console.log('🔍 Game: Total scripts loaded:', allScripts.length);
-            const v11Scripts = document.querySelectorAll('script[src*="v=11"]');
-            console.log('🔍 Game: v=11 scripts loaded:', v11Scripts.length);
+                    const v12Scripts = document.querySelectorAll('script[src*="v=12"]');
+                    console.log('🔍 Game: v=12 scripts loaded:', v12Scripts.length);
         }, 3000);
     </script>
 
