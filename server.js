@@ -96,9 +96,18 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files
-app.use(express.static(path.join(__dirname)));
-app.use('/game-board', express.static(path.join(__dirname, 'game-board')));
+// Serve static files with no-cache to avoid stale assets after deploy
+app.disable('etag');
+const noCacheStatic = (dir) => express.static(dir, {
+    etag: false,
+    maxAge: 0,
+    setHeaders: (res) => {
+        res.set('Cache-Control', 'no-store');
+    }
+});
+
+app.use(noCacheStatic(path.join(__dirname)));
+app.use('/game-board', noCacheStatic(path.join(__dirname, 'game-board')));
 
 // In-memory storage for minimal functionality
 const users = new Map();
