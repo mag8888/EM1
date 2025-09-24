@@ -63,7 +63,11 @@ if (typeof window.getIconForType === 'undefined') {
             'blue_dividend': '💰',
             'purple_business': '🏪',
             'yellow_baby': '👶',
-            'red_downsize': '💸'
+            'red_downsize': '💸',
+            // Missing types from small-circle-cells config
+            'yellow_payday': '🟡',
+            'blue_market': '🛍️',
+            'black_loss': '💣'
         };
         return icons[cellType] || '⬤';
     };
@@ -341,7 +345,15 @@ function renderTracks(room = null) {
                 'blue_opportunity': '💙',
                 'yellow_expense': '💛',
                 'red_expense': '❤️',
-                'purple_opportunity': '💜'
+                'purple_opportunity': '💜',
+                'yellow_payday': '🟡',
+                'blue_market': '🛍️',
+                'black_loss': '💣',
+                'orange_charity': '❤️',
+                'blue_dividend': '💰',
+                'purple_business': '🏪',
+                'yellow_baby': '👶',
+                'red_downsize': '💸'
             };
             return icons[cellType] || '⬤';
         };
