@@ -115,7 +115,7 @@ const rooms = new Map();
 // In-memory banking
 const bankBalances = new Map(); // key: roomId:username -> { amount }
 const bankHistory = new Map();  // key: roomId -> [ { from, to, amount, timestamp } ]
-const creditBalances = new Map(); // key: roomId:username -> { amount }
+const bankLoans = new Map();    // key: roomId:username -> { amount }
 
 // Health Check endpoint
 app.get('/health', (req, res) => {
@@ -582,12 +582,12 @@ function ensureBalance(roomId, username, initial = 1000) {
     return bankBalances.get(key);
 }
 
-function ensureCredit(roomId, username) {
+function ensureLoan(roomId, username) {
     const key = getBalanceKey(roomId, username);
-    if (!creditBalances.has(key)) {
-        creditBalances.set(key, { amount: 0 });
+    if (!bankLoans.has(key)) {
+        bankLoans.set(key, { amount: 0 });
     }
-    return creditBalances.get(key);
+    return bankLoans.get(key);
 }
 
 function pushHistory(roomId, record) {
@@ -643,31 +643,31 @@ app.post('/api/bank/transfer', (req, res) => {
     }
 });
 
-// ----- Credit API -----
-// Get credit info and limits
-app.get('/api/bank/credit/info/:username/:roomId', (req, res) => {
+// ===== Credit API =====
+// Get credit status
+app.get('/api/bank/credit/status/:username/:roomId', (req, res) => {
     try {
         const { username, roomId } = req.params;
-        const credit = ensureCredit(roomId, username);
-        // Determine passive income from room state (match by player name)
+        const loan = ensureLoan(roomId, username);
+
+        // Find room and player's passive income
         const room = rooms.get(roomId);
-        let passiveIncome = 0;
-        if (room) {
-            const player = (room.players || []).find(p => p.name === username);
-            passiveIncome = Number(player?.passiveIncome || 0);
-        }
-        const impactPer1000 = 100; // cashflow reduces by 100 per 1000 borrowed
+        const player = (room?.players || []).find(p => p.name === username || p.username === username);
+        const cashflow = Number(player?.passiveIncome || 0);
         const step = 1000;
-        const maxLoan = Math.max(0, Math.floor(passiveIncome / impactPer1000) * step);
+        const ratePerStep = 100; // cashflow decreases per 1000
+        const maxSteps = Math.max(0, Math.floor(cashflow / ratePerStep));
+        const maxAvailable = maxSteps * step;
+
         res.json({
-            credit: credit.amount,
-            passiveIncome,
+            loanAmount: Number(loan.amount || 0),
+            cashflow,
+            maxAvailable,
             step,
-            impactPer1000,
-            maxLoan
+            ratePerStep
         });
     } catch (error) {
-        console.error('Ошибка получения информации по кредиту:', error);
+        console.error('Credit status error:', error);
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
@@ -677,39 +677,38 @@ app.post('/api/bank/credit/take', (req, res) => {
     try {
         const { username, roomId, amount } = req.body || {};
         const sum = Number(amount);
-        if (!roomId || !username || !Number.isFinite(sum) || sum <= 0 || sum % 1000 !== 0) {
-            return res.status(400).json({ error: 'Неверные параметры кредита' });
+        if (!roomId || !username || !Number.isFinite(sum) || sum <= 0) {
+            return res.status(400).json({ error: 'Неверные параметры' });
+        }
+        if (sum % 1000 !== 0) {
+            return res.status(400).json({ error: 'Сумма должна быть кратна 1000' });
         }
         const room = rooms.get(roomId);
         if (!room) return res.status(404).json({ error: 'Комната не найдена' });
-        const player = (room.players || []).find(p => p.name === username);
+        const player = (room.players || []).find(p => p.name === username || p.username === username);
         if (!player) return res.status(404).json({ error: 'Игрок не найден' });
 
-        const impactPer1000 = 100;
-        const maxLoan = Math.max(0, Math.floor(Number(player.passiveIncome || 0) / impactPer1000) * 1000);
-        if (sum > maxLoan) {
+        const step = 1000;
+        const ratePerStep = 100;
+        const cashflow = Number(player.passiveIncome || 0);
+        const maxAvailable = Math.floor(cashflow / ratePerStep) * step;
+        if (sum > maxAvailable) {
             return res.status(400).json({ error: 'Превышен лимит кредита' });
         }
 
-        const credit = ensureCredit(roomId, username);
-        credit.amount += sum;
+        // Update loan and player
+        const loan = ensureLoan(roomId, username);
+        loan.amount = Number(loan.amount || 0) + sum;
+        player.passiveIncome = Math.max(0, cashflow - (sum / 1000) * ratePerStep);
 
-        // Increase cash balance
-        const balance = ensureBalance(roomId, username, 1000);
-        balance.amount += sum;
+        // Credit funds to balance
+        const bal = ensureBalance(roomId, username);
+        bal.amount += sum;
+        pushHistory(roomId, { from: 'Банк', to: username, amount: sum, roomId, timestamp: Date.now(), type: 'credit_take' });
 
-        // Decrease passive income
-        player.passiveIncome = Number(player.passiveIncome || 0) - (sum / 1000) * impactPer1000;
-        room.updatedAt = new Date().toISOString();
-
-        return res.json({
-            success: true,
-            credit: credit.amount,
-            newBalance: { amount: balance.amount },
-            passiveIncome: player.passiveIncome
-        });
+        res.json({ success: true, loanAmount: loan.amount, newBalance: bal, cashflow: player.passiveIncome });
     } catch (error) {
-        console.error('Ошибка выдачи кредита:', error);
+        console.error('Credit take error:', error);
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
@@ -719,40 +718,36 @@ app.post('/api/bank/credit/repay', (req, res) => {
     try {
         const { username, roomId, amount } = req.body || {};
         const sum = Number(amount);
-        if (!roomId || !username || !Number.isFinite(sum) || sum <= 0 || sum % 1000 !== 0) {
+        if (!roomId || !username || !Number.isFinite(sum) || sum <= 0) {
             return res.status(400).json({ error: 'Неверные параметры' });
         }
-        const room = rooms.get(roomId);
-        if (!room) return res.status(404).json({ error: 'Комната не найдена' });
-        const player = (room.players || []).find(p => p.name === username);
-        if (!player) return res.status(404).json({ error: 'Игрок не найден' });
-
-        const credit = ensureCredit(roomId, username);
-        if (credit.amount <= 0) {
-            return res.status(400).json({ error: 'Кредит отсутствует' });
+        if (sum % 1000 !== 0) {
+            return res.status(400).json({ error: 'Сумма должна быть кратна 1000' });
         }
-        const repayAmount = Math.min(sum, credit.amount);
-
-        const balance = ensureBalance(roomId, username, 1000);
-        if (balance.amount < repayAmount) {
+        const loan = ensureLoan(roomId, username);
+        if (sum > loan.amount) {
+            return res.status(400).json({ error: 'Сумма больше задолженности' });
+        }
+        const bal = ensureBalance(roomId, username);
+        if (sum > bal.amount) {
             return res.status(400).json({ error: 'Недостаточно средств на балансе' });
         }
 
-        credit.amount -= repayAmount;
-        balance.amount -= repayAmount;
+        // Update state
+        loan.amount -= sum;
+        bal.amount -= sum;
 
-        const impactPer1000 = 100;
-        player.passiveIncome = Number(player.passiveIncome || 0) + (repayAmount / 1000) * impactPer1000;
-        room.updatedAt = new Date().toISOString();
+        // Restore cashflow on player
+        const room = rooms.get(roomId);
+        const player = (room?.players || []).find(p => p.name === username || p.username === username);
+        if (player) {
+            player.passiveIncome = Number(player.passiveIncome || 0) + (sum / 1000) * 100;
+        }
 
-        return res.json({
-            success: true,
-            credit: credit.amount,
-            newBalance: { amount: balance.amount },
-            passiveIncome: player.passiveIncome
-        });
+        pushHistory(roomId, { from: username, to: 'Банк', amount: sum, roomId, timestamp: Date.now(), type: 'credit_repay' });
+        res.json({ success: true, loanAmount: loan.amount, newBalance: bal, cashflow: player?.passiveIncome || 0 });
     } catch (error) {
-        console.error('Ошибка погашения кредита:', error);
+        console.error('Credit repay error:', error);
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });

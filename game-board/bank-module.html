@@ -197,13 +197,11 @@
         }
 
         .credit-section {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
-            border: 1px solid rgba(59, 130, 246, 0.2);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.03) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.25);
             border-radius: 16px;
             padding: 24px;
-            margin-bottom: 24px;
-            position: relative;
-            z-index: 2;
+            margin-top: 24px;
         }
 
         .history-list {
@@ -354,32 +352,25 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="credit-section">
             <div class="section-title">
                 <span>🏦</span>
                 <span>Кредит</span>
             </div>
             <div class="form-group">
-                <label>Текущий кредит</label>
-                <div class="balance-amount" id="currentCredit" style="font-size:22px;">$0</div>
-            </div>
-            <div class="form-group">
-                <label>Пассивный доход</label>
-                <div id="creditPassiveIncome" style="color: rgba(255,255,255,0.8)">$0/мес</div>
-            </div>
-            <div class="form-group">
                 <label>Доступный лимит</label>
-                <div id="creditMax" style="color: rgba(255,255,255,0.8)">$0</div>
+                <div id="creditLimit" style="font-weight:700;color:#16f79e">—</div>
             </div>
             <div class="form-group">
-                <label for="creditAmount">Сумма (кратно 1000)</label>
-                <input type="number" id="creditAmount" min="1000" step="1000" placeholder="1000">
+                <label for="creditAmount">Сумма (кратно $1000)</label>
+                <input type="number" id="creditAmount" step="1000" min="1000" placeholder="1000">
             </div>
-            <div class="form-group" style="display:flex; gap:12px;">
-                <button class="btn btn-primary" onclick="takeCredit()">Взять кредит</button>
-                <button class="btn btn-primary" onclick="repayCredit()">Погасить</button>
+            <div class="form-group" style="display:flex;gap:10px;">
+                <button class="btn btn-primary" style="flex:1" onclick="takeCredit()">Взять</button>
+                <button class="btn" style="flex:1;background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2)" onclick="repayCredit()">Погасить</button>
             </div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.6)">Каждые $1000 кредита уменьшают PAYDAY на $100/мес</div>
         </div>
     </div>
 
@@ -390,6 +381,7 @@
         let currentRoom;
         let currentBalance = 1000;
         let roomPlayers = [];
+        let creditStatus = { loanAmount: 0, maxAvailable: 0, cashflow: 0 };
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
@@ -435,28 +427,7 @@
             loadBalance();
             loadPlayers();
             loadTransferHistory();
-            loadCreditInfo();
-        }
-
-        async function loadCreditInfo() {
-            try {
-                const response = await fetch(`/api/bank/credit/info/${currentUser}/${currentRoom.id}`);
-                const info = await response.json();
-                const creditEl = document.getElementById('currentCredit');
-                const incomeEl = document.getElementById('creditPassiveIncome');
-                const maxEl = document.getElementById('creditMax');
-                const amountInput = document.getElementById('creditAmount');
-                if (creditEl) creditEl.textContent = `$${Number(info.credit || 0).toLocaleString()}`;
-                if (incomeEl) incomeEl.textContent = `$${Number(info.passiveIncome || 0).toLocaleString()}/мес`;
-                if (maxEl) maxEl.textContent = `$${Number(info.maxLoan || 0).toLocaleString()}`;
-                if (amountInput) {
-                    amountInput.min = info.step || 1000;
-                    amountInput.step = info.step || 1000;
-                    amountInput.max = info.maxLoan || 0;
-                }
-            } catch (e) {
-                console.error('Ошибка загрузки инфо по кредиту:', e);
-            }
+            loadCreditStatus();
         }
 
         async function loadBalance() {
@@ -497,6 +468,16 @@
 
         function updateBalanceDisplay() {
             document.getElementById('currentBalance').textContent = `$${currentBalance}`;
+        }
+
+        async function loadCreditStatus() {
+            try {
+                const res = await fetch(`/api/bank/credit/status/${currentUser}/${currentRoom.id}`);
+                creditStatus = await res.json();
+                document.getElementById('creditLimit').textContent = `Текущий долг: $${creditStatus.loanAmount.toLocaleString()} • Лимит: $${creditStatus.maxAvailable.toLocaleString()}`;
+            } catch (e) {
+                console.error('Credit status error', e);
+            }
         }
 
         function updateHistoryDisplay(history) {
@@ -608,6 +589,52 @@
             }
         }
 
+        async function takeCredit() {
+            const amount = parseInt(document.getElementById('creditAmount').value || '0', 10);
+            if (!amount || amount % 1000 !== 0) {
+                showError('Сумма кредита должна быть кратна $1000');
+                return;
+            }
+            try {
+                const res = await fetch('/api/bank/credit/take', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUser, roomId: currentRoom.id, amount })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Ошибка кредита');
+                currentBalance = data.newBalance.amount;
+                updateBalanceDisplay();
+                await loadCreditStatus();
+                showSuccess('Кредит выдан');
+            } catch (e) {
+                showError(e.message);
+            }
+        }
+
+        async function repayCredit() {
+            const amount = parseInt(document.getElementById('creditAmount').value || '0', 10);
+            if (!amount || amount % 1000 !== 0) {
+                showError('Сумма погашения должна быть кратна $1000');
+                return;
+            }
+            try {
+                const res = await fetch('/api/bank/credit/repay', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUser, roomId: currentRoom.id, amount })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Ошибка погашения');
+                currentBalance = data.newBalance.amount;
+                updateBalanceDisplay();
+                await loadCreditStatus();
+                showSuccess('Кредит погашен');
+            } catch (e) {
+                showError(e.message);
+            }
+        }
+
         function handleBankUpdate(data) {
             console.log('Получено обновление банка:', data);
             
@@ -619,7 +646,6 @@
                 
                 // Обновляем историю
                 loadTransferHistory();
-                loadCreditInfo();
                 
                 // Показываем уведомление
                 if (data.to === currentUser) {
@@ -665,52 +691,6 @@
             window.close();
         }
 
-        async function takeCredit() {
-            const amount = Number(document.getElementById('creditAmount').value || 0);
-            if (!amount || amount % 1000 !== 0) {
-                showError('Сумма должна быть кратна 1000');
-                return;
-            }
-            try {
-                const response = await fetch('/api/bank/credit/take', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: currentUser, roomId: currentRoom.id, amount })
-                });
-                const result = await response.json();
-                if (!response.ok) return showError(result.error || 'Ошибка кредита');
-                currentBalance = result.newBalance.amount;
-                updateBalanceDisplay();
-                loadCreditInfo();
-                showSuccess('Кредит выдан');
-            } catch (e) {
-                showError('Ошибка соединения');
-            }
-        }
-
-        async function repayCredit() {
-            const amount = Number(document.getElementById('creditAmount').value || 0);
-            if (!amount || amount % 1000 !== 0) {
-                showError('Сумма должна быть кратна 1000');
-                return;
-            }
-            try {
-                const response = await fetch('/api/bank/credit/repay', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: currentUser, roomId: currentRoom.id, amount })
-                });
-                const result = await response.json();
-                if (!response.ok) return showError(result.error || 'Ошибка погашения');
-                currentBalance = result.newBalance.amount;
-                updateBalanceDisplay();
-                loadCreditInfo();
-                showSuccess('Кредит погашен');
-            } catch (e) {
-                showError('Ошибка соединения');
-            }
-        }
-        
         // Обработка закрытия окна
         window.addEventListener('beforeunload', () => {
             if (socket) {
