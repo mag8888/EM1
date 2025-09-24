@@ -3,7 +3,7 @@
 
 // Загружаем конфигурацию клеток
 let SMALL_CIRCLE_CELLS = [];
-let BIG_CIRCLE_CELLS = null;
+let bigCircleCellsData = null;
 
 // Сначала проверяем window.SMALL_CIRCLE_CELLS
 if (typeof window !== 'undefined' && window.SMALL_CIRCLE_CELLS && window.SMALL_CIRCLE_CELLS.length > 0) {
@@ -43,10 +43,10 @@ if (typeof window !== 'undefined' && window.SMALL_CIRCLE_CELLS && window.SMALL_C
 // Загружаем BIG_CIRCLE_CELLS
 if (typeof window !== 'undefined' && window.BIG_CIRCLE_CELLS && window.BIG_CIRCLE_CELLS.length > 0) {
     console.log('🔍 BoardLayout: Using window.BIG_CIRCLE_CELLS:', window.BIG_CIRCLE_CELLS.length);
-    BIG_CIRCLE_CELLS = window.BIG_CIRCLE_CELLS;
+    bigCircleCellsData = window.BIG_CIRCLE_CELLS;
 } else {
     console.log('🔍 BoardLayout: BIG_CIRCLE_CELLS not loaded from window, using empty array');
-    BIG_CIRCLE_CELLS = [];
+    bigCircleCellsData = [];
 }
 
 // Загружаем функции иконок
@@ -137,8 +137,8 @@ function showSimplePopup(cellData) {
     });
 }
 
-console.log('🔍 BoardLayout: Config loaded - SMALL_CIRCLE_CELLS:', SMALL_CIRCLE_CELLS.length, 'BIG_CIRCLE_CELLS:', BIG_CIRCLE_CELLS.length, 'getIconForType:', typeof getIconForType, 'getIconStyleClass:', typeof getIconStyleClass);
-console.log('🔍 BoardLayout: BIG_CIRCLE_CELLS sample:', BIG_CIRCLE_CELLS.slice(0, 3));
+console.log('🔍 BoardLayout: Config loaded - SMALL_CIRCLE_CELLS:', SMALL_CIRCLE_CELLS.length, 'BIG_CIRCLE_CELLS:', bigCircleCellsData?.length || 0, 'getIconForType:', typeof getIconForType, 'getIconStyleClass:', typeof getIconStyleClass);
+console.log('🔍 BoardLayout: BIG_CIRCLE_CELLS sample:', bigCircleCellsData?.slice(0, 3) || []);
 
 function createCellElement(index, sizeClass, isInner = false) {
     const el = document.createElement('div');
@@ -158,7 +158,7 @@ function createCellElement(index, sizeClass, isInner = false) {
     let iconClass = '';
     let isSelectedDream = false;
     
-    console.log('🔍 BoardLayout: Creating cell', index, 'isInner:', isInner, 'SMALL_CIRCLE_CELLS length:', SMALL_CIRCLE_CELLS.length, 'BIG_CIRCLE_CELLS length:', BIG_CIRCLE_CELLS.length);
+    console.log('🔍 BoardLayout: Creating cell', index, 'isInner:', isInner, 'SMALL_CIRCLE_CELLS length:', SMALL_CIRCLE_CELLS.length, 'BIG_CIRCLE_CELLS length:', bigCircleCellsData?.length || 0);
     
     if (isInner && index < SMALL_CIRCLE_CELLS.length) {
         // Внутренний круг - используем SMALL_CIRCLE_CELLS
@@ -183,9 +183,9 @@ function createCellElement(index, sizeClass, isInner = false) {
         }
         
         console.log('🔍 BoardLayout: Inner cell data:', cellData, 'iconText:', iconText, 'iconClass:', iconClass, 'isSelectedDream:', isSelectedDream);
-    } else if (!isInner && index < BIG_CIRCLE_CELLS.length) {
+    } else if (!isInner && bigCircleCellsData && index < bigCircleCellsData.length) {
         // Внешний круг - используем BIG_CIRCLE_CELLS
-        cellData = BIG_CIRCLE_CELLS[index];
+        cellData = bigCircleCellsData[index];
         iconText = getBigCircleIcon(cellData.type);
         iconClass = getIconStyleClass ? getIconStyleClass() : '';
         
@@ -291,7 +291,7 @@ window.currentRoom = null;
 function renderTracks(room = null) {
     console.log('🎯 renderTracks called');
     console.log('🔍 BoardLayout: SMALL_CIRCLE_CELLS available:', typeof SMALL_CIRCLE_CELLS, 'length:', SMALL_CIRCLE_CELLS?.length);
-    console.log('🔍 BoardLayout: BIG_CIRCLE_CELLS available:', typeof BIG_CIRCLE_CELLS, 'length:', BIG_CIRCLE_CELLS?.length);
+    console.log('🔍 BoardLayout: BIG_CIRCLE_CELLS available:', typeof bigCircleCellsData, 'length:', bigCircleCellsData?.length);
     console.log('🔍 BoardLayout: getIconForType available:', typeof getIconForType);
     console.log('🔍 BoardLayout: getIconStyleClass available:', typeof getIconStyleClass);
     
