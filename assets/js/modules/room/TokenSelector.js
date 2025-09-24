@@ -72,10 +72,12 @@ class TokenSelector {
             // Проверяем, занята ли фишка другим игроком
             const takenByOther = (room.takenTokens && room.takenTokens.includes(token.id) && token.id !== this.currentTokenId) ||
                                 (token.taken && token.id !== this.currentTokenId);
+            console.log('🔍 TokenSelector: Checking token', token.id, 'takenByOther:', takenByOther, 'takenTokens:', room.takenTokens);
             if (takenByOther) {
                 button.disabled = true;
                 button.classList.add('taken');
                 button.innerHTML += '<span class="taken-indicator">ЗАНЯТО</span>';
+                console.log('🔍 TokenSelector: Marked token', token.id, 'as taken');
             }
             if (token.id === this.currentTokenId) {
                 button.classList.add('selected');
