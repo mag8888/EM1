@@ -1197,6 +1197,7 @@
     <div class="game-toast" id="gameToast"></div>
 
     <!-- Загружаем конфигурацию игры -->
+    <script src="config/test-config.js"></script>
     <script src="config/game-config.js"></script>
     <script src="config/big-circle-cells.js"></script>
     <script src="config/small-circle-cells.js"></script>
@@ -1204,6 +1205,7 @@
     
     <!-- Проверяем загрузку конфигураций -->
     <script>
+        console.log('🔍 Config check - TEST_CONFIG:', typeof TEST_CONFIG, 'length:', TEST_CONFIG?.length);
         console.log('🔍 Config check - SMALL_CIRCLE_CELLS:', typeof SMALL_CIRCLE_CELLS, 'length:', SMALL_CIRCLE_CELLS?.length);
         console.log('🔍 Config check - getIconForType:', typeof getIconForType);
         console.log('🔍 Config check - getIconStyleClass:', typeof getIconStyleClass);
@@ -1275,7 +1277,7 @@
             let attempts = 0;
             
             while (attempts < maxAttempts) {
-                console.log('🔍 Checking configs...', attempts + 1, 'SMALL_CIRCLE_CELLS:', typeof SMALL_CIRCLE_CELLS, 'length:', SMALL_CIRCLE_CELLS?.length);
+                console.log('🔍 Checking configs...', attempts + 1, 'TEST_CONFIG:', typeof TEST_CONFIG, 'SMALL_CIRCLE_CELLS:', typeof SMALL_CIRCLE_CELLS, 'length:', SMALL_CIRCLE_CELLS?.length);
                 
                 if (typeof SMALL_CIRCLE_CELLS !== 'undefined' && SMALL_CIRCLE_CELLS.length > 0) {
                     console.log('✅ SMALL_CIRCLE_CELLS loaded:', SMALL_CIRCLE_CELLS.length);
@@ -1290,7 +1292,7 @@
             }
             
             console.error('❌ Failed to load SMALL_CIRCLE_CELLS after', maxAttempts, 'attempts');
-            console.log('🔍 Final check - SMALL_CIRCLE_CELLS:', typeof SMALL_CIRCLE_CELLS, 'length:', SMALL_CIRCLE_CELLS?.length);
+            console.log('🔍 Final check - TEST_CONFIG:', typeof TEST_CONFIG, 'SMALL_CIRCLE_CELLS:', typeof SMALL_CIRCLE_CELLS, 'length:', SMALL_CIRCLE_CELLS?.length);
             console.log('🔍 All available globals:', Object.keys(window));
         }
         
