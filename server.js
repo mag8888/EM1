@@ -202,6 +202,7 @@ app.post('/api/rooms', (req, res) => {
             status: 'waiting',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
+            activeIndex: 0,
             players: [
                 {
                     userId: String(user.id),
@@ -1062,7 +1063,7 @@ app.post('/api/rooms/:roomId/roll', (req, res) => {
             state: {
                 roomId: room.id,
                 status: room.status,
-                activePlayerId: room.players?.[0]?.userId || null,
+                activePlayerId: room.players?.[room.activeIndex || 0]?.userId || null,
                 players: room.players || [],
                 currentTurn: 1,
                 phase: 'moving',
@@ -1083,11 +1084,16 @@ app.post('/api/rooms/:roomId/end-turn', (req, res) => {
             return res.status(404).json({ success: false, message: 'Комната не найдена' });
         }
         
-        // Simple turn end - just return current state
+        // Advance active player in round-robin
+        if (typeof room.activeIndex !== 'number') room.activeIndex = 0;
+        const count = (room.players || []).length || 1;
+        room.activeIndex = (room.activeIndex + 1) % count;
+        room.updatedAt = new Date().toISOString();
+        // Return updated state
         const gameState = {
             roomId: room.id,
             status: room.status,
-            activePlayerId: room.players?.[0]?.userId || null,
+            activePlayerId: room.players?.[room.activeIndex || 0]?.userId || null,
             players: room.players || [],
             currentTurn: 1,
             phase: 'waiting',
