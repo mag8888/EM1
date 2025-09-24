@@ -2,6 +2,7 @@ import GameState from './GameState.js';
 import NotificationCenter from './NotificationCenter.js';
 import PlayersPanel from './PlayersPanel.js';
 import TurnController from './TurnController.js';
+import GameFlowController from './GameFlowController.js';
 import DealController from './DealController.js';
 import AssetsManager from './AssetsManager.js';
 import PlayerSummary from './PlayerSummary.js';
@@ -12,6 +13,7 @@ class GameModule {
         this.state = new GameState({ roomId });
         this.notifier = new NotificationCenter(document.getElementById('gameToast'));
         this.modules = [];
+        this.gameFlow = null;
     }
 
     async init() {
@@ -32,6 +34,43 @@ class GameModule {
         });
         playersPanel.init();
         this.modules.push(playersPanel);
+
+        // Инициализируем игровой поток и адаптеры поверх GameState/RoomApi
+        this.gameFlow = new GameFlowController({
+            eventBus: this.state, // GameState наследует EventEmitter
+            getModule: (name) => {
+                if (name === 'diceModule') {
+                    return {
+                        roll: async () => {
+                            const res = await this.state.rollDice();
+                            const values = [res?.result?.dice1 || 0, res?.result?.dice2 || 0].filter(Boolean);
+                            const total = res?.result?.total || values.reduce((a,b)=>a+b,0) || 0;
+                            return { values, total };
+                        }
+                    };
+                }
+                if (name === 'movementModule') {
+                    return {
+                        movePlayer: async (playerId, steps) => {
+                            // Клиентского движения нет — возвращаем целевую позицию как текущую
+                            // Серверная логика может расшириться позже
+                            const snapshot = this.state.getSnapshot();
+                            return { from: 0, to: (snapshot?.currentTurn || 1), steps, cell: null };
+                        }
+                    };
+                }
+                if (name === 'eventModule') {
+                    return {
+                        queueEvent: async (evt) => {
+                            // Простейшая обработка: если это выбор сделки, открыть модал через DealController
+                            return { handled: true, type: evt.type };
+                        }
+                    };
+                }
+                return null;
+            }
+        });
+        this.gameFlow.init?.();
 
         const turnController = new TurnController({
             state: this.state,
