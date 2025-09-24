@@ -3,9 +3,13 @@
 
 // Загружаем конфигурацию клеток
 let SMALL_CIRCLE_CELLS = [];
-if (typeof SMALL_CIRCLE_CELLS !== 'undefined') {
-    SMALL_CIRCLE_CELLS = window.SMALL_CIRCLE_CELLS || [];
+
+// Сначала проверяем window.SMALL_CIRCLE_CELLS
+if (typeof window !== 'undefined' && window.SMALL_CIRCLE_CELLS && window.SMALL_CIRCLE_CELLS.length > 0) {
+    console.log('🔍 BoardLayout: Using window.SMALL_CIRCLE_CELLS:', window.SMALL_CIRCLE_CELLS.length);
+    SMALL_CIRCLE_CELLS = window.SMALL_CIRCLE_CELLS;
 } else {
+    console.log('🔍 BoardLayout: Using fallback config');
     // Fallback конфигурация
     SMALL_CIRCLE_CELLS = [
         { id: 1, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
@@ -34,6 +38,30 @@ if (typeof SMALL_CIRCLE_CELLS !== 'undefined') {
         { id: 24, type: 'purple_business', name: 'Бизнес', description: 'Возможность купить или продать бизнес', color: 'purple', icon: '🏪', action: 'business_opportunity' }
     ];
 }
+
+// Загружаем функции иконок
+let getIconForType = window.getIconForType || function(cellType, style = 'emoji') {
+    const icons = {
+        'green_opportunity': '💚',
+        'pink_expense': '🛒',
+        'blue_opportunity': '💙',
+        'yellow_expense': '💛',
+        'red_expense': '❤️',
+        'purple_opportunity': '💜',
+        'orange_charity': '❤️',
+        'blue_dividend': '💰',
+        'purple_business': '🏪',
+        'yellow_baby': '👶',
+        'red_downsize': '💸'
+    };
+    return icons[cellType] || '⬤';
+};
+
+let getIconStyleClass = window.getIconStyleClass || function(style = 'emoji') {
+    return style === 'monochrome' ? 'icon-monochrome' : '';
+};
+
+console.log('🔍 BoardLayout: Config loaded - SMALL_CIRCLE_CELLS:', SMALL_CIRCLE_CELLS.length, 'getIconForType:', typeof getIconForType, 'getIconStyleClass:', typeof getIconStyleClass);
 
 function createCellElement(index, sizeClass, isInner = false) {
     const el = document.createElement('div');
@@ -181,6 +209,58 @@ function renderTracks(room = null) {
     console.log('🔍 BoardLayout: getIconForType available:', typeof getIconForType);
     console.log('🔍 BoardLayout: getIconStyleClass available:', typeof getIconStyleClass);
     
+    // Проверяем, загружены ли конфигурации
+    if (!SMALL_CIRCLE_CELLS || SMALL_CIRCLE_CELLS.length === 0) {
+        console.log('🔍 BoardLayout: Configs not loaded, using fallback');
+        // Используем fallback конфигурацию
+        SMALL_CIRCLE_CELLS = [
+            { id: 1, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+            { id: 2, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$', color: 'pink', icon: '🛒', action: 'mandatory_expense', minCost: 100, maxCost: 4000 },
+            { id: 3, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+            { id: 4, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$', color: 'pink', icon: '🛒', action: 'mandatory_expense', minCost: 100, maxCost: 4000 },
+            { id: 5, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+            { id: 6, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$', color: 'pink', icon: '🛒', action: 'mandatory_expense', minCost: 100, maxCost: 4000 },
+            { id: 7, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+            { id: 8, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$', color: 'pink', icon: '🛒', action: 'mandatory_expense', minCost: 100, maxCost: 4000 },
+            { id: 9, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+            { id: 10, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$', color: 'pink', icon: '🛒', action: 'mandatory_expense', minCost: 100, maxCost: 4000 },
+            { id: 11, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+            { id: 12, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$', color: 'pink', icon: '🛒', action: 'mandatory_expense', minCost: 100, maxCost: 4000 },
+            { id: 13, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+            { id: 14, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$', color: 'pink', icon: '🛒', action: 'mandatory_expense', minCost: 100, maxCost: 4000 },
+            { id: 15, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+            { id: 16, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$', color: 'pink', icon: '🛒', action: 'mandatory_expense', minCost: 100, maxCost: 4000 },
+            { id: 17, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+            { id: 18, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$', color: 'pink', icon: '🛒', action: 'mandatory_expense', minCost: 100, maxCost: 4000 },
+            { id: 19, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+            { id: 20, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$', color: 'pink', icon: '🛒', action: 'mandatory_expense', minCost: 100, maxCost: 4000 },
+            { id: 21, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+            { id: 22, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$', color: 'pink', icon: '🛒', action: 'mandatory_expense', minCost: 100, maxCost: 4000 },
+            { id: 23, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+            { id: 24, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$', color: 'pink', icon: '🛒', action: 'mandatory_expense', minCost: 100, maxCost: 4000 }
+        ];
+    }
+    
+    if (!getIconForType) {
+        getIconForType = function(cellType, style = 'emoji') {
+            const icons = {
+                'green_opportunity': '💚',
+                'pink_expense': '🛒',
+                'blue_opportunity': '💙',
+                'yellow_expense': '💛',
+                'red_expense': '❤️',
+                'purple_opportunity': '💜'
+            };
+            return icons[cellType] || '⬤';
+        };
+    }
+    
+    if (!getIconStyleClass) {
+        getIconStyleClass = function(style = 'emoji') {
+            return style === 'monochrome' ? 'icon-monochrome' : '';
+        };
+    }
+    
     // Сохраняем информацию о комнате
     if (room) {
         window.currentRoom = room;
@@ -190,24 +270,7 @@ function renderTracks(room = null) {
         });
     }
     
-    // Если конфигурации не загружены, ждем (но не бесконечно)
-    if (typeof SMALL_CIRCLE_CELLS === 'undefined' || SMALL_CIRCLE_CELLS.length === 0) {
-        // Добавляем счетчик попыток
-        if (!window.renderTracksAttempts) {
-            window.renderTracksAttempts = 0;
-        }
-        window.renderTracksAttempts++;
-        
-        if (window.renderTracksAttempts > 20) {
-            console.error('❌ BoardLayout: Too many retry attempts, giving up');
-            console.log('🔍 BoardLayout: Available globals:', Object.keys(window).filter(k => k.includes('CELLS') || k.includes('CONFIG')));
-            return;
-        }
-        
-        console.log(`⏳ BoardLayout: Configs not loaded, retrying in 100ms (attempt ${window.renderTracksAttempts}/20)`);
-        setTimeout(() => renderTracks(room), 100);
-        return;
-    }
+    // Конфигурации уже загружены выше с fallback
     
     const outer = document.getElementById('outerTrack');
     const inner = document.getElementById('innerTrack');
