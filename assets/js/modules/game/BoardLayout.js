@@ -1,29 +1,85 @@
 // Простая раскладка клеток для визуализации треков на game.html
 // Рисуем 44 клетки по периметру внешнего квадрата и 24 клетки в круглом внутреннем треке
 
-// Иконки для малого круга (24 клетки)
-const SMALL_CIRCLE_ICONS = [
-    '💚', '🛒', '💚', '❤️', '💚', '💰',  // 1-6
-    '💚', '🏪', '💚', '🛒', '💚', '👶',  // 7-12
-    '💚', '💰', '💚', '🏪', '💚', '🛒',  // 13-18
-    '💚', '💸', '💚', '💰', '💚', '🏪'   // 19-24
-];
+// Загружаем конфигурацию клеток
+let SMALL_CIRCLE_CELLS = [];
+if (typeof SMALL_CIRCLE_CELLS !== 'undefined') {
+    SMALL_CIRCLE_CELLS = window.SMALL_CIRCLE_CELLS || [];
+} else {
+    // Fallback конфигурация
+    SMALL_CIRCLE_CELLS = [
+        { id: 1, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+        { id: 2, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$', color: 'pink', icon: '🛒', action: 'mandatory_expense', minCost: 100, maxCost: 4000 },
+        { id: 3, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+        { id: 4, type: 'orange_charity', name: 'Благотворительность', description: 'Пожертвовать деньги для получения возможности бросать 2 кубика', color: 'orange', icon: '❤️', action: 'charity_donation', percentage: 0.1, benefit: 'double_dice' },
+        { id: 5, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+        { id: 6, type: 'blue_dividend', name: 'Дивиденды', description: 'Получить дивиденды от инвестиций', color: 'blue', icon: '💰', action: 'receive_dividends' },
+        { id: 7, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+        { id: 8, type: 'purple_business', name: 'Бизнес', description: 'Возможность купить или продать бизнес', color: 'purple', icon: '🏪', action: 'business_opportunity' },
+        { id: 9, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+        { id: 10, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$', color: 'pink', icon: '🛒', action: 'mandatory_expense', minCost: 100, maxCost: 4000 },
+        { id: 11, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+        { id: 12, type: 'yellow_baby', name: 'Семья', description: 'Рождение ребенка - дополнительные расходы', color: 'yellow', icon: '👶', action: 'family_expense', cost: 5000 },
+        { id: 13, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+        { id: 14, type: 'blue_dividend', name: 'Дивиденды', description: 'Получить дивиденды от инвестиций', color: 'blue', icon: '💰', action: 'receive_dividends' },
+        { id: 15, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+        { id: 16, type: 'purple_business', name: 'Бизнес', description: 'Возможность купить или продать бизнес', color: 'purple', icon: '🏪', action: 'business_opportunity' },
+        { id: 17, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+        { id: 18, type: 'pink_expense', name: 'Всякая всячина', description: 'Клетка с обязательными тратами от 100 до 4000$', color: 'pink', icon: '🛒', action: 'mandatory_expense', minCost: 100, maxCost: 4000 },
+        { id: 19, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+        { id: 20, type: 'red_downsize', name: 'Сокращение', description: 'Потеря работы - временное сокращение доходов', color: 'red', icon: '💸', action: 'downsize', cost: 10000 },
+        { id: 21, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+        { id: 22, type: 'blue_dividend', name: 'Дивиденды', description: 'Получить дивиденды от инвестиций', color: 'blue', icon: '💰', action: 'receive_dividends' },
+        { id: 23, type: 'green_opportunity', name: 'Зеленая возможность', description: 'Малая / большая (на выбор)', color: 'green', icon: '💚', action: 'choose_opportunity' },
+        { id: 24, type: 'purple_business', name: 'Бизнес', description: 'Возможность купить или продать бизнес', color: 'purple', icon: '🏪', action: 'business_opportunity' }
+    ];
+}
 
 function createCellElement(index, sizeClass, isInner = false) {
     const el = document.createElement('div');
     el.className = `track-cell ${sizeClass}`;
+    el.style.cursor = 'pointer';
+    
     const num = document.createElement('div');
     num.className = 'cell-number';
     num.textContent = String(index + 1);
+    
     const icon = document.createElement('div');
     icon.className = 'cell-icon';
     
-    // Используем иконки для малого круга
-    if (isInner && index < SMALL_CIRCLE_ICONS.length) {
-        icon.textContent = SMALL_CIRCLE_ICONS[index];
-    } else {
-        icon.textContent = '⬤';
+    // Получаем данные клетки и иконку
+    let cellData = null;
+    let iconText = '⬤';
+    let iconClass = '';
+    
+    if (isInner && index < SMALL_CIRCLE_CELLS.length) {
+        cellData = SMALL_CIRCLE_CELLS[index];
+        iconText = getIconForType ? getIconForType(cellData.type) : cellData.icon;
+        iconClass = getIconStyleClass ? getIconStyleClass() : '';
     }
+    
+    icon.textContent = iconText;
+    if (iconClass) {
+        icon.className += ` ${iconClass}`;
+    }
+    
+    // Добавляем обработчик клика
+    el.addEventListener('click', () => {
+        if (cellData && window.cellPopup) {
+            window.cellPopup.show(cellData);
+        }
+    });
+    
+    // Добавляем hover эффект
+    el.addEventListener('mouseenter', () => {
+        el.style.transform = 'scale(1.1)';
+        el.style.zIndex = '10';
+    });
+    
+    el.addEventListener('mouseleave', () => {
+        el.style.transform = 'scale(1)';
+        el.style.zIndex = '1';
+    });
     
     el.appendChild(num);
     el.appendChild(icon);

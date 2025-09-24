@@ -217,6 +217,185 @@ body {
     text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
 }
 
+/* Стили иконок клеток */
+.icon-monochrome {
+    color: #8B0000 !important; /* Темно-красный цвет */
+    filter: grayscale(100%) brightness(0.3) saturate(0);
+    font-size: 1.2em;
+}
+
+.icon-outline {
+    color: var(--text-primary);
+    background: transparent;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+}
+
+.icon-minimal {
+    color: var(--primary-color);
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+/* Поп-ап для клеток */
+.cell-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--panel-bg);
+    border: 2px solid var(--primary-color);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    z-index: 1000;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(10px);
+}
+
+.cell-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 999;
+    backdrop-filter: blur(5px);
+}
+
+.cell-popup-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.cell-popup-icon {
+    font-size: 2em;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.cell-popup-title {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.cell-popup-type {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.cell-popup-description {
+    color: var(--text-primary);
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.cell-popup-details {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.cell-popup-detail {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.cell-popup-detail:last-child {
+    margin-bottom: 0;
+}
+
+.cell-popup-detail-label {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+.cell-popup-detail-value {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.cell-popup-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.cell-popup-close {
+    background: var(--error-color);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.cell-popup-close:hover {
+    background: #ff5252;
+    transform: translateY(-1px);
+}
+
+/* Стили для разных типов клеток */
+.cell-popup.green-opportunity .cell-popup-icon {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+}
+
+.cell-popup.pink-expense .cell-popup-icon {
+    background: rgba(233, 30, 99, 0.2);
+    color: #E91E63;
+}
+
+.cell-popup.orange-charity .cell-popup-icon {
+    background: rgba(255, 152, 0, 0.2);
+    color: #FF9800;
+}
+
+.cell-popup.blue-dividend .cell-popup-icon {
+    background: rgba(33, 150, 243, 0.2);
+    color: #2196F3;
+}
+
+.cell-popup.purple-business .cell-popup-icon {
+    background: rgba(156, 39, 176, 0.2);
+    color: #9C27B0;
+}
+
+.cell-popup.yellow-baby .cell-popup-icon {
+    background: rgba(255, 235, 59, 0.2);
+    color: #FFEB3B;
+}
+
+.cell-popup.red-downsize .cell-popup-icon {
+    background: rgba(244, 67, 54, 0.2);
+    color: #F44336;
+}
+
 /* Адаптивность */
 @media (max-width: 768px) {
     .btn {
@@ -230,5 +409,20 @@ body {
     
     .card {
         padding: 16px;
+    }
+    
+    .cell-popup {
+        padding: 16px;
+        max-width: 350px;
+    }
+    
+    .cell-popup-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+    }
+    
+    .cell-popup-actions {
+        flex-direction: column;
     }
 }

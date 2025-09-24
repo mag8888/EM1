@@ -548,6 +548,62 @@
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        /* Стили для панели выбора стиля иконок */
+        .icon-style-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .icon-style-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .icon-style-option:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .icon-style-option.active {
+            background: rgba(0, 234, 255, 0.1);
+            border-color: #00eaff;
+        }
+
+        .icon-style-preview {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            font-size: 16px;
+        }
+
+        .icon-style-info {
+            flex: 1;
+        }
+
+        .icon-style-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .icon-style-description {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
         .btn-exit {
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             border: 1px solid rgba(239, 68, 68, 0.3);
@@ -1080,6 +1136,13 @@
                 </div>
             </div>
 
+            <div class="panel icon-style-panel">
+                <h3>🎨 Стиль иконок</h3>
+                <div class="icon-style-options" id="iconStyleOptions">
+                    <!-- Опции стилей будут добавлены через JavaScript -->
+                </div>
+            </div>
+
             <div class="panel profile-panel">
                 <h3>👤 Профиль</h3>
                 <div class="user-info">
@@ -1124,6 +1187,7 @@
     <script src="config/game-config.js"></script>
     <script src="config/big-circle-cells.js"></script>
     <script src="config/small-circle-cells.js"></script>
+    <script src="config/icon-styles.js"></script>
     
     <!-- Загружаем основные модули -->
     <script src="assets/js/core/EventBus.js"></script>
@@ -1137,6 +1201,7 @@
     <!-- Загружаем игровые модули -->
     <script src="assets/js/modules/game/Board.js"></script>
     <script src="assets/js/modules/game/BoardLayout.js?v=6"></script>
+    <script src="assets/js/modules/game/CellPopup.js"></script>
     
     <!-- Инициализируем игру -->
     <script>
@@ -1163,6 +1228,9 @@
                     statusElement.textContent = 'Готов к игре';
                 }
                 
+                // Инициализируем панель выбора стиля иконок
+                initIconStylePanel();
+                
             } catch (error) {
                 console.error('❌ Failed to initialize game:', error);
                 
@@ -1172,6 +1240,72 @@
                 }
             }
         })();
+        
+        // Инициализация панели выбора стиля иконок
+        function initIconStylePanel() {
+            const container = document.getElementById('iconStyleOptions');
+            if (!container) return;
+            
+            // Получаем доступные стили
+            const styles = window.cellPopup ? window.cellPopup.getAvailableStyles() : [
+                { key: 'emoji', name: 'Эмодзи', description: 'Цветные эмодзи иконки' },
+                { key: 'monochrome', name: 'Однотонные', description: 'Однотонные силуэты' },
+                { key: 'outline', name: 'Контурные', description: 'Только контуры' },
+                { key: 'minimal', name: 'Минималистичные', description: 'Простые формы' }
+            ];
+            
+            // Очищаем контейнер
+            container.innerHTML = '';
+            
+            // Создаем опции
+            styles.forEach(style => {
+                const option = document.createElement('div');
+                option.className = 'icon-style-option';
+                option.dataset.style = style.key;
+                
+                // Получаем иконку для превью
+                const previewIcon = getIconForType ? getIconForType('green_opportunity', style.key) : '💚';
+                const iconClass = getIconStyleClass ? getIconStyleClass(style.key) : '';
+                
+                option.innerHTML = `
+                    <div class="icon-style-preview ${iconClass}">${previewIcon}</div>
+                    <div class="icon-style-info">
+                        <div class="icon-style-name">${style.name}</div>
+                        <div class="icon-style-description">${style.description}</div>
+                    </div>
+                `;
+                
+                // Обработчик клика
+                option.addEventListener('click', () => {
+                    // Убираем активный класс с других опций
+                    container.querySelectorAll('.icon-style-option').forEach(opt => {
+                        opt.classList.remove('active');
+                    });
+                    
+                    // Добавляем активный класс к выбранной опции
+                    option.classList.add('active');
+                    
+                    // Устанавливаем стиль
+                    if (window.cellPopup) {
+                        window.cellPopup.setIconStyle(style.key);
+                    }
+                    
+                    // Перерисовываем доску с новым стилем
+                    if (typeof window.renderTracks === 'function') {
+                        window.renderTracks();
+                    }
+                });
+                
+                container.appendChild(option);
+            });
+            
+            // Устанавливаем активный стиль по умолчанию
+            const currentStyle = localStorage.getItem('iconStyle') || 'emoji';
+            const activeOption = container.querySelector(`[data-style="${currentStyle}"]`);
+            if (activeOption) {
+                activeOption.classList.add('active');
+            }
+        }
     </script>
 
 </body>
