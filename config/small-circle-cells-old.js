@@ -1,5 +1,5 @@
 // Конфигурация клеток малого круга игры "Денежный поток"
-// 24 клетки с различными типами событий и иконками
+// 24 клетки с различными типами событий
 
 const SMALL_CIRCLE_CELLS = [
   // 1-6
@@ -29,7 +29,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Зеленая возможность',
     description: 'Малая / большая (на выбор)',
     color: 'green',
-    icon: '💚',
     action: 'choose_opportunity'
   },
   {
@@ -38,7 +37,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Благотворительность',
     description: 'Пожертвовать деньги для получения возможности бросать 2 кубика (10% от дохода игрока, можно отказаться)',
     color: 'orange',
-    icon: '❤️',
     action: 'charity_donation',
     percentage: 0.1,
     benefit: 'double_dice'
@@ -49,7 +47,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Зеленая возможность',
     description: 'Малая / большая (на выбор)',
     color: 'green',
-    icon: '💚',
     action: 'choose_opportunity'
   },
   {
@@ -58,7 +55,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'PayDay',
     description: 'Получить зарплату',
     color: 'yellow',
-    icon: '💰',
     action: 'receive_salary'
   },
 
@@ -69,7 +65,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Зеленая возможность',
     description: 'Малая / большая (на выбор)',
     color: 'green',
-    icon: '💚',
     action: 'choose_opportunity'
   },
   {
@@ -78,7 +73,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Рынок',
     description: 'Там появляются покупатели на разные активы',
     color: 'blue',
-    icon: '🏪',
     action: 'market_sale'
   },
   {
@@ -87,7 +81,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Зеленая возможность',
     description: 'Малая / большая (на выбор)',
     color: 'green',
-    icon: '💚',
     action: 'choose_opportunity'
   },
   {
@@ -96,7 +89,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Всякая всячина',
     description: 'Клетка с обязательными тратами от 100 до 4000$ на разные нужды (чайник, кофе, машина, ТВ, прочее)',
     color: 'pink',
-    icon: '🛒',
     action: 'mandatory_expense',
     minCost: 100,
     maxCost: 4000
@@ -107,7 +99,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Зеленая возможность',
     description: 'Малая / большая (на выбор)',
     color: 'green',
-    icon: '💚',
     action: 'choose_opportunity'
   },
   {
@@ -116,7 +107,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Ребенок',
     description: 'Родился ребенок, увеличиваются ежемесячные расходы',
     color: 'purple',
-    icon: '👶',
     action: 'baby_born',
     effect: 'increase_monthly_expenses'
   },
@@ -128,7 +118,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Зеленая возможность',
     description: 'Малая / большая (на выбор)',
     color: 'green',
-    icon: '💚',
     action: 'choose_opportunity'
   },
   {
@@ -137,7 +126,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'PayDay',
     description: 'Получить зарплату',
     color: 'yellow',
-    icon: '💰',
     action: 'receive_salary'
   },
   {
@@ -146,7 +134,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Зеленая возможность',
     description: 'Малая / большая (на выбор)',
     color: 'green',
-    icon: '💚',
     action: 'choose_opportunity'
   },
   {
@@ -155,7 +142,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Рынок',
     description: 'Там появляются покупатели на разные активы',
     color: 'blue',
-    icon: '🏪',
     action: 'market_sale'
   },
   {
@@ -164,7 +150,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Зеленая возможность',
     description: 'Малая / большая (на выбор)',
     color: 'green',
-    icon: '💚',
     action: 'choose_opportunity'
   },
   {
@@ -173,7 +158,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Всякая всячина',
     description: 'Клетка с обязательными тратами от 100 до 4000$ на разные нужды (чайник, кофе, машина, ТВ, прочее)',
     color: 'pink',
-    icon: '🛒',
     action: 'mandatory_expense',
     minCost: 100,
     maxCost: 4000
@@ -186,7 +170,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Зеленая возможность',
     description: 'Малая / большая (на выбор)',
     color: 'green',
-    icon: '💚',
     action: 'choose_opportunity'
   },
   {
@@ -195,7 +178,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Потеря',
     description: 'Потеря денег (увольнение - оплатите один раз расходы и пропустите 2 хода или 3 раза расходы без пропуска хода). Если нет возможности оплатить можно взять кредит, если нет возможности взять кредит то банкрот и обнуление всех активов и выбор новой профессии',
     color: 'black',
-    icon: '💸',
     action: 'job_loss',
     options: [
       { name: 'Оплатить один раз', cost: 'monthly_expenses', skipTurns: 2 },
@@ -209,7 +191,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Зеленая возможность',
     description: 'Малая / большая (на выбор)',
     color: 'green',
-    icon: '💚',
     action: 'choose_opportunity'
   },
   {
@@ -218,7 +199,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'PayDay',
     description: 'Получить зарплату',
     color: 'yellow',
-    icon: '💰',
     action: 'receive_salary'
   },
   {
@@ -227,7 +207,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Зеленая возможность',
     description: 'Малая / большая (на выбор)',
     color: 'green',
-    icon: '💚',
     action: 'choose_opportunity'
   },
   {
@@ -236,7 +215,6 @@ const SMALL_CIRCLE_CELLS = [
     name: 'Рынок',
     description: 'Там появляются покупатели на разные активы',
     color: 'blue',
-    icon: '🏪',
     action: 'market_sale'
   }
 ];
@@ -263,28 +241,15 @@ const CELL_COLORS = {
   BLACK: 'black'
 };
 
-// Иконки для каждого типа клетки
-const CELL_ICONS = {
-  green_opportunity: '💚',
-  pink_expense: '🛒',
-  orange_charity: '❤️',
-  yellow_payday: '💰',
-  blue_market: '🏪',
-  purple_baby: '👶',
-  black_loss: '💸'
-};
-
 // Экспорт для использования в других модулях
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     SMALL_CIRCLE_CELLS,
     CELL_TYPES,
-    CELL_COLORS,
-    CELL_ICONS
+    CELL_COLORS
   };
 } else if (typeof window !== 'undefined') {
   window.SMALL_CIRCLE_CELLS = SMALL_CIRCLE_CELLS;
   window.CELL_TYPES = CELL_TYPES;
   window.CELL_COLORS = CELL_COLORS;
-  window.CELL_ICONS = CELL_ICONS;
 }
