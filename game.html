@@ -1393,6 +1393,14 @@
                 // Инициализируем панель выбора стиля иконок
                 initIconStylePanel();
                 
+                // Инициализируем CellPopup
+                if (typeof CellPopup !== 'undefined') {
+                    window.cellPopup = new CellPopup();
+                    console.log('✅ CellPopup initialized');
+                } else {
+                    console.warn('⚠️ CellPopup not found');
+                }
+                
             } catch (error) {
                 console.error('❌ Failed to initialize game:', error);
                 

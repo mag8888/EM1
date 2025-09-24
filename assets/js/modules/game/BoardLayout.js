@@ -86,7 +86,13 @@ function createCellElement(index, sizeClass, isInner = false) {
     if (isInner && index < SMALL_CIRCLE_CELLS.length) {
         cellData = SMALL_CIRCLE_CELLS[index];
         iconText = getIconForType ? getIconForType(cellData.type) : cellData.icon;
-        iconClass = getIconStyleClass ? getIconStyleClass() : '';
+        
+        // Для теста: каждая 3-я клетка использует монохромный стиль
+        if (index % 3 === 0) {
+            iconClass = 'icon-monochrome';
+        } else {
+            iconClass = getIconStyleClass ? getIconStyleClass() : '';
+        }
         
         // Проверяем, является ли эта клетка выбранной мечтой
         if (window.currentRoom?.currentPlayer?.selectedDream) {
@@ -131,16 +137,7 @@ function createCellElement(index, sizeClass, isInner = false) {
         }
     });
     
-    // Добавляем hover эффект
-    el.addEventListener('mouseenter', () => {
-        el.style.transform = 'scale(1.1)';
-        el.style.zIndex = '10';
-    });
-    
-    el.addEventListener('mouseleave', () => {
-        el.style.transform = 'scale(1)';
-        el.style.zIndex = '1';
-    });
+    // Hover эффекты теперь обрабатываются через CSS
     
     el.appendChild(num);
     el.appendChild(icon);

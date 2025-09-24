@@ -29,6 +29,62 @@ body {
     line-height: 1.6;
 }
 
+/* Игровые клетки */
+.track-cell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.track-cell:hover {
+    transform: scale(1.2);
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
+    z-index: 10;
+}
+
+.track-cell:active {
+    transform: scale(1.1);
+}
+
+.cell-number {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 16px;
+    height: 16px;
+    background: var(--primary-color);
+    color: var(--background-dark);
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.cell-icon {
+    font-size: 16px;
+    line-height: 1;
+    z-index: 1;
+}
+
+.cell-icon.icon-monochrome {
+    filter: grayscale(100%) brightness(0.8);
+}
+
 /* Кнопки */
 .btn {
     display: inline-flex;
