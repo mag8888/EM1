@@ -75,12 +75,14 @@ class GameModule {
     setupUiShortcuts() {
         const bankBtn = document.getElementById('bankButton');
         bankBtn?.addEventListener('click', () => {
-            window.open('/game-board/bank-module.html', 'bankModule', 'width=720,height=840,scrollbars=yes');
+            const v = Date.now();
+            window.open(`/game-board/bank-module.html?v=${v}`, 'bankModule', 'width=720,height=840,scrollbars=yes');
         });
 
         const dealsBtn = document.getElementById('dealsButton');
         dealsBtn?.addEventListener('click', () => {
-            window.open('/game-board/deals-module.html', 'dealsModule', 'width=960,height=820,scrollbars=yes');
+            const v = Date.now();
+            window.open(`/game-board/deals-module.html?v=${v}`, 'dealsModule', 'width=960,height=820,scrollbars=yes');
         });
 
         const leaveBtn = document.getElementById('leaveRoomBtn');
