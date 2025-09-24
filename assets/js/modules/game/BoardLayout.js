@@ -136,7 +136,8 @@ function showSimplePopup(cellData) {
     });
 }
 
-console.log('🔍 BoardLayout: Config loaded - SMALL_CIRCLE_CELLS:', SMALL_CIRCLE_CELLS.length, 'getIconForType:', typeof getIconForType, 'getIconStyleClass:', typeof getIconStyleClass);
+console.log('🔍 BoardLayout: Config loaded - SMALL_CIRCLE_CELLS:', SMALL_CIRCLE_CELLS.length, 'BIG_CIRCLE_CELLS:', BIG_CIRCLE_CELLS.length, 'getIconForType:', typeof getIconForType, 'getIconStyleClass:', typeof getIconStyleClass);
+console.log('🔍 BoardLayout: BIG_CIRCLE_CELLS sample:', BIG_CIRCLE_CELLS.slice(0, 3));
 
 function createCellElement(index, sizeClass, isInner = false) {
     const el = document.createElement('div');

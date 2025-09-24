@@ -1120,15 +1120,40 @@
 
     <div class="game-toast" id="gameToast"></div>
 
+    <!-- Загружаем конфигурацию игры -->
+    <script src="/config/test-config.js" onerror="console.error('❌ Failed to load test-config.js')"></script>
+    <script src="/config/game-config.js" onerror="console.error('❌ Failed to load game-config.js')"></script>
+    <script src="/config/big-circle-cells.js?v=7" onerror="console.error('❌ Failed to load big-circle-cells.js')"></script>
+    <script src="/config/small-circle-cells.js?v=7" onerror="console.error('❌ Failed to load small-circle-cells.js')"></script>
+    <script src="/config/icon-styles.js?v=7" onerror="console.error('❌ Failed to load icon-styles.js')"></script>
+
     <!-- Globals required by game modules -->
     <script src="/assets/js/modules/shared/EventEmitter.js"></script>
     <script src="/assets/js/modules/api/RoomApi.js?v=6"></script>
-    <script src="/assets/js/modules/game/BoardLayout.js?v=6"></script>
+    <script src="/assets/js/modules/game/BoardLayout.js?v=7"></script>
+    <!-- Проверяем загрузку конфигураций -->
+    <script>
+        // Проверяем загрузку скриптов
+        const scriptTags = document.querySelectorAll('script[src*="config/"]');
+        console.log('🔍 Game: Found config scripts:', scriptTags.length);
+        
+        // Проверяем доступность данных
+        setTimeout(() => {
+            console.log('🔍 Game: BIG_CIRCLE_CELLS available:', typeof window.BIG_CIRCLE_CELLS, 'length:', window.BIG_CIRCLE_CELLS?.length);
+            console.log('🔍 Game: SMALL_CIRCLE_CELLS available:', typeof window.SMALL_CIRCLE_CELLS, 'length:', window.SMALL_CIRCLE_CELLS?.length);
+            console.log('🔍 Game: renderTracks available:', typeof window.renderTracks);
+        }, 100);
+    </script>
+    
     <script>
         // Инициализация доски сразу после загрузки
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('🔍 Game: DOM loaded, initializing...');
             if (typeof window.renderTracks === 'function') {
+                console.log('🔍 Game: Calling renderTracks...');
                 window.renderTracks();
+            } else {
+                console.warn('⚠️ Game: renderTracks function not found');
             }
         });
     </script>
