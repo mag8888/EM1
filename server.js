@@ -1034,8 +1034,24 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
             return res.status(404).json({ success: false, message: 'Комната не найдена' });
         }
         
-        const { action } = req.body;
-        
+        const { action, deal } = req.body || {};
+
+        // Apply minimal effects: if user buys a deal, add passive income
+        if (action === 'buy' && deal && typeof deal.income === 'number') {
+            const buyerId = room.players?.[0]?.userId || null;
+            const player = (room.players || []).find(p => String(p.userId) === String(buyerId));
+            if (player) {
+                player.passiveIncome = Number(player.passiveIncome || 0) + Number(deal.income || 0);
+                if (!Array.isArray(player.assets)) player.assets = [];
+                player.assets.push({
+                    id: deal.id || Date.now().toString(),
+                    name: deal.name || 'Сделка',
+                    income: Number(deal.income || 0),
+                    cost: Number(deal.amount || deal.cost || 0),
+                });
+            }
+        }
+
         // Simple deal resolution
         res.json({ 
             success: true, 
