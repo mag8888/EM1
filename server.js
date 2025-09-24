@@ -116,6 +116,53 @@ const rooms = new Map();
 const bankBalances = new Map(); // key: roomId:username -> { amount }
 const bankHistory = new Map();  // key: roomId -> [ { from, to, amount, timestamp } ]
 const bankLoans = new Map();    // key: roomId:username -> { amount }
+// Turn timers
+const turnTimers = new Map(); // roomId -> { timeout, deadline }
+
+// Turn timer management
+function startTurnTimer(roomId, turnTimeSec = 120) {
+    clearTurnTimer(roomId);
+    const deadline = Date.now() + (turnTimeSec * 1000);
+    const timeout = setTimeout(() => {
+        autoEndTurn(roomId);
+    }, turnTimeSec * 1000);
+    turnTimers.set(roomId, { timeout, deadline });
+}
+
+function clearTurnTimer(roomId) {
+    const timer = turnTimers.get(roomId);
+    if (timer) {
+        clearTimeout(timer.timeout);
+        turnTimers.delete(roomId);
+    }
+}
+
+function getTurnTimeLeft(roomId) {
+    const timer = turnTimers.get(roomId);
+    if (!timer) return 0;
+    const left = Math.max(0, Math.floor((timer.deadline - Date.now()) / 1000));
+    return left;
+}
+
+function autoEndTurn(roomId) {
+    const room = rooms.get(roomId);
+    if (!room || room.status !== 'playing') {
+        // Clear timer if game is not playing
+        clearTurnTimer(roomId);
+        return;
+    }
+    
+    // Advance to next player
+    if (typeof room.activeIndex !== 'number') room.activeIndex = 0;
+    const count = (room.players || []).length || 1;
+    room.activeIndex = (room.activeIndex + 1) % count;
+    room.updatedAt = new Date().toISOString();
+    
+    // Start timer for next player
+    startTurnTimer(roomId, room.turnTime || 120);
+    
+    console.log(`Auto-ended turn for room ${roomId}, now active: ${room.activeIndex}`);
+}
 
 // Health Check endpoint
 app.get('/health', (req, res) => {
@@ -407,6 +454,7 @@ app.post('/api/rooms/:roomId/start', (req, res) => {
             return res.status(400).json({ success: false, message: 'Недостаточно готовых игроков' });
         }
         room.status = 'playing';
+        room.activeIndex = 0; // Первый игрок начинает
         // Инициализация стартовых позиций на малом круге
         const order = (room.players || []).length;
         (room.players || []).forEach((p, idx) => {
@@ -422,6 +470,9 @@ app.post('/api/rooms/:roomId/start', (req, res) => {
             pushHistory(room.id, { from: 'Банк', to: p.name, amount: 3000, roomId: room.id, timestamp: Date.now(), type: 'initial_deposit' });
         });
         room.updatedAt = new Date().toISOString();
+        
+        // Запускаем серверный таймер для первого игрока
+        startTurnTimer(room.id, room.turnTime || 120);
         return res.json({ success: true, room: sanitizeRoom(room) });
     } catch (error) {
         console.error('Ошибка запуска игры:', error);
@@ -1079,7 +1130,9 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
             currentTurn: 1,
             phase: 'waiting',
             diceResult: null,
-            pendingDeal: null
+            pendingDeal: null,
+            turnTimeLeft: getTurnTimeLeft(room.id),
+            turnTime: room.turnTime || 120
         };
         
         res.json({ success: true, state: gameState });
@@ -1198,6 +1251,9 @@ app.post('/api/rooms/:roomId/end-turn', (req, res) => {
         const count = (room.players || []).length || 1;
         room.activeIndex = (room.activeIndex + 1) % count;
         room.updatedAt = new Date().toISOString();
+        
+        // Restart timer for next player
+        startTurnTimer(room.id, room.turnTime || 120);
         // Return updated state
         const gameState = {
             roomId: room.id,

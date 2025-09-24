@@ -51,9 +51,12 @@ export class TurnController {
         
         this.updateUI(isMyTurn, currentPlayer);
 
-        // Перезапуск таймера, когда ход переходит ко мне
-        if (isMyTurn) {
-            this.startTurnTimer();
+        // Use server time if available, otherwise fallback to client timer
+        if (isMyTurn && snapshot.turnTimeLeft !== undefined && snapshot.turnTimeLeft > 0) {
+            this.startServerTimer(snapshot.turnTimeLeft);
+        } else if (isMyTurn) {
+            const turnTime = this.state.getTurnTimeSec(120);
+            this.startTurnTimer(turnTime);
         } else {
             this.clearTimers();
         }
@@ -278,13 +281,38 @@ export class TurnController {
         return true;
     }
 
-    startTurnTimer() {
+    startTurnTimer(totalSec = 120) {
         this.clearTimers();
-        
-        this.turnTimer = setTimeout(() => {
-            console.log('🎮 Время хода истекло');
-            this.handleTurnTimeout();
-        }, this.config.turnTimeLimit);
+        let left = totalSec;
+        const tick = () => {
+            if (this.timerLabel) this.timerLabel.textContent = `${left}s`;
+            left -= 1;
+            if (left < 0) {
+                this.clearTimers();
+                // Optionally, auto-end turn here
+                this.handleEndTurn();
+                return;
+            }
+            this.turnTimer = setTimeout(tick, 1000);
+        };
+        tick();
+    }
+
+    startServerTimer(serverTimeLeft) {
+        this.clearTimers();
+        let left = Math.max(0, serverTimeLeft);
+        const tick = () => {
+            if (this.timerLabel) this.timerLabel.textContent = `${left}s`;
+            left -= 1;
+            if (left < 0) {
+                this.clearTimers();
+                // Server will auto-end turn, just clear display
+                if (this.timerLabel) this.timerLabel.textContent = '0s';
+                return;
+            }
+            this.turnTimer = setTimeout(tick, 1000);
+        };
+        tick();
     }
 
     handleTurnTimeout() {

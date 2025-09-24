@@ -79,7 +79,8 @@ class GameModule {
             phaseLabel: document.getElementById('turnState'),
             lastRollLabel: document.getElementById('lastRollValue'),
             notifier: this.notifier,
-            statusChip: document.getElementById('turnStatusChip')
+            statusChip: document.getElementById('turnStatusChip'),
+            timerLabel: document.getElementById('turnTimerValue')
         });
         turnController.init();
         this.modules.push(turnController);
