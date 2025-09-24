@@ -746,7 +746,11 @@ if (typeof window !== 'undefined') {
 
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🏦 BankManager: DOM loaded, initializing...');
     if (!window.bankManager) {
+        console.log('🏦 BankManager: Creating new instance...');
         window.bankManager = new BankManager();
+    } else {
+        console.log('🏦 BankManager: Already exists, skipping initialization');
     }
 });

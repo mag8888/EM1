@@ -77,7 +77,7 @@ function getIconForType(type, style = 'emoji') {
 // Функция для получения CSS класса стиля
 function getIconStyleClass(style = 'emoji') {
     const styleConfig = ICON_STYLES[style];
-    return styleConfig ? styleConfig.cssClass : '';
+    return styleConfig ? styleConfig.cssClass : 'icon-emoji';
 }
 
 // Экспорт для использования в других модулях

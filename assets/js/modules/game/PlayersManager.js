@@ -9,10 +9,39 @@ class PlayersManager {
         this.init();
     }
 
-    init() {
+    async init() {
         console.log('🎮 PlayersManager инициализирован');
         this.setupEventListeners();
+        await this.loadPlayersData();
         this.renderPlayers();
+    }
+
+    // Загрузка данных игроков с сервера
+    async loadPlayersData() {
+        console.log('🎮 PlayersManager: Loading players data...');
+        
+        if (window.gameDataApi) {
+            try {
+                const playersData = await window.gameDataApi.getPlayersData();
+                console.log('🎮 PlayersManager: Loaded players data from server:', playersData);
+                
+                // Очищаем существующих игроков
+                this.players = [];
+                
+                // Добавляем игроков из сервера
+                playersData.forEach(playerData => {
+                    this.addPlayer(playerData);
+                });
+                
+                console.log('🎮 PlayersManager: Players loaded successfully:', this.players.length);
+            } catch (error) {
+                console.error('❌ PlayersManager: Failed to load players data:', error);
+                this.initTestPlayers();
+            }
+        } else {
+            console.warn('⚠️ PlayersManager: GameDataApi not available, using test data');
+            this.initTestPlayers();
+        }
     }
 
     setupEventListeners() {
@@ -220,13 +249,15 @@ if (typeof window !== 'undefined') {
 }
 
 // Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🎮 PlayersManager: DOM loaded, initializing...');
     if (!window.playersManager) {
+        console.log('🎮 PlayersManager: Creating new instance...');
         window.playersManager = new PlayersManager();
         
-        // Добавляем тестовых игроков для демонстрации
-        setTimeout(() => {
-            window.playersManager.initTestPlayers();
-        }, 1000);
+        // Ждем инициализацию
+        await window.playersManager.init();
+    } else {
+        console.log('🎮 PlayersManager: Already exists, skipping initialization');
     }
 });

@@ -495,7 +495,11 @@ if (typeof window !== 'undefined') {
 
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('💼 ProfessionCard: DOM loaded, initializing...');
     if (!window.professionCard) {
+        console.log('💼 ProfessionCard: Creating new instance...');
         window.professionCard = new ProfessionCard();
+    } else {
+        console.log('💼 ProfessionCard: Already exists, skipping initialization');
     }
 });

@@ -672,7 +672,11 @@ if (typeof window !== 'undefined') {
 
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('📝 DealsManager: DOM loaded, initializing...');
     if (!window.dealsManager) {
+        console.log('📝 DealsManager: Creating new instance...');
         window.dealsManager = new DealsManager();
+    } else {
+        console.log('📝 DealsManager: Already exists, skipping initialization');
     }
 });
