@@ -415,10 +415,9 @@ class RoomApi {
     }
 
     async getRoom(roomId, params = {}) {
-        // Для GET запросов не передаем user_id чтобы избежать CORS preflight
+        // Используем обычный request с X-User-ID для проверки принадлежности к комнате
         const url = `/api/rooms/${roomId}`;
-        // Публичный GET без Authorization/X-* чтобы избежать CORS preflight
-        const data = await this.requestPublic(url);
+        const data = await this.request(url);
         return data.room;
     }
 

@@ -521,6 +521,59 @@ app.post('/api/rooms/:roomId/ready', (req, res) => {
     }
 });
 
+// Get game state (requires user ID)
+app.get('/api/rooms/:roomId/game-state', (req, res) => {
+    try {
+        const userId = req.headers['x-user-id'] || req.query.user_id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User ID required' });
+        }
+
+        // Find user by ID
+        let user = null;
+        for (let u of users.values()) {
+            if (String(u.id) === String(userId)) {
+                user = u;
+                break;
+            }
+        }
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const room = rooms.get(req.params.roomId);
+        if (!room) {
+            return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        }
+
+        // Check if user is in the room
+        const player = (room.players || []).find(p => String(p.userId) === userId);
+        if (!player) {
+            return res.status(400).json({ success: false, message: 'Вы не находитесь в этой комнате. Пожалуйста, присоединитесь к комнате сначала.' });
+        }
+
+        // Return game state
+        const gameState = {
+            roomId: room.id,
+            status: room.status,
+            players: room.players || [],
+            currentPlayer: player,
+            gameStarted: room.status === 'playing',
+            turnTime: room.turnTime,
+            maxPlayers: room.maxPlayers,
+            createdAt: room.createdAt,
+            updatedAt: room.updatedAt
+        };
+
+        res.set('Cache-Control', 'no-store');
+        res.json({ success: true, gameState });
+    } catch (error) {
+        console.error('Ошибка получения состояния игры:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
 // ===== Banking API (minimal) =====
 function getBalanceKey(roomId, username) {
     return `${roomId}:${username}`;
