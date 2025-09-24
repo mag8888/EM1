@@ -153,14 +153,22 @@ class GameState extends EventEmitter {
             const debugPlayers = Array.isArray(state.players)
                 ? state.players.map(p => ({ userId: String(p.userId), name: p.name }))
                 : [];
-            console.log('🔍 GameState.applyState:', {
-                activePlayerId: String(state.activePlayerId),
-                activeIndex: state.activeIndex,
-                me: String(this.user?.id),
-                isMyTurn: String(state.activePlayerId) === String(this.user?.id),
+            const debugPayload = {
+                activePlayerId: state?.activePlayerId != null ? String(state.activePlayerId) : null,
+                activeIndex: state?.activeIndex ?? null,
+                me: this.user?.id != null ? String(this.user.id) : null,
+                isMyTurn: String(state?.activePlayerId) === String(this.user?.id),
                 players: debugPlayers
-            });
-        } catch (_) {}
+            };
+            console.log('🔍 GameState.applyState:', JSON.stringify(debugPayload));
+        } catch (e) {
+            console.log('🔍 GameState.applyState (fallback logs):',
+                'activePlayerId=', state?.activePlayerId,
+                'activeIndex=', state?.activeIndex,
+                'me=', this.user?.id,
+                'players=', Array.isArray(state?.players) ? state.players.length : 'n/a'
+            );
+        }
         this.emit('change', this.getSnapshot());
     }
 
