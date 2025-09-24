@@ -196,6 +196,16 @@
             z-index: 2;
         }
 
+        .credit-section {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            position: relative;
+            z-index: 2;
+        }
+
         .history-list {
             max-height: 200px;
             overflow-y: auto;
@@ -344,6 +354,33 @@
                 </div>
             </div>
         </div>
+        
+        <div class="credit-section">
+            <div class="section-title">
+                <span>🏦</span>
+                <span>Кредит</span>
+            </div>
+            <div class="form-group">
+                <label>Текущий кредит</label>
+                <div class="balance-amount" id="currentCredit" style="font-size:22px;">$0</div>
+            </div>
+            <div class="form-group">
+                <label>Пассивный доход</label>
+                <div id="creditPassiveIncome" style="color: rgba(255,255,255,0.8)">$0/мес</div>
+            </div>
+            <div class="form-group">
+                <label>Доступный лимит</label>
+                <div id="creditMax" style="color: rgba(255,255,255,0.8)">$0</div>
+            </div>
+            <div class="form-group">
+                <label for="creditAmount">Сумма (кратно 1000)</label>
+                <input type="number" id="creditAmount" min="1000" step="1000" placeholder="1000">
+            </div>
+            <div class="form-group" style="display:flex; gap:12px;">
+                <button class="btn btn-primary" onclick="takeCredit()">Взять кредит</button>
+                <button class="btn btn-primary" onclick="repayCredit()">Погасить</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -398,6 +435,28 @@
             loadBalance();
             loadPlayers();
             loadTransferHistory();
+            loadCreditInfo();
+        }
+
+        async function loadCreditInfo() {
+            try {
+                const response = await fetch(`/api/bank/credit/info/${currentUser}/${currentRoom.id}`);
+                const info = await response.json();
+                const creditEl = document.getElementById('currentCredit');
+                const incomeEl = document.getElementById('creditPassiveIncome');
+                const maxEl = document.getElementById('creditMax');
+                const amountInput = document.getElementById('creditAmount');
+                if (creditEl) creditEl.textContent = `$${Number(info.credit || 0).toLocaleString()}`;
+                if (incomeEl) incomeEl.textContent = `$${Number(info.passiveIncome || 0).toLocaleString()}/мес`;
+                if (maxEl) maxEl.textContent = `$${Number(info.maxLoan || 0).toLocaleString()}`;
+                if (amountInput) {
+                    amountInput.min = info.step || 1000;
+                    amountInput.step = info.step || 1000;
+                    amountInput.max = info.maxLoan || 0;
+                }
+            } catch (e) {
+                console.error('Ошибка загрузки инфо по кредиту:', e);
+            }
         }
 
         async function loadBalance() {
@@ -560,6 +619,7 @@
                 
                 // Обновляем историю
                 loadTransferHistory();
+                loadCreditInfo();
                 
                 // Показываем уведомление
                 if (data.to === currentUser) {
@@ -605,6 +665,52 @@
             window.close();
         }
 
+        async function takeCredit() {
+            const amount = Number(document.getElementById('creditAmount').value || 0);
+            if (!amount || amount % 1000 !== 0) {
+                showError('Сумма должна быть кратна 1000');
+                return;
+            }
+            try {
+                const response = await fetch('/api/bank/credit/take', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUser, roomId: currentRoom.id, amount })
+                });
+                const result = await response.json();
+                if (!response.ok) return showError(result.error || 'Ошибка кредита');
+                currentBalance = result.newBalance.amount;
+                updateBalanceDisplay();
+                loadCreditInfo();
+                showSuccess('Кредит выдан');
+            } catch (e) {
+                showError('Ошибка соединения');
+            }
+        }
+
+        async function repayCredit() {
+            const amount = Number(document.getElementById('creditAmount').value || 0);
+            if (!amount || amount % 1000 !== 0) {
+                showError('Сумма должна быть кратна 1000');
+                return;
+            }
+            try {
+                const response = await fetch('/api/bank/credit/repay', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUser, roomId: currentRoom.id, amount })
+                });
+                const result = await response.json();
+                if (!response.ok) return showError(result.error || 'Ошибка погашения');
+                currentBalance = result.newBalance.amount;
+                updateBalanceDisplay();
+                loadCreditInfo();
+                showSuccess('Кредит погашен');
+            } catch (e) {
+                showError('Ошибка соединения');
+            }
+        }
+        
         // Обработка закрытия окна
         window.addEventListener('beforeunload', () => {
             if (socket) {
