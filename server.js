@@ -1351,6 +1351,7 @@ app.post('/api/rooms/:roomId/end-turn', (req, res) => {
         const activePlayer = room.players?.[room.activeIndex || 0] || null;
         console.log('🔍 End turn check - userId:', userId, 'activePlayer:', activePlayer, 'activeIndex:', room.activeIndex);
         console.log('🔍 All players:', room.players?.map(p => ({ userId: p.userId, name: p.name, isHost: p.isHost })));
+        console.log('🔍 String comparison - userId:', String(userId), 'activePlayer.userId:', String(activePlayer?.userId), 'match:', String(activePlayer?.userId) === String(userId));
         if (!userId || !activePlayer || String(activePlayer.userId) !== String(userId)) {
             console.log('🔍 End turn denied - userId mismatch or missing');
             return res.status(403).json({ success: false, message: 'Сейчас не ваш ход' });
