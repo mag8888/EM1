@@ -1031,6 +1031,14 @@ app.get('/game', (req, res) => {
     res.sendFile(path.join(__dirname, 'game-board', 'game.html'));
 });
 
+// Lobby routes aliases
+app.get('/lobby', (req, res) => {
+    res.sendFile(path.join(__dirname, 'game-board', 'lobby.html'));
+});
+app.get('/game/lobby', (req, res) => {
+    res.sendFile(path.join(__dirname, 'game-board', 'lobby.html'));
+});
+
 // Game state endpoints
 app.get('/api/rooms/:roomId/game-state', (req, res) => {
     try {
