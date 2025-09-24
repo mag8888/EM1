@@ -478,19 +478,33 @@ function animateInnerMove(pathIndices, delayMs = 500, userId = null) {
         ? tokensLayer.querySelector(`.player-token[data-user-id="${String(targetId)}"]`)
         : tokensLayer.querySelector('.player-token');
     if (!token) return;
+    // Включаем плавную анимацию перемещения и масштаба
+    token.style.transition = 'left 200ms ease-in, top 200ms ease-in, transform 150ms ease-in-out';
     let moveIdx = 0;
-    const mvTimer = setInterval(() => {
+    const stepMove = () => {
         const cellIndex = pathIndices[moveIdx];
         const pos = positions[cellIndex];
         if (pos) {
+            // Между клетками — лёгкое увеличение
+            token.style.transform = 'scale(1.12)';
             token.style.left = `${pos.x}px`;
             token.style.top = `${pos.y}px`;
         }
+        const isLast = moveIdx >= pathIndices.length - 1;
         moveIdx++;
-        if (moveIdx >= pathIndices.length) {
-            clearInterval(mvTimer);
+        if (isLast) {
+            // На клетке — уменьшение к норме и небольшая пауза
+            setTimeout(() => {
+                token.style.transition = 'left 220ms ease-out, top 220ms ease-out, transform 220ms ease-out';
+                token.style.transform = 'scale(1.0)';
+            }, 120);
+            return; // завершили
         }
-    }, delayMs);
+        // Быстрый ритм между клетками
+        setTimeout(stepMove, Math.max(160, Math.floor(delayMs * 0.5)));
+    };
+    // Первый шаг запускаем сразу, затем ускоренный темп, финал с замедлением
+    stepMove();
 }
 
 if (typeof window !== 'undefined') {
