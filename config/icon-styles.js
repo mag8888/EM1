@@ -15,6 +15,10 @@ const ICON_STYLES = {
             'purple_business': '🏪',
             'yellow_baby': '👶',
             'red_downsize': '💸',
+            'yellow_payday': '💰',
+            'blue_market': '🛍️',
+            'black_loss': '💸',
+            'purple_baby': '👶',
             'default': '⬤'
         }
     },
@@ -29,6 +33,10 @@ const ICON_STYLES = {
             'purple_business': '📱', // Smartphone
             'yellow_baby': '📷', // Camera
             'red_downsize': '⏱️', // Stopwatch
+            'yellow_payday': '🧮', // Calculator
+            'blue_market': '🛍️', // Shopping bags
+            'black_loss': '⏱️', // Stopwatch
+            'purple_baby': '📷', // Camera
             'default': '⬤'
         },
         cssClass: 'icon-monochrome'
@@ -44,6 +52,10 @@ const ICON_STYLES = {
             'purple_business': '◊',
             'yellow_baby': '△',
             'red_downsize': '▼',
+            'yellow_payday': '$',
+            'blue_market': '◊',
+            'black_loss': '▼',
+            'purple_baby': '△',
             'default': '⬤'
         },
         cssClass: 'icon-outline'
@@ -59,6 +71,10 @@ const ICON_STYLES = {
             'purple_business': '▲',
             'yellow_baby': '▼',
             'red_downsize': '◄',
+            'yellow_payday': '♦',
+            'blue_market': '▲',
+            'black_loss': '◄',
+            'purple_baby': '▼',
             'default': '⬤'
         },
         cssClass: 'icon-minimal'
