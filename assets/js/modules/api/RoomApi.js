@@ -79,6 +79,7 @@ class RoomApi {
 
         try {
             const userId = localStorage.getItem('userId');
+            console.log('🔍 RoomApi: localStorage userId:', userId);
             if (userId) {
                 headers['X-User-ID'] = userId;
             }
@@ -87,13 +88,16 @@ class RoomApi {
         }
 
         const user = this.getCurrentUser();
+        console.log('🔍 RoomApi: getCurrentUser returned:', user);
         if (user?.id && !headers['X-User-ID']) {
             headers['X-User-ID'] = user.id;
+            console.log('🔍 RoomApi: Set X-User-ID from user.id:', user.id);
         }
         if (user?.first_name || user?.username || user?.email) {
             headers['X-User-Name'] = user.first_name || user.username || user.email || 'Игрок';
         }
 
+        console.log('🔍 RoomApi: Final headers:', headers);
         return headers;
     }
 

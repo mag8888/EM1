@@ -65,6 +65,7 @@ class SQLiteDatabase {
                 assign_professions BOOLEAN DEFAULT 0,
                 game_started BOOLEAN DEFAULT 0,
                 status TEXT DEFAULT 'waiting',
+                active_index INTEGER DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 last_activity INTEGER DEFAULT 0,
@@ -414,6 +415,98 @@ class SQLiteDatabase {
         const result = await this.run(sql, [roomId]);
         console.log('✅ Комната удалена из SQLite:', { roomId });
         return result.changes > 0;
+    }
+
+    // Сохранение состояния комнаты
+    async saveRoomState(room) {
+        try {
+            // Обновляем основную информацию о комнате
+            const roomSql = `UPDATE rooms SET 
+                status = ?, 
+                game_started = ?, 
+                active_index = ?,
+                updated_at = CURRENT_TIMESTAMP,
+                last_activity = ?
+                WHERE id = ?`;
+            
+            const gameStarted = room.status === 'playing' ? 1 : 0;
+            await this.run(roomSql, [room.status, gameStarted, room.activeIndex || 0, Date.now(), room.id]);
+
+            // Обновляем игроков
+            if (room.players && room.players.length > 0) {
+                for (const player of room.players) {
+                    const playerSql = `UPDATE room_players SET 
+                        position = ?, 
+                        track = ?, 
+                        cash = ?, 
+                        passive_income = ?,
+                        is_ready = ?
+                        WHERE room_id = ? AND user_id = ?`;
+                    
+                    await this.run(playerSql, [
+                        player.position || 0,
+                        player.track || 'inner',
+                        player.cash || 10000,
+                        player.passiveIncome || 0,
+                        player.isReady ? 1 : 0,
+                        room.id,
+                        player.userId
+                    ]);
+                }
+            }
+
+            console.log('✅ Состояние комнаты сохранено:', room.id);
+            return true;
+        } catch (error) {
+            console.error('❌ Ошибка сохранения состояния комнаты:', error);
+            return false;
+        }
+    }
+
+    // Загрузка состояния комнаты
+    async loadRoomState(roomId) {
+        try {
+            const room = await this.getRoom(roomId);
+            if (!room) return null;
+
+            const players = await this.getRoomPlayers(roomId);
+            
+            // Преобразуем данные в формат, ожидаемый сервером
+            const roomState = {
+                id: room.id,
+                name: room.name,
+                status: room.status,
+                maxPlayers: room.max_players,
+                minPlayers: room.min_players,
+                turnTime: room.turn_time,
+                assignProfessions: room.assign_professions ? true : false,
+                gameStarted: room.game_started ? true : false,
+                createdAt: room.created_at,
+                updatedAt: room.updated_at,
+                activeIndex: room.active_index || 0,
+                players: players.map(p => ({
+                    userId: p.user_id,
+                    name: p.name,
+                    avatar: p.avatar,
+                    isHost: p.is_host ? true : false,
+                    isReady: p.is_ready ? true : false,
+                    selectedDream: p.selected_dream,
+                    selectedToken: p.selected_token,
+                    dreamAchieved: p.dream_achieved ? true : false,
+                    position: p.position || 0,
+                    track: p.track || 'inner',
+                    cash: p.cash || 10000,
+                    passiveIncome: p.passive_income || 0,
+                    tokenOffset: 0 // Будет установлен при загрузке
+                }))
+            };
+
+            console.log('✅ Состояние комнаты загружено:', roomId);
+            return roomState;
+        } catch (error) {
+            console.error('❌ Ошибка загрузки состояния комнаты:', error);
+            return null;
+        }
     }
 
     async close() {

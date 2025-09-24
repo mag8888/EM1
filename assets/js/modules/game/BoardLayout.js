@@ -337,27 +337,7 @@ function renderTracks(room = null) {
         ];
     }
     
-    if (!window.getIconForType) {
-        window.getIconForType = function(cellType, style = 'emoji') {
-            const icons = {
-                'green_opportunity': '💚',
-                'pink_expense': '🛒',
-                'blue_opportunity': '💙',
-                'yellow_expense': '💛',
-                'red_expense': '❤️',
-                'purple_opportunity': '💜',
-                'yellow_payday': '🟡',
-                'blue_market': '🛍️',
-                'black_loss': '💣',
-                'orange_charity': '❤️',
-                'blue_dividend': '💰',
-                'purple_business': '🏪',
-                'yellow_baby': '👶',
-                'red_downsize': '💸'
-            };
-            return icons[cellType] || '⬤';
-        };
-    }
+    // getIconForType already defined above, no need to redefine
     
     if (!window.getIconStyleClass) {
         window.getIconStyleClass = function(style = 'emoji') {

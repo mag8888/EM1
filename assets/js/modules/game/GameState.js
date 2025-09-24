@@ -16,13 +16,41 @@ class GameState extends EventEmitter {
 
     async init() {
         this.user = this.api?.getCurrentUser?.() || null;
+        console.log('🔍 GameState: getCurrentUser returned:', this.user);
+        
+        if (!this.user?.id) {
+            console.log('🔍 GameState: No user found, checking localStorage directly');
+            try {
+                const storedUser = localStorage.getItem('user');
+                const storedUserId = localStorage.getItem('userId');
+                console.log('🔍 GameState: localStorage user:', storedUser, 'userId:', storedUserId);
+                
+                if (storedUser) {
+                    const parsedUser = JSON.parse(storedUser);
+                    if (parsedUser.id || parsedUser._id) {
+                        this.user = parsedUser;
+                        if (parsedUser._id && !parsedUser.id) {
+                            this.user.id = parsedUser._id;
+                        }
+                        console.log('🔍 GameState: Restored user from localStorage:', this.user);
+                    }
+                }
+            } catch (e) {
+                console.warn('🔍 GameState: Failed to parse user from localStorage:', e);
+            }
+        }
+        
         if (!this.user?.id) {
             console.log('Пользователь не найден, перенаправляем на авторизацию');
             window.location.assign('/auth');
             return;
         }
+        
         // Продублируем userId в localStorage для RoomApi заголовков
-        try { localStorage.setItem('userId', String(this.user.id)); } catch (_) {}
+        try { 
+            localStorage.setItem('userId', String(this.user.id)); 
+            console.log('🔍 GameState: Set userId in localStorage:', this.user.id);
+        } catch (_) {}
         
         // Проверяем пользователя с мягким фоллбэком (как в лобби)
         try {

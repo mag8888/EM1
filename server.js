@@ -9,6 +9,7 @@ const path = require('path');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const SQLiteDatabase = require('./database-sqlite.js');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -16,7 +17,6 @@ const JWT_SECRET = process.env.JWT_SECRET || 'em1-production-secret-key-2024-rai
 
 // MongoDB Configuration
 let dbConnected = false;
-let db = null;
 
 // Try MongoDB Atlas connection
 const initializeDatabase = async () => {
@@ -118,6 +118,50 @@ const bankHistory = new Map();  // key: roomId -> [ { from, to, amount, timestam
 const bankLoans = new Map();    // key: roomId:username -> { amount }
 // Turn timers
 const turnTimers = new Map(); // roomId -> { timeout, deadline }
+
+// SQLite Database
+let db = null;
+
+// Initialize database and load rooms
+async function initializeDatabase() {
+    try {
+        db = new SQLiteDatabase();
+        await db.init();
+        console.log('✅ SQLite database initialized');
+        
+        // Load existing rooms from database
+        await loadRoomsFromDatabase();
+        console.log('✅ Rooms loaded from database');
+    } catch (error) {
+        console.error('❌ Failed to initialize database:', error);
+    }
+}
+
+// Load rooms from database into memory
+async function loadRoomsFromDatabase() {
+    try {
+        const allRooms = await db.getAllRooms();
+        for (const roomData of allRooms) {
+            const roomState = await db.loadRoomState(roomData.id);
+            if (roomState) {
+                rooms.set(roomState.id, roomState);
+                console.log(`✅ Loaded room: ${roomState.id} (${roomState.status})`);
+            }
+        }
+    } catch (error) {
+        console.error('❌ Failed to load rooms from database:', error);
+    }
+}
+
+// Save room state to database
+async function saveRoomToDatabase(room) {
+    if (!db) return;
+    try {
+        await db.saveRoomState(room);
+    } catch (error) {
+        console.error('❌ Failed to save room to database:', error);
+    }
+}
 
 // Turn timer management
 function startTurnTimer(roomId, turnTimeSec = 120) {
@@ -288,6 +332,10 @@ app.post('/api/rooms', (req, res) => {
             ]
         };
         rooms.set(room.id, room);
+        
+        // Save to database
+        saveRoomToDatabase(room);
+        
         res.status(201).json({ success: true, room });
     } catch (error) {
         console.error('Ошибка создания комнаты:', error);
@@ -413,6 +461,9 @@ app.post('/api/rooms/:roomId/join', (req, res) => {
                 assets: []
             });
             room.updatedAt = new Date().toISOString();
+            
+            // Save to database
+            saveRoomToDatabase(room);
         }
 
         res.json({ success: true, room: sanitizeRoom(room) });
@@ -473,6 +524,10 @@ app.post('/api/rooms/:roomId/start', (req, res) => {
         
         // Запускаем серверный таймер для первого игрока
         startTurnTimer(room.id, room.turnTime || 120);
+        
+        // Save to database
+        saveRoomToDatabase(room);
+        
         return res.json({ success: true, room: sanitizeRoom(room) });
     } catch (error) {
         console.error('Ошибка запуска игры:', error);
@@ -512,6 +567,10 @@ app.post('/api/rooms/:roomId/dream', (req, res) => {
         
         player.selectedDream = dreamId ?? null;
         room.updatedAt = new Date().toISOString();
+        
+        // Save to database
+        saveRoomToDatabase(room);
+        
         return res.json({ success: true, room: sanitizeRoom(room) });
     } catch (error) {
         console.error('Ошибка выбора мечты:', error);
@@ -563,6 +622,10 @@ app.post('/api/rooms/:roomId/token', (req, res) => {
         
         player.selectedToken = tokenId ?? null;
         room.updatedAt = new Date().toISOString();
+        
+        // Save to database
+        saveRoomToDatabase(room);
+        
         return res.json({ success: true, room: sanitizeRoom(room) });
     } catch (error) {
         console.error('Ошибка выбора фишки:', error);
@@ -597,6 +660,10 @@ app.post('/api/rooms/:roomId/ready', (req, res) => {
         if (!player) return res.status(400).json({ success: false, message: 'Игрок не в комнате' });
         player.isReady = !player.isReady;
         room.updatedAt = new Date().toISOString();
+        
+        // Save to database
+        saveRoomToDatabase(room);
+        
         return res.json({ success: true, room: sanitizeRoom(room) });
     } catch (error) {
         console.error('Ошибка готовности:', error);
@@ -1220,6 +1287,9 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
         activePlayer.position = path[path.length - 1];
         room.updatedAt = new Date().toISOString();
 
+        // Save to database
+        saveRoomToDatabase(room);
+
         res.json({
             success: true,
             from,
@@ -1242,7 +1312,9 @@ app.post('/api/rooms/:roomId/end-turn', (req, res) => {
         // Only active player can end turn
         const userId = req.headers['x-user-id'] || req.body?.user_id;
         const activePlayer = room.players?.[room.activeIndex || 0] || null;
+        console.log('🔍 End turn check - userId:', userId, 'activePlayer:', activePlayer, 'activeIndex:', room.activeIndex);
         if (!userId || !activePlayer || String(activePlayer.userId) !== String(userId)) {
+            console.log('🔍 End turn denied - userId mismatch or missing');
             return res.status(403).json({ success: false, message: 'Сейчас не ваш ход' });
         }
 
@@ -1254,6 +1326,10 @@ app.post('/api/rooms/:roomId/end-turn', (req, res) => {
         
         // Restart timer for next player
         startTurnTimer(room.id, room.turnTime || 120);
+        
+        // Save to database
+        saveRoomToDatabase(room);
+        
         // Return updated state
         const gameState = {
             roomId: room.id,
@@ -1340,6 +1416,9 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
                 });
             }
         }
+
+        // Save to database
+        saveRoomToDatabase(room);
 
         // Simple deal resolution
         res.json({ 
@@ -1450,6 +1529,7 @@ app.get('*', (req, res) => {
 // Initialize database and start server
 const startServer = async () => {
     try {
+        // Initialize database first
         await initializeDatabase();
         
         app.listen(PORT, () => {
@@ -1457,7 +1537,7 @@ const startServer = async () => {
             console.log(`🚀 Сервер работает на порту ${PORT}`);
             console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
             console.log(`🔗 URL: ${process.env.RAILWAY_ENVIRONMENT ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : `http://localhost:${PORT}`}`);
-            console.log(`💾 Database: MongoDB Atlas`);
+            console.log(`💾 Database: SQLite + MongoDB Atlas`);
             console.log('✅ Готов к обслуживанию файлов');
         });
     } catch (error) {
