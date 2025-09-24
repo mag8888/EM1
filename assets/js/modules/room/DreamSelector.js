@@ -80,6 +80,15 @@ class DreamSelector {
                 <span class="dream-name">${dream.name}</span>
                 <span class="dream-cost">$${Number(dream.cost || 0).toLocaleString()}</span>
             `;
+
+            // Проверяем, занята ли мечта другим игроком
+            const takenByOther = room.takenDreams && room.takenDreams.includes(dream.id) && dream.id !== this.currentDreamId;
+            if (takenByOther) {
+                item.disabled = true;
+                item.classList.add('taken');
+                item.innerHTML += '<span class="taken-indicator">ЗАНЯТА</span>';
+            }
+
             item.addEventListener('click', () => this.handleSelection(dream.id));
             this.container.appendChild(item);
         });

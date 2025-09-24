@@ -177,6 +177,46 @@ body {
     animation: slideIn 0.3s ease-out;
 }
 
+/* Стили для занятых фишек и мечты */
+.taken {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    background: rgba(255, 107, 107, 0.1) !important;
+    border-color: rgba(255, 107, 107, 0.3) !important;
+}
+
+.taken-indicator {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #ff6b6b;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dream-item.taken,
+.token-item.taken {
+    position: relative;
+}
+
+.dream-item.taken::after,
+.token-item.taken::after {
+    content: '✗';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    color: #ff6b6b;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+}
+
 /* Адаптивность */
 @media (max-width: 768px) {
     .btn {

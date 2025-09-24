@@ -69,10 +69,13 @@ class TokenSelector {
                 <span class="token-name">${token.name || token.id}</span>
             `;
 
-            const takenByOther = token.taken && token.id !== this.currentTokenId;
+            // Проверяем, занята ли фишка другим игроком
+            const takenByOther = (room.takenTokens && room.takenTokens.includes(token.id) && token.id !== this.currentTokenId) ||
+                                (token.taken && token.id !== this.currentTokenId);
             if (takenByOther) {
                 button.disabled = true;
                 button.classList.add('taken');
+                button.innerHTML += '<span class="taken-indicator">ЗАНЯТА</span>';
             }
             if (token.id === this.currentTokenId) {
                 button.classList.add('selected');
