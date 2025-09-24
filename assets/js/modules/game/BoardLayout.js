@@ -3,7 +3,7 @@
 
 // Загружаем конфигурацию клеток
 let SMALL_CIRCLE_CELLS = [];
-let BIG_CIRCLE_CELLS = [];
+let BIG_CIRCLE_CELLS = null;
 
 // Сначала проверяем window.SMALL_CIRCLE_CELLS
 if (typeof window !== 'undefined' && window.SMALL_CIRCLE_CELLS && window.SMALL_CIRCLE_CELLS.length > 0) {
@@ -45,7 +45,8 @@ if (typeof window !== 'undefined' && window.BIG_CIRCLE_CELLS && window.BIG_CIRCL
     console.log('🔍 BoardLayout: Using window.BIG_CIRCLE_CELLS:', window.BIG_CIRCLE_CELLS.length);
     BIG_CIRCLE_CELLS = window.BIG_CIRCLE_CELLS;
 } else {
-    console.log('🔍 BoardLayout: BIG_CIRCLE_CELLS not loaded from window');
+    console.log('🔍 BoardLayout: BIG_CIRCLE_CELLS not loaded from window, using empty array');
+    BIG_CIRCLE_CELLS = [];
 }
 
 // Загружаем функции иконок
