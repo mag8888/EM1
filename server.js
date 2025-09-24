@@ -5,12 +5,18 @@
 
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const path = require('path');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: { origin: ["http://localhost:8080", "http://localhost:3000", /\.railway\.app$/], credentials: false }
+});
 const PORT = process.env.PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET || 'em1-production-secret-key-2024-railway';
 
@@ -642,8 +648,9 @@ app.post('/api/bank/transfer', (req, res) => {
         }
         fromBal.amount -= sum;
         toBal.amount += sum;
-        const record = { from, to, amount: sum, roomId, timestamp: Date.now() };
+        const record = { from, to, amount: sum, roomId, timestamp: Date.now(), type: 'transfer' };
         pushHistory(roomId, record);
+        try { io.to(roomId).emit('bankUpdate', record); } catch (_) {}
         res.json({ success: true, newBalance: { amount: fromBal.amount }, record });
     } catch (error) {
         console.error('Ошибка перевода:', error);
@@ -712,7 +719,9 @@ app.post('/api/bank/credit/take', (req, res) => {
         // Credit funds to balance
         const bal = ensureBalance(roomId, username);
         bal.amount += sum;
-        pushHistory(roomId, { from: 'Банк', to: username, amount: sum, roomId, timestamp: Date.now(), type: 'credit_take' });
+        const rec = { from: 'Банк', to: username, amount: sum, roomId, timestamp: Date.now(), type: 'credit_take' };
+        pushHistory(roomId, rec);
+        try { io.to(roomId).emit('bankUpdate', rec); } catch (_) {}
 
         res.json({ success: true, loanAmount: loan.amount, newBalance: bal, cashflow: player.passiveIncome });
     } catch (error) {
@@ -752,7 +761,9 @@ app.post('/api/bank/credit/repay', (req, res) => {
             player.passiveIncome = Number(player.passiveIncome || 0) + (sum / 1000) * 100;
         }
 
-        pushHistory(roomId, { from: username, to: 'Банк', amount: sum, roomId, timestamp: Date.now(), type: 'credit_repay' });
+        const rec = { from: username, to: 'Банк', amount: sum, roomId, timestamp: Date.now(), type: 'credit_repay' };
+        pushHistory(roomId, rec);
+        try { io.to(roomId).emit('bankUpdate', rec); } catch (_) {}
         res.json({ success: true, loanAmount: loan.amount, newBalance: bal, cashflow: player?.passiveIncome || 0 });
     } catch (error) {
         console.error('Credit repay error:', error);
@@ -1114,17 +1125,29 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
         activePlayer.position = path[path.length - 1];
         room.updatedAt = new Date().toISOString();
 
-        res.json({
+        const payload = {
             success: true,
             from,
             to: activePlayer.position,
             path,
             players: room.players || []
-        });
+        };
+        try { io.to(req.params.roomId).emit('playerMove', { roomId: req.params.roomId, userId, path, to: activePlayer.position }); } catch (_) {}
+        res.json(payload);
     } catch (error) {
         console.error('Ошибка перемещения:', error);
         res.status(500).json({ success: false, message: 'Ошибка сервера' });
     }
+});
+
+// Socket.IO
+io.on('connection', (socket) => {
+    socket.on('joinRoom', (roomId) => {
+        try { socket.join(roomId); } catch (_) {}
+    });
+    socket.on('leaveRoom', (roomId) => {
+        try { socket.leave(roomId); } catch (_) {}
+    });
 });
 
 app.post('/api/rooms/:roomId/end-turn', (req, res) => {
@@ -1338,7 +1361,7 @@ const startServer = async () => {
     try {
         await initializeDatabase();
         
-        app.listen(PORT, () => {
+        server.listen(PORT, () => {
             console.log('🎮 EM1 Game Board v2.0 Production Server запущен!');
             console.log(`🚀 Сервер работает на порту ${PORT}`);
             console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);

@@ -27,6 +27,7 @@ export class TurnController {
         this.turnTimer = null;
         this.rollMade = false;
         this.timerLabel = document.getElementById('turnTimerValue');
+        this.socket = null;
     }
 
     async init() {
@@ -34,6 +35,7 @@ export class TurnController {
         
         this.setupUI();
         this.state?.on('change', (snapshot) => this.updateFromState(snapshot));
+        this.setupSocket();
     }
 
     setupUI() {
@@ -43,6 +45,23 @@ export class TurnController {
         if (this.endTurnButton) {
             this.endTurnButton.addEventListener('click', () => this.handleEndTurn());
         }
+    }
+
+    setupSocket() {
+        try {
+            if (typeof io === 'undefined') return;
+            this.socket = io();
+            const roomId = this.state.roomId;
+            this.socket.emit('joinRoom', roomId);
+            this.socket.on('playerMove', (payload) => {
+                if (payload?.roomId === roomId && Array.isArray(payload.path)) {
+                    window.animateInnerMove?.(payload.path, 500);
+                }
+            });
+            this.socket.on('bankUpdate', (_) => {
+                // ignore for now
+            });
+        } catch (_) {}
     }
 
     updateFromState(snapshot) {
