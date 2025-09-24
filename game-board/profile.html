@@ -206,13 +206,15 @@
         
         async function loadProfile() {
             try {
-                // Try current-user endpoint with Authorization header
-                const token = localStorage.getItem('authToken');
-                let response = await fetch('/api/user/profile', {
-                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-                });
-                // Fallback to public username endpoint if 404
-                if (response.status === 404 || response.status === 401) {
+                // Try current-user endpoint with user ID
+                const userId = localStorage.getItem('userId');
+                let response;
+                if (userId) {
+                    response = await fetch('/api/user/profile', {
+                        headers: { 'X-User-ID': userId }
+                    });
+                } else {
+                    // Fallback to public username endpoint if no user ID
                     response = await fetch(`/api/user/profile/${username}`);
                 }
                 

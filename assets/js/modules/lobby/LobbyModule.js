@@ -43,17 +43,17 @@ class LobbyModule {
         this.bindEvents();
         this.exposeLegacyBridges();
         
-        // Если нет токена — пробуем мягко восстановить из старых данных (и не делаем мгновенный редирект)
-        const authToken = localStorage.getItem('authToken');
-        if (!authToken) {
-            console.log('❌ No auth token found. Trying soft flow: show UI, no stats/rooms until login.');
+        // Проверяем user ID
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+            console.log('❌ No user ID found. Trying soft flow: show UI, no stats/rooms until login.');
             this.updateUserDisplay();
             this.showError(null, 'Необходимо войти в систему');
             // Не редиректим сразу — даем возможность нажать "Войти" в UI
         }
         
         try {
-            const userInitialized = authToken ? await this.initializeUser() : false;
+            const userInitialized = userId ? await this.initializeUser() : false;
             
             // Проверяем, что пользователь успешно инициализирован
             if (!userInitialized) {
@@ -63,10 +63,10 @@ class LobbyModule {
             // Небольшая задержка для стабилизации localStorage
             await new Promise(resolve => setTimeout(resolve, 100));
             
-            // Проверяем токен еще раз перед загрузкой данных
-            const authToken2 = localStorage.getItem('authToken');
-            if (!authToken2) {
-                console.log('❌ Auth token lost during initialization, redirecting to login');
+            // Проверяем user ID еще раз перед загрузкой данных
+            const userId2 = localStorage.getItem('userId');
+            if (!userId2) {
+                console.log('❌ User ID lost during initialization, redirecting to login');
                 this.showError(null, 'Сессия прервана. Необходимо войти в систему');
                 setTimeout(() => {
                     window.location.href = '/auth.html';
@@ -74,7 +74,7 @@ class LobbyModule {
                 return;
             }
             
-            if (authToken) {
+            if (userId) {
                 await this.loadUserStats();
                 await this.loadRooms();
             }
@@ -204,10 +204,10 @@ class LobbyModule {
         
         // Сначала попробуем загрузить пользователя из localStorage
         const savedUser = localStorage.getItem('user');
-        const authToken = localStorage.getItem('authToken');
+        const userId = localStorage.getItem('userId');
         
         console.log('Saved user:', savedUser ? 'Found' : 'Not found');
-        console.log('Auth token:', authToken ? 'Found' : 'Not found');
+        console.log('User ID:', userId ? 'Found' : 'Not found');
         console.log('All localStorage keys:', Object.keys(localStorage));
         
         if (savedUser) {
@@ -220,14 +220,14 @@ class LobbyModule {
             }
         }
         
-        // Если нет токена, не пытаемся валидировать
-        if (!authToken) {
-            console.log('No auth token found, skipping validation');
+        // Если нет user ID, не пытаемся валидировать
+        if (!userId) {
+            console.log('No user ID found, skipping validation');
             console.log('This might be the cause of the logout issue');
             return false;
         }
         
-        console.log('Validating user with token...');
+        console.log('Validating user with user ID...');
         const userValid = await this.validateAndUpdateUser();
         // Подстраховка: если после валидации не хватает имени/email — дозаполняем
         if (userValid && this.currentUser) {
@@ -295,13 +295,13 @@ class LobbyModule {
 
     async validateAndUpdateUser() {
         try {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                console.log('No auth token found');
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                console.log('No user ID found');
                 return false;
             }
             
-            console.log('Validating user with token:', token.substring(0, 20) + '...');
+            console.log('Validating user with user ID:', userId);
             console.log('RoomApi available:', !!this.roomApi);
             console.log('RoomApi baseUrl:', this.roomApi?.baseUrl);
             
@@ -310,8 +310,20 @@ class LobbyModule {
             console.log('Current origin:', window.location.origin);
             console.log('API base URL:', this.roomApi.baseUrl);
             
-            // Профиль может отсутствовать на минимальном сервере: используем API-клиент с фолбэком
-            const data = await this.roomApi.getPublicProfile();
+            // Получаем профиль пользователя с user ID
+            const response = await fetch('/api/user/profile', {
+                headers: { 
+                    'X-User-ID': userId,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                console.log('Profile request failed:', response.status);
+                return false;
+            }
+            
+            const data = await response.json();
             console.log('Profile data received:', data);
             console.log('Profile data type:', typeof data);
             console.log('Profile data keys:', data ? Object.keys(data) : 'null/undefined');
@@ -346,13 +358,12 @@ class LobbyModule {
                 status: errorStatus
             });
             
-            // Удаляем токен только при явных ошибках авторизации (не при 404)
+            // Удаляем user ID только при явных ошибках авторизации (не при 404)
             if (errorMessage.includes('401') || errorMessage.includes('403') || 
                 errorMessage.includes('Unauthorized') || errorMessage.includes('Forbidden') ||
-                errorMessage.includes('Недействительный токен') || errorMessage.includes('Токен истек') ||
-                errorMessage.includes('Токен доступа отсутствует')) {
-                console.log('Authentication error, clearing tokens');
-                localStorage.removeItem('authToken');
+                errorMessage.includes('User not found') || errorMessage.includes('Invalid user ID')) {
+                console.log('Authentication error, clearing user data');
+                localStorage.removeItem('userId');
                 localStorage.removeItem('user');
                 return false;
             }
@@ -369,14 +380,26 @@ class LobbyModule {
 
     async loadUserStats() {
         try {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                console.log('No auth token found, skipping user stats');
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                console.log('No user ID found, skipping user stats');
                 return;
             }
             
-            // Используем RoomApi для загрузки статистики с Safari fallback
-            const stats = await this.api.request('/api/user/stats');
+            // Загружаем статистику с user ID
+            const response = await fetch('/api/user/stats', {
+                headers: {
+                    'X-User-ID': userId,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                console.log('Stats request failed:', response.status);
+                return;
+            }
+            
+            const stats = await response.json();
             if (this.dom.totalGames) this.dom.totalGames.textContent = stats.games_played ?? stats.gamesPlayed ?? 0;
             if (this.dom.totalWins) this.dom.totalWins.textContent = stats.wins_count ?? stats.totalWins ?? 0;
             if (this.dom.userLevel) this.dom.userLevel.textContent = stats.level ?? 1;
@@ -396,14 +419,14 @@ class LobbyModule {
 
     async loadRooms(showLoading = true) {
         console.log('=== Загрузка комнат ===');
-        console.log('Auth token present:', !!localStorage.getItem('authToken'));
+        console.log('User ID present:', !!localStorage.getItem('userId'));
         console.log('API available:', !!this.api);
         console.log('API baseUrl:', this.api?.baseUrl);
         
-        // Проверяем токен, но не блокируем загрузку если его нет
-        const authToken = localStorage.getItem('authToken');
-        if (!authToken) {
-            console.log('⚠️ No auth token found, but continuing with room loading');
+        // Проверяем user ID, но не блокируем загрузку если его нет
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+            console.log('⚠️ No user ID found, but continuing with room loading');
         }
         
         try {
@@ -717,6 +740,8 @@ class LobbyModule {
         console.log('=== Logout called ===');
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
+        localStorage.removeItem('userId');
+        this.currentUser = null;
         console.log('Cleared localStorage, redirecting to auth');
         window.location.href = '/auth.html';
     }

@@ -422,6 +422,7 @@
                         // Сохраняем токен и данные пользователя
                         localStorage.setItem('authToken', data.accessToken);
                         localStorage.setItem('user', JSON.stringify(data.user));
+                        localStorage.setItem('userId', data.user.id);
                         localStorage.setItem('isAuthenticated', 'true');
                         
                         showSuccess('Авторизация успешна! Переход в лобби...');
@@ -451,7 +452,7 @@
             }
 
             // Проверить, если пользователь уже авторизован
-            if (localStorage.getItem('authToken') && localStorage.getItem('isAuthenticated') === 'true') {
+            if (localStorage.getItem('userId') && localStorage.getItem('isAuthenticated') === 'true') {
                 showSuccess('Вы уже авторизованы! Переход в лобби...');
                 setTimeout(() => {
                     window.location.href = 'lobby.html';
