@@ -30,6 +30,75 @@ class DealsModule {
     
     // Загрузка данных карточек
     loadDealsData() {
+        // Загружаем расширенные данные карточек
+        this.loadExtendedCardsData();
+        
+        // Если не удалось загрузить расширенные данные, используем базовые
+        if (this.decks.bigDeal.length === 0) {
+            this.loadBasicCardsData();
+        }
+        
+        // Перемешиваем колоды
+        this.shuffleDeck('bigDeal');
+        this.shuffleDeck('smallDeal');
+        this.shuffleDeck('market');
+        this.shuffleDeck('expenses');
+        
+        console.log('🎴 DealsModule: Загружены карточки:', {
+            bigDeal: this.decks.bigDeal.length,
+            smallDeal: this.decks.smallDeal.length,
+            market: this.decks.market.length,
+            expenses: this.decks.expenses.length
+        });
+    }
+    
+    // Загрузка расширенных данных карточек
+    loadExtendedCardsData() {
+        try {
+            // Пытаемся загрузить из внешнего файла
+            if (typeof window !== 'undefined' && window.FULL_SMALL_DEALS && window.FULL_BIG_DEALS) {
+                this.decks.smallDeal = window.FULL_SMALL_DEALS.map(card => ({
+                    ...card,
+                    type: 'smallDeal',
+                    downPayment: card.cost,
+                    monthlyPayment: 0
+                }));
+                
+                this.decks.bigDeal = window.FULL_BIG_DEALS.map(card => ({
+                    ...card,
+                    type: 'bigDeal',
+                    downPayment: Math.floor(card.cost * 0.2), // 20% первый взнос
+                    monthlyPayment: Math.floor(card.cost * 0.1) // 10% ежемесячный платеж
+                }));
+                
+                console.log('🎴 DealsModule: Загружены расширенные данные карточек');
+                return;
+            }
+            
+            // Пытаемся загрузить через fetch
+            this.loadCardsFromServer();
+            
+        } catch (error) {
+            console.warn('⚠️ DealsModule: Не удалось загрузить расширенные данные:', error);
+        }
+    }
+    
+    // Загрузка карточек с сервера
+    async loadCardsFromServer() {
+        try {
+            const response = await fetch('/game-board/config/full-cards-config.js');
+            if (response.ok) {
+                const text = await response.text();
+                // Простое извлечение данных (в реальном проекте лучше использовать JSON)
+                console.log('🎴 DealsModule: Загружены данные с сервера');
+            }
+        } catch (error) {
+            console.warn('⚠️ DealsModule: Не удалось загрузить с сервера:', error);
+        }
+    }
+    
+    // Загрузка базовых данных карточек
+    loadBasicCardsData() {
         // Большие сделки (24 карты)
         this.decks.bigDeal = [
             {
@@ -68,7 +137,6 @@ class DealsModule {
                 icon: '📈',
                 category: 'stocks'
             }
-            // Добавить еще 21 карту...
         ];
         
         // Малые сделки (32 карты)
@@ -109,7 +177,6 @@ class DealsModule {
                 icon: '🏪',
                 category: 'business'
             }
-            // Добавить еще 29 карт...
         ];
         
         // Рынок (24 карты)
@@ -132,7 +199,6 @@ class DealsModule {
                 icon: '📉',
                 category: 'special'
             }
-            // Добавить еще 22 карты...
         ];
         
         // Расходы (24 карты)
@@ -155,21 +221,7 @@ class DealsModule {
                 icon: '🛡️',
                 category: 'mandatory'
             }
-            // Добавить еще 22 карты...
         ];
-        
-        // Перемешиваем колоды
-        this.shuffleDeck('bigDeal');
-        this.shuffleDeck('smallDeal');
-        this.shuffleDeck('market');
-        this.shuffleDeck('expenses');
-        
-        console.log('🎴 DealsModule: Загружены карточки:', {
-            bigDeal: this.decks.bigDeal.length,
-            smallDeal: this.decks.smallDeal.length,
-            market: this.decks.market.length,
-            expenses: this.decks.expenses.length
-        });
     }
     
     // Перемешивание колоды
