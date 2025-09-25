@@ -267,29 +267,39 @@ function getCellTypeByPosition(position) {
 
 // Process salary day event
 function processSalaryDay(player) {
+    console.log(`💰 PAYDAY: Обработка зарплаты для ${player.name}`);
+    console.log(`💰 PAYDAY: Профессия:`, player.profession);
+    console.log(`💰 PAYDAY: Текущий баланс: $${player.cash || 0}`);
+    
     const salary = player.profession?.salary || 0;
     const passiveIncome = player.passiveIncome || 0;
     const totalIncome = salary + passiveIncome;
     
+    console.log(`💰 PAYDAY: Зарплата: $${salary}, Пассивный доход: $${passiveIncome}, Итого: $${totalIncome}`);
+    
     // Добавляем зарплату
-    player.cash = (player.cash || 0) + totalIncome;
+    const oldCash = player.cash || 0;
+    player.cash = oldCash + totalIncome;
     
     // Обрабатываем расходы (базовые + дети)
     const baseExpenses = player.profession?.expenses || 0;
     const childExpenses = (player.children || 0) * 1000;
     const totalExpenses = baseExpenses + childExpenses;
     
+    console.log(`💰 PAYDAY: Базовые расходы: $${baseExpenses}, Расходы на детей: $${childExpenses}, Итого расходов: $${totalExpenses}`);
+    
     if (totalExpenses > 0) {
         player.cash = Math.max(0, player.cash - totalExpenses);
     }
     
-    console.log(`💰 PAYDAY для ${player.name}: +$${totalIncome}, -$${totalExpenses}, баланс: $${player.cash}`);
+    console.log(`💰 PAYDAY для ${player.name}: +$${totalIncome}, -$${totalExpenses}, баланс: $${oldCash} → $${player.cash}`);
     
     return {
         type: 'salary_day',
         income: totalIncome,
         expenses: totalExpenses,
-        newBalance: player.cash
+        newBalance: player.cash,
+        oldBalance: oldCash
     };
 }
 
@@ -1516,9 +1526,38 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
         room.updatedAt = new Date().toISOString();
 
         // Обработка события клетки
+        console.log(`🎯 Обработка события клетки для игрока ${activePlayer.name} на позиции ${activePlayer.position}`);
         const cellEvent = processCellEvent(activePlayer, activePlayer.position);
         if (cellEvent) {
             console.log(`⚡ Событие клетки: ${cellEvent.type} для игрока ${activePlayer.name}`);
+            console.log(`⚡ Детали события:`, cellEvent);
+            
+            // Применяем результат события к игроку
+            if (cellEvent.type === 'salary_day') {
+                console.log(`💰 Начислена зарплата: +$${cellEvent.income}, расходы: -$${cellEvent.expenses}`);
+                console.log(`💰 Новый баланс игрока: $${activePlayer.cash}`);
+                // Зарплата уже начислена в processSalaryDay
+            } else if (cellEvent.type === 'baby_born') {
+                console.log(`👶 Родился ребенок: +1 ребенок`);
+                // Ребенок уже добавлен в processBabyBorn
+            } else if (cellEvent.type === 'deal_opportunity') {
+                console.log(`💼 Возможность сделки на позиции ${activePlayer.position}`);
+                // Устанавливаем флаг ожидания выбора сделки
+                room.gameState.pendingDeal = {
+                    playerId: activePlayer.userId,
+                    stage: 'size',
+                    cellId: activePlayer.position
+                };
+                room.gameState.phase = 'awaiting_deal_choice';
+            } else if (cellEvent.type === 'market_event') {
+                console.log(`🎯 Событие рынка на позиции ${activePlayer.position}`);
+                // Здесь можно добавить логику для событий рынка
+            } else if (cellEvent.type === 'expense_event') {
+                console.log(`💸 Событие расходов на позиции ${activePlayer.position}`);
+                // Здесь можно добавить логику для событий расходов
+            }
+        } else {
+            console.log(`⚡ Нет события для позиции ${activePlayer.position}`);
         }
 
         // Save to database

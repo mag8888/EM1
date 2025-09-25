@@ -113,7 +113,20 @@ const createPlayer = ({ userId, name, avatar, isHost = false }) => ({
     cash: STARTING_BALANCE,
     passiveIncome: 0,
     assets: [],
-    stats: createPlayerStats()
+    stats: createPlayerStats(),
+    // Добавляем профессию по умолчанию
+    profession: {
+        id: 'entrepreneur',
+        name: 'Предприниматель',
+        description: 'Владелец бизнеса',
+        salary: 10000,
+        expenses: 6200,
+        cashFlow: 3800,
+        color: '#00ff96',
+        icon: '🚀'
+    },
+    professionId: 'entrepreneur',
+    children: 0
 });
 
 const sanitizePlayer = (player) => ({
@@ -130,7 +143,10 @@ const sanitizePlayer = (player) => ({
     cash: player.cash,
     passiveIncome: player.passiveIncome,
     assets: player.assets,
-    stats: player.stats
+    stats: player.stats,
+    profession: player.profession,
+    professionId: player.professionId,
+    children: player.children || 0
 });
 
 const sanitizeRoom = (room, { includePlayers = false, userId = null } = {}) => {
