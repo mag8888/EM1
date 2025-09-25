@@ -1507,6 +1507,8 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
     try {
         const room = rooms.get(req.params.roomId);
         if (!room) return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        // Гарантируем наличие gameState, иначе возможен 500 при обращении к нему ниже
+        room.gameState = room.gameState || {};
         const userId = req.headers['x-user-id'] || req.body?.user_id;
         const activePlayer = room.players?.[room.activeIndex || 0] || null;
         if (!userId || !activePlayer || String(activePlayer.userId) !== String(userId)) {
@@ -1560,8 +1562,12 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
             console.log(`⚡ Нет события для позиции ${activePlayer.position}`);
         }
 
-        // Save to database
-        saveRoomToSQLite(room);
+        // Save to database (без падения обработчика)
+        try {
+            saveRoomToSQLite(room);
+        } catch (e) {
+            console.warn('⚠️ saveRoomToSQLite failed in /move:', e?.message || e);
+        }
 
         // Ensure activeIndex is always a number
         const activeIndex = typeof room.activeIndex === 'number' ? room.activeIndex : 0;
@@ -1607,7 +1613,13 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
             message: `Игрок ${activePlayer.name} прошел ${steps} шагов`
         });
     } catch (error) {
-        console.error('Ошибка перемещения:', error);
+        console.error('Ошибка перемещения /move:', {
+            message: error?.message || String(error),
+            stack: error?.stack,
+            roomId: req.params?.roomId,
+            userId: req.headers?.['x-user-id'] || req.body?.user_id,
+            body: req.body
+        });
         res.status(500).json({ success: false, message: 'Ошибка сервера' });
     }
 });
