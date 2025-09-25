@@ -315,8 +315,8 @@ export class TurnController {
             left -= 1;
             if (left < 0) {
                 this.clearTimers();
-                // Optionally, auto-end turn here
-                this.handleEndTurn();
+                // Server handles auto-end turn, just clear display
+                if (this.timerLabel) this.timerLabel.textContent = '0s';
                 return;
             }
             this.turnTimer = setTimeout(tick, 1000);

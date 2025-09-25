@@ -196,14 +196,19 @@ function autoEndTurn(roomId) {
         return;
     }
     
-    // Advance to next player
+    // Ensure activeIndex is always a number
     if (typeof room.activeIndex !== 'number') room.activeIndex = 0;
+    
+    // Advance to next player
     const count = (room.players || []).length || 1;
     room.activeIndex = (room.activeIndex + 1) % count;
     room.updatedAt = new Date().toISOString();
     
     // Start timer for next player
     startTurnTimer(roomId, room.turnTime || 120);
+    
+    // Save to database
+    saveRoomToSQLite(room);
     
     console.log(`Auto-ended turn for room ${roomId}, now active: ${room.activeIndex}`);
 }
@@ -317,7 +322,7 @@ app.post('/api/rooms', async (req, res) => {
             status: 'waiting',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            activeIndex: 0,
+            activeIndex: 0, // Always start with 0
             creatorName: creatorName,
             lastActivity: Date.now(),
             players: [
@@ -739,21 +744,43 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
         }
 
         // Return game state
+        const activePlayer = room.players?.[room.activeIndex || 0] || null;
+        const turnTimeLeft = getTurnTimeLeft(room.id);
+        
+        console.log('🔍 Game state - activeIndex:', room.activeIndex, 'activePlayer:', activePlayer, 'allPlayers:', room.players?.map(p => ({ userId: p.userId, name: p.name })));
+        console.log('🔍 Game state - room.turnTime:', room.turnTime, 'turnTimeLeft:', turnTimeLeft, 'roomId:', room.id);
+        
+        // Ensure activeIndex is always a number
+        const activeIndex = typeof room.activeIndex === 'number' ? room.activeIndex : 0;
+        
         const gameState = {
             roomId: room.id,
             status: room.status,
-            players: room.players || [],
+            players: (room.players || []).map(player => ({
+                userId: player.userId,
+                name: player.name,
+                position: player.position || 0,
+                track: player.track || 'inner',
+                tokenOffset: player.tokenOffset || 0,
+                selectedToken: player.selectedToken || null
+            })),
             currentPlayer: player,
             gameStarted: room.status === 'playing',
             turnTime: room.turnTime,
             maxPlayers: room.maxPlayers,
             createdAt: room.createdAt,
             updatedAt: room.updatedAt,
-            activePlayerId: room.players?.[room.activeIndex || 0]?.userId || null
+            activePlayerId: activePlayer?.userId || null,
+            activeIndex: activeIndex,
+            currentTurn: 1,
+            phase: 'waiting',
+            diceResult: null,
+            pendingDeal: null,
+            turnTimeLeft: turnTimeLeft
         };
 
         res.set('Cache-Control', 'no-store');
-        res.json({ success: true, gameState });
+        res.json({ success: true, state: gameState });
     } catch (error) {
         console.error('Ошибка получения состояния игры:', error);
         res.status(500).json({ success: false, message: 'Ошибка сервера' });
@@ -1215,48 +1242,7 @@ app.get('/game/lobby', (req, res) => {
     res.sendFile(path.join(__dirname, 'game-board', 'lobby.html'));
 });
 
-// Game state endpoints
-app.get('/api/rooms/:roomId/game-state', (req, res) => {
-    try {
-        const room = rooms.get(req.params.roomId);
-        if (!room) {
-            return res.status(404).json({ success: false, message: 'Комната не найдена' });
-        }
-        
-        // Return minimal game state for now
-        const activePlayer = room.players?.[room.activeIndex || 0] || null;
-        console.log('🔍 Game state - activeIndex:', room.activeIndex, 'activePlayer:', activePlayer, 'allPlayers:', room.players?.map(p => ({ userId: p.userId, name: p.name })));
-        
-        const turnTimeLeft = getTurnTimeLeft(room.id);
-        console.log('🔍 Game state - room.turnTime:', room.turnTime, 'turnTimeLeft:', turnTimeLeft, 'roomId:', room.id);
-        
-        const gameState = {
-            roomId: room.id,
-            status: room.status,
-            activePlayerId: activePlayer?.userId || null,
-            activeIndex: room.activeIndex || 0,
-            players: (room.players || []).map(player => ({
-                userId: player.userId,
-                name: player.name,
-                position: player.position || 0,
-                track: player.track || 'inner',
-                tokenOffset: player.tokenOffset || 0,
-                selectedToken: player.selectedToken || null
-            })),
-            currentTurn: 1,
-            phase: 'waiting',
-            diceResult: null,
-            pendingDeal: null,
-            turnTimeLeft: turnTimeLeft,
-            turnTime: room.turnTime || 120
-        };
-        
-        res.json({ success: true, state: gameState });
-    } catch (error) {
-        console.error('Ошибка получения состояния игры:', error);
-        res.status(500).json({ success: false, message: 'Ошибка сервера' });
-    }
-});
+// This endpoint was a duplicate - removed to avoid conflicts
 
 // Simple cards endpoint for deals module
 app.get('/api/cards', (req, res) => {
@@ -1293,18 +1279,24 @@ app.post('/api/rooms/:roomId/roll', (req, res) => {
         const total = useDouble ? d1 + (d2 || 0) : d1;
         const isDouble = useDouble && d1 === d2;
 
+        // Ensure activeIndex is always a number
+        const activeIndex = typeof room.activeIndex === 'number' ? room.activeIndex : 0;
+        
         res.json({ 
             success: true, 
             result: { dice1: d1, dice2: d2, total, isDouble },
             state: {
                 roomId: room.id,
                 status: room.status,
-                activePlayerId: room.players?.[room.activeIndex || 0]?.userId || null,
+                activePlayerId: room.players?.[activeIndex]?.userId || null,
+                activeIndex: activeIndex,
                 players: room.players || [],
                 currentTurn: 1,
                 phase: 'moving',
                 diceResult: { dice1: d1, dice2: d2, total, isDouble },
-                pendingDeal: null
+                pendingDeal: null,
+                turnTimeLeft: getTurnTimeLeft(room.id),
+                turnTime: room.turnTime || 120
             }
         });
     } catch (error) {
@@ -1339,12 +1331,15 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
         // Save to database
         saveRoomToSQLite(room);
 
+        // Ensure activeIndex is always a number
+        const activeIndex = typeof room.activeIndex === 'number' ? room.activeIndex : 0;
+        
         // Return updated game state
         const updatedGameState = {
             roomId: room.id,
             status: room.status,
             activePlayerId: activePlayer.userId,
-            activeIndex: room.activeIndex || 0,
+            activeIndex: activeIndex,
             players: room.players.map(player => ({
                 userId: player.userId,
                 name: player.name,
@@ -1398,8 +1393,10 @@ app.post('/api/rooms/:roomId/end-turn', (req, res) => {
             return res.status(403).json({ success: false, message: 'Сейчас не ваш ход' });
         }
 
-        // Advance active player in round-robin
+        // Ensure activeIndex is always a number
         if (typeof room.activeIndex !== 'number') room.activeIndex = 0;
+        
+        // Advance active player in round-robin
         const count = (room.players || []).length || 1;
         room.activeIndex = (room.activeIndex + 1) % count;
         room.updatedAt = new Date().toISOString();
@@ -1414,12 +1411,15 @@ app.post('/api/rooms/:roomId/end-turn', (req, res) => {
         const gameState = {
             roomId: room.id,
             status: room.status,
-            activePlayerId: room.players?.[room.activeIndex || 0]?.userId || null,
+            activePlayerId: room.players?.[room.activeIndex]?.userId || null,
+            activeIndex: room.activeIndex,
             players: room.players || [],
             currentTurn: 1,
             phase: 'waiting',
             diceResult: null,
-            pendingDeal: null
+            pendingDeal: null,
+            turnTimeLeft: getTurnTimeLeft(room.id),
+            turnTime: room.turnTime || 120
         };
         
         res.json({ success: true, state: gameState });

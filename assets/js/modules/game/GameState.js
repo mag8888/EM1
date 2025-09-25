@@ -93,7 +93,10 @@ class GameState extends EventEmitter {
 
     isMyTurn() {
         if (!this.state) return false;
-        return String(this.state.activePlayerId) === String(this.user.id);
+        const myId = this.user?.id != null ? String(this.user.id) : null;
+        const activeId = this.state.activePlayerId != null ? String(this.state.activePlayerId) : null;
+        if (!myId || !activeId) return false;
+        return activeId === myId;
     }
 
     async ensureJoined() {
