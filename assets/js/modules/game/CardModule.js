@@ -541,6 +541,9 @@ export class CardModule {
         } else if (data.cellType === 'orange_charity' || data.cellType === 'charity') {
             // Благотворительность: 10% от (зарплата + пасс. доход), 3 хода — выбор 1 или 2 кубика
             this.showCharityModal(data.playerId);
+        } else if (data.cellType === 'black_loss') {
+            // Потеря: единоразово оплатить 3x или 1x месячные расходы
+            this.showLossModal(data.playerId);
         } else if (data.cellType === 'purple_baby') {
             // Обрабатываем рождение ребенка
             this.processBaby(data.playerId);
@@ -623,6 +626,77 @@ export class CardModule {
             });
         } catch (e) {
             console.warn('Charity UI error', e);
+        }
+    }
+
+    // UI: Потеря (Downsize)
+    showLossModal(playerId) {
+        try {
+            const snapshot = window.gameState?.getSnapshot?.() || {};
+            const meId = String(playerId || window.gameState?.getUserId?.() || '');
+            const me = (snapshot.players || []).find(p => String(p.userId) === meId) || {};
+            const monthly = Number((me?.profession?.expenses || 0) + ((me?.children || 0) * 1000));
+            const pay1 = monthly;
+            const pay3 = monthly * 3;
+
+            const modal = document.createElement('div');
+            modal.className = 'loss-modal';
+            modal.innerHTML = `
+                <div class="modal-overlay">
+                    <div class="modal-content">
+                        <h3 style="margin-top:0;">Потеря денег</h3>
+                        <p>Выберите, сколько оплатить единовременно:</p>
+                        <div class="loss-options">
+                            <button class="btn btn-danger pay3">Оплатить 3 платежа: $${pay3.toLocaleString()}</button>
+                            <button class="btn btn-secondary pay1">Оплатить 1 платеж: $${pay1.toLocaleString()}</button>
+                        </div>
+                        <div class="actions">
+                            <button class="btn btn-secondary close-btn">Отмена</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            const style = document.createElement('style');
+            style.textContent = `
+                .loss-modal .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:10002}
+                .loss-modal .modal-content{background:#121a2b;color:#fff;border-radius:14px;box-shadow:0 20px 40px rgba(0,0,0,.5);padding:22px;max-width:520px;width:90%}
+                .loss-options{display:grid;grid-template-columns:1fr;gap:10px;margin:12px 0}
+                .loss-modal .btn{padding:12px 16px;border:none;border-radius:12px;font-weight:700;cursor:pointer}
+                .loss-modal .btn-danger{background:linear-gradient(135deg,#ff6b6b 0%, #f14646 100%);color:#fff}
+                .loss-modal .btn-secondary{background:linear-gradient(135deg,#1f2937 0%, #111827 100%);color:#e5e7eb}
+                .loss-modal .actions{display:flex;justify-content:center;margin-top:10px}
+            `;
+            document.head.appendChild(style);
+            document.body.appendChild(modal);
+            const close = () => { try { modal.remove(); style.remove(); } catch(_){} };
+            modal.querySelector('.close-btn')?.addEventListener('click', close);
+            modal.querySelector('.modal-overlay')?.addEventListener('click', (e) => { if (e.target === modal.querySelector('.modal-overlay')) close(); });
+
+            const call = async (mode) => {
+                try {
+                    const roomId = window.gameState?.roomId;
+                    const userId = window.gameState?.getUserId?.();
+                    const res = await fetch(`/api/rooms/${roomId}/loss`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+                        body: JSON.stringify({ mode })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data?.success) {
+                        this.showNotification(`Оплачено $${Number(data.amountPaid||0).toLocaleString()}`, 'success');
+                        try { await window.gameState?.refresh?.(); } catch(_){}
+                        close();
+                    } else {
+                        this.showNotification(data?.message || 'Недостаточно средств', 'error');
+                    }
+                } catch (e) {
+                    this.showNotification('Ошибка операции', 'error');
+                }
+            };
+            modal.querySelector('.pay3')?.addEventListener('click', () => call('pay3'));
+            modal.querySelector('.pay1')?.addEventListener('click', () => call('pay1'));
+        } catch (e) {
+            console.warn('Loss UI error', e);
         }
     }
 

@@ -204,6 +204,8 @@ function processCellEvent(player, position, roomId) {
             return processExpenseEvent(player, position);
         case 'orange_charity':
             return processCharityEvent(player, roomId);
+        case 'black_loss':
+            return processLossEvent(player, roomId);
         default:
             return null;
     }
@@ -242,6 +244,23 @@ function processExpenseEvent(player, position) {
     };
 }
 
+// Black Loss (Downsize): one-time choice: either pay 3x monthly expenses now OR 1x now
+function processLossEvent(player, roomId) {
+    const baseExpenses = Number(player?.profession?.expenses || 0);
+    const childExpenses = Number(player?.children || 0) * 1000;
+    const monthly = baseExpenses + childExpenses;
+    return {
+        type: 'loss_event',
+        playerId: player.userId,
+        cellType: 'black_loss',
+        monthlyExpenses: monthly,
+        options: [
+            { id: 'pay3', label: 'Оплатить 3 платежа сразу', amount: monthly * 3 },
+            { id: 'pay1', label: 'Оплатить 1 платеж сразу', amount: monthly }
+        ]
+    };
+}
+
 // Get cell type by position (1-24)
 function getCellTypeByPosition(position) {
     // Явное соответствие 1..24 (внутренний круг)
@@ -266,7 +285,7 @@ function getCellTypeByPosition(position) {
         17: 'pink_expense',
         18: 'green_opportunity',
         19: 'blue_market',
-        20: 'green_opportunity',
+        20: 'black_loss',
         21: 'yellow_payday',
         22: 'green_opportunity',
         23: 'blue_market',
@@ -1867,6 +1886,33 @@ app.post('/api/rooms/:roomId/assets/sell', (req, res) => {
         });
     } catch (error) {
         console.error('Ошибка продажи актива:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
+// Resolve black loss event (one-time payment of expenses: 3x or 1x)
+app.post('/api/rooms/:roomId/loss', (req, res) => {
+    try {
+        const room = rooms.get(req.params.roomId);
+        if (!room) return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        const userId = req.headers['x-user-id'] || req.body?.user_id;
+        const activePlayer = room.players?.[room.activeIndex || 0] || null;
+        if (!activePlayer || String(activePlayer.userId) !== String(userId)) {
+            return res.status(403).json({ success: false, message: 'Сейчас не ваш ход' });
+        }
+        const base = Number(activePlayer?.profession?.expenses || 0);
+        const child = Number(activePlayer?.children || 0) * 1000;
+        const monthly = base + child;
+        const mode = String(req.body?.mode || 'pay1'); // pay3 | pay1
+        const amount = mode === 'pay3' ? monthly * 3 : monthly;
+        if ((activePlayer.cash || 0) < amount) {
+            return res.status(400).json({ success: false, message: 'Недостаточно средств. Возьмите кредит или уменьшите затраты.' });
+        }
+        activePlayer.cash -= amount;
+        saveRoomToSQLite(room);
+        res.json({ success: true, amountPaid: amount, mode });
+    } catch (error) {
+        console.error('Ошибка обработки black loss:', error);
         res.status(500).json({ success: false, message: 'Ошибка сервера' });
     }
 });
