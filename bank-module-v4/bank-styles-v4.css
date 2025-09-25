@@ -152,10 +152,10 @@
 
 /* Financial Summary */
 .financial-summary {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     padding: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .summary-item {
@@ -163,7 +163,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 12px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .summary-item:last-child {
@@ -173,12 +173,14 @@
 .summary-icon {
     font-size: 18px;
     margin-right: 12px;
+    color: #f1f5f9;
 }
 
 .summary-label {
-    color: #e2e8f0;
+    color: #f1f5f9;
     font-size: 14px;
     flex: 1;
+    font-weight: 500;
 }
 
 .summary-value {
@@ -200,10 +202,10 @@
 
 /* Credit Section */
 .credit-section {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     padding: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .credit-info {
@@ -221,16 +223,18 @@
 .credit-icon {
     font-size: 16px;
     margin-right: 8px;
+    color: #f1f5f9;
 }
 
 .credit-label {
-    color: #e2e8f0;
+    color: #f1f5f9;
     flex: 1;
+    font-weight: 500;
 }
 
 .credit-value {
-    color: #94a3b8;
-    font-weight: 600;
+    color: #e2e8f0;
+    font-weight: 700;
 }
 
 .credit-buttons {
@@ -252,15 +256,15 @@
 }
 
 .credit-btn.payoff {
-    background: rgba(16, 185, 129, 0.2);
+    background: rgba(16, 185, 129, 0.3);
     color: #10b981;
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    border: 1px solid rgba(16, 185, 129, 0.5);
 }
 
 .credit-btn.take {
-    background: rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.3);
     color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    border: 1px solid rgba(239, 68, 68, 0.5);
 }
 
 .credit-btn:hover {
@@ -322,10 +326,10 @@
 .form-input {
     width: 100%;
     padding: 12px 16px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 8px;
-    color: #e2e8f0;
+    color: #f1f5f9;
     font-size: 14px;
     transition: all 0.2s ease;
 }
@@ -567,4 +571,55 @@
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Улучшенная видимость для кредитной секции */
+.credit-section .credit-label,
+.credit-section .credit-value,
+.credit-section .credit-icon {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.credit-section .credit-item {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin: 4px 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.credit-section .credit-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Улучшенная видимость для финансовых деталей */
+.financial-summary .summary-label,
+.financial-summary .summary-icon {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.financial-summary .summary-item {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin: 4px 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.financial-summary .summary-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Улучшенная видимость полей ввода */
+.form-input::placeholder,
+.form-select::placeholder {
+    color: #94a3b8;
+    opacity: 0.8;
+}
+
+.form-input:focus::placeholder,
+.form-select:focus::placeholder {
+    opacity: 0.6;
 }
