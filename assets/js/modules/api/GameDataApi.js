@@ -159,7 +159,7 @@ class GameDataApi {
                 id: 'player_1',
                 name: 'Алексей',
                 profession: { name: 'Предприниматель', salary: 10000, expenses: 6200 },
-                cash: 5000,
+                cash: 10000,
                 assets: 0,
                 income: 10000,
                 expenses: 6200,
@@ -169,11 +169,11 @@ class GameDataApi {
             {
                 id: 'player_2',
                 name: 'Мария',
-                profession: { name: 'Врач', salary: 8000, expenses: 4500 },
-                cash: 3000,
+                profession: { name: 'Предприниматель', salary: 10000, expenses: 6200 },
+                cash: 10000,
                 assets: 0,
-                income: 8000,
-                expenses: 4500,
+                income: 10000,
+                expenses: 6200,
                 isHost: false,
                 isReady: true
             }

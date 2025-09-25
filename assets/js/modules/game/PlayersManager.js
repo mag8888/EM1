@@ -231,10 +231,10 @@ class PlayersManager {
         console.log('🧪 Инициализация тестовых игроков');
         
         const testPlayers = [
-            { name: 'Алексей', profession: { name: 'Предприниматель' }, cash: 5000, isHost: true },
-            { name: 'Мария', profession: { name: 'Врач' }, cash: 3000 },
-            { name: 'Дмитрий', profession: { name: 'Инженер' }, cash: 4000 },
-            { name: 'Анна', profession: { name: 'Учитель' }, cash: 2000 }
+            { name: 'Алексей', profession: { name: 'Предприниматель' }, cash: 10000, isHost: true },
+            { name: 'Мария', profession: { name: 'Предприниматель' }, cash: 10000 },
+            { name: 'Дмитрий', profession: { name: 'Предприниматель' }, cash: 10000 },
+            { name: 'Анна', profession: { name: 'Предприниматель' }, cash: 10000 }
         ];
 
         testPlayers.forEach(playerData => {

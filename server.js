@@ -452,13 +452,13 @@ app.post('/api/rooms', async (req, res) => {
                     passiveIncome: 0,
                     assets: [],
                     profession: {
-                        id: 'engineer',
-                        name: 'Инженер',
-                        description: 'Разработчик программного обеспечения',
+                        id: 'entrepreneur',
+                        name: 'Предприниматель',
+                        description: 'Владелец успешного бизнеса',
                         icon: '🚀',
-                        salary: 5000,
-                        expenses: 3000,
-                        color: '#4CAF50'
+                        salary: 10000,
+                        expenses: 6200,
+                        color: '#00ff96'
                     }
                 }
             ]
@@ -611,13 +611,13 @@ app.post('/api/rooms/:roomId/join', async (req, res) => {
                 passiveIncome: 0,
                 assets: [],
                 profession: {
-                    id: 'teacher',
-                    name: 'Учитель',
-                    description: 'Преподаватель в школе',
-                    icon: '📚',
-                    salary: 3000,
-                    expenses: 2000,
-                    color: '#2196F3'
+                    id: 'entrepreneur',
+                    name: 'Предприниматель',
+                    description: 'Владелец успешного бизнеса',
+                    icon: '🚀',
+                    salary: 10000,
+                    expenses: 6200,
+                    color: '#00ff96'
                 }
             });
             room.updatedAt = new Date().toISOString();
