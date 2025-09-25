@@ -643,6 +643,16 @@ class DealsModule {
                             <span>Ежемесячный платеж:</span>
                             <span class="monthly-payment">$${card.monthlyPayment.toLocaleString()}</span>
                         </div>
+                        ${card.category === 'stocks' ? `
+                        <div class="detail-row stock-quantity">
+                            <label for="stock-quantity">Количество акций:</label>
+                            <input type="number" id="stock-quantity" min="1" max="100000" value="1" class="stock-quantity-input">
+                            <div class="quantity-info">
+                                <span class="total-cost">Итого: $<span class="total-amount">${card.cost.toLocaleString()}</span></span>
+                                <span class="monthly-income">Доход: $<span class="monthly-amount">${card.income.toLocaleString()}</span>/мес</span>
+                            </div>
+                        </div>
+                        ` : ''}
                     </div>
                     <div class="deal-card-actions">
                         <button class="btn btn-primary buy-btn" ${isOwner ? '' : 'disabled'} title="${isOwner ? '' : 'Действие недоступно: ход другого игрока'}">Купить</button>
@@ -665,6 +675,26 @@ class DealsModule {
                 this.closeModal(modal);
             }
         });
+        
+        // Обработчик изменения количества акций
+        if (card.category === 'stocks') {
+            const quantityInput = modal.querySelector('#stock-quantity');
+            const totalAmountSpan = modal.querySelector('.total-amount');
+            const monthlyAmountSpan = modal.querySelector('.monthly-amount');
+            
+            if (quantityInput && totalAmountSpan && monthlyAmountSpan) {
+                quantityInput.addEventListener('input', (e) => {
+                    const quantity = Math.max(1, Math.min(100000, parseInt(e.target.value) || 1));
+                    e.target.value = quantity;
+                    
+                    const totalCost = card.cost * quantity;
+                    const totalIncome = card.income * quantity;
+                    
+                    totalAmountSpan.textContent = totalCost.toLocaleString();
+                    monthlyAmountSpan.textContent = totalIncome.toLocaleString();
+                });
+            }
+        }
         
         return modal;
     }
@@ -700,7 +730,20 @@ class DealsModule {
 
                 // Проверяем баланс игрока
                 const currentBalance = player.cash || 0;
-                const cardCost = card.cost || 0;
+                
+                // Для акций получаем количество из модального окна
+                let quantity = 1;
+                let cardCost = card.cost || 0;
+                let cardIncome = card.income || 0;
+                
+                if (card.category === 'stocks') {
+                    const quantityInput = document.querySelector('#stock-quantity');
+                    if (quantityInput) {
+                        quantity = Math.max(1, Math.min(100000, parseInt(quantityInput.value) || 1));
+                        cardCost = card.cost * quantity;
+                        cardIncome = card.income * quantity;
+                    }
+                }
                 
                 if (currentBalance < cardCost) {
                     alert(`Недостаточно средств! Нужно: $${cardCost}, доступно: $${currentBalance}`);
@@ -714,8 +757,10 @@ class DealsModule {
                         id: card.id, 
                         name: card.name, 
                         amount: cardCost, 
-                        income: card.income || 0,
-                        type: card.type || 'smallDeal'
+                        income: cardIncome,
+                        type: card.type || 'smallDeal',
+                        quantity: quantity,
+                        category: card.category
                     } 
                 };
                 

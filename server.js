@@ -2012,12 +2012,20 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
                 
                 // Добавляем актив в портфель игрока
                 if (!Array.isArray(player.assets)) player.assets = [];
+                
+                // Для акций добавляем количество
+                const assetName = deal.category === 'stocks' && deal.quantity > 1 
+                    ? `${deal.name} (${deal.quantity} шт.)`
+                    : deal.name || 'Сделка';
+                
                 const newAsset = {
                     id: deal.id || Date.now().toString(),
-                    name: deal.name || 'Сделка',
+                    name: assetName,
                     purchasePrice: dealCost,
                     monthlyIncome: dealIncome,
                     type: deal.type || 'smallDeal',
+                    category: deal.category,
+                    quantity: deal.quantity || 1
                 };
                 player.assets.push(newAsset);
                 
@@ -2032,8 +2040,8 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
                     // Записываем в историю банка
                     console.log(`📝 Запись в историю банка`);
                     pushHistory(req.params.roomId, {
-                        from: 'Покупка актива',
-                        to: player.name || player.username,
+                        from: 'Банк',
+                        to: player.name || player.username || `Игрок ${player.userId}`,
                         amount: dealCost,
                         roomId: req.params.roomId,
                         reason: `покупка актива: ${deal.name}`,
