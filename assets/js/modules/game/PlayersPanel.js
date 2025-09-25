@@ -40,6 +40,8 @@ export default class PlayersPanel {
                     <span class="player-card-profession-icon">${player.profession.icon || '🚀'}</span>
                     <span>${player.profession.name}</span>
                 </div>` : ''}
+                <!-- Статистика скрыта по запросу пользователя -->
+                <!--
                 <div class="player-card-meta">
                     <span>Доход: $${Number(player.passiveIncome || 0).toLocaleString()}</span>
                     <span>Активы: ${player.assets?.length || 0}</span>
@@ -49,6 +51,7 @@ export default class PlayersPanel {
                     <span>Сделки: ${player.stats?.dealsBought || 0}</span>
                     <span>Передачи: ${player.stats?.dealsTransferred || 0}</span>
                 </div>
+                -->
             `;
 
             this.container.appendChild(item);
