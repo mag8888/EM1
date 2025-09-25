@@ -502,6 +502,33 @@ function animateInnerMove(pathIndices, delayMs = 500, userId = null) {
                 setTimeout(() => {
                     window._isAnimatingMove = false;
                     console.log('🎬 Move animation completed');
+
+                    // После завершения движения активируем событие клетки
+                    try {
+                        const finalIndex = Array.isArray(pathIndices) && pathIndices.length > 0
+                            ? pathIndices[pathIndices.length - 1]
+                            : null;
+                        const cellData = Array.isArray(smallCircleCellsData) && finalIndex != null
+                            ? smallCircleCellsData[finalIndex]
+                            : null;
+                        const cellType = cellData?.type || 'unknown';
+
+                        const detail = {
+                            cellType,
+                            playerId: userId || (window?.GameState?.getUserId?.() || null),
+                            cell: cellData || null,
+                            position: finalIndex
+                        };
+
+                        // Отправляем событие через EventBus, если он доступен
+                        if (window.gameCore && window.gameCore.eventBus && typeof window.gameCore.eventBus.emit === 'function') {
+                            window.gameCore.eventBus.emit('cellEvent', detail);
+                        }
+                        // И всегда дублируем через DOM-событие, чтобы слушатели без eventBus тоже сработали
+                        document.dispatchEvent(new CustomEvent('cellEvent', { detail }));
+                    } catch (e) {
+                        console.warn('⚠️ Failed to emit cellEvent after move:', e);
+                    }
                 }, 500);
             }, 120);
             return;
