@@ -148,7 +148,9 @@ export class TurnController {
                         
                         // Анимируем движение фишки
                         if (Array.isArray(moveData.path)) {
-                            window.animateInnerMove?.(moveData.path, 500);
+                            const currentUserId = this.state.getUserId();
+                            console.log('🎬 Calling animateInnerMove with userId:', currentUserId);
+                            window.animateInnerMove?.(moveData.path, 500, currentUserId);
                         }
                     }
                 } catch (error) {

@@ -436,15 +436,29 @@ function animateInnerMove(pathIndices, delayMs = 500, userId = null) {
     // Находим фишку игрока
     let targetId = userId;
     if (!targetId) {
-        try { targetId = window.GameState?.getUserId?.() || null; } catch (_) {}
+        try { 
+            targetId = window.GameState?.getUserId?.() || null; 
+        } catch (_) {}
     }
+    
+    // Если все еще нет userId, пробуем получить из gameState
+    if (!targetId && window.gameState && window.gameState.state) {
+        targetId = window.gameState.state.me;
+    }
+    
+    console.log('🎬 Looking for token with userId:', targetId);
+    
     const token = targetId
         ? tokensLayer.querySelector(`.player-token[data-user-id="${String(targetId)}"]`)
         : tokensLayer.querySelector('.player-token');
+        
     if (!token) {
+        console.log('🎬 Token not found, available tokens:', Array.from(tokensLayer.querySelectorAll('.player-token')).map(t => t.dataset.userId));
         window._isAnimatingMove = false;
         return;
     }
+    
+    console.log('🎬 Found token for user:', targetId);
 
     // Убираем все предыдущие подсветки
     cells.forEach(c => {
