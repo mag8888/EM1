@@ -1,9 +1,12 @@
-# Используем официальный Node.js образ (стабильная версия)
-FROM node:18.20.4-slim
+# Используем Ubuntu с Node.js (более стабильный вариант)
+FROM ubuntu:20.04
 
-# Обновляем пакеты и устанавливаем необходимые зависимости
+# Устанавливаем Node.js 18.x
 RUN apt-get update && apt-get install -y \
-    python3 \
+    curl \
+    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && apt-get install -y python3 \
     make \
     g++ \
     && rm -rf /var/lib/apt/lists/*
