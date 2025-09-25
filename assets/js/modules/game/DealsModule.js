@@ -18,6 +18,7 @@ class DealsModule {
         this.playerAssets = new Map(); // Карточки у игроков
         this.currentDeal = null;       // Текущая карточка сделки
         this.isDealActive = false;     // Активна ли сделка
+        this.dealChosenThisTurn = false; // Флаг, что сделка уже была выбрана в этом ходу
         this.viewOnlyMode = false;     // Режим: показывать неактивные кнопки всем
         
         this.init();
@@ -331,22 +332,36 @@ class DealsModule {
             });
         }
         
+        // Слушаем смену хода для сброса флага выбора сделки
+        document.addEventListener('playerTurnStarted', () => {
+            this.dealChosenThisTurn = false; // Сбрасываем флаг при новом ходу
+            console.log('🎴 DealsModule: Сброшен флаг выбора сделки для нового хода');
+        });
+        
         // Обновление счетчиков карт в UI
         this.updateDeckCounters();
     }
     
     // Показать выбор типа сделки
     showDealChoice(playerId) {
+        // Проверяем, не была ли уже выбрана сделка в этом ходу
+        if (this.dealChosenThisTurn) {
+            console.log('🎴 DealsModule: Сделка уже была выбрана в этом ходу');
+            return;
+        }
+        
         const modal = this.createDealChoiceModal();
         document.body.appendChild(modal);
         
         // Обработчики выбора
         modal.querySelector('.big-deal-btn').addEventListener('click', () => {
+            this.dealChosenThisTurn = true; // Отмечаем, что сделка выбрана
             this.drawCard('bigDeal', playerId);
             this.closeModal(modal);
         });
         
         modal.querySelector('.small-deal-btn').addEventListener('click', () => {
+            this.dealChosenThisTurn = true; // Отмечаем, что сделка выбрана
             this.drawCard('smallDeal', playerId);
             this.closeModal(modal);
         });
@@ -386,6 +401,11 @@ class DealsModule {
         
         // Добавляем стили
         this.addModalStyles();
+        
+        // Обработчик кнопки закрытия
+        modal.querySelector('.close-btn').addEventListener('click', () => {
+            this.closeModal(modal);
+        });
         
         // Обработчик клика по overlay для закрытия
         modal.addEventListener('click', (e) => {
@@ -632,6 +652,11 @@ class DealsModule {
             </div>
         `;
         
+        // Обработчик кнопки закрытия
+        modal.querySelector('.close-btn').addEventListener('click', () => {
+            this.closeModal(modal);
+        });
+        
         // Обработчик клика по overlay для закрытия
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
@@ -697,6 +722,13 @@ class DealsModule {
                 });
 
                 if (response.ok) {
+                    const responseData = await response.json();
+                    
+                    // Обновляем данные игрока из ответа сервера
+                    if (responseData.player) {
+                        Object.assign(player, responseData.player);
+                    }
+                    
                     // Списываем деньги с баланса игрока
                     player.cash = Math.max(0, currentBalance - cardCost);
                     
@@ -714,6 +746,11 @@ class DealsModule {
                     });
 
                     console.log(`🎴 DealsModule: Игрок ${playerId} купил карту ${card.name} за $${cardCost}`);
+                    
+                    // Обновляем состояние игры
+                    if (window.gameState && window.gameState.refresh) {
+                        window.gameState.refresh();
+                    }
                     
                     // Отправляем уведомление о покупке актива
                     if (window.notificationService) {
@@ -738,6 +775,10 @@ class DealsModule {
             this.playerAssets.set(playerId, []);
         }
         this.playerAssets.get(playerId).push(card);
+
+        // Отправляем карточку в отбой после покупки
+        const deckType = card.type === 'bigDeal' ? 'bigDeal' : (card.type === 'smallDeal' ? 'smallDeal' : 'market');
+        this.passCard(card, deckType);
 
         // Сбрасываем текущую сделку
         this.currentDeal = null;

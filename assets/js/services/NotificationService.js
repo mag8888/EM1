@@ -374,20 +374,32 @@ export class NotificationService {
             } else {
                 console.error('🔔 Ошибка отправки уведомления на сервер');
                 // Показываем локально в любом случае
-                const sign = amount >= 0 ? '+' : '';
-                this.money(`Ваш счет пополнен на сумму ${sign}$${amount}`, { 
-                    reason,
-                    duration: 4000 
-                });
+                if (amount >= 0) {
+                    this.money(`Ваш счет пополнен на сумму $${amount}`, { 
+                        reason,
+                        duration: 4000 
+                    });
+                } else {
+                    this.money(`С вашего счета списано $${Math.abs(amount)}`, { 
+                        reason,
+                        duration: 4000 
+                    });
+                }
             }
         } catch (error) {
             console.error('🔔 Ошибка отправки уведомления:', error);
             // Показываем локально в любом случае
-            const sign = amount >= 0 ? '+' : '';
-            this.money(`Ваш счет пополнен на сумму ${sign}$${amount}`, { 
-                reason,
-                duration: 4000 
-            });
+            if (amount >= 0) {
+                this.money(`Ваш счет пополнен на сумму $${amount}`, { 
+                    reason,
+                    duration: 4000 
+                });
+            } else {
+                this.money(`С вашего счета списано $${Math.abs(amount)}`, { 
+                    reason,
+                    duration: 4000 
+                });
+            }
         }
     }
 

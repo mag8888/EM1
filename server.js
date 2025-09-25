@@ -1103,6 +1103,44 @@ app.get('/api/bank/balance/:username/:roomId', (req, res) => {
     }
 });
 
+// Player financial details endpoint
+app.get('/api/bank/financials/:username/:roomId', (req, res) => {
+    try {
+        const { username, roomId } = req.params;
+        const room = rooms.get(roomId);
+        if (!room) {
+            return res.status(404).json({ error: 'Room not found' });
+        }
+        
+        const player = (room?.players || []).find(p => p.name === username || p.username === username);
+        if (!player) {
+            return res.status(404).json({ error: 'Player not found' });
+        }
+        
+        const salary = Number(player?.profession?.salary || 0);
+        const passiveIncome = Number(player?.passiveIncome || 0);
+        const baseExpenses = Number(player?.profession?.expenses || 0);
+        const childExpenses = Number(player?.children || 0) * 1000;
+        const totalExpenses = baseExpenses + childExpenses;
+        const netIncome = (salary + passiveIncome) - totalExpenses;
+        
+        res.json({
+            salary,
+            passiveIncome,
+            baseExpenses,
+            childExpenses,
+            totalExpenses,
+            netIncome,
+            cash: player.cash || 0,
+            children: player.children || 0,
+            profession: player.profession
+        });
+    } catch (error) {
+        console.error('Error getting financials:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Get transfer history (last 100)
 app.get('/api/bank/history/:roomId', (req, res) => {
     try {
@@ -1900,8 +1938,9 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
 
         // Apply effects: if user buys a deal, deduct cost and add passive income
         if (action === 'buy' && deal) {
-            const buyerId = room.players?.[0]?.userId || null;
-            const player = (room.players || []).find(p => String(p.userId) === String(buyerId));
+            // Получаем активного игрока
+            const activePlayerId = room.activePlayerId || room.players?.[0]?.userId;
+            const player = (room.players || []).find(p => String(p.userId) === String(activePlayerId));
             if (player) {
                 const dealCost = Number(deal.amount || deal.cost || 0);
                 const dealIncome = Number(deal.income || 0);
@@ -1935,8 +1974,8 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
         // Save to database
         saveRoomToSQLite(room);
 
-        // Simple deal resolution
-        res.json({ 
+        // Возвращаем обновленные данные игрока
+        const response = { 
             success: true, 
             action,
             state: {
@@ -1949,7 +1988,13 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
                 diceResult: null,
                 pendingDeal: null
             }
-        });
+        };
+        
+        if (action === 'buy' && deal && player) {
+            response.player = player;
+        }
+        
+        res.json(response);
     } catch (error) {
         console.error('Ошибка разрешения сделки:', error);
         res.status(500).json({ success: false, message: 'Ошибка сервера' });
