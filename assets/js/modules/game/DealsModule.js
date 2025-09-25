@@ -71,7 +71,27 @@ class DealsModule {
                     monthlyPayment: Math.floor(card.cost * 0.1) // 10% ежемесячный платеж
                 }));
                 
-                console.log('🎴 DealsModule: Загружены расширенные данные карточек');
+                // Загружаем карты рынка и расходов из конфигурации
+                if (window.MARKET_CARDS) {
+                    this.decks.market = window.MARKET_CARDS.map(card => ({
+                        ...card,
+                        type: 'market'
+                    }));
+                }
+                
+                if (window.EXPENSE_CARDS) {
+                    this.decks.expenses = window.EXPENSE_CARDS.map(card => ({
+                        ...card,
+                        type: 'expenses'
+                    }));
+                }
+                
+                console.log('🎴 DealsModule: Загружены расширенные данные карточек:', {
+                    smallDeal: this.decks.smallDeal.length,
+                    bigDeal: this.decks.bigDeal.length,
+                    market: this.decks.market.length,
+                    expenses: this.decks.expenses.length
+                });
                 return;
             }
             

@@ -302,15 +302,17 @@
             width: clamp(150px, calc(var(--computed-board-size, var(--board-size)) * 0.22), 210px);
             height: clamp(120px, calc(var(--computed-board-size, var(--board-size)) * 0.18), 150px);
             border-radius: 24px;
-            padding: 18px;
+            padding: 12px;
             background: linear-gradient(160deg, rgba(25, 36, 58, 0.92) 0%, rgba(14, 21, 37, 0.96) 100%);
             border: 2px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 22px 44px rgba(0, 0, 0, 0.45);
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 8px;
             justify-content: center;
             pointer-events: auto;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .special-card.big-deal {
@@ -334,17 +336,27 @@
         }
 
         .special-title {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
 
         .special-metric {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
             color: rgba(255, 255, 255, 0.72);
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
 
         .sidebar {
@@ -1201,6 +1213,7 @@
     <script src="/config/small-circle-cells.js?v=8" onerror="console.error('❌ Failed to load small-circle-cells.js')"></script>
     <script src="/config/icon-styles.js?v=8" onerror="console.error('❌ Failed to load icon-styles.js')"></script>
     <script src="/game-board/config/full-cards-config.js?v=1" onerror="console.error('❌ Failed to load full-cards-config.js')"></script>
+    <script src="/game-board/config/cards-config.js?v=1" onerror="console.error('❌ Failed to load cards-config.js')"></script>
 
     <!-- Globals required by game modules -->
     <script src="/assets/js/modules/shared/EventEmitter.js"></script>

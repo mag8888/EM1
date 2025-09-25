@@ -1,8 +1,8 @@
 // Game Board v2.0 - Cards Configuration
 // Конфигурация карт рынка и расходов
 
-// Импорт полных списков карточек
-const { FULL_SMALL_DEALS, FULL_BIG_DEALS } = require('./full-cards-config');
+// Импорт полных списков карточек (для браузера)
+// const { FULL_SMALL_DEALS, FULL_BIG_DEALS } = require('./full-cards-config');
 
 // Карты рынка (24 карты) - Market Deck
 const MARKET_CARDS = [
@@ -587,10 +587,22 @@ const CardsUtils = {
     }
 };
 
-module.exports = {
-    MARKET_CARDS,
-    EXPENSE_CARDS,
-    SMALL_DEALS,
-    BIG_DEALS,
-    CardsUtils
-};
+// Экспорт для браузера
+if (typeof window !== 'undefined') {
+    window.MARKET_CARDS = MARKET_CARDS;
+    window.EXPENSE_CARDS = EXPENSE_CARDS;
+    window.SMALL_DEALS = SMALL_DEALS;
+    window.BIG_DEALS = BIG_DEALS;
+    window.CardsUtils = CardsUtils;
+}
+
+// Экспорт для Node.js
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        MARKET_CARDS,
+        EXPENSE_CARDS,
+        SMALL_DEALS,
+        BIG_DEALS,
+        CardsUtils
+    };
+}
