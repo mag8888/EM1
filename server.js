@@ -345,7 +345,13 @@ function processSalaryDay(player, roomId) {
             const bankBal = ensureBalance(roomId, username, 0);
             const delta = (totalIncome - totalExpenses);
             bankBal.amount = Number(bankBal.amount || 0) + Number(delta || 0);
-            pushHistory(roomId, { type: 'payday', username, amount: delta, timestamp: Date.now() });
+            pushHistory(roomId, { 
+                type: 'payday', 
+                username, 
+                amount: delta, 
+                reason: 'зарплата',
+                timestamp: Date.now() 
+            });
             console.log(`💰 PAYDAY Bank sync: ${username} ${delta >= 0 ? '+' : ''}${delta}, new bank balance: ${bankBal.amount}`);
         }
     } catch (e) {
@@ -1109,11 +1115,50 @@ app.post('/api/bank/transfer', (req, res) => {
         }
         fromBal.amount -= sum;
         toBal.amount += sum;
-        const record = { from, to, amount: sum, roomId, timestamp: Date.now() };
+        const record = { 
+            from, 
+            to, 
+            amount: sum, 
+            roomId, 
+            reason: 'перевод от игрока',
+            timestamp: Date.now() 
+        };
         pushHistory(roomId, record);
         res.json({ success: true, newBalance: { amount: fromBal.amount }, record });
     } catch (error) {
         console.error('Ошибка перевода:', error);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// ===== Push Notifications API =====
+// Send balance change notification
+app.post('/api/bank/notify/balance', (req, res) => {
+    try {
+        const { username, roomId, amount, reason } = req.body || {};
+        
+        if (!username || !roomId || typeof amount !== 'number') {
+            return res.status(400).json({ error: 'Неверные параметры уведомления' });
+        }
+        
+        // Add to history with reason
+        pushHistory(roomId, { 
+            type: 'notification',
+            username, 
+            amount, 
+            reason: reason || 'пополнение баланса',
+            timestamp: Date.now() 
+        });
+        
+        console.log(`🔔 Push notification: ${username} ${amount >= 0 ? '+' : ''}$${amount} - ${reason || 'пополнение баланса'}`);
+        
+        res.json({ 
+            success: true, 
+            message: `Ваш счет пополнен на сумму $${amount}`,
+            reason: reason || 'пополнение баланса'
+        });
+    } catch (error) {
+        console.error('Ошибка отправки уведомления:', error);
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });

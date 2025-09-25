@@ -48,6 +48,32 @@ export class CardModule {
             document.addEventListener('playerTurnEnded', (e) => this.onPlayerTurnEnded(e.detail || e));
             console.warn('🃏 CardModule: eventBus недоступен, используем DOM-события');
         }
+
+        // Импортируем сервис уведомлений
+        this.loadNotificationService();
+    }
+
+    /**
+     * Загрузка сервиса уведомлений
+     */
+    async loadNotificationService() {
+        try {
+            // Проверяем, есть ли уже глобальный сервис уведомлений
+            if (window.notificationService) {
+                this.notificationService = window.notificationService;
+                console.log('🔔 CardModule: используем глобальный NotificationService');
+                return;
+            }
+
+            // Динамически импортируем сервис
+            const { NotificationService } = await import('../../services/NotificationService.js');
+            this.notificationService = new NotificationService();
+            window.notificationService = this.notificationService;
+            console.log('🔔 CardModule: создан новый NotificationService');
+        } catch (error) {
+            console.warn('🔔 CardModule: не удалось загрузить NotificationService:', error);
+            this.notificationService = null;
+        }
     }
 
     /**
@@ -779,9 +805,33 @@ export class CardModule {
     }
     
     // Обработка дня зарплаты
-    processPayday(playerId) {
+    async processPayday(playerId) {
         console.log('💰 CardModule: Обработка дня зарплаты для игрока', playerId);
-        // Здесь можно добавить логику обработки зарплаты
+        
+        // Отправляем уведомление о зарплате
+        if (this.notificationService) {
+            try {
+                const gameState = window.gameState?.state;
+                if (gameState) {
+                    const player = gameState.players?.find(p => p.userId === playerId);
+                    if (player) {
+                        const salary = player.profession?.salary || 0;
+                        const passiveIncome = player.passiveIncome || 0;
+                        const totalIncome = salary + passiveIncome;
+                        
+                        if (totalIncome > 0) {
+                            await this.notificationService.notifyBalanceChange(
+                                player.name || player.username,
+                                totalIncome,
+                                'зарплата'
+                            );
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('🔔 Ошибка отправки уведомления о зарплате:', error);
+            }
+        }
     }
     
     // Обработка рождения ребенка

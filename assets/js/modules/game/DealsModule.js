@@ -855,6 +855,27 @@ class DealsModule {
             detail: { card, fromPlayerId, toPlayerId }
         });
         document.dispatchEvent(event);
+
+        // Отправляем push-уведомление о продаже актива
+        if (window.notificationService && card.price) {
+            try {
+                const gameState = window.gameState?.state;
+                if (gameState) {
+                    const fromPlayer = gameState.players?.find(p => p.userId === fromPlayerId);
+                    const toPlayer = gameState.players?.find(p => p.userId === toPlayerId);
+                    
+                    if (fromPlayer && toPlayer) {
+                        window.notificationService.notifyBalanceChange(
+                            fromPlayer.name || fromPlayer.username,
+                            card.price,
+                            'продажа актива'
+                        );
+                    }
+                }
+            } catch (error) {
+                console.error('🔔 Ошибка отправки уведомления о продаже актива:', error);
+            }
+        }
     }
     
     // Закрытие модального окна

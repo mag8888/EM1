@@ -482,6 +482,12 @@
                 
                 let displayText = '';
                 let amountClass = '';
+                let reasonText = '';
+                
+                // Определяем причину операции
+                if (transfer.reason) {
+                    reasonText = `<div style="font-size: 12px; color: rgba(255, 255, 255, 0.5); margin-top: 2px;">${transfer.reason}</div>`;
+                }
                 
                 if (isOutgoing) {
                     displayText = `Перевод игроку ${transfer.to}`;
@@ -502,7 +508,7 @@
                 return `
                     <div class="history-item">
                         <div class="history-info">
-                            <div>${displayText}</div>
+                            <div>${displayText}${reasonText}</div>
                             <div class="history-time">${time}</div>
                         </div>
                         <div class="history-amount ${amountClass}">
