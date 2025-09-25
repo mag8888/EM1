@@ -196,9 +196,48 @@ function processCellEvent(player, position) {
             return processSalaryDay(player);
         case 'purple_baby':
             return processBabyBorn(player);
+        case 'green_opportunity':
+            return processDealOpportunity(player, position);
+        case 'blue_market':
+            return processMarketEvent(player, position);
+        case 'pink_expense':
+            return processExpenseEvent(player, position);
         default:
             return null;
     }
+}
+
+// Обработка возможности сделки
+function processDealOpportunity(player, position) {
+    console.log(`💼 Возможность сделки для ${player.name} на позиции ${position}`);
+    return {
+        type: 'deal_opportunity',
+        playerId: player.userId,
+        position: position,
+        cellType: 'green_opportunity'
+    };
+}
+
+// Обработка события рынка
+function processMarketEvent(player, position) {
+    console.log(`🎯 Событие рынка для ${player.name} на позиции ${position}`);
+    return {
+        type: 'market_event',
+        playerId: player.userId,
+        position: position,
+        cellType: 'blue_market'
+    };
+}
+
+// Обработка события расходов
+function processExpenseEvent(player, position) {
+    console.log(`💸 Событие расходов для ${player.name} на позиции ${position}`);
+    return {
+        type: 'expense_event',
+        playerId: player.userId,
+        position: position,
+        cellType: 'pink_expense'
+    };
 }
 
 // Get cell type by position (1-24)
@@ -210,6 +249,18 @@ function getCellTypeByPosition(position) {
     // Клетка 12 - Ребенок
     if (position === 12) {
         return 'purple_baby';
+    }
+    // Клетки 2, 4, 8, 10, 16, 18, 20, 24 - Сделки (зеленые)
+    if ([2, 4, 8, 10, 16, 18, 20, 24].includes(position)) {
+        return 'green_opportunity';
+    }
+    // Клетки 3, 7, 11, 15, 19, 23 - Рынок (синие)
+    if ([3, 7, 11, 15, 19, 23].includes(position)) {
+        return 'blue_market';
+    }
+    // Клетки 1, 5, 9, 13, 17, 21 - Расходы (розовые)
+    if ([1, 5, 9, 13, 17, 21].includes(position)) {
+        return 'pink_expense';
     }
     return null;
 }

@@ -514,16 +514,50 @@ export class CardModule {
     }
 
     onCellEvent(data) {
-        if (data.cellType === 'green_opportunity') {
-            // Показываем выбор типа сделки
-            this.showDealTypeSelection(data.playerId);
+        console.log('🎴 CardModule: Обработка события клетки:', data);
+        
+        if (data.cellType === 'green_opportunity' || data.cellType === 'deal') {
+            // Активируем модуль сделок
+            this.activateDealsModule(data.playerId);
         } else if (data.cellType === 'blue_market') {
             // Показываем карту рынка
             this.showMarketCard(data.playerId);
         } else if (data.cellType === 'pink_expense') {
             // Показываем карту расходов
             this.showExpenseCard(data.playerId);
+        } else if (data.cellType === 'yellow_payday') {
+            // Обрабатываем день зарплаты
+            this.processPayday(data.playerId);
+        } else if (data.cellType === 'purple_baby') {
+            // Обрабатываем рождение ребенка
+            this.processBaby(data.playerId);
         }
+    }
+    
+    // Активация модуля сделок
+    activateDealsModule(playerId) {
+        console.log('🎴 CardModule: Активация модуля сделок для игрока', playerId);
+        
+        // Проверяем, доступен ли DealsModule
+        if (window.dealsModule) {
+            // Используем наш DealsModule
+            window.dealsModule.showDealChoice(playerId);
+        } else {
+            // Fallback на старую систему
+            this.showDealTypeSelection(playerId);
+        }
+    }
+    
+    // Обработка дня зарплаты
+    processPayday(playerId) {
+        console.log('💰 CardModule: Обработка дня зарплаты для игрока', playerId);
+        // Здесь можно добавить логику обработки зарплаты
+    }
+    
+    // Обработка рождения ребенка
+    processBaby(playerId) {
+        console.log('👶 CardModule: Обработка рождения ребенка для игрока', playerId);
+        // Здесь можно добавить логику обработки ребенка
     }
 
     /**

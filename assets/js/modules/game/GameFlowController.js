@@ -282,6 +282,27 @@ export class GameFlowController {
 
     onPlayerLandedOnCell(data) {
         console.log(`⚡ Игрок ${data.player} попал на клетку "${data.cell.name}"`);
+        
+        // Эмитируем событие для CardModule и DealsModule
+        if (this.gameCore && this.gameCore.eventBus) {
+            this.gameCore.eventBus.emit('cellEvent', {
+                cellType: data.cell.type || 'unknown',
+                playerId: data.player,
+                cell: data.cell,
+                position: data.position
+            });
+        }
+        
+        // Также эмитируем через document для DealsModule
+        const cellEvent = new CustomEvent('cellEvent', {
+            detail: {
+                cellType: data.cell.type || 'unknown',
+                playerId: data.player,
+                cell: data.cell,
+                position: data.position
+            }
+        });
+        document.dispatchEvent(cellEvent);
     }
 
     /**

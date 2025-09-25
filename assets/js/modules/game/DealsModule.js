@@ -281,6 +281,23 @@ class DealsModule {
             this.showDealChoice(playerId);
         });
         
+        // Слушаем события от GameFlowController
+        document.addEventListener('cellEvent', (event) => {
+            const { cellType, playerId } = event.detail;
+            if (cellType === 'green_opportunity' || cellType === 'deal') {
+                this.showDealChoice(playerId);
+            }
+        });
+        
+        // Слушаем события от сервера через WebSocket
+        if (window.io) {
+            window.io.on('cellEvent', (data) => {
+                if (data.cellType === 'green_opportunity') {
+                    this.showDealChoice(data.playerId);
+                }
+            });
+        }
+        
         // Обновление счетчиков карт в UI
         this.updateDeckCounters();
     }
