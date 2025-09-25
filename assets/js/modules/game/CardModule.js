@@ -538,9 +538,91 @@ export class CardModule {
         } else if (data.cellType === 'yellow_payday') {
             // Обрабатываем день зарплаты
             this.processPayday(data.playerId);
+        } else if (data.cellType === 'orange_charity' || data.cellType === 'charity') {
+            // Благотворительность: 10% от (зарплата + пасс. доход), 3 хода — выбор 1 или 2 кубика
+            this.showCharityModal(data.playerId);
         } else if (data.cellType === 'purple_baby') {
             // Обрабатываем рождение ребенка
             this.processBaby(data.playerId);
+        }
+    }
+
+    // UI: Благотворительность
+    showCharityModal(playerId) {
+        try {
+            const modal = document.createElement('div');
+            modal.className = 'charity-modal';
+
+            // Получаем данные игрока из состояния
+            const snapshot = window.gameState?.getSnapshot?.() || {};
+            const meId = String(playerId || window.gameState?.getUserId?.() || '');
+            const me = (snapshot.players || []).find(p => String(p.userId) === meId) || {};
+            const salary = Number(me?.profession?.salary || 0);
+            const passive = Number(me?.passiveIncome || 0);
+            const income = salary + passive;
+            const donation = Math.floor(income * 0.10);
+
+            modal.innerHTML = `
+                <div class="modal-overlay">
+                    <div class="modal-content">
+                        <h3 style="margin-top:0;">Благотворительность</h3>
+                        <p>Вы можете пожертвовать <strong>10%</strong> от вашего дохода и получить <strong>3 хода</strong>, в каждом из которых можно бросать <strong>1 или 2</strong> кубика на выбор.</p>
+                        <div class="charity-stats">
+                            <div><span>Зарплата:</span><span>$${salary.toLocaleString()}</span></div>
+                            <div><span>Пассивный доход:</span><span>$${passive.toLocaleString()}</span></div>
+                            <div class="sum"><span>Пожертвование (10%):</span><span>$${donation.toLocaleString()}</span></div>
+                        </div>
+                        <div class="charity-actions">
+                            <button class="btn btn-primary pay-btn">Оплатить</button>
+                            <button class="btn btn-secondary cancel-btn">Отказаться</button>
+                        </div>
+                    </div>
+                </div>`;
+
+            // Стили (локально для модалки)
+            const style = document.createElement('style');
+            style.textContent = `
+                .charity-modal .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:10002}
+                .charity-modal .modal-content{background:#121a2b;color:#fff;border-radius:14px;box-shadow:0 20px 40px rgba(0,0,0,.5);padding:22px;max-width:480px;width:90%}
+                .charity-stats{margin:14px 0 8px 0;display:grid;grid-template-columns:1fr auto;gap:8px 12px}
+                .charity-stats .sum{font-weight:700}
+                .charity-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+                .charity-modal .btn{padding:12px 16px;border:none;border-radius:12px;font-weight:700;cursor:pointer}
+                .charity-modal .btn-primary{background:linear-gradient(135deg,#16f79e 0%,#0ecf82 100%);color:#0b1729}
+                .charity-modal .btn-secondary{background:linear-gradient(135deg,#1f2937 0%,#111827 100%);color:#e5e7eb}
+            `;
+
+            document.head.appendChild(style);
+            document.body.appendChild(modal);
+
+            const close = () => { try { modal.remove(); style.remove(); } catch(_){} };
+            modal.querySelector('.cancel-btn')?.addEventListener('click', close);
+            modal.querySelector('.modal-overlay')?.addEventListener('click', (e) => { if (e.target === modal.querySelector('.modal-overlay')) close(); });
+
+            // Оплата благотворительности
+            modal.querySelector('.pay-btn')?.addEventListener('click', async () => {
+                try {
+                    const roomId = window.gameState?.roomId;
+                    const userId = window.gameState?.getUserId?.();
+                    const res = await fetch(`/api/rooms/${roomId}/charity`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+                        body: JSON.stringify({})
+                    });
+                    const data = await res.json();
+                    if (res.ok && data?.success) {
+                        this.showNotification(`Пожертвование $${donation.toLocaleString()} принято. 3 хода с выбором 1/2 кубика.`, 'success');
+                        try { await window.gameState?.refresh?.(); } catch(_){}
+                        close();
+                    } else {
+                        this.showNotification(data?.message || 'Не удалось выполнить благотворительность', 'error');
+                    }
+                } catch (e) {
+                    this.showNotification('Ошибка благотворительности', 'error');
+                }
+            });
+        } catch (e) {
+            console.warn('Charity UI error', e);
         }
     }
     
