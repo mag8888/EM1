@@ -1230,9 +1230,14 @@ app.post('/api/bank/notify/balance', (req, res) => {
         
         console.log(`🔔 Push notification: ${username} ${amount >= 0 ? '+' : ''}$${amount} - ${reason || 'пополнение баланса'}`);
         
+        // Формируем правильное сообщение в зависимости от знака суммы
+        const message = amount >= 0 
+            ? `Ваш счет пополнен на сумму $${amount}`
+            : `С вашего счета списан расход $${Math.abs(amount)}`;
+            
         res.json({ 
             success: true, 
-            message: `Ваш счет пополнен на сумму $${amount}`,
+            message: message,
             reason: reason || 'пополнение баланса'
         });
     } catch (error) {
