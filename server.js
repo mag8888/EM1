@@ -1936,11 +1936,16 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
         
         const { action, deal } = req.body || {};
 
+        // Получаем активного игрока
+        const activePlayerId = room.activePlayerId || room.players?.[0]?.userId;
+        const player = (room.players || []).find(p => String(p.userId) === String(activePlayerId));
+        
+        if (!player) {
+            return res.status(404).json({ success: false, message: 'Активный игрок не найден' });
+        }
+
         // Apply effects: if user buys a deal, deduct cost and add passive income
         if (action === 'buy' && deal) {
-            // Получаем активного игрока
-            const activePlayerId = room.activePlayerId || room.players?.[0]?.userId;
-            const player = (room.players || []).find(p => String(p.userId) === String(activePlayerId));
             if (player) {
                 const dealCost = Number(deal.amount || deal.cost || 0);
                 const dealIncome = Number(deal.income || 0);
@@ -1990,7 +1995,7 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
             }
         };
         
-        if (action === 'buy' && deal && player) {
+        if (action === 'buy' && deal) {
             response.player = player;
         }
         

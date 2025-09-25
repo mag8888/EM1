@@ -571,16 +571,18 @@ class DealsModule {
         this.showDealCard(card, playerId);
     }
     
-    // Показать карту сделки
+    // Показать карту сделки всем игрокам
     showDealCard(card, playerId) {
         const myId = String(this.getCurrentPlayerId());
         const isOwner = myId === String(playerId);
-        const modal = this.createDealCardModal(card, { isOwner: isOwner && !this.viewOnlyMode });
+        const modal = this.createDealCardModal(card, { isOwner: isOwner && !this.viewOnlyMode, originalOwnerId: playerId });
         document.body.appendChild(modal);
         
         // Обработчики действий
         modal.querySelector('.buy-btn').addEventListener('click', () => {
-            this.buyCard(card, playerId);
+            // При покупке используем ID текущего игрока, а не оригинального владельца
+            const currentPlayerId = this.getCurrentPlayerId();
+            this.buyCard(card, currentPlayerId);
             this.closeModal(modal);
         });
         
@@ -612,7 +614,7 @@ class DealsModule {
     }
     
     // Создание модального окна карты сделки
-    createDealCardModal(card, { isOwner = true } = {}) {
+    createDealCardModal(card, { isOwner = true, originalOwnerId = null } = {}) {
         const modal = document.createElement('div');
         modal.className = 'deals-modal';
         modal.innerHTML = `
@@ -984,8 +986,42 @@ class DealsModule {
 
         console.log(`🎴 DealsModule: Карта ${card.name} передана от ${fromPlayerId} к ${toPlayerId}`);
         
+        // Обновляем модальное окно для всех игроков с новыми правами
+        this.updateModalForTransfer(card, toPlayerId);
+        
         // Уведомляем о передаче
         this.notifyCardTransferred(card, fromPlayerId, toPlayerId);
+    }
+    
+    // Обновление модального окна после передачи карточки
+    updateModalForTransfer(card, newOwnerId) {
+        // Находим все открытые модальные окна с этой карточкой
+        const modals = document.querySelectorAll('.deals-modal');
+        modals.forEach(modal => {
+            const modalTitle = modal.querySelector('h3');
+            if (modalTitle && modalTitle.textContent === card.name) {
+                // Обновляем права доступа к кнопкам
+                const myId = String(this.getCurrentPlayerId());
+                const isNewOwner = myId === String(newOwnerId);
+                
+                const buyBtn = modal.querySelector('.buy-btn');
+                const transferBtn = modal.querySelector('.transfer-btn');
+                
+                if (isNewOwner) {
+                    // Новый владелец может покупать и передавать
+                    buyBtn.disabled = false;
+                    buyBtn.title = '';
+                    transferBtn.disabled = false;
+                    transferBtn.title = '';
+                } else {
+                    // Остальные игроки не могут действовать
+                    buyBtn.disabled = true;
+                    buyBtn.title = 'Действие недоступно: карточка передана другому игроку';
+                    transferBtn.disabled = true;
+                    transferBtn.title = 'Действие недоступно: карточка передана другому игроку';
+                }
+            }
+        });
     }
     
     // Уведомления

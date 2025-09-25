@@ -70,6 +70,15 @@ export class TurnController {
                 this.lastTurnIndex = snapshot.activeIndex;
                 this.hasRolledThisTurn = false; // Reset dice roll flag for new turn
                 
+                // Генерируем событие о начале нового хода
+                document.dispatchEvent(new CustomEvent('playerTurnStarted', {
+                    detail: {
+                        playerId: snapshot.activePlayerId,
+                        activeIndex: snapshot.activeIndex,
+                        turnNumber: snapshot.currentTurn || 1
+                    }
+                }));
+                
                 // Приоритет: серверный таймер, если есть данные
                 if (snapshot.turnTimeLeft !== undefined && snapshot.turnTimeLeft > 0) {
                     console.log('🕒 Starting server timer with', snapshot.turnTimeLeft, 'seconds');
