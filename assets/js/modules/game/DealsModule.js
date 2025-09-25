@@ -519,7 +519,8 @@ class DealsModule {
     
     // Показать карту сделки
     showDealCard(card, playerId) {
-        const modal = this.createDealCardModal(card);
+        const isOwner = String(this.getCurrentPlayerId()) === String(playerId);
+        const modal = this.createDealCardModal(card, { isOwner });
         document.body.appendChild(modal);
         
         // Обработчики действий
@@ -529,6 +530,7 @@ class DealsModule {
         });
         
         modal.querySelector('.pass-btn').addEventListener('click', () => {
+            const deckType = card.type === 'bigDeal' ? 'bigDeal' : (card.type === 'smallDeal' ? 'smallDeal' : 'market');
             this.passCard(card, deckType);
             this.closeModal(modal);
         });
@@ -539,7 +541,7 @@ class DealsModule {
     }
     
     // Создание модального окна карты сделки
-    createDealCardModal(card) {
+    createDealCardModal(card, { isOwner = true } = {}) {
         const modal = document.createElement('div');
         modal.className = 'deals-modal';
         modal.innerHTML = `
@@ -570,9 +572,9 @@ class DealsModule {
                         </div>
                     </div>
                     <div class="deal-card-actions">
-                        <button class="action-btn buy-btn">Купить</button>
-                        <button class="action-btn transfer-btn">Передать</button>
-                        <button class="action-btn pass-btn">Отмена</button>
+                        <button class="btn btn-primary buy-btn" ${isOwner ? '' : 'disabled'}>Купить</button>
+                        <button class="btn btn-secondary transfer-btn" ${isOwner ? '' : 'disabled'}>Передать</button>
+                        <button class="btn btn-danger pass-btn">Отмена</button>
                     </div>
                 </div>
             </div>
@@ -693,10 +695,18 @@ class DealsModule {
     
     // Показать опции передачи карты
     showTransferOptions(card, fromPlayerId) {
-        // Получаем список других игроков
-        const otherPlayers = Array.from(this.playerAssets.keys()).filter(id => id !== fromPlayerId);
+        // Получаем список других игроков из актуального состояния игры
+        let otherPlayers = [];
+        try {
+            const players = window.gameState?.state?.players || [];
+            otherPlayers = players
+                .map(p => ({ id: String(p.userId), name: p.name || p.userId }))
+                .filter(p => p.id !== String(fromPlayerId));
+        } catch (_) {
+            otherPlayers = [];
+        }
         
-        if (otherPlayers.length === 0) {
+        if (!otherPlayers.length) {
             alert('Нет других игроков для передачи карты');
             return;
         }
@@ -722,9 +732,9 @@ class DealsModule {
                     </div>
                     <div class="players-list">
                         <h4>Выберите игрока:</h4>
-                        ${otherPlayers.map(playerId => `
-                            <button class="player-btn" data-player-id="${playerId}">
-                                Игрок ${playerId}
+                        ${otherPlayers.map(p => `
+                            <button class="btn btn-secondary player-btn" data-player-id="${p.id}">
+                                ${p.name}
                             </button>
                         `).join('')}
                     </div>
@@ -749,7 +759,7 @@ class DealsModule {
     }
     
     // Передача карты другому игроку
-    transferCard(card, fromPlayerId, toPlayerId) {
+    async transferCard(card, fromPlayerId, toPlayerId) {
         // Удаляем карту у отправителя
         const fromAssets = this.playerAssets.get(fromPlayerId) || [];
         const cardIndex = fromAssets.findIndex(asset => asset.id === card.id);
@@ -763,6 +773,16 @@ class DealsModule {
         }
         this.playerAssets.get(toPlayerId).push(card);
         
+        // Пытаемся уведомить сервер (best-effort)
+        try {
+            const roomId = window.gameState?.roomId;
+            await fetch(`/api/rooms/${roomId}/assets/transfer`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ assetId: card.id, asset_id: card.id, targetUserId: toPlayerId, target_user_id: toPlayerId })
+            });
+        } catch (_) {}
+
         console.log(`🎴 DealsModule: Карта ${card.name} передана от ${fromPlayerId} к ${toPlayerId}`);
         
         // Уведомляем о передаче
