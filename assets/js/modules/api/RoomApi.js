@@ -36,14 +36,10 @@ class RoomApi {
         if (baseUrl) {
             this.baseUrl = baseUrl.replace(/\/$/, '');
         } else if (typeof window !== 'undefined') {
-            const { hostname, origin } = window.location;
-            if (hostname === 'localhost' || hostname === '127.0.0.1') {
-                this.baseUrl = 'http://localhost:8080';
-            } else if (hostname.includes('railway.app') || hostname.includes('railway')) {
-                this.baseUrl = 'https://em1-production.up.railway.app';
-            } else {
-                this.baseUrl = origin.replace(/\/$/, '');
-            }
+            // По умолчанию используем тот же origin, где открыт фронтенд,
+            // чтобы исключить 404 из-за несоответствия окружений.
+            const { origin } = window.location;
+            this.baseUrl = origin ? origin.replace(/\/$/, '') : '';
         } else {
             this.baseUrl = '';
         }
