@@ -12,6 +12,7 @@ class GameState extends EventEmitter {
         this.timer = null;
         this.isFetching = false;
         this.redirectOnMissingGame = true;
+        this._lastStateSignature = null;
     }
 
     async init() {
@@ -151,6 +152,25 @@ class GameState extends EventEmitter {
 
     applyState(state) {
         if (!state) return;
+        // Avoid redundant updates by comparing a compact signature of important fields
+        try {
+            const signatureObj = {
+                activePlayerId: state?.activePlayerId != null ? String(state.activePlayerId) : null,
+                activeIndex: state?.activeIndex ?? null,
+                turnTimeLeft: state?.turnTimeLeft ?? null,
+                players: Array.isArray(state?.players)
+                    ? state.players.map(p => ({
+                        userId: p?.userId != null ? String(p.userId) : null,
+                        position: Number(p?.position ?? 0)
+                    }))
+                    : []
+            };
+            const signature = JSON.stringify(signatureObj);
+            if (this._lastStateSignature === signature) {
+                return;
+            }
+            this._lastStateSignature = signature;
+        } catch (_) {}
         this.state = state;
         try {
             const debugPlayers = Array.isArray(state.players)
@@ -163,14 +183,18 @@ class GameState extends EventEmitter {
                 isMyTurn: String(state?.activePlayerId) === String(this.user?.id),
                 players: debugPlayers
             };
-            console.log('🔍 GameState.applyState:', JSON.stringify(debugPayload));
+            if (typeof window !== 'undefined' && (window.DEBUG || window.DEBUG_GAME)) {
+                console.log('🔍 GameState.applyState:', JSON.stringify(debugPayload));
+            }
         } catch (e) {
-            console.log('🔍 GameState.applyState (fallback logs):',
-                'activePlayerId=', state?.activePlayerId,
-                'activeIndex=', state?.activeIndex,
-                'me=', this.user?.id,
-                'players=', Array.isArray(state?.players) ? state.players.length : 'n/a'
-            );
+            if (typeof window !== 'undefined' && (window.DEBUG || window.DEBUG_GAME)) {
+                console.log('🔍 GameState.applyState (fallback logs):',
+                    'activePlayerId=', state?.activePlayerId,
+                    'activeIndex=', state?.activeIndex,
+                    'me=', this.user?.id,
+                    'players=', Array.isArray(state?.players) ? state.players.length : 'n/a'
+                );
+            }
         }
         this.emit('change', this.getSnapshot());
         
