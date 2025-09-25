@@ -354,6 +354,36 @@
             </div>
         </div>
 
+        <div class="credit-section" style="margin: 20px 0; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+            <div class="section-title" style="margin-bottom: 15px; font-size: 16px; font-weight: 600; color: #fff;">
+                <span>🏦</span>
+                <span>Кредитная информация</span>
+            </div>
+            <div class="credit-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">
+                <div class="credit-row" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span style="color: rgba(255,255,255,0.8);">Текущий долг:</span>
+                    <span class="credit-value" id="currentDebtValue" style="color: #ff6b6b; font-weight: 600;">$0</span>
+                </div>
+                <div class="credit-row" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span style="color: rgba(255,255,255,0.8);">Доступный лимит:</span>
+                    <span class="credit-value" id="availableLimitValue" style="color: #16f79e; font-weight: 600;">$0</span>
+                </div>
+                <div class="credit-row" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span style="color: rgba(255,255,255,0.8);">Максимальный лимит:</span>
+                    <span class="credit-value" id="maxLimitValue" style="color: #16f79e; font-weight: 600;">$0</span>
+                </div>
+                <div class="credit-row" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span style="color: rgba(255,255,255,0.8);">Свободный лимит:</span>
+                    <span class="credit-value" id="freeLimitValue" style="color: #16f79e; font-weight: 600;">$0</span>
+                </div>
+            </div>
+            <div class="credit-info" style="margin-top: 15px; padding: 12px; background: rgba(255, 193, 7, 0.1); border-radius: 8px; border: 1px solid rgba(255, 193, 7, 0.3);">
+                <div style="text-align: center; font-size: 14px; color: #ffc107;">
+                    💡 Каждые $1000 кредита уменьшают PAYDAY на $100/мес
+                </div>
+            </div>
+        </div>
+
         <div class="error-message" id="errorMessage"></div>
         <div class="success-message" id="successMessage"></div>
 
@@ -518,7 +548,18 @@
             try {
                 const res = await fetch(`/api/bank/credit/status/${currentUser}/${currentRoom.id}`);
                 creditStatus = await res.json();
-                document.getElementById('creditLimit').textContent = `Текущий долг: $${creditStatus.loanAmount.toLocaleString()} • Лимит: $${creditStatus.maxAvailable.toLocaleString()}`;
+                
+                // Обновляем старый элемент (если есть)
+                const creditLimitElement = document.getElementById('creditLimit');
+                if (creditLimitElement) {
+                    creditLimitElement.textContent = `Текущий долг: $${creditStatus.loanAmount.toLocaleString()} • Лимит: $${creditStatus.maxAvailable.toLocaleString()}`;
+                }
+                
+                // Обновляем новую секцию кредитной информации
+                document.getElementById('currentDebtValue').textContent = `$${creditStatus.loanAmount.toLocaleString()}`;
+                document.getElementById('availableLimitValue').textContent = `$${creditStatus.maxAvailable.toLocaleString()}`;
+                document.getElementById('maxLimitValue').textContent = `$${creditStatus.maxAvailable.toLocaleString()}`;
+                document.getElementById('freeLimitValue').textContent = `$${Math.max(0, creditStatus.maxAvailable - creditStatus.loanAmount).toLocaleString()}`;
             } catch (e) {
                 console.error('Credit status error', e);
             }
@@ -539,6 +580,7 @@
                 let displayText = '';
                 let amountClass = '';
                 let reasonText = '';
+                let amountDisplay = '';
                 
                 // Определяем причину операции
                 if (transfer.reason) {
@@ -548,12 +590,15 @@
                 if (isOutgoing) {
                     displayText = `Перевод игроку ${transfer.to}`;
                     amountClass = 'outgoing';
+                    amountDisplay = `-$${transfer.amount}`; // Расход
                 } else if (isIncoming) {
                     displayText = `Получено от ${transfer.from}`;
                     amountClass = '';
+                    amountDisplay = `+$${transfer.amount}`; // Доход
                 } else {
                     displayText = `${transfer.from} → ${transfer.to}`;
                     amountClass = '';
+                    amountDisplay = `$${transfer.amount}`; // Нейтрально
                 }
                 
                 const time = new Date(transfer.timestamp).toLocaleTimeString('ru-RU', {
@@ -568,7 +613,7 @@
                             <div class="history-time">${time}</div>
                         </div>
                         <div class="history-amount ${amountClass}">
-                            ${isOutgoing ? '-' : '+'}$${transfer.amount}
+                            ${amountDisplay}
                         </div>
                     </div>
                 `;
@@ -656,6 +701,10 @@
                 currentBalance = data.newBalance.amount;
                 updateBalanceDisplay();
                 await loadCreditStatus();
+                
+                // Обновляем историю операций
+                loadTransferHistory();
+                
                 showSuccess('Кредит выдан');
             } catch (e) {
                 showError(e.message);
@@ -679,6 +728,10 @@
                 currentBalance = data.newBalance.amount;
                 updateBalanceDisplay();
                 await loadCreditStatus();
+                
+                // Обновляем историю операций
+                loadTransferHistory();
+                
                 showSuccess('Кредит погашен');
             } catch (e) {
                 showError(e.message);

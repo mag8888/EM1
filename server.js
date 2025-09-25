@@ -1091,10 +1091,34 @@ function pushHistory(roomId, record) {
     bankHistory.get(roomId).push(record);
 }
 
+// Синхронизация баланса игрока с банковским балансом
+function syncPlayerBalance(roomId, username) {
+    try {
+        const room = rooms.get(roomId);
+        if (!room) return;
+        
+        const player = (room.players || []).find(p => p.name === username || p.username === username);
+        if (!player) return;
+        
+        const bankBalance = ensureBalance(roomId, username);
+        
+        // Синхронизируем: банковский баланс = баланс игрока
+        bankBalance.amount = player.cash || 0;
+        
+        console.log(`🔄 Синхронизация баланса: ${username} = $${player.cash}`);
+    } catch (error) {
+        console.error('Ошибка синхронизации баланса:', error);
+    }
+}
+
 // Get balance
 app.get('/api/bank/balance/:username/:roomId', (req, res) => {
     try {
         const { username, roomId } = req.params;
+        
+        // Синхронизируем баланс перед возвратом
+        syncPlayerBalance(roomId, username);
+        
         const balance = ensureBalance(roomId, username);
         res.json({ amount: balance.amount });
     } catch (error) {
@@ -1290,9 +1314,11 @@ app.post('/api/bank/credit/take', (req, res) => {
             player.profession.salary = Math.max(0, salary - (sum / 1000) * ratePerStep);
         }
 
-        // Credit funds to balance
-        const bal = ensureBalance(roomId, username);
-        bal.amount += sum;
+        // Credit funds to player balance
+        player.cash = (player.cash || 0) + sum;
+        
+        // Синхронизируем банковский баланс
+        syncPlayerBalance(roomId, username);
         pushHistory(roomId, { 
             from: 'Банк', 
             to: username, 
@@ -1303,7 +1329,8 @@ app.post('/api/bank/credit/take', (req, res) => {
             type: 'credit_take' 
         });
 
-        res.json({ success: true, loanAmount: loan.amount, newBalance: bal, cashflow: player.passiveIncome });
+        const bankBalance = ensureBalance(roomId, username);
+        res.json({ success: true, loanAmount: loan.amount, newBalance: bankBalance, cashflow: player.passiveIncome });
     } catch (error) {
         console.error('Credit take error:', error);
         res.status(500).json({ error: 'Ошибка сервера' });
@@ -1332,7 +1359,12 @@ app.post('/api/bank/credit/repay', (req, res) => {
 
         // Update state
         loan.amount -= sum;
-        bal.amount -= sum;
+        
+        // Списываем с баланса игрока
+        player.cash = Math.max(0, (player.cash || 0) - sum);
+        
+        // Синхронизируем банковский баланс
+        syncPlayerBalance(roomId, username);
 
         // Restore cashflow on player (пассивный доход или зарплату)
         const room = rooms.get(roomId);
@@ -1358,7 +1390,8 @@ app.post('/api/bank/credit/repay', (req, res) => {
             timestamp: Date.now(), 
             type: 'credit_repay' 
         });
-        res.json({ success: true, loanAmount: loan.amount, newBalance: bal, cashflow: player?.passiveIncome || 0 });
+        const bankBalance = ensureBalance(roomId, username);
+        res.json({ success: true, loanAmount: loan.amount, newBalance: bankBalance, cashflow: player?.passiveIncome || 0 });
     } catch (error) {
         console.error('Credit repay error:', error);
         res.status(500).json({ error: 'Ошибка сервера' });
