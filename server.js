@@ -2255,11 +2255,38 @@ app.post('/api/rooms/:roomId/charity', (req, res) => {
         const salary = Number(activePlayer?.profession?.salary || 0);
         const passive = Number(activePlayer?.passiveIncome || 0);
         const donation = Math.floor((salary + passive) * 0.10);
+        
+        console.log(`❤️ Благотворительность: игрок ${activePlayer.name}, зарплата: $${salary}, пассивный доход: $${passive}, пожертвование: $${donation}`);
+        
         if ((activePlayer.cash || 0) < donation) {
+            console.log(`❌ Недостаточно средств для благотворительности: нужно $${donation}, есть $${activePlayer.cash}`);
             return res.status(400).json({ success: false, message: 'Недостаточно средств для пожертвования' });
         }
+        
+        const oldCash = activePlayer.cash;
         activePlayer.cash -= donation;
         activePlayer.charityTurns = 3;
+        
+        console.log(`✅ Благотворительность выполнена: баланс ${oldCash} → ${activePlayer.cash}, получено 3 хода с выбором кубиков`);
+        
+        // Синхронизируем с банковским балансом
+        try {
+            syncPlayerBalance(req.params.roomId, activePlayer.name || activePlayer.username);
+            
+            // Записываем в историю банка
+            pushHistory(req.params.roomId, {
+                from: activePlayer.name || activePlayer.username || `Игрок ${activePlayer.userId}`,
+                to: 'Благотворительность',
+                amount: donation,
+                roomId: req.params.roomId,
+                reason: 'благотворительность (3 хода с выбором кубиков)',
+                timestamp: Date.now(),
+                type: 'charity'
+            });
+        } catch (syncError) {
+            console.error('❌ Ошибка синхронизации баланса при благотворительности:', syncError);
+        }
+        
         saveRoomToSQLite(room);
         res.json({ success: true, donation, charityTurns: activePlayer.charityTurns });
     } catch (error) {
