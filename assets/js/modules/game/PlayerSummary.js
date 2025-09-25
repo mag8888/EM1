@@ -13,10 +13,21 @@ export default class PlayerSummary {
         this.professionExpensesEl = document.getElementById('professionExpenses');
         this.professionPassiveEl = document.getElementById('professionPassive');
         this.professionCashflowEl = document.getElementById('professionCashflow');
+        this.assetsButton = document.getElementById('assetsButton');
     }
 
     init() {
         this.state.on('change', () => this.render());
+        
+        // Добавляем обработчик для кнопки активов
+        if (this.assetsButton) {
+            this.assetsButton.addEventListener('click', () => {
+                const playerId = this.state.getUserId();
+                if (playerId && window.assetsCatalog) {
+                    window.assetsCatalog.show(playerId);
+                }
+            });
+        }
     }
 
     render() {

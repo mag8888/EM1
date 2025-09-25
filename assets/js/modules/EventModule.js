@@ -86,6 +86,7 @@ export class EventModule {
             
             switch (event.type) {
                 case 'payday':
+                case 'receive_salary':
                     result = await this.processPaydayEvent(event);
                     break;
                 case 'charity':
@@ -99,6 +100,9 @@ export class EventModule {
                     break;
                 case 'movement':
                     result = await this.processMovementEvent(event);
+                    break;
+                case 'baby_born':
+                    result = await this.processBabyBornEvent(event);
                     break;
                 default:
                     console.warn(`Неизвестный тип события: ${event.type}`);
@@ -148,8 +152,10 @@ export class EventModule {
         }
 
         try {
-            // Расчет общего дохода
-            const totalIncome = player.monthlyIncome + player.passiveIncome;
+            // Получаем зарплату из профессии игрока
+            const salary = player.profession?.salary || 0;
+            const passiveIncome = player.passiveIncome || 0;
+            const totalIncome = salary + passiveIncome;
             
             // Добавление дохода
             playerManager.updateBalance(player.id, totalIncome, 'PAYDAY - Зарплата');
@@ -169,9 +175,13 @@ export class EventModule {
                 }
             }
             
-            // Обработка расходов
-            if (player.monthlyExpenses > 0) {
-                playerManager.updateBalance(player.id, -player.monthlyExpenses, 'PAYDAY - Расходы');
+            // Обработка расходов (базовые расходы профессии + расходы на детей)
+            const baseExpenses = player.profession?.expenses || 0;
+            const childExpenses = (player.children || 0) * 1000; // $1000 на ребенка
+            const totalExpenses = baseExpenses + childExpenses;
+            
+            if (totalExpenses > 0) {
+                playerManager.updateBalance(player.id, -totalExpenses, 'PAYDAY - Расходы');
                 
                 // Проверка банкротства после расходов
                 if (player.balance < 0) {
@@ -188,13 +198,16 @@ export class EventModule {
                 lastPayday: Date.now()
             });
             
-            console.log(`💰 PAYDAY обработан для игрока ${player.name}: +$${totalIncome}`);
+            console.log(`💰 PAYDAY обработан для игрока ${player.name}: +$${totalIncome} (зарплата: $${salary}, пассивный доход: $${passiveIncome})`);
             
             return {
                 success: true,
                 message: `PAYDAY: +$${totalIncome}`,
                 income: totalIncome,
-                expenses: player.monthlyExpenses,
+                salary: salary,
+                passiveIncome: passiveIncome,
+                expenses: totalExpenses,
+                childExpenses: childExpenses,
                 creditInterest: player.creditAmount > 0 ? Math.round(player.creditAmount * 0.10) : 0
             };
             
@@ -202,6 +215,222 @@ export class EventModule {
             console.error('Ошибка обработки PAYDAY:', error);
             return { success: false, message: 'Ошибка обработки PAYDAY' };
         }
+    }
+
+    /**
+     * Обработка события рождения ребенка
+     * @param {Object} event - Событие
+     */
+    async processBabyBornEvent(event) {
+        const playerManager = this.gameCore.getModule('playerManager');
+        const player = playerManager.getPlayer(event.playerId);
+        
+        if (!player) {
+            return { success: false, message: 'Игрок не найден' };
+        }
+
+        try {
+            // Бросаем дополнительный кубик для определения рождения ребенка
+            const babyDice = Math.floor(Math.random() * 6) + 1; // 1-6
+            console.log(`👶 Бросок кубика для рождения ребенка: ${babyDice}`);
+            
+            if (babyDice <= 4) {
+                // Ребенок родился (1-4)
+                const currentChildren = player.children || 0;
+                const newChildrenCount = currentChildren + 1;
+                
+                // Обновляем количество детей
+                playerManager.updatePlayer(player.id, {
+                    children: newChildrenCount
+                });
+                
+                // Выплачиваем разовую сумму $5000
+                playerManager.updateBalance(player.id, 5000, 'Рождение ребенка - подарок');
+                
+                // Показываем поздравление с анимацией конфети
+                this.showBabyCelebration(player.name, newChildrenCount);
+                
+                console.log(`👶 Ребенок родился у игрока ${player.name}! Всего детей: ${newChildrenCount}`);
+                
+                return {
+                    success: true,
+                    message: `🎉 Поздравляем! У вас родился ребенок! +$5000`,
+                    babyBorn: true,
+                    diceResult: babyDice,
+                    childrenCount: newChildrenCount,
+                    bonus: 5000
+                };
+            } else {
+                // Ребенок не родился (5-6)
+                console.log(`👶 Ребенок не родился у игрока ${player.name} (кубик: ${babyDice})`);
+                
+                return {
+                    success: true,
+                    message: `К сожалению, ребенок не родился в этот раз`,
+                    babyBorn: false,
+                    diceResult: babyDice
+                };
+            }
+            
+        } catch (error) {
+            console.error('Ошибка обработки рождения ребенка:', error);
+            return { success: false, message: 'Ошибка обработки рождения ребенка' };
+        }
+    }
+
+    /**
+     * Показ поздравления с рождением ребенка
+     * @param {string} playerName - Имя игрока
+     * @param {number} childrenCount - Количество детей
+     */
+    showBabyCelebration(playerName, childrenCount) {
+        // Создаем модальное окно поздравления
+        const celebrationModal = document.createElement('div');
+        celebrationModal.className = 'baby-celebration-modal';
+        celebrationModal.innerHTML = `
+            <div class="celebration-overlay">
+                <div class="celebration-content">
+                    <div class="celebration-icon">👶</div>
+                    <h2 class="celebration-title">Поздравляем!</h2>
+                    <p class="celebration-message">
+                        У ${playerName} родился ребенок!<br>
+                        Всего детей: ${childrenCount}
+                    </p>
+                    <p class="celebration-bonus">+$5000 подарок!</p>
+                    <button class="celebration-close" onclick="this.closest('.baby-celebration-modal').remove()">
+                        Закрыть
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Добавляем стили для анимации конфети
+        const style = document.createElement('style');
+        style.textContent = `
+            .baby-celebration-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 10000;
+                pointer-events: none;
+            }
+            
+            .celebration-overlay {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                pointer-events: all;
+            }
+            
+            .celebration-content {
+                background: linear-gradient(135deg, #ff6b6b, #ffa726);
+                padding: 40px;
+                border-radius: 20px;
+                text-align: center;
+                color: white;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                animation: celebrationBounce 0.6s ease-out;
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .celebration-icon {
+                font-size: 4rem;
+                margin-bottom: 20px;
+                animation: celebrationPulse 1s ease-in-out infinite;
+            }
+            
+            .celebration-title {
+                font-size: 2.5rem;
+                margin: 0 0 20px 0;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            }
+            
+            .celebration-message {
+                font-size: 1.2rem;
+                margin: 0 0 15px 0;
+                line-height: 1.4;
+            }
+            
+            .celebration-bonus {
+                font-size: 1.5rem;
+                font-weight: bold;
+                margin: 0 0 30px 0;
+                color: #4caf50;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            }
+            
+            .celebration-close {
+                background: rgba(255, 255, 255, 0.2);
+                border: 2px solid white;
+                color: white;
+                padding: 12px 24px;
+                border-radius: 25px;
+                cursor: pointer;
+                font-size: 1rem;
+                font-weight: bold;
+                transition: all 0.3s ease;
+            }
+            
+            .celebration-close:hover {
+                background: white;
+                color: #ff6b6b;
+            }
+            
+            @keyframes celebrationBounce {
+                0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+                50% { transform: scale(1.1) rotate(5deg); }
+                100% { transform: scale(1) rotate(0deg); opacity: 1; }
+            }
+            
+            @keyframes celebrationPulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+            }
+            
+            /* Анимация конфети */
+            .celebration-content::before {
+                content: '';
+                position: absolute;
+                top: -50px;
+                left: -50px;
+                right: -50px;
+                bottom: -50px;
+                background: 
+                    radial-gradient(circle at 20% 20%, #ff6b6b 2px, transparent 2px),
+                    radial-gradient(circle at 80% 20%, #4caf50 2px, transparent 2px),
+                    radial-gradient(circle at 40% 40%, #ffa726 2px, transparent 2px),
+                    radial-gradient(circle at 60% 60%, #2196f3 2px, transparent 2px),
+                    radial-gradient(circle at 80% 80%, #9c27b0 2px, transparent 2px);
+                background-size: 20px 20px;
+                animation: confetti 3s linear infinite;
+                pointer-events: none;
+            }
+            
+            @keyframes confetti {
+                0% { transform: translateY(-100vh) rotate(0deg); }
+                100% { transform: translateY(100vh) rotate(360deg); }
+            }
+        `;
+        
+        document.head.appendChild(style);
+        document.body.appendChild(celebrationModal);
+        
+        // Автоматически закрываем через 5 секунд
+        setTimeout(() => {
+            if (celebrationModal.parentNode) {
+                celebrationModal.remove();
+            }
+            if (style.parentNode) {
+                style.remove();
+            }
+        }, 5000);
     }
 
     /**
@@ -400,6 +629,18 @@ export class EventModule {
     }
 
     /**
+     * Создание события рождения ребенка
+     * @param {string} playerId - ID игрока
+     */
+    createBabyBornEvent(playerId) {
+        return this.queueEvent({
+            type: 'baby_born',
+            playerId,
+            priority: 'medium'
+        });
+    }
+
+    /**
      * Получение истории событий
      * @param {number} limit - Лимит записей
      */
@@ -462,10 +703,15 @@ export class EventModule {
         if (cell) {
             switch (cell.type) {
                 case 'payday':
+                case 'yellow_payday':
                     this.createPaydayEvent(data.playerId);
                     break;
                 case 'charity':
+                case 'orange_charity':
                     this.createCharityEvent(data.playerId);
+                    break;
+                case 'purple_baby':
+                    this.createBabyBornEvent(data.playerId);
                     break;
             }
         }

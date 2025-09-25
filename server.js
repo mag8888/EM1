@@ -186,6 +186,97 @@ async function saveRoomToSQLite(room) {
     }
 }
 
+// Cell event processing
+function processCellEvent(player, position) {
+    // Определяем тип клетки по позиции (1-24)
+    const cellType = getCellTypeByPosition(position);
+    
+    switch (cellType) {
+        case 'yellow_payday':
+            return processSalaryDay(player);
+        case 'purple_baby':
+            return processBabyBorn(player);
+        default:
+            return null;
+    }
+}
+
+// Get cell type by position (1-24)
+function getCellTypeByPosition(position) {
+    // Клетки 6, 14, 22 - День зарплаты
+    if (position === 6 || position === 14 || position === 22) {
+        return 'yellow_payday';
+    }
+    // Клетка 12 - Ребенок
+    if (position === 12) {
+        return 'purple_baby';
+    }
+    return null;
+}
+
+// Process salary day event
+function processSalaryDay(player) {
+    const salary = player.profession?.salary || 0;
+    const passiveIncome = player.passiveIncome || 0;
+    const totalIncome = salary + passiveIncome;
+    
+    // Добавляем зарплату
+    player.cash = (player.cash || 0) + totalIncome;
+    
+    // Обрабатываем расходы (базовые + дети)
+    const baseExpenses = player.profession?.expenses || 0;
+    const childExpenses = (player.children || 0) * 1000;
+    const totalExpenses = baseExpenses + childExpenses;
+    
+    if (totalExpenses > 0) {
+        player.cash = Math.max(0, player.cash - totalExpenses);
+    }
+    
+    console.log(`💰 PAYDAY для ${player.name}: +$${totalIncome}, -$${totalExpenses}, баланс: $${player.cash}`);
+    
+    return {
+        type: 'salary_day',
+        income: totalIncome,
+        expenses: totalExpenses,
+        newBalance: player.cash
+    };
+}
+
+// Process baby born event
+function processBabyBorn(player) {
+    // Бросаем кубик (1-6)
+    const babyDice = Math.floor(Math.random() * 6) + 1;
+    console.log(`👶 Бросок кубика для рождения ребенка: ${babyDice}`);
+    
+    if (babyDice <= 4) {
+        // Ребенок родился
+        const currentChildren = player.children || 0;
+        player.children = currentChildren + 1;
+        
+        // Выплачиваем подарок
+        player.cash = (player.cash || 0) + 5000;
+        
+        console.log(`👶 Ребенок родился у ${player.name}! Всего детей: ${player.children}, +$5000`);
+        
+        return {
+            type: 'baby_born',
+            babyBorn: true,
+            diceResult: babyDice,
+            childrenCount: player.children,
+            bonus: 5000
+        };
+    } else {
+        // Ребенок не родился
+        console.log(`👶 Ребенок не родился у ${player.name} (кубик: ${babyDice})`);
+        
+        return {
+            type: 'baby_born',
+            babyBorn: false,
+            diceResult: babyDice
+        };
+    }
+}
+
 // Turn timer management
 function startTurnTimer(roomId, turnTimeSec = 120) {
     clearTurnTimer(roomId);
@@ -1372,6 +1463,12 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
         }
         activePlayer.position = path[path.length - 1];
         room.updatedAt = new Date().toISOString();
+
+        // Обработка события клетки
+        const cellEvent = processCellEvent(activePlayer, activePlayer.position);
+        if (cellEvent) {
+            console.log(`⚡ Событие клетки: ${cellEvent.type} для игрока ${activePlayer.name}`);
+        }
 
         // Save to database
         saveRoomToSQLite(room);

@@ -190,17 +190,26 @@ export class GameFlowController {
     getEventTypeFromCell(cell) {
         switch (cell.type) {
             case 'payday':
-                return 'payday';
+            case 'yellow_payday':
+                return 'receive_salary';
             case 'charity':
+            case 'orange_charity':
                 return 'charity';
             case 'opportunity':
+            case 'green_opportunity':
                 return 'card_draw';
             case 'expense':
+            case 'pink_expense':
                 return 'card_draw';
             case 'market':
+            case 'blue_market':
                 return 'market_action';
             case 'dream':
                 return 'dream_action';
+            case 'purple_baby':
+                return 'baby_born';
+            case 'black_loss':
+                return 'job_loss';
             default:
                 return 'neutral';
         }
