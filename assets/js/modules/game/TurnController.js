@@ -157,6 +157,9 @@ export class TurnController {
                         const currentPlayer = this.state?.getCurrentPlayer();
                         const isMyTurn = this.state?.isMyTurn() || false;
                         this.updateUI(isMyTurn, currentPlayer);
+                        // Жестко фиксируем состояния кнопок после броска
+                        if (this.rollButton) this.rollButton.disabled = true;
+                        if (this.endTurnButton) this.endTurnButton.disabled = !isMyTurn ? true : false;
                     }
                 } catch (error) {
                     console.error('Ошибка движения:', error);
@@ -164,12 +167,16 @@ export class TurnController {
                     const currentPlayer = this.state?.getCurrentPlayer();
                     const isMyTurn = this.state?.isMyTurn() || false;
                     this.updateUI(isMyTurn, currentPlayer);
+                    if (this.rollButton) this.rollButton.disabled = true;
+                    if (this.endTurnButton) this.endTurnButton.disabled = !isMyTurn ? true : false;
                 }
             } else {
                 // Если результат не получен, но бросок был выполнен, обновляем UI
                 const currentPlayer = this.state?.getCurrentPlayer();
                 const isMyTurn = this.state?.isMyTurn() || false;
                 this.updateUI(isMyTurn, currentPlayer);
+                if (this.rollButton) this.rollButton.disabled = true;
+                if (this.endTurnButton) this.endTurnButton.disabled = !isMyTurn ? true : false;
             }
         } catch (error) {
             console.error('Ошибка броска кубика:', error);
