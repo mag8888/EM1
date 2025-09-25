@@ -708,19 +708,28 @@ class DealsModule {
                 }
 
                 // Отправляем запрос на сервер для покупки
+                const requestData = { 
+                    action: 'buy', 
+                    deal: { 
+                        id: card.id, 
+                        name: card.name, 
+                        amount: cardCost, 
+                        income: card.income || 0,
+                        type: card.type || 'smallDeal'
+                    } 
+                };
+                
+                console.log(`🔍 Отправка запроса на покупку:`, {
+                    url: `/api/rooms/${roomId}/deals/resolve`,
+                    data: requestData,
+                    playerBalance: currentBalance,
+                    cardCost: cardCost
+                });
+                
                 const response = await fetch(`/api/rooms/${roomId}/deals/resolve`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        action: 'buy', 
-                        deal: { 
-                            id: card.id, 
-                            name: card.name, 
-                            amount: cardCost, 
-                            income: card.income || 0,
-                            type: card.type || 'smallDeal'
-                        } 
-                    })
+                    body: JSON.stringify(requestData)
                 });
 
                 if (response.ok) {
@@ -776,6 +785,14 @@ class DealsModule {
                     }
                 } else {
                     console.error('🎴 DealsModule: Ошибка покупки карты на сервере');
+                    console.error('🔍 Статус ответа:', response.status, response.statusText);
+                    
+                    try {
+                        const errorData = await response.json();
+                        console.error('🔍 Данные ошибки:', errorData);
+                    } catch (e) {
+                        console.error('🔍 Не удалось получить данные ошибки');
+                    }
                     return;
                 }
             }
