@@ -244,31 +244,35 @@ function processExpenseEvent(player, position) {
 
 // Get cell type by position (1-24)
 function getCellTypeByPosition(position) {
-    // Клетки 6, 14, 22 - День зарплаты
-    if (position === 6 || position === 14 || position === 22) {
-        return 'yellow_payday';
-    }
-    // Клетка 12 - Ребенок
-    if (position === 12) {
-        return 'purple_baby';
-    }
-    // Клетки 2, 4, 8, 10, 16, 18, 20, 24 - Сделки (зеленые)
-    if ([2, 4, 8, 10, 16, 18, 20, 24].includes(position)) {
-        return 'green_opportunity';
-    }
-    // Клетки 3, 7, 11, 15, 19, 23 - Рынок (синие)
-    if ([3, 7, 11, 15, 19, 23].includes(position)) {
-        return 'blue_market';
-    }
-    // Клетки 1, 5, 9, 13, 17, 21 - Расходы (розовые)
-    if ([1, 5, 9, 13, 17, 21].includes(position)) {
-        return 'pink_expense';
-    }
-    // Клетка 4 — Благотворительность (оранжевая)
-    if (position === 4) {
-        return 'orange_charity';
-    }
-    return null;
+    // Явное соответствие 1..24 (внутренний круг)
+    // Можно подправить при необходимости, чтобы синхронизировать с фронтендом
+    const cellMap = {
+        1: 'pink_expense',        // расходы
+        2: 'green_opportunity',   // сделка
+        3: 'blue_market',         // рынок
+        4: 'orange_charity',      // благотворительность (10% → 3 хода 1/2 кубика)
+        5: 'yellow_payday',       // PAYDAY
+        6: 'green_opportunity',
+        7: 'blue_market',
+        8: 'pink_expense',
+        9: 'green_opportunity',
+        10: 'blue_market',
+        11: 'pink_expense',
+        12: 'purple_baby',        // ребёнок (шанс)
+        13: 'yellow_payday',
+        14: 'green_opportunity',
+        15: 'blue_market',
+        16: 'green_opportunity',
+        17: 'pink_expense',
+        18: 'green_opportunity',
+        19: 'blue_market',
+        20: 'green_opportunity',
+        21: 'yellow_payday',
+        22: 'green_opportunity',
+        23: 'blue_market',
+        24: 'green_opportunity'
+    };
+    return cellMap[position] || null;
 }
 
 // Charity event: pay 10% of total income to gain 3 power turns (1 or 2 dice)

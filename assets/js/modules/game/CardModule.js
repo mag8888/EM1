@@ -530,11 +530,11 @@ export class CardModule {
             // Активируем модуль сделок
             this.activateDealsModule(data.playerId);
         } else if (data.cellType === 'blue_market') {
-            // Показываем карту рынка
-            this.showMarketCard(data.playerId);
+            // Показываем событие рынка
+            this.showMarketCard(data.playerId, data.cell || {});
         } else if (data.cellType === 'pink_expense') {
-            // Показываем карту расходов
-            this.showExpenseCard(data.playerId);
+            // Показываем событие расходов
+            this.showExpenseCard(data.playerId, data.cell || {});
         } else if (data.cellType === 'yellow_payday') {
             // Обрабатываем день зарплаты
             this.processPayday(data.playerId);
@@ -624,6 +624,70 @@ export class CardModule {
         } catch (e) {
             console.warn('Charity UI error', e);
         }
+    }
+
+    // Простое событие рынка
+    showMarketCard(playerId, cell = {}) {
+        const modal = document.createElement('div');
+        modal.className = 'market-modal';
+        const title = cell.name || 'Событие рынка';
+        const desc = cell.description || 'Изменения на рынке влияют на цены активов.';
+        modal.innerHTML = `
+            <div class="modal-overlay">
+                <div class="modal-content">
+                    <h3 style="margin-top:0;">${title}</h3>
+                    <p>${desc}</p>
+                    <div class="actions">
+                        <button class="btn btn-secondary close-btn">Ок</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        const style = document.createElement('style');
+        style.textContent = `
+            .market-modal .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:10002}
+            .market-modal .modal-content{background:#121a2b;color:#fff;border-radius:14px;box-shadow:0 20px 40px rgba(0,0,0,.5);padding:22px;max-width:460px;width:90%}
+            .market-modal .btn{padding:10px 16px;border:none;border-radius:10px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#1f2937 0%,#111827 100%);color:#e5e7eb}
+            .market-modal .actions{display:flex;justify-content:center;margin-top:12px}
+        `;
+        document.head.appendChild(style);
+        document.body.appendChild(modal);
+        const close = () => { try { modal.remove(); style.remove(); } catch(_){} };
+        modal.querySelector('.close-btn')?.addEventListener('click', close);
+        modal.querySelector('.modal-overlay')?.addEventListener('click', (e) => { if (e.target === modal.querySelector('.modal-overlay')) close(); });
+    }
+
+    // Простое событие расходов
+    showExpenseCard(playerId, cell = {}) {
+        const modal = document.createElement('div');
+        modal.className = 'expense-modal';
+        const title = cell.name || 'Неожиданные расходы';
+        const min = Number(cell.minCost || 100);
+        const max = Number(cell.maxCost || 4000);
+        const amount = Math.floor(Math.random() * (max - min + 1)) + min;
+        modal.innerHTML = `
+            <div class="modal-overlay">
+                <div class="modal-content">
+                    <h3 style="margin-top:0;">${title}</h3>
+                    <p>Вы понесли расходы на сумму <strong>$${amount.toLocaleString()}</strong>.</p>
+                    <div class="actions">
+                        <button class="btn btn-secondary close-btn">Ок</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        const style = document.createElement('style');
+        style.textContent = `
+            .expense-modal .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:10002}
+            .expense-modal .modal-content{background:#121a2b;color:#fff;border-radius:14px;box-shadow:0 20px 40px rgba(0,0,0,.5);padding:22px;max-width:460px;width:90%}
+            .expense-modal .btn{padding:10px 16px;border:none;border-radius:10px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#1f2937 0%,#111827 100%);color:#e5e7eb}
+            .expense-modal .actions{display:flex;justify-content:center;margin-top:12px}
+        `;
+        document.head.appendChild(style);
+        document.body.appendChild(modal);
+        const close = () => { try { modal.remove(); style.remove(); } catch(_){} };
+        modal.querySelector('.close-btn')?.addEventListener('click', close);
+        modal.querySelector('.modal-overlay')?.addEventListener('click', (e) => { if (e.target === modal.querySelector('.modal-overlay')) close(); });
     }
     
     // Активация модуля сделок
