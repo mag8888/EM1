@@ -1963,29 +1963,41 @@ app.post('/api/rooms/:roomId/deals/choose', (req, res) => {
 
 app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
     try {
+        console.log(`🔍 Deals resolve: ${req.params.roomId}`, req.body);
+        
         const room = rooms.get(req.params.roomId);
         if (!room) {
+            console.log(`❌ Комната ${req.params.roomId} не найдена`);
             return res.status(404).json({ success: false, message: 'Комната не найдена' });
         }
         
         const { action, deal } = req.body || {};
+        console.log(`🔍 Action: ${action}, Deal:`, deal);
 
         // Получаем активного игрока
         const activePlayerId = room.activePlayerId || room.players?.[0]?.userId;
         const player = (room.players || []).find(p => String(p.userId) === String(activePlayerId));
         
+        console.log(`🔍 Active player: ${activePlayerId}, Found:`, !!player);
+        
         if (!player) {
+            console.log(`❌ Активный игрок ${activePlayerId} не найден в комнате ${req.params.roomId}`);
             return res.status(404).json({ success: false, message: 'Активный игрок не найден' });
         }
 
         // Apply effects: if user buys a deal, deduct cost and add passive income
         if (action === 'buy' && deal) {
+            console.log(`💰 Покупка актива: ${deal.name} за $${deal.amount || deal.cost}`);
+            
             if (player) {
                 const dealCost = Number(deal.amount || deal.cost || 0);
                 const dealIncome = Number(deal.income || 0);
                 
+                console.log(`💰 Стоимость: $${dealCost}, Доход: $${dealIncome}, Баланс игрока: $${player.cash}`);
+                
                 // Проверяем, достаточно ли денег у игрока
                 if (player.cash < dealCost) {
+                    console.log(`❌ Недостаточно средств: нужно $${dealCost}, есть $${player.cash}`);
                     return res.status(400).json({ 
                         success: false, 
                         message: `Недостаточно средств! Нужно: $${dealCost}, доступно: $${player.cash}` 
@@ -2000,32 +2012,49 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
                 
                 // Добавляем актив в портфель игрока
                 if (!Array.isArray(player.assets)) player.assets = [];
-                player.assets.push({
+                const newAsset = {
                     id: deal.id || Date.now().toString(),
                     name: deal.name || 'Сделка',
                     purchasePrice: dealCost,
                     monthlyIncome: dealIncome,
                     type: deal.type || 'smallDeal',
-                });
-
-                // Синхронизируем с банковским балансом
-                syncPlayerBalance(roomId, player.name || player.username);
+                };
+                player.assets.push(newAsset);
                 
-                // Записываем в историю банка
-                pushHistory(roomId, {
-                    from: 'Покупка актива',
-                    to: player.name || player.username,
-                    amount: dealCost,
-                    roomId,
-                    reason: `покупка актива: ${deal.name}`,
-                    timestamp: Date.now(),
-                    type: 'asset_purchase'
-                });
+                console.log(`✅ Актив добавлен:`, newAsset);
+                console.log(`💰 Новый баланс игрока: $${player.cash}`);
+
+                try {
+                    // Синхронизируем с банковским балансом
+                    console.log(`🔄 Синхронизация баланса для ${player.name || player.username}`);
+                    syncPlayerBalance(req.params.roomId, player.name || player.username);
+                    
+                    // Записываем в историю банка
+                    console.log(`📝 Запись в историю банка`);
+                    pushHistory(req.params.roomId, {
+                        from: 'Покупка актива',
+                        to: player.name || player.username,
+                        amount: dealCost,
+                        roomId: req.params.roomId,
+                        reason: `покупка актива: ${deal.name}`,
+                        timestamp: Date.now(),
+                        type: 'asset_purchase'
+                    });
+                } catch (syncError) {
+                    console.error('❌ Ошибка синхронизации баланса:', syncError);
+                    // Не прерываем выполнение, только логируем ошибку
+                }
             }
         }
 
         // Save to database
-        saveRoomToSQLite(room);
+        console.log(`💾 Сохранение комнаты в базу данных`);
+        try {
+            saveRoomToSQLite(room);
+            console.log(`✅ Комната сохранена`);
+        } catch (saveError) {
+            console.error('❌ Ошибка сохранения комнаты:', saveError);
+        }
 
         // Возвращаем обновленные данные игрока
         const response = { 
@@ -2048,6 +2077,7 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
             response.player = player;
         }
         
+        console.log(`✅ Отправка ответа:`, { success: response.success, action: response.action });
         res.json(response);
     } catch (error) {
         console.error('Ошибка разрешения сделки:', error);
