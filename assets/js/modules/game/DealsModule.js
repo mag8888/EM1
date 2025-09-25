@@ -18,6 +18,7 @@ class DealsModule {
         this.playerAssets = new Map(); // Карточки у игроков
         this.currentDeal = null;       // Текущая карточка сделки
         this.isDealActive = false;     // Активна ли сделка
+        this.viewOnlyMode = false;     // Режим: показывать неактивные кнопки всем
         
         this.init();
     }
@@ -531,7 +532,7 @@ class DealsModule {
     showDealCard(card, playerId) {
         const myId = String(this.getCurrentPlayerId());
         const isOwner = myId === String(playerId);
-        const modal = this.createDealCardModal(card, { isOwner });
+        const modal = this.createDealCardModal(card, { isOwner: isOwner && !this.viewOnlyMode });
         document.body.appendChild(modal);
         
         // Обработчики действий
@@ -559,6 +560,11 @@ class DealsModule {
                     window.open(`/game-board/bank-module.html?v=${v}`, 'bankModule', 'width=720,height=840,scrollbars=yes');
                 } catch (_) {}
             });
+        }
+
+        // Применяем режим "не активные кнопки" для всех, если включен
+        if (this.viewOnlyMode && !isOwner) {
+            this.applyDisabledState(modal, true);
         }
     }
     
@@ -594,8 +600,8 @@ class DealsModule {
                         </div>
                     </div>
                     <div class="deal-card-actions">
-                        <button class="btn btn-primary buy-btn" ${isOwner ? '' : 'disabled'}>Купить</button>
-                        <button class="btn btn-secondary transfer-btn" ${isOwner ? '' : 'disabled'}>Передать</button>
+                        <button class="btn btn-primary buy-btn" ${isOwner ? '' : 'disabled'} title="${isOwner ? '' : 'Действие недоступно: ход другого игрока'}">Купить</button>
+                        <button class="btn btn-secondary transfer-btn" ${isOwner ? '' : 'disabled'} title="${isOwner ? '' : 'Действие недоступно: ход другого игрока'}">Передать</button>
                         <button class="btn btn-warning credit-btn">Взять кредит</button>
                         <button class="btn btn-danger pass-btn">Отмена</button>
                     </div>
@@ -604,6 +610,21 @@ class DealsModule {
         `;
         
         return modal;
+    }
+
+    // Принудительно отключить/включить действия в модалке сделки
+    applyDisabledState(modal, disabled) {
+        try {
+            const buy = modal.querySelector('.buy-btn');
+            const transfer = modal.querySelector('.transfer-btn');
+            if (buy) { buy.disabled = !!disabled; if (disabled) buy.title = 'Действие недоступно'; }
+            if (transfer) { transfer.disabled = !!disabled; if (disabled) transfer.title = 'Действие недоступно'; }
+        } catch (_) {}
+    }
+
+    // Публичное API: включить режим "не активные кнопки" для всех
+    setViewOnlyMode(flag) {
+        this.viewOnlyMode = !!flag;
     }
     
     // Покупка карты
