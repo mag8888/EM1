@@ -1544,6 +1544,17 @@
         <script src="assets/js/modules/game/PlayersManager.js?v=11"></script>
         <script src="assets/js/modules/game/ProfessionCard.js?v=11"></script>
         <script src="assets/js/modules/game/DealsModule.js?v=1"></script>
+        <script>
+            // Инициализация DealsModule
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof DealsModule !== 'undefined') {
+                    window.dealsModule = new DealsModule();
+                    console.log('🎴 DealsModule инициализирован');
+                } else {
+                    console.error('❌ DealsModule не найден');
+                }
+            });
+        </script>
         <script src="assets/js/modules/game/DealsManager.js?v=11"></script>
         <script src="assets/js/modules/game/BankManager.js?v=11"></script>
         <script src="game-board/professions-data.js"></script>

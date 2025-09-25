@@ -1145,6 +1145,17 @@
     <script src="assets/js/modules/game/Player.js"></script>
     <script src="assets/js/modules/game/ProfessionCard.js?v=11"></script>
     <script src="assets/js/modules/game/DealsModule.js?v=1"></script>
+    <script>
+        // Инициализация DealsModule
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof DealsModule !== 'undefined') {
+                window.dealsModule = new DealsModule();
+                console.log('🎴 DealsModule инициализирован');
+            } else {
+                console.error('❌ DealsModule не найден');
+            }
+        });
+    </script>
     <script src="assets/js/core/GameCore.js"></script>
     
     <!-- Инициализируем рабочую версию -->

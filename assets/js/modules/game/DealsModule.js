@@ -810,7 +810,10 @@ class DealsModule {
             // Обновляем счетчики в полосе сделок
             const bigDealCounters = document.querySelectorAll('.special-card.big-deal .special-metric');
             const smallDealCounters = document.querySelectorAll('.special-card.small-deal .special-metric');
+            const marketCounters = document.querySelectorAll('.special-card.market .special-metric');
+            const expenseCounters = document.querySelectorAll('.special-card.expense .special-metric');
             
+            // Обновляем счетчики основных колод
             bigDealCounters.forEach(counter => {
                 if (counter.textContent.includes('карт')) {
                     counter.textContent = `${this.decks.bigDeal.length} карт`;
@@ -820,6 +823,42 @@ class DealsModule {
             smallDealCounters.forEach(counter => {
                 if (counter.textContent.includes('карт')) {
                     counter.textContent = `${this.decks.smallDeal.length} карт`;
+                }
+            });
+            
+            marketCounters.forEach(counter => {
+                if (counter.textContent.includes('карт')) {
+                    counter.textContent = `${this.decks.market.length} карт`;
+                }
+            });
+            
+            expenseCounters.forEach(counter => {
+                if (counter.textContent.includes('карт')) {
+                    counter.textContent = `${this.decks.expenses.length} карт`;
+                }
+            });
+            
+            // Обновляем счетчики отбоя
+            const bigDealDiscard = document.getElementById('bigDealDiscardCount');
+            const smallDealDiscard = document.getElementById('smallDealDiscardCount');
+            const marketDiscard = document.getElementById('marketDiscardCount');
+            const expenseDiscard = document.getElementById('expenseDiscardCount');
+            
+            if (bigDealDiscard) bigDealDiscard.textContent = this.discardPiles.bigDeal.length;
+            if (smallDealDiscard) smallDealDiscard.textContent = this.discardPiles.smallDeal.length;
+            if (marketDiscard) marketDiscard.textContent = this.discardPiles.market.length;
+            if (expenseDiscard) expenseDiscard.textContent = this.discardPiles.expenses.length;
+            
+            console.log('🎴 DealsModule: Обновлены счетчики карт:', {
+                bigDeal: this.decks.bigDeal.length,
+                smallDeal: this.decks.smallDeal.length,
+                market: this.decks.market.length,
+                expenses: this.decks.expenses.length,
+                discard: {
+                    bigDeal: this.discardPiles.bigDeal.length,
+                    smallDeal: this.discardPiles.smallDeal.length,
+                    market: this.discardPiles.market.length,
+                    expenses: this.discardPiles.expenses.length
                 }
             });
         }, 100);
