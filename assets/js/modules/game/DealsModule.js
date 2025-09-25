@@ -731,8 +731,13 @@ class DealsModule {
                         Object.assign(player, responseData.player);
                     }
                     
-                    // Списываем деньги с баланса игрока
-                    player.cash = Math.max(0, currentBalance - cardCost);
+                    // Обновляем баланс игрока (используем данные с сервера)
+                    if (responseData.player && responseData.player.cash !== undefined) {
+                        player.cash = responseData.player.cash;
+                    } else {
+                        // Fallback: списываем деньги локально
+                        player.cash = Math.max(0, currentBalance - cardCost);
+                    }
                     
                     // Добавляем карту в активы игрока
                     if (!player.assets) {
@@ -753,6 +758,13 @@ class DealsModule {
                     if (window.gameState && window.gameState.refresh) {
                         window.gameState.refresh();
                     }
+                    
+                    // Дополнительная синхронизация через небольшую задержку
+                    setTimeout(() => {
+                        if (window.gameState && window.gameState.refresh) {
+                            window.gameState.refresh();
+                        }
+                    }, 100);
                     
                     // Отправляем уведомление о покупке актива
                     if (window.notificationService) {

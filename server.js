@@ -2007,6 +2007,20 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
                     monthlyIncome: dealIncome,
                     type: deal.type || 'smallDeal',
                 });
+
+                // Синхронизируем с банковским балансом
+                syncPlayerBalance(roomId, player.name || player.username);
+                
+                // Записываем в историю банка
+                pushHistory(roomId, {
+                    from: 'Покупка актива',
+                    to: player.name || player.username,
+                    amount: dealCost,
+                    roomId,
+                    reason: `покупка актива: ${deal.name}`,
+                    timestamp: Date.now(),
+                    type: 'asset_purchase'
+                });
             }
         }
 
@@ -2017,6 +2031,7 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
         const response = { 
             success: true, 
             action,
+            player: player, // Возвращаем обновленные данные игрока
             state: {
                 roomId: room.id,
                 status: room.status,
