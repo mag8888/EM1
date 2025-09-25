@@ -202,6 +202,8 @@ function processCellEvent(player, position, roomId) {
             return processMarketEvent(player, position);
         case 'pink_expense':
             return processExpenseEvent(player, position);
+        case 'orange_charity':
+            return processCharityEvent(player, roomId);
         default:
             return null;
     }
@@ -262,7 +264,26 @@ function getCellTypeByPosition(position) {
     if ([1, 5, 9, 13, 17, 21].includes(position)) {
         return 'pink_expense';
     }
+    // Клетка 4 — Благотворительность (оранжевая)
+    if (position === 4) {
+        return 'orange_charity';
+    }
     return null;
+}
+
+// Charity event: pay 10% of total income to gain 3 power turns (1 or 2 dice)
+function processCharityEvent(player, roomId) {
+    console.log(`❤️ Charity opportunity for ${player.name}`);
+    const income = Number((player?.profession?.salary || 0) + (player?.passiveIncome || 0));
+    const donation = Math.floor(income * 0.10);
+    return {
+        type: 'charity',
+        playerId: player.userId,
+        cellType: 'orange_charity',
+        canDonate: donation > 0 && (player.cash || 0) >= donation,
+        donation,
+        income
+    };
 }
 
 // Process salary day event
@@ -1486,11 +1507,17 @@ app.post('/api/rooms/:roomId/roll', (req, res) => {
         }
 
         // Dice roll: single by default; double=true for charity
-        const useDouble = String(req.query.double || req.body?.double || '').toLowerCase() === 'true';
+        const useDouble = String(req.query.double || req.body?.double || '').toLowerCase() === 'true'
+            || Number(activePlayer?.charityTurns || 0) > 0; // благотворительность позволяет 1 или 2 кубика
         const d1 = Math.floor(Math.random() * 6) + 1;
         const d2 = useDouble ? (Math.floor(Math.random() * 6) + 1) : null;
         const total = useDouble ? d1 + (d2 || 0) : d1;
         const isDouble = useDouble && d1 === d2;
+
+        // Списываем один заряд благотворительности, если был активен
+        if (Number(activePlayer?.charityTurns || 0) > 0) {
+            activePlayer.charityTurns = Math.max(0, Number(activePlayer.charityTurns) - 1);
+        }
 
         // Ensure activeIndex is always a number
         const activeIndex = typeof room.activeIndex === 'number' ? room.activeIndex : 0;
@@ -1573,6 +1600,9 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
             } else if (cellEvent.type === 'expense_event') {
                 console.log(`💸 Событие расходов на позиции ${activePlayer.position}`);
                 // Здесь можно добавить логику для событий расходов
+            } else if (cellEvent.type === 'charity') {
+                // Для благотворительности пока только сообщаем клиенту детали,
+                // само списание и активация выполняется отдельным POST /charity
             }
         } else {
             console.log(`⚡ Нет события для позиции ${activePlayer.position}`);
@@ -1833,6 +1863,32 @@ app.post('/api/rooms/:roomId/assets/sell', (req, res) => {
         });
     } catch (error) {
         console.error('Ошибка продажи актива:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
+// Activate charity benefit (pay 10% of total income to roll 1 or 2 dice for next 3 rolls)
+app.post('/api/rooms/:roomId/charity', (req, res) => {
+    try {
+        const room = rooms.get(req.params.roomId);
+        if (!room) return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        const userId = req.headers['x-user-id'] || req.body?.user_id;
+        const activePlayer = room.players?.[room.activeIndex || 0] || null;
+        if (!activePlayer || String(activePlayer.userId) !== String(userId)) {
+            return res.status(403).json({ success: false, message: 'Сейчас не ваш ход' });
+        }
+        const salary = Number(activePlayer?.profession?.salary || 0);
+        const passive = Number(activePlayer?.passiveIncome || 0);
+        const donation = Math.floor((salary + passive) * 0.10);
+        if ((activePlayer.cash || 0) < donation) {
+            return res.status(400).json({ success: false, message: 'Недостаточно средств для пожертвования' });
+        }
+        activePlayer.cash -= donation;
+        activePlayer.charityTurns = 3;
+        saveRoomToSQLite(room);
+        res.json({ success: true, donation, charityTurns: activePlayer.charityTurns });
+    } catch (error) {
+        console.error('Ошибка благотворительности:', error);
         res.status(500).json({ success: false, message: 'Ошибка сервера' });
     }
 });
