@@ -72,6 +72,19 @@ export default class AssetsManager {
             });
             actions.appendChild(sellBtn);
 
+            // Кнопка перемещения в каталог
+            const catalogBtn = document.createElement('button');
+            catalogBtn.className = 'btn btn-secondary';
+            catalogBtn.textContent = '📦 В каталог';
+            catalogBtn.addEventListener('click', () => {
+                // Перемещаем актив в каталог (добавляем в глобальный каталог)
+                if (window.dealsModule) {
+                    window.dealsModule.moveAssetToCatalog(asset, player.userId);
+                    this.notifier?.show('Актив перемещен в каталог', { type: 'success' });
+                }
+            });
+            actions.appendChild(catalogBtn);
+
             if (otherPlayers.length > 0) {
                 const transferWrapper = document.createElement('div');
                 transferWrapper.className = 'asset-transfer';

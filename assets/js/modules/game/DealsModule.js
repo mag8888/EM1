@@ -823,6 +823,33 @@ class DealsModule {
         document.body.appendChild(modal);
     }
     
+    // Перемещение актива в каталог
+    moveAssetToCatalog(asset, playerId) {
+        // Удаляем актив у игрока
+        const playerAssets = this.playerAssets.get(playerId) || [];
+        const assetIndex = playerAssets.findIndex(a => a.id === asset.id);
+        if (assetIndex !== -1) {
+            playerAssets.splice(assetIndex, 1);
+        }
+        
+        // Добавляем актив в глобальный каталог
+        if (!this.catalogAssets) {
+            this.catalogAssets = [];
+        }
+        this.catalogAssets.push({
+            ...asset,
+            originalOwnerId: playerId,
+            addedToCatalogAt: Date.now()
+        });
+        
+        console.log(`🎴 Актив ${asset.name} перемещен в каталог игроком ${playerId}`);
+        
+        // Обновляем состояние игры
+        if (window.gameState) {
+            window.gameState.refresh();
+        }
+    }
+    
     // Создание модального окна каталога активов
     createAssetsCatalogModal() {
         const modal = document.createElement('div');
@@ -832,9 +859,16 @@ class DealsModule {
         let allAssets = [];
         this.playerAssets.forEach((assets, playerId) => {
             assets.forEach(asset => {
-                allAssets.push({...asset, ownerId: playerId});
+                allAssets.push({...asset, ownerId: playerId, type: 'player'});
             });
         });
+        
+        // Добавляем активы из каталога
+        if (this.catalogAssets) {
+            this.catalogAssets.forEach(asset => {
+                allAssets.push({...asset, ownerId: 'catalog', type: 'catalog'});
+            });
+        }
         
         modal.innerHTML = `
             <div class="deals-modal-content assets-catalog-modal">
@@ -961,36 +995,54 @@ class DealsModule {
     
     // Передача карты другому игроку
     async transferCard(card, fromPlayerId, toPlayerId) {
-        // Удаляем карту у отправителя
-        const fromAssets = this.playerAssets.get(fromPlayerId) || [];
-        const cardIndex = fromAssets.findIndex(asset => asset.id === card.id);
-        if (cardIndex !== -1) {
-            fromAssets.splice(cardIndex, 1);
-        }
-        
-        // Добавляем карту получателю
-        if (!this.playerAssets.has(toPlayerId)) {
-            this.playerAssets.set(toPlayerId, []);
-        }
-        this.playerAssets.get(toPlayerId).push(card);
-        
-        // Пытаемся уведомить сервер (best-effort)
         try {
             const roomId = window.gameState?.roomId;
-            await fetch(`/api/rooms/${roomId}/assets/transfer`, {
+            const currentUserId = this.getCurrentPlayerId();
+            
+            // Отправляем запрос на сервер
+            const response = await fetch(`/api/rooms/${roomId}/assets/transfer`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ assetId: card.id, asset_id: card.id, targetUserId: toPlayerId, target_user_id: toPlayerId })
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-User-ID': currentUserId
+                },
+                body: JSON.stringify({ 
+                    assetId: card.id, 
+                    targetUserId: toPlayerId 
+                })
             });
-        } catch (_) {}
 
-        console.log(`🎴 DealsModule: Карта ${card.name} передана от ${fromPlayerId} к ${toPlayerId}`);
-        
-        // Обновляем модальное окно для всех игроков с новыми правами
-        this.updateModalForTransfer(card, toPlayerId);
-        
-        // Уведомляем о передаче
-        this.notifyCardTransferred(card, fromPlayerId, toPlayerId);
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log(`🎴 DealsModule: Карта ${card.name} передана от ${fromPlayerId} к ${toPlayerId}`);
+                
+                // Обновляем локальное состояние после успешной передачи на сервере
+                this.playerAssets.set(fromPlayerId, (this.playerAssets.get(fromPlayerId) || []).filter(asset => asset.id !== card.id));
+                
+                if (!this.playerAssets.has(toPlayerId)) {
+                    this.playerAssets.set(toPlayerId, []);
+                }
+                this.playerAssets.get(toPlayerId).push(card);
+                
+                // Обновляем модальное окно для всех игроков с новыми правами
+                this.updateModalForTransfer(card, toPlayerId);
+                
+                // Уведомляем о передаче
+                this.notifyCardTransferred(card, fromPlayerId, toPlayerId);
+                
+                // Обновляем состояние игры
+                if (window.gameState) {
+                    window.gameState.refresh();
+                }
+            } else {
+                console.error('Ошибка передачи актива:', result.message);
+                alert(`Ошибка передачи актива: ${result.message}`);
+            }
+        } catch (error) {
+            console.error('Ошибка при передаче актива:', error);
+            alert('Ошибка при передаче актива');
+        }
     }
     
     // Обновление модального окна после передачи карточки

@@ -827,9 +827,10 @@ app.post('/api/rooms/:roomId/start', (req, res) => {
             if (p.passiveIncome < 0 || !Number.isFinite(p.passiveIncome)) p.passiveIncome = 0;
 
             // Начальные сбережения: начисляем $3000 каждому игроку и пишем в историю
+            p.cash = 3000; // Устанавливаем стартовый баланс игрока
             const bal = ensureBalance(room.id, p.name, 0);
-            bal.amount += 3000;
-            pushHistory(room.id, { from: 'Банк', to: p.name, amount: 3000, roomId: room.id, timestamp: Date.now(), type: 'initial_deposit' });
+            bal.amount = 3000; // Синхронизируем банковский баланс
+            pushHistory(room.id, { from: 'Банк', to: p.name, amount: 3000, roomId: room.id, timestamp: Date.now(), type: 'initial_deposit', reason: 'стартовые сбережения' });
         });
         room.updatedAt = new Date().toISOString();
         
@@ -2045,19 +2046,68 @@ app.post('/api/rooms/:roomId/assets/transfer', (req, res) => {
         if (!room) {
             return res.status(404).json({ success: false, message: 'Комната не найдена' });
         }
+
+        const { assetId, targetUserId } = req.body;
+        const userId = req.headers['x-user-id'];
         
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User ID required' });
+        }
+
+        if (!assetId || !targetUserId) {
+            return res.status(400).json({ success: false, message: 'Asset ID and target user ID required' });
+        }
+
+        // Находим отправителя и получателя
+        const fromPlayer = (room.players || []).find(p => String(p.userId) === String(userId));
+        const toPlayer = (room.players || []).find(p => String(p.userId) === String(targetUserId));
+
+        if (!fromPlayer || !toPlayer) {
+            return res.status(404).json({ success: false, message: 'Игрок не найден' });
+        }
+
+        // Находим актив у отправителя
+        const fromAssets = fromPlayer.assets || [];
+        const assetIndex = fromAssets.findIndex(asset => String(asset.id || asset.assetId) === String(assetId));
+
+        if (assetIndex === -1) {
+            return res.status(404).json({ success: false, message: 'Актив не найден у отправителя' });
+        }
+
+        // Получаем актив
+        const asset = fromAssets[assetIndex];
+
+        // Удаляем актив у отправителя
+        fromAssets.splice(assetIndex, 1);
+
+        // Добавляем актив получателю
+        if (!toPlayer.assets) {
+            toPlayer.assets = [];
+        }
+        toPlayer.assets.push(asset);
+
+        console.log(`🎴 Актив ${asset.name} передан от ${fromPlayer.name} к ${toPlayer.name}`);
+
+        // Сохраняем состояние комнаты
+        saveRoomToSQLite(room);
+
+        // Записываем в историю банка
+        pushHistory(room.id, {
+            from: fromPlayer.name,
+            to: toPlayer.name,
+            amount: 0,
+            roomId: room.id,
+            reason: `передача актива: ${asset.name}`,
+            timestamp: Date.now(),
+            type: 'asset_transfer'
+        });
+
         res.json({ 
             success: true, 
-            state: {
-                roomId: room.id,
-                status: room.status,
-                activePlayerId: room.players?.[0]?.userId || null,
-                players: room.players || [],
-                currentTurn: 1,
-                phase: 'waiting',
-                diceResult: null,
-                pendingDeal: null
-            }
+            message: `Актив "${asset.name}" передан игроку ${toPlayer.name}`,
+            asset: asset,
+            fromPlayer: fromPlayer.name,
+            toPlayer: toPlayer.name
         });
     } catch (error) {
         console.error('Ошибка передачи актива:', error);
