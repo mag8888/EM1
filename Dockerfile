@@ -1,5 +1,5 @@
-# Используем официальный Node.js образ (альтернативный тег)
-FROM node:18.20.4
+# Используем официальный Node.js образ (стабильная версия)
+FROM node:18.20.4-slim
 
 # Обновляем пакеты и устанавливаем необходимые зависимости
 RUN apt-get update && apt-get install -y \
@@ -14,8 +14,8 @@ WORKDIR /app
 # Копируем package.json
 COPY package.json ./
 
-# Устанавливаем зависимости
-RUN npm install --production
+# Устанавливаем зависимости (с очисткой кэша)
+RUN npm cache clean --force && npm install --production
 
 # Копируем исходный код
 COPY . .
