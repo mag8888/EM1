@@ -34,10 +34,20 @@ export class CardModule {
         // Инициализируем колоды карт
         await this.initializeDecks();
         
-        // Подписка на события
-        this.gameCore.eventBus.on('playerTurnStarted', this.onPlayerTurnStarted.bind(this));
-        this.gameCore.eventBus.on('playerTurnEnded', this.onPlayerTurnEnded.bind(this));
-        this.gameCore.eventBus.on('cellEvent', this.onCellEvent.bind(this));
+        // Подписка на события с защитой, если gameCore/eventBus отсутствуют
+        const hasEventBus = !!(this.gameCore && this.gameCore.eventBus && typeof this.gameCore.eventBus.on === 'function');
+        if (hasEventBus) {
+            this.gameCore.eventBus.on('playerTurnStarted', this.onPlayerTurnStarted.bind(this));
+            this.gameCore.eventBus.on('playerTurnEnded', this.onPlayerTurnEnded.bind(this));
+            this.gameCore.eventBus.on('cellEvent', this.onCellEvent.bind(this));
+            console.log('🃏 CardModule: подписан на события через gameCore.eventBus');
+        } else {
+            // Fallback на DOM-события, чтобы модуль работал автономно
+            document.addEventListener('cellEvent', (e) => this.onCellEvent(e.detail || e));
+            document.addEventListener('playerTurnStarted', (e) => this.onPlayerTurnStarted(e.detail || e));
+            document.addEventListener('playerTurnEnded', (e) => this.onPlayerTurnEnded(e.detail || e));
+            console.warn('🃏 CardModule: eventBus недоступен, используем DOM-события');
+        }
     }
 
     /**
