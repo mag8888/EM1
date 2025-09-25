@@ -18,6 +18,8 @@ export class TurnController {
         this.currentPhase = 'waiting';
         this.turnHistory = [];
         this.isDestroyed = false;
+        this.lastTurnIndex = null; // Track which turn we last started timer for
+        this.hasRolledThisTurn = false; // Track if player has rolled dice this turn
         
         this.config = {
             turnTimeLimit: 60000,
@@ -61,19 +63,29 @@ export class TurnController {
         });
         
         if (isMyTurn) {
-            // Приоритет: серверный таймер, если есть данные
-            if (snapshot.turnTimeLeft !== undefined && snapshot.turnTimeLeft > 0) {
-                console.log('🕒 Starting server timer with', snapshot.turnTimeLeft, 'seconds');
-                this.startServerTimer(snapshot.turnTimeLeft);
-            } else {
-                // Fallback: клиентский таймер с данными из комнаты
-                const turnTime = snapshot.turnTime || this.state.getTurnTimeSec(120);
-                console.log('🕒 Starting client timer with', turnTime, 'seconds (fallback)');
-                this.startTurnTimer(turnTime);
+            // Only start timer if we don't already have one running for this turn
+            const shouldStartTimer = !this.turnTimer || this.lastTurnIndex !== snapshot.activeIndex;
+            
+            if (shouldStartTimer) {
+                this.lastTurnIndex = snapshot.activeIndex;
+                this.hasRolledThisTurn = false; // Reset dice roll flag for new turn
+                
+                // Приоритет: серверный таймер, если есть данные
+                if (snapshot.turnTimeLeft !== undefined && snapshot.turnTimeLeft > 0) {
+                    console.log('🕒 Starting server timer with', snapshot.turnTimeLeft, 'seconds');
+                    this.startServerTimer(snapshot.turnTimeLeft);
+                } else {
+                    // Fallback: клиентский таймер с данными из комнаты
+                    const turnTime = snapshot.turnTime || this.state.getTurnTimeSec(120);
+                    console.log('🕒 Starting client timer with', turnTime, 'seconds (fallback)');
+                    this.startTurnTimer(turnTime);
+                }
             }
         } else {
             console.log('🕒 Clearing timers - not my turn');
             this.clearTimers();
+            this.lastTurnIndex = null;
+            this.hasRolledThisTurn = false; // Reset dice roll flag when not my turn
         }
     }
 
@@ -83,11 +95,13 @@ export class TurnController {
         }
         
         if (this.rollButton) {
-            this.rollButton.disabled = !isMyTurn;
+            // Disable roll button if not my turn OR if already rolled this turn
+            this.rollButton.disabled = !isMyTurn || this.hasRolledThisTurn;
         }
         
         if (this.endTurnButton) {
-            this.endTurnButton.disabled = !isMyTurn;
+            // Enable end turn button only if it's my turn and I've rolled
+            this.endTurnButton.disabled = !isMyTurn || !this.hasRolledThisTurn;
         }
         
         if (this.statusChip) {
@@ -98,8 +112,16 @@ export class TurnController {
     async handleRollDice() {
         if (!this.state) return;
         
+        // Check if already rolled this turn
+        if (this.hasRolledThisTurn) {
+            console.log('🎲 Already rolled this turn, ignoring');
+            return;
+        }
+        
         try {
             this.rollButton.disabled = true;
+            this.hasRolledThisTurn = true; // Mark as rolled
+            
             const result = await this.state.rollDice();
             
             if (result?.result) {
@@ -138,7 +160,8 @@ export class TurnController {
             if (this.notifier) {
                 this.notifier.show('Ошибка броска кубика', { type: 'error' });
             }
-            // Разблокируем кнопку только при ошибке
+            // Reset roll flag on error and re-enable button
+            this.hasRolledThisTurn = false;
             this.rollButton.disabled = false;
         }
         // НЕ разблокируем кнопку после успешного хода - только после завершения хода

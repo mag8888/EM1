@@ -501,6 +501,34 @@ function renderPlayerTokensFromState(innerPositions) {
     // Получаем состояние игры из глобального объекта GameState
     if (window.gameState && window.gameState.state && Array.isArray(window.gameState.state.players)) {
         renderPlayerTokens(window.gameState.state, innerPositions);
+        
+        // Синхронизируем подсветку с активным игроком
+        highlightActivePlayer(window.gameState.state);
+    }
+}
+
+// Подсветка активного игрока
+function highlightActivePlayer(gameState) {
+    const inner = document.getElementById('innerTrack');
+    if (!inner || !gameState.activePlayerId) return;
+    
+    // Убираем все подсветки
+    const cells = Array.from(inner.children);
+    cells.forEach(cell => {
+        cell.style.outline = '';
+        cell.classList.remove('active-player-cell');
+    });
+    
+    // Находим активного игрока
+    const activePlayer = gameState.players.find(p => p.userId === gameState.activePlayerId);
+    if (!activePlayer) return;
+    
+    // Подсвечиваем клетку активного игрока
+    const cellIndex = Number(activePlayer.position || 0) % cells.length;
+    const activeCell = cells[cellIndex];
+    if (activeCell) {
+        activeCell.style.outline = '3px solid #16f79e';
+        activeCell.classList.add('active-player-cell');
     }
 }
 
@@ -530,6 +558,11 @@ function renderPlayerTokens(room, innerPositions) {
         token.style.top = `${pos.y + offset}px`;
         container.appendChild(token);
     });
+    
+    // Синхронизируем подсветку с активным игроком
+    if (room.activePlayerId) {
+        highlightActivePlayer(room);
+    }
 }
 
 

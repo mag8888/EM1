@@ -144,8 +144,15 @@ async function loadRoomsFromSQLite() {
         for (const roomData of allRooms) {
             const roomState = await sqliteDb.loadRoomState(roomData.id);
             if (roomState) {
+                // Ensure all players have proper tokenOffset for visual positioning
+                if (roomState.players && roomState.players.length > 0) {
+                    roomState.players.forEach((player, index) => {
+                        player.tokenOffset = index; // Set visual offset for multiple players
+                    });
+                }
+                
                 rooms.set(roomState.id, roomState);
-                console.log(`✅ Loaded room: ${roomState.id} (${roomState.status})`);
+                console.log(`✅ Loaded room: ${roomState.id} (${roomState.status}) with ${roomState.players?.length || 0} players`);
             }
         }
     } catch (error) {
@@ -157,7 +164,23 @@ async function loadRoomsFromSQLite() {
 async function saveRoomToSQLite(room) {
     if (!sqliteDb) return;
     try {
+        console.log('💾 Saving room state to database:', {
+            roomId: room.id,
+            status: room.status,
+            activeIndex: room.activeIndex,
+            playersCount: room.players?.length || 0,
+            players: room.players?.map(p => ({
+                userId: p.userId,
+                name: p.name,
+                position: p.position,
+                track: p.track,
+                cash: p.cash,
+                passiveIncome: p.passiveIncome
+            }))
+        });
+        
         await sqliteDb.saveRoomState(room);
+        console.log('✅ Room state saved successfully');
     } catch (error) {
         console.error('❌ Failed to save room to database:', error);
     }
