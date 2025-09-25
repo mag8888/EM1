@@ -387,6 +387,13 @@ class DealsModule {
         // Добавляем стили
         this.addModalStyles();
         
+        // Обработчик клика по overlay для закрытия
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeModal(modal);
+            }
+        });
+        
         return modal;
     }
     
@@ -408,6 +415,22 @@ class DealsModule {
                 justify-content: center;
                 align-items: center;
                 z-index: 10000;
+                opacity: 1;
+                transition: opacity 0.3s ease;
+            }
+            
+            .deals-modal.modal-closing {
+                opacity: 0;
+                pointer-events: none;
+            }
+            
+            .deals-modal-content {
+                transform: scale(1);
+                transition: transform 0.3s ease;
+            }
+            
+            .deals-modal.modal-closing .deals-modal-content {
+                transform: scale(0.9);
             }
             
             .deals-modal-content {
@@ -609,6 +632,13 @@ class DealsModule {
             </div>
         `;
         
+        // Обработчик клика по overlay для закрытия
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeModal(modal);
+            }
+        });
+        
         return modal;
     }
 
@@ -631,15 +661,77 @@ class DealsModule {
     async buyCard(card, playerId) {
         try {
             const roomId = window.gameState?.roomId;
-            if (roomId) {
-                // Сообщаем серверу о покупке (пассивный доход и т.д.)
-                await fetch(`/api/rooms/${roomId}/deals/resolve`, {
+            const gameState = window.gameState?.state;
+            
+            if (roomId && gameState) {
+                // Получаем данные игрока
+                const player = gameState.players?.find(p => p.userId === playerId);
+                if (!player) {
+                    console.error('🎴 DealsModule: Игрок не найден');
+                    return;
+                }
+
+                // Проверяем баланс игрока
+                const currentBalance = player.cash || 0;
+                const cardCost = card.cost || 0;
+                
+                if (currentBalance < cardCost) {
+                    alert(`Недостаточно средств! Нужно: $${cardCost}, доступно: $${currentBalance}`);
+                    return;
+                }
+
+                // Отправляем запрос на сервер для покупки
+                const response = await fetch(`/api/rooms/${roomId}/deals/resolve`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'buy', deal: { id: card.id, name: card.name, amount: card.cost, income: card.income } })
+                    body: JSON.stringify({ 
+                        action: 'buy', 
+                        deal: { 
+                            id: card.id, 
+                            name: card.name, 
+                            amount: cardCost, 
+                            income: card.income || 0,
+                            type: card.type || 'smallDeal'
+                        } 
+                    })
                 });
+
+                if (response.ok) {
+                    // Списываем деньги с баланса игрока
+                    player.cash = Math.max(0, currentBalance - cardCost);
+                    
+                    // Добавляем карту в активы игрока
+                    if (!player.assets) {
+                        player.assets = [];
+                    }
+                    player.assets.push({
+                        id: card.id,
+                        name: card.name,
+                        purchasePrice: cardCost,
+                        monthlyIncome: card.income || 0,
+                        type: card.type || 'smallDeal',
+                        icon: card.icon || '📈'
+                    });
+
+                    console.log(`🎴 DealsModule: Игрок ${playerId} купил карту ${card.name} за $${cardCost}`);
+                    
+                    // Отправляем уведомление о покупке актива
+                    if (window.notificationService) {
+                        await window.notificationService.notifyBalanceChange(
+                            player.name || player.username,
+                            -cardCost,
+                            'покупка актива'
+                        );
+                    }
+                } else {
+                    console.error('🎴 DealsModule: Ошибка покупки карты на сервере');
+                    return;
+                }
             }
-        } catch (_) {}
+        } catch (error) {
+            console.error('🎴 DealsModule: Ошибка покупки карты:', error);
+            return;
+        }
 
         // Локально добавляем карту в активы
         if (!this.playerAssets.has(playerId)) {
@@ -651,7 +743,6 @@ class DealsModule {
         this.currentDeal = null;
         this.isDealActive = false;
 
-        console.log(`🎴 DealsModule: Игрок ${playerId} купил карту ${card.name}`);
         this.notifyCardBought(card, playerId);
     }
     
@@ -743,6 +834,13 @@ class DealsModule {
             this.closeModal(modal);
         });
         
+        // Обработчик клика по overlay для закрытия
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeModal(modal);
+            }
+        });
+        
         return modal;
     }
     
@@ -806,6 +904,13 @@ class DealsModule {
         
         modal.querySelector('.close-btn').addEventListener('click', () => {
             this.closeModal(modal);
+        });
+        
+        // Обработчик клика по overlay для закрытия
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeModal(modal);
+            }
         });
         
         return modal;
@@ -881,7 +986,15 @@ class DealsModule {
     // Закрытие модального окна
     closeModal(modal) {
         if (modal && modal.parentNode) {
-            modal.parentNode.removeChild(modal);
+            // Добавляем анимацию закрытия
+            modal.classList.add('modal-closing');
+            
+            // Удаляем модальное окно после анимации
+            setTimeout(() => {
+                if (modal && modal.parentNode) {
+                    modal.parentNode.removeChild(modal);
+                }
+            }, 300);
         }
     }
     

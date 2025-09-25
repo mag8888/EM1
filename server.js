@@ -1898,18 +1898,36 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
         
         const { action, deal } = req.body || {};
 
-        // Apply minimal effects: if user buys a deal, add passive income
-        if (action === 'buy' && deal && typeof deal.income === 'number') {
+        // Apply effects: if user buys a deal, deduct cost and add passive income
+        if (action === 'buy' && deal) {
             const buyerId = room.players?.[0]?.userId || null;
             const player = (room.players || []).find(p => String(p.userId) === String(buyerId));
             if (player) {
-                player.passiveIncome = Number(player.passiveIncome || 0) + Number(deal.income || 0);
+                const dealCost = Number(deal.amount || deal.cost || 0);
+                const dealIncome = Number(deal.income || 0);
+                
+                // Проверяем, достаточно ли денег у игрока
+                if (player.cash < dealCost) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: `Недостаточно средств! Нужно: $${dealCost}, доступно: $${player.cash}` 
+                    });
+                }
+                
+                // Списываем деньги с баланса игрока
+                player.cash = Math.max(0, player.cash - dealCost);
+                
+                // Добавляем пассивный доход
+                player.passiveIncome = Number(player.passiveIncome || 0) + dealIncome;
+                
+                // Добавляем актив в портфель игрока
                 if (!Array.isArray(player.assets)) player.assets = [];
                 player.assets.push({
                     id: deal.id || Date.now().toString(),
                     name: deal.name || 'Сделка',
-                    income: Number(deal.income || 0),
-                    cost: Number(deal.amount || deal.cost || 0),
+                    purchasePrice: dealCost,
+                    monthlyIncome: dealIncome,
+                    type: deal.type || 'smallDeal',
                 });
             }
         }
