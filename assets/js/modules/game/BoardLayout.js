@@ -545,11 +545,37 @@ function renderPlayerTokens(room, innerPositions) {
         lion: '🦁', tiger: '🐯', fox: '🦊', panda: '🐼', frog: '🐸', owl: '🦉', octopus: '🐙', whale: '🐋'
     };
 
+    // Цвета для обводки фишек игроков
+    const playerColors = [
+        '#16f79e', // Зеленый
+        '#ff6b6b', // Красный
+        '#4ecdc4', // Бирюзовый
+        '#45b7d1', // Синий
+        '#96ceb4', // Мятный
+        '#feca57', // Желтый
+        '#ff9ff3', // Розовый
+        '#54a0ff'  // Голубой
+    ];
+
     (room.players || []).forEach((p, idx) => {
         const token = document.createElement('div');
         token.className = 'player-token';
         token.dataset.userId = p.userId;
         token.textContent = tokenEmojiMap[p.selectedToken] || '🔷';
+        
+        // Добавляем цветную обводку
+        const playerColor = playerColors[idx % playerColors.length];
+        token.style.border = `3px solid ${playerColor}`;
+        token.style.boxShadow = `0 0 10px ${playerColor}40, inset 0 0 5px ${playerColor}20`;
+        token.style.backgroundColor = `${playerColor}20`;
+        token.style.borderRadius = '50%';
+        token.style.padding = '2px';
+        
+        // Добавляем класс active для активного игрока
+        if (room.activePlayerId && p.userId === room.activePlayerId) {
+            token.classList.add('active');
+        }
+        
         const posIndex = Number(p.position || 0) % (innerPositions.length || 1);
         const pos = innerPositions[posIndex] || { x: 0, y: 0 };
         const offsetStep = 8;
