@@ -418,30 +418,22 @@ function renderTracks(room = null) {
     });
 }
 
-// Анимация перемещения фишки по внутреннему кругу
+// Анимация перемещения фишки по внутреннему кругу с синхронизированной подсветкой
 function animateInnerMove(pathIndices, delayMs = 500, userId = null) {
-    // В простом варианте подсвечиваем клетки по пути
     const inner = document.getElementById('innerTrack');
     if (!inner || !Array.isArray(pathIndices) || pathIndices.length === 0) return;
+    
     const cells = Array.from(inner.children);
-    let idx = 0;
-    const timer = setInterval(() => {
-        cells.forEach(c => c.style.outline = '');
-        const cellIndex = pathIndices[idx];
-        const cell = cells[cellIndex];
-        if (cell) cell.style.outline = '2px solid #16f79e';
-        idx++;
-        if (idx >= pathIndices.length) {
-            clearInterval(timer);
-            setTimeout(() => cells.forEach(c => c.style.outline = ''), delayMs);
-        }
-    }, delayMs);
-
-    // Двигаем фишку игрока по точкам пути
     const positions = window._innerPositionsCache || [];
     const tokensLayer = document.getElementById('playerTokens');
+    
     if (!tokensLayer || positions.length === 0) return;
-    // Если не указан userId, пробуем текущего пользователя
+    
+    // Устанавливаем флаг анимации
+    window._isAnimatingMove = true;
+    console.log('🎬 Starting move animation for user:', userId);
+    
+    // Находим фишку игрока
     let targetId = userId;
     if (!targetId) {
         try { targetId = window.GameState?.getUserId?.() || null; } catch (_) {}
@@ -449,33 +441,63 @@ function animateInnerMove(pathIndices, delayMs = 500, userId = null) {
     const token = targetId
         ? tokensLayer.querySelector(`.player-token[data-user-id="${String(targetId)}"]`)
         : tokensLayer.querySelector('.player-token');
-    if (!token) return;
+    if (!token) {
+        window._isAnimatingMove = false;
+        return;
+    }
+
+    // Убираем все предыдущие подсветки
+    cells.forEach(c => {
+        c.style.outline = '';
+        c.classList.remove('active-player-cell');
+    });
+
     // Включаем плавную анимацию перемещения и масштаба
     token.style.transition = 'left 200ms ease-in, top 200ms ease-in, transform 150ms ease-in-out';
+    
     let moveIdx = 0;
     const stepMove = () => {
         const cellIndex = pathIndices[moveIdx];
         const pos = positions[cellIndex];
+        
         if (pos) {
-            // Между клетками — лёгкое увеличение
+            // Синхронизированное движение фишки и подсветка клетки
             token.style.transform = 'scale(1.12)';
             token.style.left = `${pos.x}px`;
             token.style.top = `${pos.y}px`;
+            
+            // Подсвечиваем текущую клетку
+            cells.forEach(c => c.style.outline = '');
+            const cell = cells[cellIndex];
+            if (cell) {
+                cell.style.outline = '3px solid #16f79e';
+                cell.classList.add('active-player-cell');
+            }
         }
+        
         const isLast = moveIdx >= pathIndices.length - 1;
         moveIdx++;
+        
         if (isLast) {
-            // На клетке — уменьшение к норме и небольшая пауза
+            // На финальной клетке — уменьшение к норме
             setTimeout(() => {
                 token.style.transition = 'left 220ms ease-out, top 220ms ease-out, transform 220ms ease-out';
                 token.style.transform = 'scale(1.0)';
+                
+                // Завершаем анимацию
+                setTimeout(() => {
+                    window._isAnimatingMove = false;
+                    console.log('🎬 Move animation completed');
+                }, 500);
             }, 120);
-            return; // завершили
+            return;
         }
-        // Быстрый ритм между клетками
+        
+        // Продолжаем движение
         setTimeout(stepMove, Math.max(160, Math.floor(delayMs * 0.5)));
     };
-    // Первый шаг запускаем сразу, затем ускоренный темп, финал с замедлением
+    
+    // Запускаем анимацию
     stepMove();
 }
 
@@ -502,15 +524,25 @@ function renderPlayerTokensFromState(innerPositions) {
     if (window.gameState && window.gameState.state && Array.isArray(window.gameState.state.players)) {
         renderPlayerTokens(window.gameState.state, innerPositions);
         
-        // Синхронизируем подсветку с активным игроком
-        highlightActivePlayer(window.gameState.state);
+        // Синхронизируем подсветку с активным игроком только если нет анимации
+        if (!window._isAnimatingMove) {
+            highlightActivePlayer(window.gameState.state);
+        } else {
+            console.log('🎬 Skipping highlight update during animation');
+        }
     }
 }
 
-// Подсветка активного игрока
+// Подсветка активного игрока (только если ход завершен)
 function highlightActivePlayer(gameState) {
     const inner = document.getElementById('innerTrack');
     if (!inner || !gameState.activePlayerId) return;
+    
+    // Проверяем, не идет ли сейчас анимация движения
+    if (window._isAnimatingMove) {
+        console.log('🎬 Animation in progress, skipping highlight update');
+        return;
+    }
     
     // Убираем все подсветки
     const cells = Array.from(inner.children);
@@ -585,8 +617,8 @@ function renderPlayerTokens(room, innerPositions) {
         container.appendChild(token);
     });
     
-    // Синхронизируем подсветку с активным игроком
-    if (room.activePlayerId) {
+    // Синхронизируем подсветку с активным игроком только если нет анимации
+    if (room.activePlayerId && !window._isAnimatingMove) {
         highlightActivePlayer(room);
     }
 }
