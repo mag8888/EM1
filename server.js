@@ -187,13 +187,13 @@ async function saveRoomToSQLite(room) {
 }
 
 // Cell event processing
-function processCellEvent(player, position) {
+function processCellEvent(player, position, roomId) {
     // Определяем тип клетки по позиции (1-24)
     const cellType = getCellTypeByPosition(position);
     
     switch (cellType) {
         case 'yellow_payday':
-            return processSalaryDay(player);
+            return processSalaryDay(player, roomId);
         case 'purple_baby':
             return processBabyBorn(player);
         case 'green_opportunity':
@@ -266,7 +266,7 @@ function getCellTypeByPosition(position) {
 }
 
 // Process salary day event
-function processSalaryDay(player) {
+function processSalaryDay(player, roomId) {
     console.log(`💰 PAYDAY: Обработка зарплаты для ${player.name}`);
     console.log(`💰 PAYDAY: Профессия:`, player.profession);
     console.log(`💰 PAYDAY: Текущий баланс: $${player.cash || 0}`);
@@ -293,6 +293,20 @@ function processSalaryDay(player) {
     }
     
     console.log(`💰 PAYDAY для ${player.name}: +$${totalIncome}, -$${totalExpenses}, баланс: $${oldCash} → $${player.cash}`);
+
+    // Синхронизируем с банковским балансом (интерфейс /api/bank)
+    try {
+        if (roomId && typeof ensureBalance === 'function') {
+            const username = player.name || player.username || String(player.userId);
+            const bankBal = ensureBalance(roomId, username, 0);
+            const delta = (totalIncome - totalExpenses);
+            bankBal.amount = Number(bankBal.amount || 0) + Number(delta || 0);
+            pushHistory(roomId, { type: 'payday', username, amount: delta, timestamp: Date.now() });
+            console.log(`💰 PAYDAY Bank sync: ${username} ${delta >= 0 ? '+' : ''}${delta}, new bank balance: ${bankBal.amount}`);
+        }
+    } catch (e) {
+        console.warn('⚠️ PAYDAY bank sync failed:', e?.message || e);
+    }
     
     return {
         type: 'salary_day',
@@ -735,7 +749,9 @@ app.post('/api/rooms/:roomId/start', (req, res) => {
             return res.status(400).json({ success: false, message: 'Недостаточно готовых игроков' });
         }
         room.status = 'playing';
-        room.activeIndex = 0; // Первый игрок начинает
+        // Случайно выбираем первого игрока
+        const playersCount = (room.players || []).length || 1;
+        room.activeIndex = Math.floor(Math.random() * playersCount);
         // Инициализация стартовых позиций на малом круге
         const order = (room.players || []).length;
         (room.players || []).forEach((p, idx) => {
@@ -1529,7 +1545,7 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
 
         // Обработка события клетки
         console.log(`🎯 Обработка события клетки для игрока ${activePlayer.name} на позиции ${activePlayer.position}`);
-        const cellEvent = processCellEvent(activePlayer, activePlayer.position);
+        const cellEvent = processCellEvent(activePlayer, activePlayer.position, room.id);
         if (cellEvent) {
             console.log(`⚡ Событие клетки: ${cellEvent.type} для игрока ${activePlayer.name}`);
             console.log(`⚡ Детали события:`, cellEvent);
