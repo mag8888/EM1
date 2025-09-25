@@ -412,7 +412,7 @@ class DealsModule {
             .deals-modal-content {
                 background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
                 border-radius: 20px;
-                padding: 30px;
+                padding: 24px 24px 20px 24px;
                 max-width: 500px;
                 width: 90%;
                 box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
@@ -468,6 +468,10 @@ class DealsModule {
                 font-size: 32px;
                 margin-bottom: 10px;
             }
+            .deal-card-content { display:flex; flex-direction:column; gap:14px; }
+            .deal-card-details { display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; margin-bottom:6px; }
+            .deal-card-actions { display:grid; grid-template-columns:1fr; gap:12px; margin-top:8px; }
+            .btn-warning { background: linear-gradient(135deg, #ffd166 0%, #fcbf49 100%); color:#1f2937; }
             
             .deal-title {
                 font-size: 18px;
@@ -496,6 +500,12 @@ class DealsModule {
             .cancel-btn:hover {
                 background: #c53030;
             }
+            .action-btn, .deal-btn, .cancel-btn, .player-btn, .btn { width:100%; padding:14px 18px; border-radius:14px; border:none; font-weight:700; letter-spacing:.2px; cursor:pointer; transition:all .2s ease-in-out; outline:none; }
+            .btn-primary { background: linear-gradient(135deg, #16f79e 0%, #0ecf82 100%); color:#0b1729; }
+            .btn-secondary { background: linear-gradient(135deg, #1f2937 0%, #111827 100%); color:#e5e7eb; }
+            .btn-danger { background: linear-gradient(135deg, #ff6b6b 0%, #f14646 100%); color:#fff; }
+            .btn[disabled] { opacity:.55; cursor:not-allowed; }
+            @media (max-width: 480px) { .deals-modal-content { padding:18px; } .action-btn, .deal-btn, .cancel-btn, .player-btn, .btn { padding:12px 14px; } }
         `;
         
         document.head.appendChild(styles);
@@ -538,6 +548,17 @@ class DealsModule {
         modal.querySelector('.transfer-btn').addEventListener('click', () => {
             this.showTransferOptions(card, playerId);
         });
+
+        // Кредит — открываем модуль банка
+        const creditBtn = modal.querySelector('.credit-btn');
+        if (creditBtn) {
+            creditBtn.addEventListener('click', () => {
+                try {
+                    const v = Date.now();
+                    window.open(`/game-board/bank-module.html?v=${v}`, 'bankModule', 'width=720,height=840,scrollbars=yes');
+                } catch (_) {}
+            });
+        }
     }
     
     // Создание модального окна карты сделки
@@ -574,6 +595,7 @@ class DealsModule {
                     <div class="deal-card-actions">
                         <button class="btn btn-primary buy-btn" ${isOwner ? '' : 'disabled'}>Купить</button>
                         <button class="btn btn-secondary transfer-btn" ${isOwner ? '' : 'disabled'}>Передать</button>
+                        <button class="btn btn-warning credit-btn">Взять кредит</button>
                         <button class="btn btn-danger pass-btn">Отмена</button>
                     </div>
                 </div>
@@ -584,21 +606,30 @@ class DealsModule {
     }
     
     // Покупка карты
-    buyCard(card, playerId) {
-        // Добавляем карту в активы игрока
+    async buyCard(card, playerId) {
+        try {
+            const roomId = window.gameState?.roomId;
+            if (roomId) {
+                // Сообщаем серверу о покупке (пассивный доход и т.д.)
+                await fetch(`/api/rooms/${roomId}/deals/resolve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'buy', deal: { id: card.id, name: card.name, amount: card.cost, income: card.income } })
+                });
+            }
+        } catch (_) {}
+
+        // Локально добавляем карту в активы
         if (!this.playerAssets.has(playerId)) {
             this.playerAssets.set(playerId, []);
         }
-        
         this.playerAssets.get(playerId).push(card);
-        
+
         // Сбрасываем текущую сделку
         this.currentDeal = null;
         this.isDealActive = false;
-        
+
         console.log(`🎴 DealsModule: Игрок ${playerId} купил карту ${card.name}`);
-        
-        // Уведомляем о покупке
         this.notifyCardBought(card, playerId);
     }
     
