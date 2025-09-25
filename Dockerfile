@@ -1,4 +1,4 @@
-# Используем Alpine Linux с Node.js (минимальный образ)
+# Используем Alpine Linux с Node.js (минимальный образ) - FORCE UPDATE
 FROM alpine:3.18
 
 # Устанавливаем Node.js и необходимые пакеты
