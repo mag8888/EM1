@@ -359,7 +359,16 @@ app.post('/api/rooms', async (req, res) => {
                     position: 0,
                     cash: 10000,
                     passiveIncome: 0,
-                    assets: []
+                    assets: [],
+                    profession: {
+                        id: 'engineer',
+                        name: 'Инженер',
+                        description: 'Разработчик программного обеспечения',
+                        icon: '🚀',
+                        salary: 5000,
+                        expenses: 3000,
+                        color: '#4CAF50'
+                    }
                 }
             ]
         };
@@ -509,7 +518,16 @@ app.post('/api/rooms/:roomId/join', async (req, res) => {
                 position: 0,
                 cash: 10000,
                 passiveIncome: 0,
-                assets: []
+                assets: [],
+                profession: {
+                    id: 'teacher',
+                    name: 'Учитель',
+                    description: 'Преподаватель в школе',
+                    icon: '📚',
+                    salary: 3000,
+                    expenses: 2000,
+                    color: '#2196F3'
+                }
             });
             room.updatedAt = new Date().toISOString();
             room.lastActivity = Date.now();
@@ -785,7 +803,11 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
                 position: player.position || 0,
                 track: player.track || 'inner',
                 tokenOffset: player.tokenOffset || 0,
-                selectedToken: player.selectedToken || null
+                selectedToken: player.selectedToken || null,
+                profession: player.profession || null,
+                cash: player.cash || 0,
+                passiveIncome: player.passiveIncome || 0,
+                assets: player.assets || []
             })),
             currentPlayer: player,
             gameStarted: room.status === 'playing',
@@ -1369,7 +1391,11 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
                 position: player.position || 0,
                 track: player.track || 'inner',
                 tokenOffset: player.tokenOffset || 0,
-                selectedToken: player.selectedToken || null
+                selectedToken: player.selectedToken || null,
+                profession: player.profession || null,
+                cash: player.cash || 0,
+                passiveIncome: player.passiveIncome || 0,
+                assets: player.assets || []
             })),
             currentTurn: 1,
             phase: 'waiting',
