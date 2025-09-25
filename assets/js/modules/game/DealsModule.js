@@ -1012,6 +1012,13 @@ class DealsModule {
             const currentUserId = this.getCurrentPlayerId();
             
             // Отправляем запрос на сервер
+            console.log(`🔍 Передача актива:`, {
+                cardId: card.id,
+                cardName: card.name,
+                fromPlayerId,
+                toPlayerId
+            });
+            
             const response = await fetch(`/api/rooms/${roomId}/assets/transfer`, {
                 method: 'POST',
                 headers: { 
@@ -1020,6 +1027,7 @@ class DealsModule {
                 },
                 body: JSON.stringify({ 
                     assetId: card.id, 
+                    assetName: card.name, // Добавляем имя актива для поиска
                     targetUserId: toPlayerId 
                 })
             });

@@ -2062,15 +2062,15 @@ app.post('/api/rooms/:roomId/assets/transfer', (req, res) => {
             return res.status(404).json({ success: false, message: 'Комната не найдена' });
         }
 
-        const { assetId, targetUserId } = req.body;
+        const { assetId, assetName, targetUserId } = req.body;
         const userId = req.headers['x-user-id'];
         
         if (!userId) {
             return res.status(401).json({ success: false, message: 'User ID required' });
         }
 
-        if (!assetId || !targetUserId) {
-            return res.status(400).json({ success: false, message: 'Asset ID and target user ID required' });
+        if ((!assetId && !assetName) || !targetUserId) {
+            return res.status(400).json({ success: false, message: 'Asset ID/Name and target user ID required' });
         }
 
         // Находим отправителя и получателя
@@ -2083,10 +2083,31 @@ app.post('/api/rooms/:roomId/assets/transfer', (req, res) => {
 
         // Находим актив у отправителя
         const fromAssets = fromPlayer.assets || [];
-        const assetIndex = fromAssets.findIndex(asset => String(asset.id || asset.assetId) === String(assetId));
+        console.log(`🔍 Поиск актива ${assetId || assetName} у игрока ${fromPlayer.name}`);
+        console.log(`🔍 Активы игрока:`, fromAssets.map(a => ({ id: a.id, name: a.name })));
+        
+        // Пробуем найти актив по ID или имени
+        let assetIndex = -1;
+        
+        if (assetId) {
+            assetIndex = fromAssets.findIndex(asset => 
+                String(asset.id || asset.assetId) === String(assetId)
+            );
+        }
+        
+        // Если не нашли по ID, пробуем найти по имени
+        if (assetIndex === -1 && assetName) {
+            assetIndex = fromAssets.findIndex(asset => 
+                asset.name && asset.name.toLowerCase().includes(assetName.toLowerCase())
+            );
+        }
 
         if (assetIndex === -1) {
-            return res.status(404).json({ success: false, message: 'Актив не найден у отправителя' });
+            console.log(`❌ Актив ${assetId} не найден у отправителя ${fromPlayer.name}`);
+            return res.status(404).json({ 
+                success: false, 
+                message: `Актив не найден у отправителя. Доступные активы: ${fromAssets.map(a => a.name).join(', ')}` 
+            });
         }
 
         // Получаем актив
