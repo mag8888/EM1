@@ -60,13 +60,17 @@ export class TurnController {
             activeIndex: snapshot.activeIndex
         });
         
-        if (isMyTurn && snapshot.turnTimeLeft !== undefined && snapshot.turnTimeLeft > 0) {
-            console.log('🕒 Starting server timer with', snapshot.turnTimeLeft, 'seconds');
-            this.startServerTimer(snapshot.turnTimeLeft);
-        } else if (isMyTurn) {
-            const turnTime = this.state.getTurnTimeSec(120);
-            console.log('🕒 Starting client timer with', turnTime, 'seconds');
-            this.startTurnTimer(turnTime);
+        if (isMyTurn) {
+            // Приоритет: серверный таймер, если есть данные
+            if (snapshot.turnTimeLeft !== undefined && snapshot.turnTimeLeft > 0) {
+                console.log('🕒 Starting server timer with', snapshot.turnTimeLeft, 'seconds');
+                this.startServerTimer(snapshot.turnTimeLeft);
+            } else {
+                // Fallback: клиентский таймер с данными из комнаты
+                const turnTime = snapshot.turnTime || this.state.getTurnTimeSec(120);
+                console.log('🕒 Starting client timer with', turnTime, 'seconds (fallback)');
+                this.startTurnTimer(turnTime);
+            }
         } else {
             console.log('🕒 Clearing timers - not my turn');
             this.clearTimers();
