@@ -290,6 +290,15 @@ const respondWithRoom = (res, room, userId, { includePlayers = true } = {}) => {
 
 const ensureGameState = (room) => {
     if (!room.gameState) {
+        // Назначаем одинаковую профессию всем игрокам при начале игры
+        const defaultProfession = room.defaultProfession || 'entrepreneur';
+        const professionCard = getProfessionCard(defaultProfession);
+        
+        room.players.forEach(player => {
+            player.professionId = defaultProfession;
+            player.profession = professionCard;
+        });
+        
         const turnOrder = room.players.map(player => getPlayerIdentifier(player)).filter(Boolean);
         room.gameState = {
             startedAt: new Date().toISOString(),
@@ -319,7 +328,9 @@ const buildGameState = (room, userId) => {
             selectedToken: player.selectedToken || null,
             position: player.position || 0,
             cash: player.cash ?? 10000,
-            passiveIncome: player.passiveIncome ?? 0
+            passiveIncome: player.passiveIncome ?? 0,
+            profession: player.profession || null,
+            professionId: player.professionId || null
         }));
 
     const activePlayerId = gameState.turnOrder[gameState.activePlayerIndex] || null;

@@ -415,6 +415,18 @@ const initializeGame = (room) => {
         throw new Error('Все готовые игроки должны выбрать мечту и фишку');
     }
 
+    // Назначаем одинаковую профессию всем игрокам
+    const defaultProfession = {
+        id: 'entrepreneur',
+        name: 'Предприниматель',
+        description: 'Владелец успешного бизнеса',
+        salary: 10000,
+        expenses: 6200,
+        cashFlow: 3800,
+        color: '#00ff96',
+        icon: '🚀'
+    };
+
     room.players.forEach(player => {
         player.isReady = true;
         player.position = 0;
@@ -425,12 +437,33 @@ const initializeGame = (room) => {
         player.assets = [];
         player.stats = createPlayerStats();
         player.dreamAchieved = false;
+        // Назначаем одинаковую профессию всем игрокам
+        player.profession = defaultProfession;
+        player.professionId = 'entrepreneur';
     });
+
+    // Создаем рандомный порядок ходов
+    const shuffledTurnOrder = shuffle(readyPlayers.map(player => player.userId.toString()));
+    
+    // Назначаем нового хоста - первый игрок в рандомном порядке
+    const newHostId = shuffledTurnOrder[0];
+    
+    // Обновляем статус хоста у всех игроков
+    room.players.forEach(player => {
+        player.isHost = (player.userId.toString() === newHostId);
+    });
+    
+    // Обновляем информацию о создателе комнаты
+    const newHost = room.players.find(p => p.userId.toString() === newHostId);
+    if (newHost) {
+        room.creatorId = newHost.userId;
+        room.creatorName = newHost.name;
+    }
 
     room.gameState = {
         startedAt: Date.now(),
         activePlayerIndex: 0,
-        turnOrder: shuffle(readyPlayers.map(player => player.userId.toString())),
+        turnOrder: shuffledTurnOrder,
         phase: 'awaiting_roll',
         lastRoll: null,
         pendingDeal: null,

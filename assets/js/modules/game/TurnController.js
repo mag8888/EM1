@@ -152,10 +152,24 @@ export class TurnController {
                             console.log('🎬 Calling animateInnerMove with userId:', currentUserId);
                             window.animateInnerMove?.(moveData.path, 500, currentUserId);
                         }
+                        
+                        // Обновляем UI после успешного броска и движения
+                        const currentPlayer = this.state?.getCurrentPlayer();
+                        const isMyTurn = this.state?.isMyTurn() || false;
+                        this.updateUI(isMyTurn, currentPlayer);
                     }
                 } catch (error) {
                     console.error('Ошибка движения:', error);
+                    // Обновляем UI даже если движение не удалось, но бросок был успешным
+                    const currentPlayer = this.state?.getCurrentPlayer();
+                    const isMyTurn = this.state?.isMyTurn() || false;
+                    this.updateUI(isMyTurn, currentPlayer);
                 }
+            } else {
+                // Если результат не получен, но бросок был выполнен, обновляем UI
+                const currentPlayer = this.state?.getCurrentPlayer();
+                const isMyTurn = this.state?.isMyTurn() || false;
+                this.updateUI(isMyTurn, currentPlayer);
             }
         } catch (error) {
             console.error('Ошибка броска кубика:', error);
@@ -185,9 +199,13 @@ export class TurnController {
                 this.notifier.show('Ошибка завершения хода', { type: 'error' });
             }
         } finally {
-            this.endTurnButton.disabled = false;
-            // Разблокируем кнопку броска кубика при завершении хода
-            this.rollButton.disabled = false;
+            // Сбрасываем флаг броска кубика при завершении хода
+            this.hasRolledThisTurn = false;
+            
+            // Обновляем UI через updateUI для правильного состояния кнопок
+            const currentPlayer = this.state?.getCurrentPlayer();
+            const isMyTurn = this.state?.isMyTurn() || false;
+            this.updateUI(isMyTurn, currentPlayer);
         }
     }
 
@@ -269,6 +287,9 @@ export class TurnController {
     nextPlayer() {
         this.currentPhase = 'waiting';
         this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.turnOrder.length;
+        
+        // Сбрасываем флаг броска кубика для нового игрока
+        this.hasRolledThisTurn = false;
         
         const currentPlayer = this.getCurrentPlayer();
         console.log(`🎮 Переход к игроку ${currentPlayer?.name}`);
