@@ -529,7 +529,8 @@ class DealsModule {
     
     // Показать карту сделки
     showDealCard(card, playerId) {
-        const isOwner = String(this.getCurrentPlayerId()) === String(playerId);
+        const myId = String(this.getCurrentPlayerId());
+        const isOwner = myId === String(playerId);
         const modal = this.createDealCardModal(card, { isOwner });
         document.body.appendChild(modal);
         
@@ -871,7 +872,13 @@ class DealsModule {
     
     // Получение ID текущего игрока
     getCurrentPlayerId() {
-        // Пытаемся получить из различных источников
+        // Пытаемся получить из различных источников (в приоритете GameState)
+        try {
+            if (window.gameState && typeof window.gameState.getUserId === 'function') {
+                const id = window.gameState.getUserId();
+                if (id) return String(id);
+            }
+        } catch (_) {}
         if (window.state && window.state.getCurrentPlayer) {
             const player = window.state.getCurrentPlayer();
             return player?.userId || player?.id;
@@ -884,7 +891,7 @@ class DealsModule {
         
         // Fallback - берем из localStorage или cookie
         const currentRoom = JSON.parse(localStorage.getItem('currentRoom') || '{}');
-        return currentRoom.userId || 'player1';
+        return currentRoom.userId || localStorage.getItem('userId') || 'player1';
     }
     
     // Обновление счетчиков карт в UI

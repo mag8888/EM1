@@ -1081,10 +1081,10 @@ app.get('/api/bank/credit/status/:username/:roomId', (req, res) => {
         const { username, roomId } = req.params;
         const loan = ensureLoan(roomId, username);
 
-        // Find room and player's passive income
+        // Find room and player's passive income (fallback to profession cashFlow)
         const room = rooms.get(roomId);
         const player = (room?.players || []).find(p => p.name === username || p.username === username);
-        const cashflow = Number(player?.passiveIncome || 0);
+        const cashflow = Number(player?.passiveIncome || player?.profession?.cashFlow || 0);
         const step = 1000;
         const ratePerStep = 100; // cashflow decreases per 1000
         const maxSteps = Math.max(0, Math.floor(cashflow / ratePerStep));
