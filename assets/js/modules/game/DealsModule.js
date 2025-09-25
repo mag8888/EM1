@@ -601,8 +601,19 @@ class DealsModule {
         if (creditBtn) {
             creditBtn.addEventListener('click', () => {
                 try {
+                    // Закрываем предыдущее окно банка, если оно открыто
+                    if (window.bankWindow && !window.bankWindow.closed) {
+                        window.bankWindow.close();
+                    }
+                    
                     const v = Date.now();
-                    window.open(`/game-board/bank-module.html?v=${v}`, 'bankModule', 'width=720,height=840,scrollbars=yes');
+                    const features = 'width=720,height=840,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no';
+                    window.bankWindow = window.open(`/game-board/bank-module.html?v=${v}`, 'bankModule', features);
+                    
+                    // Фокусируем новое окно
+                    if (window.bankWindow) {
+                        window.bankWindow.focus();
+                    }
                 } catch (_) {}
             });
         }

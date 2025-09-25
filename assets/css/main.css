@@ -232,6 +232,30 @@ body {
 
 .card-modal.show {
     opacity: 1;
+    z-index: 1001;
+}
+
+/* Предотвращение перекрытия модальных окон */
+.card-modal + .card-modal {
+    z-index: 1002;
+}
+
+/* Банковские модальные окна */
+.bank-modal {
+    z-index: 1100 !important;
+}
+
+.bank-modal.show {
+    z-index: 1101 !important;
+}
+
+/* Сделки модальные окна */
+.deals-modal {
+    z-index: 1200 !important;
+}
+
+.deals-modal.show {
+    z-index: 1201 !important;
 }
 
 .card-modal-content {
