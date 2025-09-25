@@ -30,11 +30,14 @@ class DealsModule {
     
     // Загрузка данных карточек
     loadDealsData() {
-        // Загружаем расширенные данные карточек
-        this.loadExtendedCardsData();
+        console.log('🎴 DealsModule: Начинаем загрузку данных карточек');
+        
+        // Сначала пытаемся загрузить расширенные данные
+        const extendedLoaded = this.loadExtendedCardsData();
         
         // Если не удалось загрузить расширенные данные, используем базовые
-        if (this.decks.bigDeal.length === 0) {
+        if (!extendedLoaded) {
+            console.log('🎴 DealsModule: Расширенные данные не загружены, используем базовые');
             this.loadBasicCardsData();
         }
         
@@ -55,6 +58,12 @@ class DealsModule {
     // Загрузка расширенных данных карточек
     loadExtendedCardsData() {
         try {
+            console.log('🎴 DealsModule: Проверяем доступность расширенных данных...');
+            console.log('🎴 DealsModule: window.FULL_SMALL_DEALS:', typeof window.FULL_SMALL_DEALS, window.FULL_SMALL_DEALS?.length);
+            console.log('🎴 DealsModule: window.FULL_BIG_DEALS:', typeof window.FULL_BIG_DEALS, window.FULL_BIG_DEALS?.length);
+            console.log('🎴 DealsModule: window.MARKET_CARDS:', typeof window.MARKET_CARDS, window.MARKET_CARDS?.length);
+            console.log('🎴 DealsModule: window.EXPENSE_CARDS:', typeof window.EXPENSE_CARDS, window.EXPENSE_CARDS?.length);
+            
             // Пытаемся загрузить из внешнего файла
             if (typeof window !== 'undefined' && window.FULL_SMALL_DEALS && window.FULL_BIG_DEALS) {
                 this.decks.smallDeal = window.FULL_SMALL_DEALS.map(card => ({
@@ -92,14 +101,17 @@ class DealsModule {
                     market: this.decks.market.length,
                     expenses: this.decks.expenses.length
                 });
-                return;
+                return true;
             }
             
+            console.log('🎴 DealsModule: Расширенные данные недоступны, пытаемся загрузить с сервера...');
             // Пытаемся загрузить через fetch
             this.loadCardsFromServer();
+            return false;
             
         } catch (error) {
             console.warn('⚠️ DealsModule: Не удалось загрузить расширенные данные:', error);
+            return false;
         }
     }
     

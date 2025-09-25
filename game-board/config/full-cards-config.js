@@ -114,7 +114,16 @@ const FULL_BIG_DEALS = [
     { id: 'big_024', name: 'Франшиза "Энергия денег"', cost: 100000, income: 10000, description: 'Франшиза на страну игры "Энергия денег" - прибыльный образовательный бизнес', type: 'big_deal', category: 'franchise', icon: '🎮', color: '#3b82f6' }
 ];
 
-module.exports = {
-    FULL_SMALL_DEALS,
-    FULL_BIG_DEALS
-};
+// Экспорт для браузера
+if (typeof window !== 'undefined') {
+    window.FULL_SMALL_DEALS = FULL_SMALL_DEALS;
+    window.FULL_BIG_DEALS = FULL_BIG_DEALS;
+}
+
+// Экспорт для Node.js
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        FULL_SMALL_DEALS,
+        FULL_BIG_DEALS
+    };
+}
