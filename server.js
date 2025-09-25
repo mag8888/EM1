@@ -37,8 +37,16 @@ const initializeDatabase = async () => {
         
     } catch (error) {
         console.error('❌ MongoDB connection failed:', error.message);
-        console.error('❌ Server will not start without MongoDB connection');
-        process.exit(1); // Exit if MongoDB connection fails
+        console.error('❌ Server requires MongoDB Atlas connection');
+        
+        // Проверяем, что мы на Railway или принудительно включен режим Railway
+        const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID || process.env.FORCE_RAILWAY_MODE;
+        if (isRailway) {
+            console.error('❌ Railway deployment requires MongoDB Atlas');
+            process.exit(1);
+        } else {
+            console.warn('⚠️ Local development: MongoDB not required');
+        }
     }
 };
 
@@ -125,15 +133,22 @@ let sqliteDb = null;
 // Initialize database and load rooms
 async function initializeSQLite() {
     try {
+        // Проверяем, что мы на Railway или принудительно включен режим Railway
+        const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID || process.env.FORCE_RAILWAY_MODE;
+        if (!isRailway) {
+            console.log('🔄 Not on Railway, skipping SQLite initialization');
+            return;
+        }
+        
         sqliteDb = new SQLiteDatabase();
         await sqliteDb.init();
-        console.log('✅ SQLite database initialized');
+        console.log('✅ SQLite database initialized on Railway');
         
         // Load existing rooms from database
         await loadRoomsFromSQLite();
-        console.log('✅ Rooms loaded from database');
+        console.log('✅ Rooms loaded from Railway database');
     } catch (error) {
-        console.error('❌ Failed to initialize database:', error);
+        console.error('❌ Failed to initialize Railway database:', error);
     }
 }
 
@@ -2024,15 +2039,29 @@ app.get('*', (req, res) => {
 // Initialize database and start server
 const startServer = async () => {
     try {
-        // Initialize database first
-        await initializeSQLite();
+        // Проверяем, что мы на Railway или принудительно включен режим Railway
+        const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID || process.env.FORCE_RAILWAY_MODE;
+        
+        // Initialize database first (only on Railway)
+        if (isRailway) {
+            await initializeSQLite();
+        }
         
         app.listen(PORT, () => {
             console.log('🎮 EM1 Game Board v2.0 Production Server запущен!');
             console.log(`🚀 Сервер работает на порту ${PORT}`);
             console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
             console.log(`🔗 URL: ${process.env.RAILWAY_ENVIRONMENT ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : `http://localhost:${PORT}`}`);
-            console.log(`💾 Database: SQLite + MongoDB Atlas`);
+            
+            if (isRailway) {
+                console.log('🚂 Railway deployment detected');
+                console.log(`💾 Database: ${dbConnected ? 'MongoDB Atlas + SQLite' : 'Memory only'}`);
+            } else {
+                console.log('💻 Local development mode');
+                console.log(`💾 Database: ${dbConnected ? 'MongoDB Atlas' : 'Memory only'}`);
+                console.log('⚠️ SQLite disabled for local development');
+            }
+            
             console.log('✅ Готов к обслуживанию файлов');
         });
     } catch (error) {
