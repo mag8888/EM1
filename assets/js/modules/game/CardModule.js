@@ -817,13 +817,25 @@ export class CardModule {
                     if (player) {
                         const salary = player.profession?.salary || 0;
                         const passiveIncome = player.passiveIncome || 0;
-                        const totalIncome = salary + passiveIncome;
+                        const expenses = player.profession?.expenses || 0;
                         
-                        if (totalIncome > 0) {
+                        // Чистый доход = зарплата + пассивный доход - расходы
+                        const netIncome = salary + passiveIncome - expenses;
+                        
+                        console.log(`💰 Зарплата: $${salary}, Пассивный доход: $${passiveIncome}, Расходы: $${expenses}, Чистый доход: $${netIncome}`);
+                        
+                        if (netIncome > 0) {
                             await this.notificationService.notifyBalanceChange(
                                 player.name || player.username,
-                                totalIncome,
+                                netIncome,
                                 'зарплата'
+                            );
+                        } else {
+                            // Если чистый доход отрицательный или нулевой
+                            await this.notificationService.notifyBalanceChange(
+                                player.name || player.username,
+                                0,
+                                'зарплата (без изменений)'
                             );
                         }
                     }
