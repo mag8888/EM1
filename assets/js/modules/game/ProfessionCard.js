@@ -47,7 +47,7 @@ class ProfessionCard {
             {
                 id: 'entrepreneur',
                 name: 'Предприниматель',
-                description: 'Владелец успешного бизнеса',
+                description: 'Владелец бизнеса',
                 salary: 10000,
                 expenses: 6200,
                 cashFlow: 3800,

@@ -73,7 +73,7 @@ async function initializeDefaultProfession() {
         if (!existingProfession) {
             const defaultProfession = new Profession({
                 name: 'Предприниматель',
-                description: 'Владелец успешного бизнеса',
+                description: 'Владелец бизнеса',
                 category: 'entrepreneur',
                 difficulty: 'medium',
                 startingFinancials: {
