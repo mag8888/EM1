@@ -1185,10 +1185,15 @@ app.get('/api/bank/credit/status/:username/:roomId', (req, res) => {
         const { username, roomId } = req.params;
         const loan = ensureLoan(roomId, username);
 
-        // Find room and player's passive income (fallback to profession cashFlow)
+        // Find room and player's income (passive income or salary)
         const room = rooms.get(roomId);
         const player = (room?.players || []).find(p => p.name === username || p.username === username);
-        const cashflow = Number(player?.passiveIncome || player?.profession?.cashFlow || 0);
+        
+        // Используем пассивный доход, если есть, иначе зарплату
+        const passiveIncome = Number(player?.passiveIncome || 0);
+        const salary = Number(player?.profession?.salary || 0);
+        const cashflow = passiveIncome > 0 ? passiveIncome : salary;
+        
         const step = 1000;
         const ratePerStep = 100; // cashflow decreases per 1000
         const maxSteps = Math.max(0, Math.floor(cashflow / ratePerStep));
@@ -1225,7 +1230,12 @@ app.post('/api/bank/credit/take', (req, res) => {
 
         const step = 1000;
         const ratePerStep = 100;
-        const cashflow = Number(player.passiveIncome || 0);
+        
+        // Используем пассивный доход, если есть, иначе зарплату
+        const passiveIncome = Number(player.passiveIncome || 0);
+        const salary = Number(player.profession?.salary || 0);
+        const cashflow = passiveIncome > 0 ? passiveIncome : salary;
+        
         const maxAvailable = Math.floor(cashflow / ratePerStep) * step;
         if (sum > maxAvailable) {
             return res.status(400).json({ error: 'Превышен лимит кредита' });
@@ -1234,12 +1244,26 @@ app.post('/api/bank/credit/take', (req, res) => {
         // Update loan and player
         const loan = ensureLoan(roomId, username);
         loan.amount = Number(loan.amount || 0) + sum;
-        player.passiveIncome = Math.max(0, cashflow - (sum / 1000) * ratePerStep);
+        
+        // Уменьшаем пассивный доход или зарплату
+        if (passiveIncome > 0) {
+            player.passiveIncome = Math.max(0, passiveIncome - (sum / 1000) * ratePerStep);
+        } else {
+            player.profession.salary = Math.max(0, salary - (sum / 1000) * ratePerStep);
+        }
 
         // Credit funds to balance
         const bal = ensureBalance(roomId, username);
         bal.amount += sum;
-        pushHistory(roomId, { from: 'Банк', to: username, amount: sum, roomId, timestamp: Date.now(), type: 'credit_take' });
+        pushHistory(roomId, { 
+            from: 'Банк', 
+            to: username, 
+            amount: sum, 
+            roomId, 
+            reason: 'взятие кредита',
+            timestamp: Date.now(), 
+            type: 'credit_take' 
+        });
 
         res.json({ success: true, loanAmount: loan.amount, newBalance: bal, cashflow: player.passiveIncome });
     } catch (error) {
@@ -1272,14 +1296,30 @@ app.post('/api/bank/credit/repay', (req, res) => {
         loan.amount -= sum;
         bal.amount -= sum;
 
-        // Restore cashflow on player
+        // Restore cashflow on player (пассивный доход или зарплату)
         const room = rooms.get(roomId);
         const player = (room?.players || []).find(p => p.name === username || p.username === username);
         if (player) {
-            player.passiveIncome = Number(player.passiveIncome || 0) + (sum / 1000) * 100;
+            const passiveIncome = Number(player.passiveIncome || 0);
+            const salary = Number(player.profession?.salary || 0);
+            const restoredAmount = (sum / 1000) * 100;
+            
+            if (passiveIncome > 0) {
+                player.passiveIncome = passiveIncome + restoredAmount;
+            } else {
+                player.profession.salary = salary + restoredAmount;
+            }
         }
 
-        pushHistory(roomId, { from: username, to: 'Банк', amount: sum, roomId, timestamp: Date.now(), type: 'credit_repay' });
+        pushHistory(roomId, { 
+            from: username, 
+            to: 'Банк', 
+            amount: sum, 
+            roomId, 
+            reason: 'погашение кредита',
+            timestamp: Date.now(), 
+            type: 'credit_repay' 
+        });
         res.json({ success: true, loanAmount: loan.amount, newBalance: bal, cashflow: player?.passiveIncome || 0 });
     } catch (error) {
         console.error('Credit repay error:', error);
