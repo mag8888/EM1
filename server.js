@@ -1339,7 +1339,7 @@ app.get('/api/bank/history/:roomId', (req, res) => {
 });
 
 // Make transfer
-app.post('/api/bank/transfer', async (req, res) => {
+app.post('/api/bank/transfer', (req, res) => {
     try {
         const { from, to, amount, roomId } = req.body || {};
         const sum = Number(amount);
@@ -1362,30 +1362,6 @@ app.post('/api/bank/transfer', async (req, res) => {
             timestamp: Date.now() 
         };
         pushHistory(roomId, record);
-        
-        // Сохраняем изменения в MongoDB
-        try {
-            const room = rooms.get(roomId);
-            if (room) {
-                // Обновляем баланс игроков в комнате
-                const fromPlayer = room.players?.find(p => p.name === from);
-                const toPlayer = room.players?.find(p => p.name === to);
-                
-                if (fromPlayer) {
-                    fromPlayer.balance = fromBal.amount;
-                }
-                if (toPlayer) {
-                    toPlayer.balance = toBal.amount;
-                }
-                
-                // Сохраняем комнату в MongoDB
-                await saveRoomToSQLite(room);
-                console.log(`💾 Перевод $${sum} от ${from} к ${to} сохранен в MongoDB`);
-            }
-        } catch (saveError) {
-            console.error('❌ Ошибка сохранения перевода:', saveError);
-        }
-        
         res.json({ success: true, newBalance: { amount: fromBal.amount }, record });
     } catch (error) {
         console.error('Ошибка перевода:', error);
@@ -1441,19 +1417,25 @@ app.get('/api/bank/credit/status/:username/:roomId', (req, res) => {
         const room = rooms.get(roomId);
         const player = (room?.players || []).find(p => p.name === username || p.username === username);
         
-        // Используем пассивный доход, если есть, иначе зарплату
+        // PAYDAY (net income) = salary + passiveIncome - totalExpenses
         const passiveIncome = Number(player?.passiveIncome || 0);
         const salary = Number(player?.profession?.salary || 0);
-        const cashflow = passiveIncome > 0 ? passiveIncome : salary;
-        
+        const baseExpenses = Number(player?.profession?.expenses || 0);
+        const childExpenses = Number(player?.children || 0) * 1000;
+        const totalExpenses = baseExpenses + childExpenses;
+        const payday = Math.max(0, (salary + passiveIncome) - totalExpenses);
+
+        // Максимальный кредит = PAYDAY * 10
+        const CREDIT_MULTIPLIER = 10;
+        const maxAvailable = Math.max(0, payday * CREDIT_MULTIPLIER);
+
+        // Для совместимости возвращаем также шаг/ставку (не используются при формуле PAYDAY*10)
         const step = 1000;
-        const ratePerStep = 100; // cashflow decreases per 1000
-        const maxSteps = Math.max(0, Math.floor(cashflow / ratePerStep));
-        const maxAvailable = maxSteps * step;
+        const ratePerStep = 100;
 
         res.json({
             loanAmount: Number(loan.amount || 0),
-            cashflow,
+            cashflow: payday,
             maxAvailable,
             step,
             ratePerStep
