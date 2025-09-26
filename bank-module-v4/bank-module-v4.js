@@ -801,7 +801,13 @@ class BankModuleV4 {
                 const isNegativeStartingSavings = (transfer.description || transfer.reason) === 'стартовые сбережения' && 
                                                 Number(transfer.amount) < 0;
                 
-                return !isDuplicate && !isNegativeStartingSavings;
+                // Исключаем записи, которые не относятся к текущему игроку
+                const isNotForCurrentPlayer = transfer.from !== this.playerName && 
+                                            transfer.to !== this.playerName && 
+                                            transfer.sender !== this.playerName && 
+                                            transfer.recipient !== this.playerName;
+                
+                return !isDuplicate && !isNegativeStartingSavings && !isNotForCurrentPlayer;
             });
 
             const orderedTransfers = [...uniqueTransfers].sort((a, b) => {
@@ -816,6 +822,12 @@ class BankModuleV4 {
             });
 
             console.log(`📋 BankModuleV4: История обновлена (${uniqueTransfers.length} уникальных записей из ${this.data.transfers.length})`);
+            
+            // Отладочная информация о фильтрации
+            const filteredOut = this.data.transfers.length - uniqueTransfers.length;
+            if (filteredOut > 0) {
+                console.log(`🔍 BankModuleV4: Отфильтровано ${filteredOut} записей (дубликаты, не для игрока, отрицательные стартовые сбережения)`);
+            }
             
         } catch (error) {
             console.error('❌ BankModuleV4: Ошибка обновления истории:', error);
