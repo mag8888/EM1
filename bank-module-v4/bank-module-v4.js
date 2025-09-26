@@ -336,23 +336,25 @@ class BankModuleV4 {
                 creditData
             });
 
-            // 4. Обновляем локальное состояние модуля
+            // 4. Подготавливаем данные для DataStore
             const salary = Number(financialsData?.salary || 0);
             const passiveIncome = Number(financialsData?.passiveIncome || 0);
             const totalIncome = Number.isFinite(salary + passiveIncome) ? salary + passiveIncome : 0;
             const totalExpenses = Number(financialsData?.totalExpenses || 0);
             const netIncome = Number(financialsData?.netIncome ?? (totalIncome - totalExpenses));
 
-            this.data.balance = Number(balanceData?.amount || 0);
-            this.data.income = totalIncome;
-            this.data.passiveIncome = passiveIncome; // Добавляем пассивный доход отдельно
-            this.data.expenses = totalExpenses;
-            this.data.payday = Number.isFinite(netIncome) ? netIncome : Math.max(0, totalIncome - totalExpenses);
-            this.data.credit = Number(creditData?.loanAmount || 0);
-            this.data.maxCredit = Number(creditData?.maxAvailable || Math.max(0, this.data.payday * CREDIT_MULTIPLIER));
-            this.data.transfers = Array.isArray(historyData) ? historyData : [];
+            const newData = {
+                balance: Number(balanceData?.amount || 0),
+                income: totalIncome,
+                passiveIncome: passiveIncome,
+                expenses: totalExpenses,
+                payday: Number.isFinite(netIncome) ? netIncome : Math.max(0, totalIncome - totalExpenses),
+                credit: Number(creditData?.loanAmount || 0),
+                maxCredit: Number(creditData?.maxAvailable || Math.max(0, (Number.isFinite(netIncome) ? netIncome : Math.max(0, totalIncome - totalExpenses)) * CREDIT_MULTIPLIER)),
+                transfers: Array.isArray(historyData) ? historyData : []
+            };
             
-            // 5. Синхронизируем с DataStore, если доступен
+            // 5. Обновляем DataStore как единый источник истины
             if (window.dataStore) {
                 // Инициализируем DataStore, если еще не инициализирован
                 if (!window.dataStore.isReady()) {
@@ -365,34 +367,24 @@ class BankModuleV4 {
                 }
                 
                 // Обновляем данные в DataStore
-                window.dataStore.update({
-                    balance: this.data.balance,
-                    income: this.data.income,
-                    passiveIncome: this.data.passiveIncome,
-                    expenses: this.data.expenses,
-                    payday: this.data.payday,
-                    credit: this.data.credit,
-                    maxCredit: this.data.maxCredit,
-                    transfers: this.data.transfers
-                });
+                window.dataStore.update(newData);
                 
-                console.log('🔄 BankModuleV4: Данные синхронизированы с DataStore', {
-                    balance: this.data.balance,
-                    income: this.data.income,
-                    expenses: this.data.expenses,
-                    payday: this.data.payday,
-                    credit: this.data.credit
-                });
+                console.log('🔄 BankModuleV4: Данные обновлены в DataStore', newData);
             } else {
                 console.warn('⚠️ BankModuleV4: DataStore недоступен, используем локальные данные');
+                // Fallback к локальным данным только если DataStore недоступен
+                this.data = { ...newData };
             }
 
-            // 6. Обновляем кэш
-            this.cache.data = { ...this.data };
+            // 6. Обновляем кэш из DataStore
+            if (window.dataStore && window.dataStore.isReady()) {
+                this.cache.data = { ...window.dataStore.getAll() };
+            } else {
+                this.cache.data = { ...this.data };
+            }
             this.cache.timestamp = Date.now();
 
-            // 7. Синхронизируем баланс игрока в игре
-            this.syncPlayerBalanceInGame();
+            // 7. Синхронизация через DataStore (убрана прямая синхронизация с gameState)
 
             // 8. Обновляем UI и список получателей
             this.updateUI();
@@ -421,8 +413,16 @@ class BankModuleV4 {
      */
     updateDataFromCache() {
         if (this.cache.data) {
-            this.data = { ...this.cache.data };
-            this.syncPlayerBalanceInGame();
+            // Если DataStore доступен, используем его как источник истины
+            if (window.dataStore && window.dataStore.isReady()) {
+                const dataStoreData = window.dataStore.getAll();
+                this.data = { ...dataStoreData };
+                console.log('📦 BankModuleV4: Данные восстановлены из DataStore');
+            } else {
+                // Fallback к кэшу
+                this.data = { ...this.cache.data };
+                console.log('📦 BankModuleV4: Данные восстановлены из кэша');
+            }
             this.updateUI();
         }
     }
@@ -480,58 +480,18 @@ class BankModuleV4 {
      * Сохранение данных в localStorage для офлайн режима
      */
     saveToLocalStorage() {
-        try {
-            localStorage.setItem('playerBalance', this.data.balance.toString());
-            localStorage.setItem('playerIncome', this.data.income.toString());
-            localStorage.setItem('playerExpenses', this.data.expenses.toString());
-            localStorage.setItem('playerCredit', this.data.credit.toString());
-            localStorage.setItem('playerTransfers', JSON.stringify(this.data.transfers));
-            console.log('💾 BankModuleV4: Данные сохранены в localStorage');
-        } catch (error) {
-            console.error('❌ BankModuleV4: Ошибка сохранения в localStorage:', error);
-        }
+        // Убираем сохранение в localStorage, так как используем DataStore
+        // localStorage может создавать конфликты с DataStore
+        console.log('💾 BankModuleV4: Сохранение в localStorage отключено, используется DataStore');
     }
 
     /**
      * Синхронизация баланса игрока в игре
      */
     syncPlayerBalanceInGame() {
-        try {
-            if (!this.playerName || !this.data.balance) return;
-
-            // Обновляем баланс в глобальном состоянии игры
-            if (window.gameState?.state?.players) {
-                const player = window.gameState.state.players.find(p => 
-                    p.name === this.playerName || 
-                    p.username === this.playerName ||
-                    String(p.userId) === String(this.userId)
-                );
-                
-                if (player) {
-                    const oldBalance = player.cash || 0;
-                    player.cash = this.data.balance;
-                    console.log(`🔄 BankModuleV4: Синхронизация баланса игрока ${this.playerName}: $${oldBalance} → $${this.data.balance}`);
-                }
-            }
-
-            // Обновляем баланс в массиве игроков
-            if (window.players && Array.isArray(window.players)) {
-                const player = window.players.find(p => 
-                    p.name === this.playerName || 
-                    p.username === this.playerName ||
-                    String(p.userId) === String(this.userId)
-                );
-                
-                if (player) {
-                    const oldBalance = player.cash || 0;
-                    player.cash = this.data.balance;
-                    console.log(`🔄 BankModuleV4: Синхронизация в массиве игроков ${this.playerName}: $${oldBalance} → $${this.data.balance}`);
-                }
-            }
-
-        } catch (error) {
-            console.error('❌ BankModuleV4: Ошибка синхронизации баланса игрока:', error);
-        }
+        // Убираем прямые обновления window.gameState, так как это создает конфликты
+        // Синхронизация должна происходить через DataStore и GameModule
+        console.log('🔄 BankModuleV4: Прямая синхронизация с gameState отключена, используется DataStore');
     }
 
     /**
@@ -756,6 +716,9 @@ class BankModuleV4 {
      */
     updateUI() {
         try {
+            // Получаем актуальные данные из DataStore
+            const data = this.getData();
+            
             // Сохраняем текущие значения полей ввода
             const recipientSelect = document.getElementById('recipientSelect');
             const amountInput = document.getElementById('transferAmount');
@@ -768,7 +731,7 @@ class BankModuleV4 {
             // Обновляем баланс
             const balanceEl = document.getElementById('currentBalance');
             if (balanceEl) {
-                balanceEl.textContent = `$${this.data.balance.toLocaleString()}`;
+                balanceEl.textContent = `$${data.balance.toLocaleString()}`;
             }
             
             // Обновляем финансовые детали
@@ -780,14 +743,14 @@ class BankModuleV4 {
             
             const passiveIncomeEl = document.getElementById('passiveIncomeAmount');
             if (passiveIncomeEl) {
-                passiveIncomeEl.textContent = `$0`; // Пока нет пассивного дохода
+                passiveIncomeEl.textContent = `$${data.passiveIncome.toLocaleString()}`;
             }
             
             // Обновляем детализированные расходы
             const currentCreditEl = document.getElementById('currentCreditAmount');
             if (currentCreditEl) {
                 // Каждые $1000 кредита = $100/мес платеж
-                const monthlyPayment = Math.floor(this.data.credit / 1000) * 100;
+                const monthlyPayment = Math.floor(data.credit / 1000) * 100;
                 currentCreditEl.textContent = `$${monthlyPayment.toLocaleString()}`;
             }
             
@@ -831,74 +794,42 @@ class BankModuleV4 {
             // Обновляем общие суммы доходов и расходов
             const totalIncomeEl = document.getElementById('totalIncomeAmount');
             if (totalIncomeEl) {
-                const income = Number(this.data.income || 0);
-                const passiveIncome = Number(this.data.passiveIncome || 0);
-                const totalIncome = income + passiveIncome;
-                totalIncomeEl.textContent = `$${totalIncome.toLocaleString()}`;
+                totalIncomeEl.textContent = `$${data.income.toLocaleString()}`;
             }
             
             const totalExpensesEl = document.getElementById('totalExpensesAmount');
             if (totalExpensesEl) {
-                const childrenCount = this.getChildrenCount();
-                const childrenExpenses = childrenCount * 400;
-                const totalExpenses = this.getTotalExpenses() + childrenExpenses;
-                totalExpensesEl.textContent = `$${totalExpenses.toLocaleString()}`;
+                totalExpensesEl.textContent = `$${data.expenses.toLocaleString()}`;
             }
             
             const netIncomeEl = document.getElementById('netIncomeAmount');
             if (netIncomeEl) {
-                const childrenCount = this.getChildrenCount();
-                const childrenExpenses = childrenCount * 400;
-                const income = Number(this.data.income || 0);
-                const passiveIncome = Number(this.data.passiveIncome || 0);
-                // Чистый доход = доходы - все расходы (включая штраф по кредиту)
-                const totalExpenses = this.getTotalExpenses() + childrenExpenses;
-                const netIncome = (income + passiveIncome) - totalExpenses;
+                const netIncome = data.income - data.expenses;
                 netIncomeEl.textContent = `$${netIncome.toLocaleString()}`;
             }
             
             // Обновляем PAYDAY
             const paydayEl = document.getElementById('paydayAmount');
             if (paydayEl) {
-                const childrenCount = this.getChildrenCount();
-                const childrenExpenses = childrenCount * 400;
-                const income = Number(this.data.income || 0);
-                const passiveIncome = Number(this.data.passiveIncome || 0);
-                // PAYDAY = доходы - все расходы (включая штраф по кредиту)
-                const totalExpenses = this.getTotalExpenses() + childrenExpenses;
-                const payday = (income + passiveIncome) - totalExpenses;
-                paydayEl.textContent = `$${payday.toLocaleString()}/мес`;
+                paydayEl.textContent = `$${data.payday.toLocaleString()}/мес`;
             }
             
             // Обновляем кредитную информацию
             const currentDebtEl = document.getElementById('currentDebt');
             if (currentDebtEl) {
-                currentDebtEl.textContent = `$${(this.data.credit || 0).toLocaleString()}`;
+                currentDebtEl.textContent = `$${data.credit.toLocaleString()}`;
             }
             
-            
-            // Рассчитываем максимальный лимит один раз для обеих полей
-            const childrenCount = this.getChildrenCount();
-            const childrenExpenses = childrenCount * 400;
-            const income = Number(this.data.income || 0);
-            const passiveIncome = Number(this.data.passiveIncome || 0);
-            // Максимальный лимит рассчитывается от базового PAYDAY без учета текущего кредита
-            // Исключаем штраф по кредиту из расчета максимального лимита
-            const creditPenalty = Math.floor((this.data.credit || 0) / 1000) * 100;
-            const baseExpenses = this.getTotalExpenses() + childrenExpenses;
-            const baseNetIncome = (income + passiveIncome) - baseExpenses + creditPenalty;
-            const maxCredit = Math.max(0, baseNetIncome * 10);
-            
+            // Обновляем лимиты кредита из DataStore
             const maxLimitEl = document.getElementById('maxLimit');
             if (maxLimitEl) {
-                maxLimitEl.textContent = `$${maxCredit.toLocaleString()}`;
+                maxLimitEl.textContent = `$${data.maxCredit.toLocaleString()}`;
             }
             
             const freeLimitEl = document.getElementById('freeLimit');
             if (freeLimitEl) {
-                // Свободный лимит = Максимальный лимит (не вычитаем текущий долг)
-                // Текущий долг уже учтен в расходах и платежах
-                freeLimitEl.textContent = `$${maxCredit.toLocaleString()}`;
+                const freeCredit = Math.max(0, data.maxCredit - data.credit);
+                freeLimitEl.textContent = `$${freeCredit.toLocaleString()}`;
             }
             
             // Обновляем историю переводов
@@ -906,7 +837,7 @@ class BankModuleV4 {
 
             const historyCountEl = document.getElementById('historyCount');
             if (historyCountEl) {
-                historyCountEl.textContent = this.data.transfers.length;
+                historyCountEl.textContent = data.transfers.length;
             }
 
             // Восстанавливаем значения полей ввода
@@ -1375,15 +1306,25 @@ class BankModuleV4 {
      * Получение текущих данных
      */
     getData() {
-        // Если доступен DataStore и он готов, используем его как источник истины
+        // Всегда используем DataStore как источник истины
         if (window.dataStore && window.dataStore.isReady()) {
             const dataStoreData = window.dataStore.getBankModuleData();
             console.log('📊 BankModuleV4: Данные получены из DataStore', dataStoreData);
             return dataStoreData;
         }
         
-        // Fallback к локальным данным
-        console.log('📊 BankModuleV4: Данные получены из локального кэша', this.data);
+        // Если DataStore недоступен, инициализируем его
+        if (window.dataStore) {
+            window.dataStore.initialize();
+            if (window.dataStore.isReady()) {
+                const dataStoreData = window.dataStore.getBankModuleData();
+                console.log('📊 BankModuleV4: DataStore инициализирован, данные получены', dataStoreData);
+                return dataStoreData;
+            }
+        }
+        
+        // Fallback к локальным данным только в крайнем случае
+        console.warn('⚠️ BankModuleV4: DataStore недоступен, используем локальные данные', this.data);
         return { ...this.data };
     }
 
