@@ -1103,10 +1103,22 @@ function syncPlayerBalance(roomId, username) {
         
         const bankBalance = ensureBalance(roomId, username);
         
-        // Синхронизируем: банковский баланс = баланс игрока
-        bankBalance.amount = player.cash || 0;
+        // Синхронизируем: игрок получает баланс из банка, если банковский баланс больше
+        const bankAmount = Number(bankBalance.amount || 0);
+        const playerCash = Number(player.cash || 0);
         
-        console.log(`🔄 Синхронизация баланса: ${username} = $${player.cash}`);
+        if (bankAmount > playerCash) {
+            // Банковский баланс больше - обновляем игрока
+            player.cash = bankAmount;
+            console.log(`🔄 Синхронизация: ${username} получил $${bankAmount} из банка`);
+        } else if (playerCash > bankAmount) {
+            // Баланс игрока больше - обновляем банк
+            bankBalance.amount = playerCash;
+            console.log(`🔄 Синхронизация: банк обновлен до $${playerCash} для ${username}`);
+        } else {
+            console.log(`🔄 Синхронизация: балансы уже синхронизированы для ${username} = $${playerCash}`);
+        }
+        
     } catch (error) {
         console.error('Ошибка синхронизации баланса:', error);
     }
@@ -1997,6 +2009,10 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
             if (player) {
                 const dealCost = Number(deal.amount || deal.cost || 0);
                 const dealIncome = Number(deal.income || 0);
+                
+                // СИНХРОНИЗИРУЕМ БАЛАНС ПЕРЕД ПРОВЕРКОЙ
+                console.log(`🔄 Синхронизация баланса перед покупкой для ${player.name || player.username}`);
+                syncPlayerBalance(req.params.roomId, player.name || player.username);
                 
                 console.log(`💰 Стоимость: $${dealCost}, Доход: $${dealIncome}, Баланс игрока: $${player.cash}`);
                 
