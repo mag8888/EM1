@@ -981,7 +981,8 @@ class BankModuleV4 {
                      transfer.sender === this.playerName || transfer.recipient === this.playerName);
                 
                 // Показываем транзакции, которые относятся к игроку ИЛИ являются стартовыми сбережениями для текущего игрока
-                const shouldShow = (isRegularTransactionForCurrentPlayer || shouldShowStartingSavings) && !isDuplicate && !isNegativeStartingSavings;
+                // Убираем проверку на дубликаты для стартовых сбережений, так как они могут быть одинаковыми
+                const shouldShow = (isRegularTransactionForCurrentPlayer || shouldShowStartingSavings) && !isNegativeStartingSavings;
                 
                 if (isStartingSavings) {
                     console.log(`🔍 Стартовые сбережения: amount=${transfer.amount}, to=${transfer.to}, playerName=${this.playerName}, shouldShow=${shouldShow}, isStartingSavingsForCurrentPlayer=${isStartingSavingsForCurrentPlayer}, isDuplicate=${isDuplicate}, isNegativeStartingSavings=${isNegativeStartingSavings}, isRegularTransactionForCurrentPlayer=${isRegularTransactionForCurrentPlayer}`);

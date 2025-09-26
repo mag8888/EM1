@@ -1521,12 +1521,20 @@ app.post('/api/bank/credit/take', (req, res) => {
         const step = 1000;
         const ratePerStep = 100;
         
-        // Используем пассивный доход, если есть, иначе зарплату
+        // Используем общий доход (зарплата + пассивный доход) для расчета лимита
         const passiveIncome = Number(player.passiveIncome || 0);
         const salary = Number(player.profession?.salary || 0);
-        const cashflow = passiveIncome > 0 ? passiveIncome : salary;
+        const totalIncome = salary + passiveIncome;
         
-        const maxAvailable = Math.floor(cashflow / ratePerStep) * step;
+        // Рассчитываем базовые расходы (без учета штрафа по кредиту)
+        const baseExpenses = Number(player.profession?.expenses || 0);
+        const childrenCount = Number(player.children || 0);
+        const childrenExpenses = childrenCount * 400;
+        const totalBaseExpenses = baseExpenses + childrenExpenses;
+        
+        // Базовый чистый доход (без штрафа по кредиту)
+        const baseNetIncome = totalIncome - totalBaseExpenses;
+        const maxAvailable = Math.max(0, Math.floor(baseNetIncome / ratePerStep) * step);
         if (sum > maxAvailable) {
             return res.status(400).json({ error: 'Превышен лимит кредита' });
         }
@@ -1606,6 +1614,9 @@ app.post('/api/bank/credit/repay', (req, res) => {
         
         // Списываем с баланса игрока
         player.cash = Math.max(0, (player.cash || 0) - sum);
+        
+        // Обновляем банковский баланс перед синхронизацией
+        bal.amount = player.cash;
         
         // Синхронизируем банковский баланс
         syncPlayerBalance(roomId, username);

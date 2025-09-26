@@ -101,10 +101,10 @@ export default class PlayerSummary {
             this.professionExpensesEl.textContent = `$${Number(profession.expenses || 0).toLocaleString()}`;
         }
         if (this.professionPassiveEl) {
-            this.professionPassiveEl.textContent = `$${passiveIncome.toLocaleString()}`;
+            this.professionPassiveEl.textContent = `$${(passiveIncome || 0).toLocaleString()}`;
         }
         if (this.professionCashflowEl) {
-            this.professionCashflowEl.textContent = `$${payday.toLocaleString()}`;
+            this.professionCashflowEl.textContent = `$${(payday || 0).toLocaleString()}`;
         }
 
         // Условие перехода на большой круг: пассивный доход > расходы
