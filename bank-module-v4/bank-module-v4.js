@@ -365,7 +365,16 @@ class BankModuleV4 {
             return true;
         } catch (error) {
             console.error('❌ BankModuleV4: Ошибка загрузки данных:', error);
-            return false;
+            
+            // При ошибке API пытаемся загрузить офлайн данные
+            console.log('🔄 BankModuleV4: Переключаемся на офлайн режим');
+            try {
+                await this.loadOfflineData();
+                return true;
+            } catch (offlineError) {
+                console.error('❌ BankModuleV4: Ошибка офлайн режима:', offlineError);
+                return false;
+            }
         } finally {
             this.isLoading = false;
         }
@@ -923,6 +932,12 @@ class BankModuleV4 {
 
             // Обновляем данные (принудительно)
             await this.loadData(true);
+            
+            // Принудительно обновляем UI
+            this.updateUI();
+            
+            // Обновляем историю переводов
+            await this.updateTransfersHistory();
 
             console.log(`✅ BankModuleV4: Перевод $${numericAmount} выполнен`);
             return true;
@@ -1231,6 +1246,14 @@ async function executeTransferV4() {
             // Очищаем форму
             recipientSelect.value = '';
             amountInput.value = '';
+            
+            // Принудительно обновляем данные
+            if (bankModuleV4) {
+                await bankModuleV4.loadData(true);
+                bankModuleV4.updateUI();
+                await bankModuleV4.updateTransfersHistory();
+            }
+            
             alert('Перевод выполнен успешно!');
         }
         
