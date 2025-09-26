@@ -82,6 +82,7 @@ class DreamSelector {
                 <span class="dream-icon">${dream.icon || '🌟'}</span>
                 <span class="dream-name">${dream.name}</span>
                 <span class="dream-cost">$${Number(dream.cost || 0).toLocaleString()}</span>
+                ${dream.id === this.currentDreamId ? '<span class="dream-heart">❤️</span>' : ''}
             `;
 
             // Мечты теперь можно выбирать нескольким игрокам
