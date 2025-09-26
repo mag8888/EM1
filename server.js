@@ -1339,7 +1339,7 @@ app.get('/api/bank/history/:roomId', (req, res) => {
 });
 
 // Make transfer
-app.post('/api/bank/transfer', (req, res) => {
+app.post('/api/bank/transfer', async (req, res) => {
     try {
         const { from, to, amount, roomId } = req.body || {};
         const sum = Number(amount);
