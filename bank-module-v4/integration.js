@@ -29,17 +29,24 @@ function syncDataFromBankV4() {
         window.dataStoreAdapter.syncFromBankModule(data);
         window.dataStoreAdapter.updateUI();
         
-        // Дополнительно обновляем глобальные переменные для совместимости
-        window.currentBalance = data.balance || 0;
-        window.monthlyIncome = data.income || 0;
-        window.monthlyExpenses = data.expenses || 0;
-        window.totalCredit = data.credit || 0;
-        
-        // Принудительно обновляем отображение
-        updateBalanceDisplay();
-        updateFinancesDisplay();
-        updateCreditDisplay();
-        updatePlayerSummary();
+    // Дополнительно обновляем глобальные переменные для совместимости
+    window.currentBalance = data.balance || 0;
+    window.monthlyIncome = data.income || 0;
+    window.monthlyExpenses = data.expenses || 0;
+    window.totalCredit = data.credit || 0;
+
+    // Принудительно обновляем отображение
+    updateBalanceDisplay();
+    updateFinancesDisplay();
+    updateCreditDisplay();
+    updatePlayerSummary();
+    
+    // Дополнительно обновляем bankBalanceValue напрямую
+    const bankBalanceEl = document.getElementById('bankBalanceValue');
+    if (bankBalanceEl) {
+        bankBalanceEl.textContent = `$${(data.balance || 0).toLocaleString()}`;
+        console.log('✅ bankBalanceValue обновлен напрямую:', bankBalanceEl.textContent);
+    }
     } else {
         // Fallback к старой логике, если DataStore недоступен
         window.currentBalance = data.balance;
@@ -61,17 +68,27 @@ function syncDataFromBankV4() {
  */
 function updateBalanceDisplay() {
     const balanceEl = document.getElementById('currentBalance');
+    const bankBalanceEl = document.getElementById('bankBalanceValue');
+    
     console.log('💰 updateBalanceDisplay:', {
         balanceEl: !!balanceEl,
+        bankBalanceEl: !!bankBalanceEl,
         currentBalance: window.currentBalance,
         elementId: 'currentBalance'
     });
     
     if (balanceEl) {
         balanceEl.textContent = `$${window.currentBalance.toLocaleString()}`;
-        console.log('✅ Баланс обновлен в DOM:', balanceEl.textContent);
+        console.log('✅ Баланс обновлен в DOM (currentBalance):', balanceEl.textContent);
     } else {
         console.warn('⚠️ Элемент currentBalance не найден');
+    }
+    
+    if (bankBalanceEl) {
+        bankBalanceEl.textContent = `$${window.currentBalance.toLocaleString()}`;
+        console.log('✅ Баланс обновлен в DOM (bankBalanceValue):', bankBalanceEl.textContent);
+    } else {
+        console.warn('⚠️ Элемент bankBalanceValue не найден');
     }
     
     // Обновляем в банковском модуле
