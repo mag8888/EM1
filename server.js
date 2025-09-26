@@ -1277,18 +1277,14 @@ function syncPlayerBalance(roomId, username) {
         
         const bankBalance = ensureBalance(roomId, username);
         
-        // Синхронизируем: игрок получает баланс из банка, если банковский баланс больше
+        // Синхронизируем: игрок получает баланс из банка (банк - источник истины)
         const bankAmount = Number(bankBalance.amount || 0);
         const playerCash = Number(player.cash || 0);
         
-        if (bankAmount > playerCash) {
-            // Банковский баланс больше - обновляем игрока
+        // Банковский баланс - источник истины, обновляем игрока
+        if (bankAmount !== playerCash) {
             player.cash = bankAmount;
-            console.log(`🔄 Синхронизация: ${username} получил $${bankAmount} из банка`);
-        } else if (playerCash > bankAmount) {
-            // Баланс игрока больше - обновляем банк
-            bankBalance.amount = playerCash;
-            console.log(`🔄 Синхронизация: банк обновлен до $${playerCash} для ${username}`);
+            console.log(`🔄 Синхронизация: ${username} обновлен до $${bankAmount} из банка (было $${playerCash})`);
         } else {
             console.log(`🔄 Синхронизация: балансы уже синхронизированы для ${username} = $${playerCash}`);
         }
@@ -1374,16 +1370,27 @@ app.post('/api/bank/transfer', (req, res) => {
     try {
         const { from, to, amount, roomId } = req.body || {};
         const sum = Number(amount);
+        
+        console.log(`💸 Перевод: ${from} → ${to}, сумма: $${sum}, комната: ${roomId}`);
+        
         if (!roomId || !from || !to || !Number.isFinite(sum) || sum <= 0) {
             return res.status(400).json({ error: 'Неверные параметры перевода' });
         }
+        
         const fromBal = ensureBalance(roomId, from);
         const toBal = ensureBalance(roomId, to);
+        
+        console.log(`💸 Балансы до перевода: ${from}=$${fromBal.amount}, ${to}=$${toBal.amount}`);
+        
         if (fromBal.amount < sum) {
             return res.status(400).json({ error: 'Недостаточно средств' });
         }
+        
         fromBal.amount -= sum;
         toBal.amount += sum;
+        
+        console.log(`💸 Балансы после перевода: ${from}=$${fromBal.amount}, ${to}=$${toBal.amount}`);
+        
         const record = { 
             from, 
             to, 
@@ -1393,6 +1400,11 @@ app.post('/api/bank/transfer', (req, res) => {
             timestamp: Date.now() 
         };
         pushHistory(roomId, record);
+        
+        // Синхронизируем балансы игроков
+        syncPlayerBalance(roomId, from);
+        syncPlayerBalance(roomId, to);
+        
         res.json({ success: true, newBalance: { amount: fromBal.amount }, record });
     } catch (error) {
         console.error('Ошибка перевода:', error);
