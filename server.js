@@ -1530,7 +1530,16 @@ app.post('/api/bank/credit/take', (req, res) => {
         }
 
         // Credit funds to player balance
-        player.cash = (player.cash || 0) + sum;
+        const oldCash = player.cash || 0;
+        player.cash = oldCash + sum;
+        
+        console.log(`💰 Кредит: ${username} получил $${sum}, баланс: $${oldCash} → $${player.cash}`);
+        
+        // Обновляем банковский баланс
+        const bankBalance = ensureBalance(roomId, username);
+        bankBalance.amount = player.cash;
+        
+        console.log(`💰 Банковский баланс обновлен: ${username} = $${bankBalance.amount}`);
         
         // Синхронизируем банковский баланс
         syncPlayerBalance(roomId, username);
