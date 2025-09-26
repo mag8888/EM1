@@ -24,7 +24,7 @@ function syncDataFromBankV4() {
     
     // Обновляем глобальные переменные
     window.currentBalance = data.balance;
-    window.monthlyIncome = data.income;
+    window.monthlyIncome = data.income; // Это уже общий доход (зарплата + пассивный доход)
     window.monthlyExpenses = data.expenses;
     window.totalCredit = data.credit;
     
@@ -58,10 +58,24 @@ function updateBalanceDisplay() {
  * Обновление финансов в table.html
  */
 function updateFinancesDisplay() {
-    const incomeEl = document.getElementById('monthlyIncome');
+    // Обновляем элементы внешней панели банка
+    const incomeEl = document.getElementById('incomeValue');
+    const expenseEl = document.getElementById('expenseValue');
+    const paydayEl = document.getElementById('paydayValue');
+    const loanEl = document.getElementById('loanValue');
+    
     if (incomeEl) {
+        incomeEl.textContent = `$${window.monthlyIncome.toLocaleString()}`;
+    }
+    if (expenseEl) {
+        expenseEl.textContent = `$${window.monthlyExpenses.toLocaleString()}`;
+    }
+    if (paydayEl) {
         const payday = Math.max(0, window.monthlyIncome - window.monthlyExpenses);
-        incomeEl.textContent = `$${payday.toLocaleString()}/мес`;
+        paydayEl.textContent = `$${payday.toLocaleString()}/мес`;
+    }
+    if (loanEl) {
+        loanEl.textContent = `$${window.totalCredit.toLocaleString()}`;
     }
     
     console.log(`💰 PAYDAY: доход $${window.monthlyIncome.toLocaleString()} - расходы $${window.monthlyExpenses.toLocaleString()} = $${Math.max(0, window.monthlyIncome - window.monthlyExpenses).toLocaleString()}`);
@@ -97,31 +111,11 @@ function updatePlayerSummary() {
         }
     }
     
-    // Альтернативный способ - через прямой поиск в DOM
-    const incomeEl = document.getElementById('incomeValue');
-    const expenseEl = document.getElementById('expenseValue');
-    const paydayEl = document.getElementById('paydayValue');
-    const loanEl = document.getElementById('loanValue');
+    // Обновляем пассивный доход отдельно, если элемент существует
     const passiveIncomeEl = document.getElementById('passiveIncomeValue');
-    
-    if (bankModuleV4) {
+    if (passiveIncomeEl && bankModuleV4) {
         const data = bankModuleV4.getData();
-        
-        if (incomeEl) {
-            incomeEl.textContent = `$${(data.income || 0).toLocaleString()}`;
-        }
-        if (expenseEl) {
-            expenseEl.textContent = `$${(data.expenses || 0).toLocaleString()}`;
-        }
-        if (paydayEl) {
-            paydayEl.textContent = `$${(data.payday || 0).toLocaleString()}/мес`;
-        }
-        if (loanEl) {
-            loanEl.textContent = `$${(data.credit || 0).toLocaleString()}`;
-        }
-        if (passiveIncomeEl) {
-            passiveIncomeEl.textContent = `$${(data.passiveIncome || 0).toLocaleString()}`;
-        }
+        passiveIncomeEl.textContent = `$${(data.passiveIncome || 0).toLocaleString()}`;
     }
 }
 

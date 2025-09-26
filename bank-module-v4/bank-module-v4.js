@@ -345,6 +345,7 @@ class BankModuleV4 {
 
             this.data.balance = Number(balanceData?.amount || 0);
             this.data.income = totalIncome;
+            this.data.passiveIncome = passiveIncome; // Добавляем пассивный доход отдельно
             this.data.expenses = totalExpenses;
             this.data.payday = Number.isFinite(netIncome) ? netIncome : Math.max(0, totalIncome - totalExpenses);
             this.data.credit = Number(creditData?.loanAmount || 0);
