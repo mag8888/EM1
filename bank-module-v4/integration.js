@@ -33,6 +33,9 @@ function syncDataFromBankV4() {
     updateFinancesDisplay();
     updateCreditDisplay();
     
+    // Обновляем PlayerSummary если он доступен
+    updatePlayerSummary();
+    
     console.log('🔄 Данные синхронизированы из BankModuleV4:', data);
 }
 
@@ -77,6 +80,48 @@ function updateCreditDisplay() {
     if (maxCreditEl) {
         const maxCredit = Math.max(0, window.monthlyIncome * 10);
         maxCreditEl.textContent = `$${maxCredit.toLocaleString()}`;
+    }
+}
+
+/**
+ * Обновление PlayerSummary из банковского модуля
+ */
+function updatePlayerSummary() {
+    // Ищем PlayerSummary в глобальных модулях игры
+    if (window.gameState && window.gameState.modules) {
+        const playerSummary = window.gameState.modules.find(module => 
+            module.constructor.name === 'PlayerSummary'
+        );
+        if (playerSummary && typeof playerSummary.render === 'function') {
+            playerSummary.render();
+        }
+    }
+    
+    // Альтернативный способ - через прямой поиск в DOM
+    const incomeEl = document.getElementById('incomeValue');
+    const expenseEl = document.getElementById('expenseValue');
+    const paydayEl = document.getElementById('paydayValue');
+    const loanEl = document.getElementById('loanValue');
+    const passiveIncomeEl = document.getElementById('passiveIncomeValue');
+    
+    if (bankModuleV4) {
+        const data = bankModuleV4.getData();
+        
+        if (incomeEl) {
+            incomeEl.textContent = `$${data.income.toLocaleString()}`;
+        }
+        if (expenseEl) {
+            expenseEl.textContent = `$${data.expenses.toLocaleString()}`;
+        }
+        if (paydayEl) {
+            paydayEl.textContent = `$${data.payday.toLocaleString()}/мес`;
+        }
+        if (loanEl) {
+            loanEl.textContent = `$${data.credit.toLocaleString()}`;
+        }
+        if (passiveIncomeEl) {
+            passiveIncomeEl.textContent = `$${data.passiveIncome.toLocaleString()}`;
+        }
     }
 }
 
@@ -247,6 +292,7 @@ function safeCallBankFunction(functionName, ...args) {
 window.updateBalanceDisplay = updateBalanceDisplay;
 window.updateFinancesDisplay = updateFinancesDisplay;
 window.updateCreditDisplay = updateCreditDisplay;
+window.updatePlayerSummary = updatePlayerSummary;
 window.addBalance = addBalance;
 window.subtractBalance = subtractBalance;
 window.addMonthlyIncome = addMonthlyIncome;

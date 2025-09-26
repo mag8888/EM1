@@ -35,24 +35,42 @@ export default class PlayerSummary {
         if (!player) {
             return;
         }
-        const passiveIncome = Number(player.passiveIncome || 0);
-        // Общий доход = зарплата + пассивный доход (если доступны данные профессии)
-        const salary = Number(player.profession?.salary || 0);
-        const totalIncome = salary + passiveIncome;
-        this.setText(this.incomeEl, `$${totalIncome.toLocaleString()}`);
-        // Отдельно показываем пассивный доход
-        if (this.passiveIncomeEl) {
-            this.passiveIncomeEl.textContent = `$${passiveIncome.toLocaleString()}`;
+
+        // Используем данные из банковского модуля как единый источник истины
+        let bankData = null;
+        if (window.bankModuleV4) {
+            bankData = window.bankModuleV4.getData();
         }
-        // Расходы = базовые расходы профессии + ежемесячный платёж по кредитам
-        const baseExpenses = Number(player.profession?.expenses || 0);
-        const creditExpense = Number(window._creditExpense || 0);
-        const expenses = baseExpenses + creditExpense;
-        this.setText(this.expenseEl, `$${expenses.toLocaleString()}`);
-        this.setText(this.loanEl, '$0');
-        // PAYDAY = (зарплата + пассивный доход) - расходы
-        const payday = totalIncome - expenses;
-        this.setText(this.paydayEl, `$${payday.toLocaleString()}/мес`);
+
+        if (bankData) {
+            // Данные из банковского модуля
+            this.setText(this.incomeEl, `$${bankData.income.toLocaleString()}`);
+            if (this.passiveIncomeEl) {
+                this.passiveIncomeEl.textContent = `$${bankData.passiveIncome.toLocaleString()}`;
+            }
+            this.setText(this.expenseEl, `$${bankData.expenses.toLocaleString()}`);
+            this.setText(this.loanEl, `$${bankData.credit.toLocaleString()}`);
+            this.setText(this.paydayEl, `$${bankData.payday.toLocaleString()}/мес`);
+        } else {
+            // Fallback к старой логике, если банковский модуль недоступен
+            const passiveIncome = Number(player.passiveIncome || 0);
+            const salary = Number(player.profession?.salary || 0);
+            const totalIncome = salary + passiveIncome;
+            this.setText(this.incomeEl, `$${totalIncome.toLocaleString()}`);
+            
+            if (this.passiveIncomeEl) {
+                this.passiveIncomeEl.textContent = `$${passiveIncome.toLocaleString()}`;
+            }
+            
+            const baseExpenses = Number(player.profession?.expenses || 0);
+            const creditExpense = Number(window._creditExpense || 0);
+            const expenses = baseExpenses + creditExpense;
+            this.setText(this.expenseEl, `$${expenses.toLocaleString()}`);
+            this.setText(this.loanEl, '$0');
+            
+            const payday = totalIncome - expenses;
+            this.setText(this.paydayEl, `$${payday.toLocaleString()}/мес`);
+        }
 
         const profession = player.profession || {};
         if (this.professionNameEl) {
