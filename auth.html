@@ -378,7 +378,7 @@
                 <div class="form-group">
                     <label class="form-label">Пароль</label>
                     <div class="input-group">
-                        <input type="password" class="form-input" id="loginPassword" name="password" autocomplete="current-password" data-lastpass-icon="disable" placeholder="Введите пароль" required>
+                        <input type="password" class="form-input" id="loginPassword" name="password" autocomplete="current-password" data-lastpass-icon="disable" placeholder="Введите пароль">
                         <span class="input-icon password-toggle" onclick="togglePassword('loginPassword', this)">👁</span>
                     </div>
                 </div>
@@ -504,7 +504,8 @@
             toggleLoading(true);
 
             const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
+            // Временно убираем проверку пароля
+            // const password = document.getElementById('loginPassword').value;
             const rememberMe = document.getElementById('rememberMe').checked;
 
             // Создаем скрытую форму для Chrome password manager (только для триггера сохранения пароля)
@@ -520,14 +521,15 @@
             emailInput.value = email;
             emailInput.autocomplete = 'email';
             
-            const passwordInput = document.createElement('input');
-            passwordInput.type = 'password';
-            passwordInput.name = 'password';
-            passwordInput.value = password;
-            passwordInput.autocomplete = 'current-password';
+            // Временно убираем пароль из скрытой формы
+            // const passwordInput = document.createElement('input');
+            // passwordInput.type = 'password';
+            // passwordInput.name = 'password';
+            // passwordInput.value = password;
+            // passwordInput.autocomplete = 'current-password';
             
             hiddenForm.appendChild(emailInput);
-            hiddenForm.appendChild(passwordInput);
+            // hiddenForm.appendChild(passwordInput);
             document.body.appendChild(hiddenForm);
             // ВАЖНО: НЕ отправляем скрытую форму, чтобы не было навигации на /api/auth/login
             // Браузеры (Chrome) все равно предлагают сохранить пароль по факту отправки fetch ниже
@@ -540,7 +542,7 @@
                     },
                     body: JSON.stringify({
                         email,
-                        password,
+                        // password, // Временно убираем проверку пароля
                         rememberMe
                     })
                 });

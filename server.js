@@ -1794,9 +1794,14 @@ app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         
-        if (!email || !password) {
-            return res.status(400).json({ error: 'Email и пароль обязательны' });
+        if (!email) {
+            return res.status(400).json({ error: 'Email обязателен' });
         }
+        
+        // Временно убираем проверку пароля
+        // if (!password) {
+        //     return res.status(400).json({ error: 'Пароль обязателен' });
+        // }
         
         // Find user
         let user = null;
@@ -1812,13 +1817,14 @@ app.post('/api/auth/login', async (req, res) => {
             const allowAutoCreate = (process.env.AUTH_AUTO_CREATE_ON_LOGIN || 'true').toLowerCase() !== 'false';
             if (allowAutoCreate) {
                 const usernameFromEmail = String(email).split('@')[0] || 'user';
-                const hashedPassword = await bcrypt.hash(password, 10);
+                // Временно убираем хеширование пароля
+                // const hashedPassword = await bcrypt.hash(password, 10);
                 const userId = Date.now().toString();
                 user = {
                     id: userId,
                     username: usernameFromEmail,
                     email,
-                    password: hashedPassword,
+                    password: 'no_password', // Временно убираем проверку пароля
                     createdAt: new Date(),
                     isActive: true
                 };
@@ -1829,11 +1835,11 @@ app.post('/api/auth/login', async (req, res) => {
             }
         }
         
-        // Check password
-        const isValidPassword = await bcrypt.compare(password, user.password);
-        if (!isValidPassword) {
-            return res.status(401).json({ error: 'Неверный email или пароль' });
-        }
+        // Временно убираем проверку пароля
+        // const isValidPassword = await bcrypt.compare(password, user.password);
+        // if (!isValidPassword) {
+        //     return res.status(401).json({ error: 'Неверный email или пароль' });
+        // }
         
         // Generate JWT token
         const token = jwt.sign(
