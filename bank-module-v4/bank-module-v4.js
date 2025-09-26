@@ -742,9 +742,14 @@ class BankModuleV4 {
         const isCreditTake = type === 'credit_take';
         const isCreditRepay = type === 'credit_repay';
 
-        const isReceived = isNotification
-            ? rawAmount >= 0
-            : to === this.playerName;
+        // Специальная обработка для стартовых сбережений
+        const isStartingSavings = (transfer?.reason || transfer?.description) === 'стартовые сбережения';
+        
+        const isReceived = isStartingSavings
+            ? true  // Стартовые сбережения всегда считаются полученными
+            : isNotification
+                ? rawAmount >= 0
+                : to === this.playerName;
 
         const amountClass = isReceived ? 'received' : 'sent';
         const absoluteAmount = Math.abs(rawAmount);
@@ -754,7 +759,9 @@ class BankModuleV4 {
         let description = transfer?.reason || transfer?.description || '';
 
         if (!description) {
-            if (isCreditTake) {
+            if (isStartingSavings) {
+                description = 'Стартовые сбережения';
+            } else if (isCreditTake) {
                 description = `Кредит от банка`;
             } else if (isCreditRepay) {
                 description = `Погашение кредита`;
