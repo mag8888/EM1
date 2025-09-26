@@ -39,14 +39,15 @@ class BankModuleV4 {
         
         // Если Room ID все еще не найден, ждем немного и пробуем снова
         if (!this.roomId) {
-            console.log('⏳ Room ID не найден, ожидаем загрузки...');
+            console.log('⏳ Room ID не найден, ожидаем загрузки gameState...');
             await new Promise(resolve => setTimeout(resolve, 1000));
             this.roomId = this.getRoomId();
             
-            // Если все еще не найден, используем хардкод из логов
+            // Если все еще не найден, ждем еще немного
             if (!this.roomId) {
-                this.roomId = '68cc38e1ce7b0898a9dc83f1';
-                console.log('🔧 Используем хардкод Room ID:', this.roomId);
+                console.log('⏳ Room ID все еще не найден, ожидаем еще...');
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                this.roomId = this.getRoomId();
             }
         }
             
@@ -90,9 +91,21 @@ class BankModuleV4 {
             roomId = window.roomId;
         }
         
+        // Пробуем получить из gameState (основной источник в игре)
+        if (!roomId && window.gameState?.roomId) {
+            roomId = window.gameState.roomId;
+        }
+        
+        // Пробуем получить из gameState.state
+        if (!roomId && window.gameState?.state?.roomId) {
+            roomId = window.gameState.state.roomId;
+        }
+        
         console.log('🔍 Поиск Room ID:', { 
             fromUrl: urlParams.get('room_id') || urlParams.get('roomId'),
             fromWindow: window.currentRoomId || window.roomId,
+            fromGameState: window.gameState?.roomId,
+            fromGameStateState: window.gameState?.state?.roomId,
             result: roomId 
         });
         
@@ -1007,7 +1020,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!result) {
             // Если не удалось, ждем 2 секунды и пробуем принудительную инициализацию
             setTimeout(async () => {
-                const roomId = '68cc38e1ce7b0898a9dc83f1'; // Из логов
+                const roomId = window.gameState?.roomId || window.gameState?.state?.roomId;
                 const userId = getUserIdFromStorage(); // Получаем реальный user_id
                 
                 if (userId) {
