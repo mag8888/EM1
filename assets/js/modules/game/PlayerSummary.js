@@ -42,20 +42,32 @@ export default class PlayerSummary {
             bankData = window.bankModuleV4.getData();
         }
 
+        // Объявляем переменные для использования во всей функции
+        let passiveIncome = 0;
+        let totalIncome = 0;
+        let expenses = 0;
+        let payday = 0;
+
         if (bankData) {
             // Данные из банковского модуля
-            this.setText(this.incomeEl, `$${(bankData.income || 0).toLocaleString()}`);
+            passiveIncome = bankData.passiveIncome || 0;
+            totalIncome = bankData.income || 0;
+            expenses = bankData.expenses || 0;
+            payday = bankData.payday || 0;
+            
+            this.setText(this.incomeEl, `$${totalIncome.toLocaleString()}`);
             if (this.passiveIncomeEl) {
-                this.passiveIncomeEl.textContent = `$${(bankData.passiveIncome || 0).toLocaleString()}`;
+                this.passiveIncomeEl.textContent = `$${passiveIncome.toLocaleString()}`;
             }
-            this.setText(this.expenseEl, `$${(bankData.expenses || 0).toLocaleString()}`);
+            this.setText(this.expenseEl, `$${expenses.toLocaleString()}`);
             this.setText(this.loanEl, `$${(bankData.credit || 0).toLocaleString()}`);
-            this.setText(this.paydayEl, `$${(bankData.payday || 0).toLocaleString()}/мес`);
+            this.setText(this.paydayEl, `$${payday.toLocaleString()}/мес`);
         } else {
             // Fallback к старой логике, если банковский модуль недоступен
-            const passiveIncome = Number(player.passiveIncome || 0);
+            passiveIncome = Number(player.passiveIncome || 0);
             const salary = Number(player.profession?.salary || 0);
-            const totalIncome = salary + passiveIncome;
+            totalIncome = salary + passiveIncome;
+            
             this.setText(this.incomeEl, `$${totalIncome.toLocaleString()}`);
             
             if (this.passiveIncomeEl) {
@@ -64,11 +76,11 @@ export default class PlayerSummary {
             
             const baseExpenses = Number(player.profession?.expenses || 0);
             const creditExpense = Number(window._creditExpense || 0);
-            const expenses = baseExpenses + creditExpense;
+            expenses = baseExpenses + creditExpense;
             this.setText(this.expenseEl, `$${expenses.toLocaleString()}`);
             this.setText(this.loanEl, '$0');
             
-            const payday = totalIncome - expenses;
+            payday = totalIncome - expenses;
             this.setText(this.paydayEl, `$${payday.toLocaleString()}/мес`);
         }
 
@@ -89,19 +101,15 @@ export default class PlayerSummary {
             this.professionExpensesEl.textContent = `$${Number(profession.expenses || 0).toLocaleString()}`;
         }
         if (this.professionPassiveEl) {
-            const passiveIncomeValue = bankData ? (bankData.passiveIncome || 0) : passiveIncome;
-            this.professionPassiveEl.textContent = `$${passiveIncomeValue.toLocaleString()}`;
+            this.professionPassiveEl.textContent = `$${passiveIncome.toLocaleString()}`;
         }
         if (this.professionCashflowEl) {
-            const paydayValue = bankData ? bankData.payday : (totalIncome - expenses);
-            this.professionCashflowEl.textContent = `$${paydayValue.toLocaleString()}`;
+            this.professionCashflowEl.textContent = `$${payday.toLocaleString()}`;
         }
 
         // Условие перехода на большой круг: пассивный доход > расходы
         // Здесь только отображение; сам переход запустим отдельным контроллером
-        const passiveIncomeValue = bankData ? (bankData.passiveIncome || 0) : passiveIncome;
-        const expensesValue = bankData ? bankData.expenses : expenses;
-        const canGoOuter = passiveIncomeValue > expensesValue;
+        const canGoOuter = passiveIncome > expenses;
         if (canGoOuter) {
             console.log('✅ Условие перехода на большой круг выполнено');
         }
