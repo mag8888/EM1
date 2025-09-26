@@ -1362,6 +1362,30 @@ app.post('/api/bank/transfer', (req, res) => {
             timestamp: Date.now() 
         };
         pushHistory(roomId, record);
+        
+        // Сохраняем изменения в MongoDB
+        try {
+            const room = rooms.get(roomId);
+            if (room) {
+                // Обновляем баланс игроков в комнате
+                const fromPlayer = room.players?.find(p => p.name === from);
+                const toPlayer = room.players?.find(p => p.name === to);
+                
+                if (fromPlayer) {
+                    fromPlayer.balance = fromBal.amount;
+                }
+                if (toPlayer) {
+                    toPlayer.balance = toBal.amount;
+                }
+                
+                // Сохраняем комнату в MongoDB
+                await saveRoomToSQLite(room);
+                console.log(`💾 Перевод $${sum} от ${from} к ${to} сохранен в MongoDB`);
+            }
+        } catch (saveError) {
+            console.error('❌ Ошибка сохранения перевода:', saveError);
+        }
+        
         res.json({ success: true, newBalance: { amount: fromBal.amount }, record });
     } catch (error) {
         console.error('Ошибка перевода:', error);
