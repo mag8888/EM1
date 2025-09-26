@@ -158,6 +158,29 @@ async function initializeSQLite() {
 // Load rooms from database into memory
 async function loadRoomsFromSQLite() {
     try {
+        // Try to load from MongoDB first
+        if (dbConnected && db) {
+            console.log('🔄 Loading rooms from MongoDB...');
+            const mongoRooms = await db.getAllRooms();
+            for (const roomData of mongoRooms) {
+                if (roomData.gameState) {
+                    // Ensure all players have proper tokenOffset for visual positioning
+                    if (roomData.gameState.players && roomData.gameState.players.length > 0) {
+                        roomData.gameState.players.forEach((player, index) => {
+                            player.tokenOffset = index; // Set visual offset for multiple players
+                        });
+                    }
+                    
+                    rooms.set(roomData.gameState.id, roomData.gameState);
+                    console.log(`✅ Loaded room from MongoDB: ${roomData.gameState.id} (${roomData.gameState.status}) with ${roomData.gameState.players?.length || 0} players`);
+                }
+            }
+            console.log(`✅ Loaded ${mongoRooms.length} rooms from MongoDB`);
+            return;
+        }
+        
+        // Fallback to SQLite
+        console.log('🔄 Loading rooms from SQLite...');
         const allRooms = await sqliteDb.getAllRooms();
         for (const roomData of allRooms) {
             const roomState = await sqliteDb.loadRoomState(roomData.id);
@@ -170,9 +193,10 @@ async function loadRoomsFromSQLite() {
                 }
                 
                 rooms.set(roomState.id, roomState);
-                console.log(`✅ Loaded room: ${roomState.id} (${roomState.status}) with ${roomState.players?.length || 0} players`);
+                console.log(`✅ Loaded room from SQLite: ${roomState.id} (${roomState.status}) with ${roomState.players?.length || 0} players`);
             }
         }
+        console.log(`✅ Loaded ${allRooms.length} rooms from SQLite`);
     } catch (error) {
         console.error('❌ Failed to load rooms from database:', error);
     }
@@ -180,9 +204,46 @@ async function loadRoomsFromSQLite() {
 
 // Save room state to database
 async function saveRoomToSQLite(room) {
+    // Save to MongoDB first
+    if (dbConnected && db) {
+        try {
+            console.log('💾 Saving room state to MongoDB:', {
+                roomId: room.id,
+                status: room.status,
+                activeIndex: room.activeIndex,
+                playersCount: room.players?.length || 0
+            });
+            
+            await db.getRoom(room.id).then(async (existingRoom) => {
+                if (existingRoom) {
+                    // Update existing room
+                    await db.updateRoom(room.id, {
+                        gameState: room,
+                        status: room.status,
+                        players: room.players,
+                        updatedAt: new Date().toISOString()
+                    });
+                } else {
+                    // Create new room
+                    await db.createRoom({
+                        id: room.id,
+                        name: room.name || 'Game Room',
+                        status: room.status,
+                        players: room.players,
+                        gameState: room
+                    });
+                }
+            });
+            console.log('✅ Room state saved to MongoDB successfully');
+        } catch (error) {
+            console.error('❌ Failed to save room to MongoDB:', error);
+        }
+    }
+    
+    // Fallback to SQLite
     if (!sqliteDb) return;
     try {
-        console.log('💾 Saving room state to database:', {
+        console.log('💾 Saving room state to SQLite:', {
             roomId: room.id,
             status: room.status,
             activeIndex: room.activeIndex,
@@ -198,15 +259,14 @@ async function saveRoomToSQLite(room) {
         });
         
         await sqliteDb.saveRoomState(room);
-        console.log('✅ Room state saved successfully');
+        console.log('✅ Room state saved to SQLite successfully');
     } catch (error) {
-        console.error('❌ Failed to save room to database:', error);
+        console.error('❌ Failed to save room to SQLite:', error);
     }
 }
 
 // Auto-save room when it's modified
 async function autoSaveRoom(roomId) {
-    if (!sqliteDb) return;
     try {
         const room = rooms.get(roomId);
         if (room) {
@@ -510,8 +570,31 @@ app.get('/api/health', (req, res) => {
 });
 
 // List rooms (minimal implementation)
-app.get('/api/rooms', (req, res) => {
+app.get('/api/rooms', async (req, res) => {
     try {
+        // Try to load from MongoDB first
+        if (dbConnected && db) {
+            try {
+                const mongoRooms = await db.getAllRooms();
+                const list = mongoRooms.map(room => ({
+                    id: room.id,
+                    name: room.name,
+                    maxPlayers: room.maxPlayers,
+                    turnTime: room.turnTime,
+                    status: room.status,
+                    createdAt: room.createdAt,
+                    updatedAt: room.updatedAt,
+                    players: room.players || []
+                }));
+                res.set('Cache-Control', 'no-store');
+                res.json({ success: true, rooms: list });
+                return;
+            } catch (mongoError) {
+                console.error('❌ Failed to load rooms from MongoDB, falling back to memory:', mongoError);
+            }
+        }
+        
+        // Fallback to memory
         const list = Array.from(rooms.values()).map(room => ({
             id: room.id,
             name: room.name,
@@ -624,7 +707,7 @@ app.post('/api/rooms', async (req, res) => {
         // Auto-save room
         await autoSaveRoom(room.id);
         
-        // Save to database
+        // Save to SQLite database
         if (sqliteDb) {
             try {
                 await sqliteDb.createRoom({
@@ -642,7 +725,31 @@ app.post('/api/rooms', async (req, res) => {
                 // Create host player in database
                 await sqliteDb.addPlayerToRoom(room.id, String(user.id), creatorName, user.avatar || null, true);
             } catch (dbError) {
-                console.error('❌ Failed to save room to database:', dbError);
+                console.error('❌ Failed to save room to SQLite:', dbError);
+            }
+        }
+        
+        // Save to MongoDB
+        if (dbConnected && db) {
+            try {
+                await db.createRoom({
+                    id: room.id,
+                    name: room.name,
+                    creatorId: String(user.id),
+                    creatorName: creatorName,
+                    creatorEmail: user.email,
+                    creatorAvatar: user.avatar || null,
+                    maxPlayers: room.maxPlayers,
+                    minPlayers: 2,
+                    turnTime: room.turnTime,
+                    assignProfessions: false,
+                    status: 'waiting',
+                    players: room.players,
+                    gameState: room
+                });
+                console.log('✅ Room saved to MongoDB:', room.id);
+            } catch (mongoError) {
+                console.error('❌ Failed to save room to MongoDB:', mongoError);
             }
         }
         
@@ -697,9 +804,25 @@ function sanitizeRoom(room) {
 }
 
 // Get room by id (public GET without auth)
-app.get('/api/rooms/:roomId', (req, res) => {
+app.get('/api/rooms/:roomId', async (req, res) => {
     try {
-        const room = rooms.get(req.params.roomId);
+        let room = rooms.get(req.params.roomId);
+        
+        // If room not in memory, try to load from MongoDB
+        if (!room && dbConnected && db) {
+            try {
+                const mongoRoom = await db.getRoom(req.params.roomId);
+                if (mongoRoom && mongoRoom.gameState) {
+                    room = mongoRoom.gameState;
+                    // Load into memory for faster access
+                    rooms.set(room.id, room);
+                    console.log(`✅ Loaded room from MongoDB: ${room.id}`);
+                }
+            } catch (mongoError) {
+                console.error('❌ Failed to load room from MongoDB:', mongoError);
+            }
+        }
+        
         if (!room) {
             return res.status(404).json({ success: false, message: 'Комната не найдена' });
         }

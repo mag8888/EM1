@@ -100,6 +100,10 @@ const dbWrapper = {
     async getAllRooms() {
         if (!RoomModel) throw new Error("RoomModel not set");
         return await RoomModel.find();
+    },
+    async updateRoom(roomId, updateData) {
+        if (!RoomModel) throw new Error("RoomModel not set");
+        return await RoomModel.updateOne(roomId, updateData);
     }
 };
 
