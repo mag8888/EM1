@@ -828,10 +828,13 @@ class DealsModule {
                     }
                     player.assets.push({
                         id: card.id,
+                        cardId: card.id,
                         name: card.name,
+                        type: card.type || 'smallDeal',
+                        size: 'small', // или 'big' в зависимости от типа карты
                         purchasePrice: cardCost,
                         monthlyIncome: card.income || 0,
-                        type: card.type || 'smallDeal',
+                        acquiredAt: Date.now(),
                         icon: card.icon || '📈'
                     });
 
@@ -842,10 +845,19 @@ class DealsModule {
                         window.gameState.refresh();
                     }
                     
+                    // Принудительно обновляем UI активов
+                    if (window.assetsManager) {
+                        window.assetsManager.render(window.gameState?.getSnapshot?.());
+                    }
+                    
                     // Дополнительная синхронизация через небольшую задержку
                     setTimeout(() => {
                         if (window.gameState && window.gameState.refresh) {
                             window.gameState.refresh();
+                        }
+                        // Повторное обновление UI активов
+                        if (window.assetsManager) {
+                            window.assetsManager.render(window.gameState?.getSnapshot?.());
                         }
                     }, 100);
                     

@@ -102,6 +102,9 @@ class GameModule {
         });
         assetsManager.init();
         this.modules.push(assetsManager);
+        
+        // Делаем AssetsManager доступным глобально
+        window.assetsManager = assetsManager;
 
         const playerSummary = new PlayerSummary({ state: this.state });
         playerSummary.init();
