@@ -186,21 +186,6 @@
             background: linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%);
         }
 
-        .dream-card .dream-heart {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            font-size: 24px;
-            color: #ff6b6b;
-            animation: heartbeat 1.5s ease-in-out infinite;
-        }
-
-        @keyframes heartbeat {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
         .dream-icon {
             font-size: 2.5rem;
             margin-bottom: 16px;
@@ -444,7 +429,6 @@
                         <span>💰</span>
                         <span>$${dream.cost.toLocaleString()}</span>
                     </div>
-                    ${selectedDream && selectedDream.id === dream.id ? '<div class="dream-heart">❤️</div>' : ''}
                 </div>
             `).join('');
         }

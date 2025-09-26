@@ -65,7 +65,7 @@ class PlayersList {
                 if (dream) {
                     const dreamRow = document.createElement('div');
                     dreamRow.className = 'player-dream';
-                    dreamRow.innerHTML = `<span class="dream-icon">${dream.icon || '🌟'}</span><span class="dream-name">${dream.name}</span><span class="dream-heart">❤️</span>`;
+                    dreamRow.innerHTML = `<span class="dream-icon">${dream.icon || '🌟'}</span><span class="dream-name">${dream.name}</span>`;
                     info.appendChild(dreamRow);
                 }
             }

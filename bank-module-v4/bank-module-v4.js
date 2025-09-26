@@ -427,8 +427,8 @@ class BankModuleV4 {
             
             // Обновляем UI
             this.updateUI();
-            if (typeof window.initRecipientsListGlobal === 'function') {
-                window.initRecipientsListGlobal();
+            if (typeof window.initRecipientsList === 'function') {
+                window.initRecipientsList();
             }
             
             console.log('✅ BankModuleV4: Офлайн данные загружены', this.data);
@@ -642,12 +642,6 @@ class BankModuleV4 {
             const recipientSelect = document.getElementById('recipientSelect');
             if (!recipientSelect) return;
 
-            // Защита от повторной инициализации
-            if (recipientSelect.dataset.initialized === 'true') {
-                console.log('👥 BankModuleV4: Список получателей уже инициализирован');
-                return;
-            }
-
             // Очищаем список
             recipientSelect.innerHTML = '<option value="">Выберите получателя</option>';
 
@@ -662,14 +656,6 @@ class BankModuleV4 {
                     }
                 });
             }
-
-            // Отмечаем как инициализированный
-            recipientSelect.dataset.initialized = 'true';
-
-            // Добавляем обработчик изменения выбора
-            recipientSelect.addEventListener('change', (event) => {
-                console.log('👥 BankModuleV4: Выбран получатель:', event.target.value, event.target.textContent);
-            });
 
             console.log('👥 BankModuleV4: Список получателей обновлен');
         } catch (error) {
@@ -742,14 +728,9 @@ class BankModuleV4 {
         const isCreditTake = type === 'credit_take';
         const isCreditRepay = type === 'credit_repay';
 
-        // Специальная обработка для стартовых сбережений
-        const isStartingSavings = (transfer?.reason || transfer?.description) === 'стартовые сбережения';
-        
-        const isReceived = isStartingSavings
-            ? true  // Стартовые сбережения всегда считаются полученными
-            : isNotification
-                ? rawAmount >= 0
-                : to === this.playerName;
+        const isReceived = isNotification
+            ? rawAmount >= 0
+            : to === this.playerName;
 
         const amountClass = isReceived ? 'received' : 'sent';
         const absoluteAmount = Math.abs(rawAmount);
@@ -759,9 +740,7 @@ class BankModuleV4 {
         let description = transfer?.reason || transfer?.description || '';
 
         if (!description) {
-            if (isStartingSavings) {
-                description = 'Стартовые сбережения';
-            } else if (isCreditTake) {
+            if (isCreditTake) {
                 description = `Кредит от банка`;
             } else if (isCreditRepay) {
                 description = `Погашение кредита`;

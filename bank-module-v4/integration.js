@@ -75,7 +75,7 @@ function updateCreditDisplay() {
     
     const maxCreditEl = document.getElementById('maxCredit');
     if (maxCreditEl) {
-        const maxCredit = Math.max(0, window.monthlyIncome * 10);
+        const maxCredit = Math.max(0, window.payday * 10);
         maxCreditEl.textContent = `$${maxCredit.toLocaleString()}`;
     }
 }

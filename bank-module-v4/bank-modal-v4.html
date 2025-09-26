@@ -145,8 +145,8 @@ function resetTransferFormV4() {
     document.getElementById('transferAmount').value = '';
 }
 
-// Инициализация списка получателей (глобальная функция для совместимости)
-function initRecipientsListGlobal() {
+// Инициализация списка получателей
+function initRecipientsList() {
     const select = document.getElementById('recipientSelect');
     const players = window.players || [];
     const currentUserId = bankModuleV4?.userId;
@@ -183,6 +183,6 @@ function updateHistoryCount() {
 
 // Инициализация при загрузке DOM
 document.addEventListener('DOMContentLoaded', () => {
-    initRecipientsListGlobal();
+    initRecipientsList();
 });
 </script>
