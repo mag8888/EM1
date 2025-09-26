@@ -765,29 +765,174 @@ export class CardModule {
         const min = Number(cell.minCost || 100);
         const max = Number(cell.maxCost || 4000);
         const amount = Math.floor(Math.random() * (max - min + 1)) + min;
+        
+        // Получаем текущий баланс игрока
+        const gameState = window.gameState?.state;
+        const player = gameState?.players?.find(p => p.userId === playerId);
+        const currentBalance = player?.cash || 0;
+        const hasEnoughMoney = currentBalance >= amount;
+        
         modal.innerHTML = `
             <div class="modal-overlay">
                 <div class="modal-content">
                     <h3 style="margin-top:0;">${title}</h3>
                     <p>Вы понесли расходы на сумму <strong>$${amount.toLocaleString()}</strong>.</p>
+                    <div class="expense-info">
+                        <div class="balance-info">
+                            <span>Ваш баланс: $${currentBalance.toLocaleString()}</span>
+                        </div>
+                        ${!hasEnoughMoney ? `
+                        <div class="insufficient-funds">
+                            <p style="color: #ff6b6b; margin: 10px 0;">⚠️ Недостаточно средств!</p>
+                            <p>Нужно: $${amount.toLocaleString()}</p>
+                            <p>Доступно: $${currentBalance.toLocaleString()}</p>
+                            <p>Не хватает: $${(amount - currentBalance).toLocaleString()}</p>
+                        </div>
+                        ` : ''}
+                    </div>
                     <div class="actions">
-                        <button class="btn btn-secondary close-btn">Ок</button>
+                        ${hasEnoughMoney ? `
+                            <button class="btn btn-primary pay-btn">Оплатить $${amount.toLocaleString()}</button>
+                        ` : `
+                            <button class="btn btn-warning credit-btn">Взять кредит $${amount.toLocaleString()}</button>
+                            <button class="btn btn-danger pay-partial-btn">Оплатить частично $${currentBalance.toLocaleString()}</button>
+                        `}
+                        <button class="btn btn-secondary close-btn">Отмена</button>
                     </div>
                 </div>
             </div>
         `;
+        
         const style = document.createElement('style');
         style.textContent = `
             .expense-modal .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:10002}
             .expense-modal .modal-content{background:#121a2b;color:#fff;border-radius:14px;box-shadow:0 20px 40px rgba(0,0,0,.5);padding:22px;max-width:460px;width:90%}
-            .expense-modal .btn{padding:10px 16px;border:none;border-radius:10px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#1f2937 0%,#111827 100%);color:#e5e7eb}
-            .expense-modal .actions{display:flex;justify-content:center;margin-top:12px}
+            .expense-modal .btn{padding:10px 16px;border:none;border-radius:10px;font-weight:700;cursor:pointer;margin:5px;transition:all 0.2s}
+            .expense-modal .btn-primary{background:linear-gradient(135deg,#16f79e 0%,#0ecf82 100%);color:#0b1729}
+            .expense-modal .btn-warning{background:linear-gradient(135deg,#ffd166 0%,#fcbf49 100%);color:#1f2937}
+            .expense-modal .btn-danger{background:linear-gradient(135deg,#ff6b6b 0%,#f14646 100%);color:#fff}
+            .expense-modal .btn-secondary{background:linear-gradient(135deg,#1f2937 0%,#111827 100%);color:#e5e7eb}
+            .expense-modal .actions{display:flex;flex-wrap:wrap;justify-content:center;margin-top:12px}
+            .expense-modal .expense-info{margin:15px 0;padding:15px;background:rgba(255,255,255,0.05);border-radius:8px}
+            .expense-modal .balance-info{font-weight:600;color:#48bb78}
+            .expense-modal .insufficient-funds{color:#ff6b6b;text-align:center}
         `;
         document.head.appendChild(style);
         document.body.appendChild(modal);
-        const close = () => { try { modal.remove(); style.remove(); } catch(_){} };
+        
+        const close = () => { 
+            try { 
+                modal.remove(); 
+                style.remove(); 
+            } catch(_){}
+        };
+        
+        // Обработчики кнопок
         modal.querySelector('.close-btn')?.addEventListener('click', close);
-        modal.querySelector('.modal-overlay')?.addEventListener('click', (e) => { if (e.target === modal.querySelector('.modal-overlay')) close(); });
+        modal.querySelector('.pay-btn')?.addEventListener('click', () => {
+            this.payExpense(playerId, amount);
+            close();
+        });
+        modal.querySelector('.credit-btn')?.addEventListener('click', () => {
+            this.takeCreditForExpense(playerId, amount);
+            close();
+        });
+        modal.querySelector('.pay-partial-btn')?.addEventListener('click', () => {
+            this.payExpense(playerId, currentBalance);
+            close();
+        });
+        
+        modal.querySelector('.modal-overlay')?.addEventListener('click', (e) => { 
+            if (e.target === modal.querySelector('.modal-overlay')) close(); 
+        });
+    }
+    
+    // Оплата расходов
+    async payExpense(playerId, amount) {
+        try {
+            console.log(`💸 CardModule: Оплата расходов $${amount} для игрока ${playerId}`);
+            
+            const gameState = window.gameState?.state;
+            const player = gameState?.players?.find(p => p.userId === playerId);
+            
+            if (!player) {
+                console.error('💸 CardModule: Игрок не найден');
+                return;
+            }
+            
+            // Списываем деньги с баланса игрока
+            player.cash = Math.max(0, player.cash - amount);
+            
+            // Обновляем состояние игры
+            if (window.gameState && window.gameState.refresh) {
+                window.gameState.refresh();
+            }
+            
+            // Обновляем банковский модуль
+            if (window.bankModuleV4) {
+                window.bankModuleV4.updateUI();
+            }
+            
+            // Показываем уведомление
+            alert(`Расходы на сумму $${amount.toLocaleString()} оплачены!`);
+            
+            console.log(`✅ CardModule: Расходы оплачены. Новый баланс: $${player.cash.toLocaleString()}`);
+            
+        } catch (error) {
+            console.error('💸 CardModule: Ошибка при оплате расходов:', error);
+            alert('Ошибка при оплате расходов');
+        }
+    }
+    
+    // Взятие кредита для оплаты расходов
+    async takeCreditForExpense(playerId, amount) {
+        try {
+            console.log(`💳 CardModule: Взятие кредита $${amount} для оплаты расходов игрока ${playerId}`);
+            
+            const roomId = window.gameState?.roomId;
+            
+            if (!roomId) {
+                alert('Ошибка: не удалось получить ID комнаты');
+                return;
+            }
+            
+            // Отправляем запрос на сервер для взятия кредита
+            const response = await fetch(`/api/bank/credit/take`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    roomId: roomId,
+                    userId: playerId,
+                    amount: amount
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ Кредит взят успешно:', result);
+                
+                // Обновляем состояние игры
+                if (window.gameState && window.gameState.refresh) {
+                    window.gameState.refresh();
+                }
+                
+                // Обновляем банковский модуль
+                if (window.bankModuleV4) {
+                    window.bankModuleV4.updateUI();
+                }
+                
+                // Показываем уведомление
+                alert(`Кредит на сумму $${amount.toLocaleString()} взят успешно! Теперь вы можете оплатить расходы.`);
+                
+            } else {
+                const errorData = await response.json();
+                alert(`Ошибка при взятии кредита: ${errorData.message || 'Неизвестная ошибка'}`);
+            }
+            
+        } catch (error) {
+            console.error('💳 CardModule: Ошибка при взятии кредита:', error);
+            alert('Ошибка при взятии кредита');
+        }
     }
     
     // Активация модуля сделок
