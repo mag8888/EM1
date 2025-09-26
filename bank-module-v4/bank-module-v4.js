@@ -848,12 +848,12 @@ class BankModuleV4 {
             const childrenExpenses = childrenCount * 400;
             const income = Number(this.data.income || 0);
             const passiveIncome = Number(this.data.passiveIncome || 0);
+            // Максимальный лимит рассчитывается от базового PAYDAY без учета текущего кредита
             const baseNetIncome = (income + passiveIncome) - (this.getTotalExpenses() + childrenExpenses);
             const maxCredit = Math.max(0, baseNetIncome * 10);
             
             const maxLimitEl = document.getElementById('maxLimit');
             if (maxLimitEl) {
-                // Максимальный лимит рассчитывается от базового PAYDAY без учета текущего кредита
                 maxLimitEl.textContent = `$${maxCredit.toLocaleString()}`;
             }
             
