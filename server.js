@@ -805,7 +805,7 @@ app.post('/api/rooms/:roomId/join', async (req, res) => {
 });
 
 // Start game (requires user ID and host, and canStart)
-app.post('/api/rooms/:roomId/start', (req, res) => {
+app.post('/api/rooms/:roomId/start', async (req, res) => {
     try {
         const userId = req.headers['x-user-id'] || req.body.user_id;
         if (!userId) {
@@ -1907,7 +1907,7 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
     }
 });
 
-app.post('/api/rooms/:roomId/end-turn', (req, res) => {
+app.post('/api/rooms/:roomId/end-turn', async (req, res) => {
     try {
         const room = rooms.get(req.params.roomId);
         if (!room) {
