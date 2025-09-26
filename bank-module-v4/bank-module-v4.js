@@ -373,7 +373,7 @@ class BankModuleV4 {
                 return true;
             } catch (offlineError) {
                 console.error('❌ BankModuleV4: Ошибка офлайн режима:', offlineError);
-                return false;
+            return false;
             }
         } finally {
             this.isLoading = false;
@@ -843,27 +843,23 @@ class BankModuleV4 {
             }
             
             
+            // Рассчитываем максимальный лимит один раз для обеих полей
+            const childrenCount = this.getChildrenCount();
+            const childrenExpenses = childrenCount * 400;
+            const income = Number(this.data.income || 0);
+            const passiveIncome = Number(this.data.passiveIncome || 0);
+            const baseNetIncome = (income + passiveIncome) - (this.getTotalExpenses() + childrenExpenses);
+            const maxCredit = Math.max(0, baseNetIncome * 10);
+            
             const maxLimitEl = document.getElementById('maxLimit');
             if (maxLimitEl) {
-                const childrenCount = this.getChildrenCount();
-                const childrenExpenses = childrenCount * 400;
                 // Максимальный лимит рассчитывается от базового PAYDAY без учета текущего кредита
-                const income = Number(this.data.income || 0);
-                const passiveIncome = Number(this.data.passiveIncome || 0);
-                const baseNetIncome = (income + passiveIncome) - (this.getTotalExpenses() + childrenExpenses);
-                const maxCredit = Math.max(0, baseNetIncome * 10);
                 maxLimitEl.textContent = `$${maxCredit.toLocaleString()}`;
             }
             
             const freeLimitEl = document.getElementById('freeLimit');
             if (freeLimitEl) {
-                const childrenCount = this.getChildrenCount();
-                const childrenExpenses = childrenCount * 400;
                 // Свободный лимит = Максимальный лимит - Текущий долг
-                const income = Number(this.data.income || 0);
-                const passiveIncome = Number(this.data.passiveIncome || 0);
-                const baseNetIncome = (income + passiveIncome) - (this.getTotalExpenses() + childrenExpenses);
-                const maxCredit = Math.max(0, baseNetIncome * 10);
                 const free = Math.max(0, maxCredit - (this.data.credit || 0));
                 freeLimitEl.textContent = `$${free.toLocaleString()}`;
             }
@@ -1274,7 +1270,7 @@ class BankModuleV4 {
         this.syncInterval = setInterval(() => {
             // Проверяем, не загружаем ли мы уже данные
             if (!this.isLoading) {
-                this.loadData();
+            this.loadData();
             } else {
                 console.log('⏳ BankModuleV4: Пропускаем автосинхронизацию - загрузка уже выполняется');
             }
