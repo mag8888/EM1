@@ -1183,14 +1183,19 @@ async function payoffCreditV4() {
  * Перевод средств v4
  */
 async function transferMoneyV4(recipientIndex, amount) {
+    console.log('🔄 transferMoneyV4: Начинаем перевод', { recipientIndex, amount });
+    
     if (!bankModuleV4) {
+        console.log('🔄 transferMoneyV4: bankModuleV4 не инициализирован, пытаемся инициализировать');
         await initBankModuleV4();
     }
     
     if (bankModuleV4) {
+        console.log('🔄 transferMoneyV4: bankModuleV4 найден, вызываем transferMoney');
         return await bankModuleV4.transferMoney(recipientIndex, amount);
     }
     
+    console.log('❌ transferMoneyV4: bankModuleV4 не найден после инициализации');
     return false;
 }
 
@@ -1216,8 +1221,12 @@ window.transferMoneyV4 = transferMoneyV4;
 // Функция для выполнения перевода из формы
 async function executeTransferV4() {
     try {
+        console.log('🔄 executeTransferV4: Начинаем перевод');
+        
         const recipientSelect = document.getElementById('recipientSelect');
         const amountInput = document.getElementById('transferAmount');
+        
+        console.log('🔍 executeTransferV4: Элементы формы:', { recipientSelect: !!recipientSelect, amountInput: !!amountInput });
         
         if (!recipientSelect || !amountInput) {
             throw new Error('Элементы формы не найдены');
@@ -1225,6 +1234,8 @@ async function executeTransferV4() {
         
         const recipientIndex = parseInt(recipientSelect.value);
         const amount = parseFloat(amountInput.value);
+        
+        console.log('🔍 executeTransferV4: Данные формы:', { recipientIndex, amount });
         
         if (!recipientIndex || !amount) {
             alert('Пожалуйста, выберите получателя и укажите сумму');
@@ -1236,23 +1247,29 @@ async function executeTransferV4() {
             return;
         }
         
+        console.log('🔄 executeTransferV4: Вызываем transferMoneyV4');
         const success = await transferMoneyV4(recipientIndex, amount);
+        console.log('🔍 executeTransferV4: Результат transferMoneyV4:', success);
+        
         if (success) {
             // Очищаем только сумму, оставляем получателя
             amountInput.value = '';
             
             // Принудительно обновляем данные
             if (bankModuleV4) {
+                console.log('🔄 executeTransferV4: Обновляем данные');
                 await bankModuleV4.loadData(true);
                 bankModuleV4.updateUI();
                 await bankModuleV4.updateTransfersHistory();
             }
             
             alert('Перевод выполнен успешно!');
+        } else {
+            alert('Перевод не удался. Проверьте консоль для подробностей.');
         }
         
     } catch (error) {
-        console.error('Ошибка перевода:', error);
+        console.error('❌ executeTransferV4: Ошибка перевода:', error);
         alert(`Ошибка перевода: ${error.message}`);
     }
 }
