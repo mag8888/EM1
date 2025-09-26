@@ -220,6 +220,21 @@ async function payoffCredit() {
 async function openBankModal() {
     console.log('🏦 Открытие банковского модального окна');
     
+    // Ждем DataStore перед инициализацией BankModuleV4
+    if (!window.dataStore) {
+        console.log('⏳ Ожидаем загрузки DataStore для открытия банка...');
+        await new Promise(resolve => {
+            const checkDataStore = () => {
+                if (window.dataStore) {
+                    resolve();
+                } else {
+                    setTimeout(checkDataStore, 100);
+                }
+            };
+            checkDataStore();
+        });
+    }
+    
     if (!bankModuleV4 && typeof window.initBankModuleV4 === 'function') {
         await window.initBankModuleV4();
     }

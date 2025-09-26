@@ -1698,22 +1698,40 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('window.currentRoomId:', window.currentRoomId);
     console.log('window.roomId:', window.roomId);
     
-    // Пробуем обычную инициализацию
-    initBankModuleV4().then(result => {
-        if (!result) {
-            // Если не удалось, ждем 2 секунды и пробуем принудительную инициализацию
-            setTimeout(async () => {
-                const roomId = window.gameState?.roomId || window.gameState?.state?.roomId;
-                const userId = getUserIdFromStorage(); // Получаем реальный user_id
-                
-                if (userId) {
-                    console.log('🔄 Попытка принудительной инициализации...', { roomId, userId });
-                    await forceInitBankModuleV4(roomId, userId);
+    // Ждем загрузки DataStore перед инициализацией BankModuleV4
+    function waitForDataStore() {
+        return new Promise((resolve) => {
+            const checkDataStore = () => {
+                if (window.dataStore) {
+                    console.log('✅ DataStore найден, инициализируем BankModuleV4');
+                    resolve(true);
                 } else {
-                    console.warn('⚠️ Не удалось получить User ID для принудительной инициализации');
+                    console.log('⏳ Ожидаем загрузки DataStore...');
+                    setTimeout(checkDataStore, 100);
                 }
-            }, 2000);
-        }
+            };
+            checkDataStore();
+        });
+    }
+    
+    // Ждем DataStore, затем инициализируем BankModuleV4
+    waitForDataStore().then(() => {
+        initBankModuleV4().then(result => {
+            if (!result) {
+                // Если не удалось, ждем 2 секунды и пробуем принудительную инициализацию
+                setTimeout(async () => {
+                    const roomId = window.gameState?.roomId || window.gameState?.state?.roomId;
+                    const userId = getUserIdFromStorage(); // Получаем реальный user_id
+                    
+                    if (userId) {
+                        console.log('🔄 Попытка принудительной инициализации...', { roomId, userId });
+                        await forceInitBankModuleV4(roomId, userId);
+                    } else {
+                        console.warn('⚠️ Не удалось получить User ID для принудительной инициализации');
+                    }
+                }, 2000);
+            }
+        });
     });
 });
 
