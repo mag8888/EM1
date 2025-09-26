@@ -547,6 +547,42 @@ class BankModuleV4 {
     }
 
     /**
+     * Переключение деталей доходов
+     */
+    toggleIncomeDetails() {
+        const details = document.getElementById('incomeDetails');
+        const icon = document.getElementById('incomeExpandIcon');
+        
+        if (details && icon) {
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+                icon.textContent = '▼';
+            } else {
+                details.style.display = 'none';
+                icon.textContent = '▶';
+            }
+        }
+    }
+
+    /**
+     * Переключение деталей расходов
+     */
+    toggleExpensesDetails() {
+        const details = document.getElementById('expensesDetails');
+        const icon = document.getElementById('expensesExpandIcon');
+        
+        if (details && icon) {
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+                icon.textContent = '▼';
+            } else {
+                details.style.display = 'none';
+                icon.textContent = '▶';
+            }
+        }
+    }
+
+    /**
      * Обновление UI
      */
     updateUI() {
@@ -586,6 +622,13 @@ class BankModuleV4 {
             const childrenExpensesEl = document.getElementById('childrenExpensesAmount');
             if (childrenExpensesEl) {
                 childrenExpensesEl.textContent = `$0`; // Пока нет расходов на детей
+            }
+            
+            // Обновляем общие суммы доходов и расходов
+            const totalIncomeEl = document.getElementById('totalIncomeAmount');
+            if (totalIncomeEl) {
+                const totalIncome = 10000 + 0; // зарплата + пассивный доход
+                totalIncomeEl.textContent = `$${totalIncome.toLocaleString()}`;
             }
             
             const totalExpensesEl = document.getElementById('totalExpensesAmount');
@@ -1372,5 +1415,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+// Глобальные функции для переключения деталей
+window.toggleIncomeDetails = function() {
+    if (bankModuleV4) {
+        bankModuleV4.toggleIncomeDetails();
+    }
+};
+
+window.toggleExpensesDetails = function() {
+    if (bankModuleV4) {
+        bankModuleV4.toggleExpensesDetails();
+    }
+};
 
 console.log('🏦 BankModuleV4 загружен');

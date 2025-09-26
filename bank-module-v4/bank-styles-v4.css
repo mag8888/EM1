@@ -706,3 +706,65 @@
 .form-select:focus::placeholder {
     opacity: 0.6;
 }
+
+/* Expandable Sections */
+.financial-item.expandable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.financial-item.expandable:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.expand-icon {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: #94a3b8;
+    transition: transform 0.2s ease;
+}
+
+.financial-item.expandable:hover .expand-icon {
+    color: #f59e0b;
+}
+
+.income-details,
+.expenses-details {
+    margin-left: 20px;
+    margin-top: 8px;
+    padding-left: 16px;
+    border-left: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.financial-subitem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 14px;
+    color: #cbd5e1;
+}
+
+.financial-subitem .financial-label {
+    color: #94a3b8;
+}
+
+.financial-subitem .financial-value {
+    font-weight: 500;
+}
+
+.assets-income,
+.profession-expenses {
+    margin-top: 8px;
+}
+
+.assets-income .financial-subitem,
+.profession-expenses .financial-subitem {
+    padding: 4px 0;
+    font-size: 13px;
+}
