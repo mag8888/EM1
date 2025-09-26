@@ -841,6 +841,18 @@ class BankModuleV4 {
         const isReceived = isNotification
             ? rawAmount >= 0
             : to === this.playerName;
+            
+        // Отладочная информация для стартовых сбережений
+        if ((transfer?.reason || transfer?.description) === 'стартовые сбережения') {
+            console.log('🔍 Стартовые сбережения:', {
+                from,
+                to,
+                playerName: this.playerName,
+                rawAmount,
+                isReceived,
+                type
+            });
+        }
 
         const amountClass = isReceived ? 'received' : 'sent';
         const absoluteAmount = Math.abs(rawAmount);
