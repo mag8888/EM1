@@ -934,7 +934,7 @@ app.post('/api/rooms/:roomId/join', async (req, res) => {
                 profession: {
                     id: 'entrepreneur',
                     name: 'Предприниматель',
-                    description: 'Владелец успешного бизнеса',
+                    description: 'Владелец бизнеса',
                     icon: '🚀',
                     salary: 10000,
                     expenses: 6200,

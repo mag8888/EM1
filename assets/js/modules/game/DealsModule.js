@@ -609,30 +609,11 @@ class DealsModule {
             this.showTransferOptions(card, playerId);
         });
 
-        // Кредит — открываем модуль банка
+        // Кредит — открываем малое кредитное окно
         const creditBtn = modal.querySelector('.credit-btn');
         if (creditBtn) {
             creditBtn.addEventListener('click', () => {
-                try {
-                    // Закрываем предыдущее окно банка, если оно открыто
-                    if (window.bankWindow && !window.bankWindow.closed) {
-                        window.bankWindow.close();
-                    }
-                    
-                    const v = Date.now();
-                    const features = 'width=720,height=840,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no';
-                    // Открываем банковский модуль v4
-                    if (typeof window.openBankV4 === 'function') {
-                        window.openBankV4();
-                    } else {
-                        console.error('BankModuleV4 не доступен! Убедитесь, что модуль загружен.');
-                    }
-                    
-                    // Фокусируем новое окно
-                    if (window.bankWindow) {
-                        window.bankWindow.focus();
-                    }
-                } catch (_) {}
+                this.showCreditModal(card);
             });
         }
 
@@ -1055,6 +1036,266 @@ class DealsModule {
         return modal;
     }
     
+    // Показать малое кредитное окно
+    showCreditModal(card) {
+        const modal = this.createCreditModal(card);
+        document.body.appendChild(modal);
+    }
+    
+    // Создание малого кредитного окна
+    createCreditModal(card) {
+        const modal = document.createElement('div');
+        modal.className = 'deals-modal credit-modal';
+        modal.innerHTML = `
+            <div class="deals-modal-content credit-modal-content">
+                <div class="deals-modal-header">
+                    <h3>Взять кредит для ${card.name}</h3>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="credit-modal-body">
+                    <div class="card-info">
+                        <div class="card-icon">${card.icon}</div>
+                        <div class="card-details">
+                            <div class="card-name">${card.name}</div>
+                            <div class="card-cost">Стоимость: $${card.cost.toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div class="credit-form">
+                        <div class="form-group">
+                            <label for="credit-amount">Сумма кредита:</label>
+                            <input type="number" id="credit-amount" min="1000" max="100000" value="${card.cost}" class="credit-input">
+                        </div>
+                        <div class="credit-info">
+                            <div class="info-item">
+                                <span>Максимальный лимит:</span>
+                                <span class="max-limit">$0</span>
+                            </div>
+                            <div class="info-item">
+                                <span>Ежемесячный платеж:</span>
+                                <span class="monthly-payment">$0</span>
+                            </div>
+                        </div>
+                        <div class="credit-actions">
+                            <button class="btn btn-primary take-credit-btn">Взять кредит</button>
+                            <button class="btn btn-secondary cancel-credit-btn">Отмена</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Добавляем стили для кредитного окна
+        this.addCreditModalStyles();
+        
+        // Обработчики
+        modal.querySelector('.close-btn').addEventListener('click', () => {
+            this.closeModal(modal);
+        });
+        
+        modal.querySelector('.cancel-credit-btn').addEventListener('click', () => {
+            this.closeModal(modal);
+        });
+        
+        modal.querySelector('.take-credit-btn').addEventListener('click', () => {
+            this.takeCredit(card, modal);
+        });
+        
+        // Обработчик изменения суммы кредита
+        const creditInput = modal.querySelector('#credit-amount');
+        const monthlyPayment = modal.querySelector('.monthly-payment');
+        
+        creditInput.addEventListener('input', (e) => {
+            const amount = parseInt(e.target.value) || 0;
+            const monthly = Math.floor(amount * 0.1); // 10% ежемесячный платеж
+            monthlyPayment.textContent = `$${monthly.toLocaleString()}`;
+        });
+        
+        // Обработчик клика по overlay для закрытия
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeModal(modal);
+            }
+        });
+        
+        return modal;
+    }
+    
+    // Добавление стилей для кредитного окна
+    addCreditModalStyles() {
+        if (document.getElementById('credit-modal-styles')) return;
+        
+        const styles = document.createElement('style');
+        styles.id = 'credit-modal-styles';
+        styles.textContent = `
+            .credit-modal-content {
+                max-width: 400px;
+                width: 90%;
+            }
+            
+            .credit-modal-body {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .card-info {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                padding: 15px;
+                background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+                border-radius: 10px;
+                border: 1px solid #4a5568;
+            }
+            
+            .card-icon {
+                font-size: 32px;
+            }
+            
+            .card-details {
+                flex: 1;
+            }
+            
+            .card-name {
+                font-size: 18px;
+                font-weight: 600;
+                color: #ffffff;
+                margin-bottom: 5px;
+            }
+            
+            .card-cost {
+                font-size: 14px;
+                color: #a0a0a0;
+            }
+            
+            .credit-form {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .form-group {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .form-group label {
+                color: #ffffff;
+                font-weight: 600;
+                font-size: 14px;
+            }
+            
+            .credit-input {
+                padding: 12px;
+                border: 2px solid #4a5568;
+                border-radius: 8px;
+                background: #1a202c;
+                color: #ffffff;
+                font-size: 16px;
+                font-weight: 600;
+            }
+            
+            .credit-input:focus {
+                outline: none;
+                border-color: #48bb78;
+            }
+            
+            .credit-info {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                padding: 15px;
+                background: linear-gradient(135deg, #1a202c 0%, #111827 100%);
+                border-radius: 8px;
+                border: 1px solid #374151;
+            }
+            
+            .info-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                color: #e5e7eb;
+                font-size: 14px;
+            }
+            
+            .info-item span:first-child {
+                color: #9ca3af;
+            }
+            
+            .info-item span:last-child {
+                font-weight: 600;
+                color: #48bb78;
+            }
+            
+            .credit-actions {
+                display: flex;
+                gap: 10px;
+            }
+            
+            .credit-actions .btn {
+                flex: 1;
+            }
+        `;
+        
+        document.head.appendChild(styles);
+    }
+    
+    // Взять кредит
+    async takeCredit(card, modal) {
+        try {
+            const creditAmount = parseInt(modal.querySelector('#credit-amount').value) || 0;
+            
+            if (creditAmount < 1000) {
+                alert('Минимальная сумма кредита: $1,000');
+                return;
+            }
+            
+            const roomId = window.gameState?.roomId;
+            const playerId = this.getCurrentPlayerId();
+            
+            if (!roomId || !playerId) {
+                alert('Ошибка: не удалось получить данные игры');
+                return;
+            }
+            
+            // Отправляем запрос на сервер для взятия кредита
+            const response = await fetch(`/api/bank/credit/take`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    roomId: roomId,
+                    userId: playerId,
+                    amount: creditAmount
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ Кредит взят успешно:', result);
+                
+                // Закрываем модальное окно
+                this.closeModal(modal);
+                
+                // Обновляем состояние игры
+                if (window.gameState && window.gameState.refresh) {
+                    window.gameState.refresh();
+                }
+                
+                // Показываем уведомление
+                alert(`Кредит на сумму $${creditAmount.toLocaleString()} взят успешно!`);
+                
+            } else {
+                const errorData = await response.json();
+                alert(`Ошибка при взятии кредита: ${errorData.message || 'Неизвестная ошибка'}`);
+            }
+            
+        } catch (error) {
+            console.error('Ошибка при взятии кредита:', error);
+            alert('Ошибка при взятии кредита');
+        }
+    }
+
     // Показать опции передачи карты
     showTransferOptions(card, fromPlayerId) {
         // Получаем список других игроков из актуального состояния игры
