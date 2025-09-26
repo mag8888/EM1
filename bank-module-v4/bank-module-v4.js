@@ -573,6 +573,110 @@ class BankModuleV4 {
     }
 
     /**
+     * Получение суммы кредита по типу
+     */
+    getLoanAmount(loanType) {
+        const loanData = this.data.loans || {};
+        const loanAmounts = {
+            car: 700,
+            education: 500,
+            mortgage: 1200,
+            creditCards: 1000
+        };
+        
+        return loanData[loanType] !== false ? loanAmounts[loanType] : 0;
+    }
+
+    /**
+     * Расчет общих расходов
+     */
+    getTotalExpenses() {
+        const taxes = 1300;
+        const otherExpenses = 1500;
+        const carLoan = this.getLoanAmount('car');
+        const educationLoan = this.getLoanAmount('education');
+        const mortgage = this.getLoanAmount('mortgage');
+        const creditCards = this.getLoanAmount('creditCards');
+        
+        return taxes + otherExpenses + carLoan + educationLoan + mortgage + creditCards;
+    }
+
+    /**
+     * Погашение кредита
+     */
+    async payoffLoan(loanType) {
+        const payoffAmounts = {
+            car: 14000,
+            education: 10000,
+            mortgage: 120000,
+            creditCards: 10000
+        };
+        
+        const payoffAmount = payoffAmounts[loanType];
+        const currentBalance = this.data.balance;
+        
+        if (currentBalance < payoffAmount) {
+            alert(`Недостаточно средств для погашения! Нужно: $${payoffAmount.toLocaleString()}, доступно: $${currentBalance.toLocaleString()}`);
+            return;
+        }
+        
+        if (!confirm(`Погасить ${this.getLoanName(loanType)} за $${payoffAmount.toLocaleString()}?`)) {
+            return;
+        }
+        
+        try {
+            // Отправляем запрос на сервер для погашения кредита
+            const response = await fetch(`/api/bank/loans/payoff`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    roomId: this.roomId,
+                    username: this.playerName,
+                    loanType: loanType,
+                    amount: payoffAmount
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    // Обновляем локальные данные
+                    if (!this.data.loans) this.data.loans = {};
+                    this.data.loans[loanType] = false; // Кредит погашен
+                    this.data.balance -= payoffAmount;
+                    
+                    // Обновляем UI
+                    this.updateUI();
+                    
+                    alert(`Кредит ${this.getLoanName(loanType)} успешно погашен!`);
+                } else {
+                    alert(`Ошибка: ${result.message}`);
+                }
+            } else {
+                alert('Ошибка сервера при погашении кредита');
+            }
+        } catch (error) {
+            console.error('Ошибка погашения кредита:', error);
+            alert('Ошибка при погашении кредита');
+        }
+    }
+
+    /**
+     * Получение названия кредита
+     */
+    getLoanName(loanType) {
+        const names = {
+            car: 'Кредит на авто',
+            education: 'Образовательный кредит',
+            mortgage: 'Ипотека',
+            creditCards: 'Кредитные карты'
+        };
+        return names[loanType] || loanType;
+    }
+
+    /**
      * Переключение деталей доходов
      */
     toggleIncomeDetails() {
@@ -640,9 +744,35 @@ class BankModuleV4 {
                 passiveIncomeEl.textContent = `$0`; // Пока нет пассивного дохода
             }
             
-            const baseExpensesEl = document.getElementById('baseExpensesAmount');
-            if (baseExpensesEl) {
-                baseExpensesEl.textContent = `$${this.data.expenses.toLocaleString()}`;
+            // Обновляем детализированные расходы
+            const taxesEl = document.getElementById('taxesAmount');
+            if (taxesEl) {
+                taxesEl.textContent = `$1,300`;
+            }
+            
+            const otherExpensesEl = document.getElementById('otherExpensesAmount');
+            if (otherExpensesEl) {
+                otherExpensesEl.textContent = `$1,500`;
+            }
+            
+            const carLoanEl = document.getElementById('carLoanAmount');
+            if (carLoanEl) {
+                carLoanEl.textContent = `$${this.getLoanAmount('car')}`;
+            }
+            
+            const educationLoanEl = document.getElementById('educationLoanAmount');
+            if (educationLoanEl) {
+                educationLoanEl.textContent = `$${this.getLoanAmount('education')}`;
+            }
+            
+            const mortgageEl = document.getElementById('mortgageAmount');
+            if (mortgageEl) {
+                mortgageEl.textContent = `$${this.getLoanAmount('mortgage')}`;
+            }
+            
+            const creditCardsEl = document.getElementById('creditCardsAmount');
+            if (creditCardsEl) {
+                creditCardsEl.textContent = `$${this.getLoanAmount('creditCards')}`;
             }
             
             const childrenExpensesEl = document.getElementById('childrenExpensesAmount');
@@ -663,7 +793,7 @@ class BankModuleV4 {
             if (totalExpensesEl) {
                 const childrenCount = this.getChildrenCount();
                 const childrenExpenses = childrenCount * 400;
-                const totalExpenses = this.data.expenses + childrenExpenses;
+                const totalExpenses = this.getTotalExpenses() + childrenExpenses;
                 totalExpensesEl.textContent = `$${totalExpenses.toLocaleString()}`;
             }
             
@@ -671,7 +801,7 @@ class BankModuleV4 {
             if (netIncomeEl) {
                 const childrenCount = this.getChildrenCount();
                 const childrenExpenses = childrenCount * 400;
-                const netIncome = 10000 - (this.data.expenses + childrenExpenses);
+                const netIncome = 10000 - (this.getTotalExpenses() + childrenExpenses);
                 netIncomeEl.textContent = `$${netIncome.toLocaleString()}`;
             }
             
@@ -680,7 +810,7 @@ class BankModuleV4 {
             if (paydayEl) {
                 const childrenCount = this.getChildrenCount();
                 const childrenExpenses = childrenCount * 400;
-                const payday = 10000 - (this.data.expenses + childrenExpenses);
+                const payday = 10000 - (this.getTotalExpenses() + childrenExpenses);
                 paydayEl.textContent = `$${payday.toLocaleString()}/мес`;
             }
             
@@ -695,7 +825,7 @@ class BankModuleV4 {
             if (maxLimitEl) {
                 const childrenCount = this.getChildrenCount();
                 const childrenExpenses = childrenCount * 400;
-                const netIncome = 10000 - (this.data.expenses + childrenExpenses);
+                const netIncome = 10000 - (this.getTotalExpenses() + childrenExpenses);
                 const maxCredit = Math.max(0, netIncome * 10);
                 maxLimitEl.textContent = `$${maxCredit.toLocaleString()}`;
             }
@@ -704,7 +834,7 @@ class BankModuleV4 {
             if (freeLimitEl) {
                 const childrenCount = this.getChildrenCount();
                 const childrenExpenses = childrenCount * 400;
-                const netIncome = 10000 - (this.data.expenses + childrenExpenses);
+                const netIncome = 10000 - (this.getTotalExpenses() + childrenExpenses);
                 const maxCredit = Math.max(0, netIncome * 10);
                 const free = Math.max(0, maxCredit - this.data.credit);
                 freeLimitEl.textContent = `$${free.toLocaleString()}`;
@@ -1356,6 +1486,13 @@ window.closeBankV4 = closeBankV4;
 window.requestCreditV4 = requestCreditV4;
 window.payoffCreditV4 = payoffCreditV4;
 window.transferMoneyV4 = transferMoneyV4;
+window.payoffLoan = (loanType) => {
+    if (window.bankModuleV4) {
+        window.bankModuleV4.payoffLoan(loanType);
+    } else {
+        console.error('BankModuleV4 не инициализирован');
+    }
+};
 
 // Функция для выполнения перевода из формы
 async function executeTransferV4() {

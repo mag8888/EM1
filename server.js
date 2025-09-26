@@ -1634,6 +1634,83 @@ app.post('/api/bank/credit/repay', (req, res) => {
     }
 });
 
+// Погашение кредитов (авто, образование, ипотека, кредитные карты)
+app.post('/api/bank/loans/payoff', (req, res) => {
+    try {
+        const { roomId, username, loanType, amount } = req.body;
+        
+        if (!roomId || !username || !loanType || !amount) {
+            return res.status(400).json({ success: false, message: 'Недостаточно данных' });
+        }
+        
+        const room = rooms.get(roomId);
+        if (!room) {
+            return res.status(404).json({ success: false, message: 'Комната не найдена' });
+        }
+        
+        const player = (room.players || []).find(p => p.name === username || p.username === username);
+        if (!player) {
+            return res.status(404).json({ success: false, message: 'Игрок не найден' });
+        }
+        
+        const bankBalance = ensureBalance(roomId, username);
+        const payoffAmount = Number(amount);
+        
+        if (payoffAmount <= 0) {
+            return res.status(400).json({ success: false, message: 'Сумма погашения должна быть положительной' });
+        }
+        
+        if (bankBalance.amount < payoffAmount) {
+            return res.status(400).json({ success: false, message: 'Недостаточно средств для погашения' });
+        }
+        
+        // Проверяем, что кредит еще не погашен
+        if (!player.loans) player.loans = {};
+        if (player.loans[loanType] === false) {
+            return res.status(400).json({ success: false, message: 'Кредит уже погашен' });
+        }
+        
+        // Списываем деньги
+        bankBalance.amount -= payoffAmount;
+        player.cash = bankBalance.amount;
+        
+        // Отмечаем кредит как погашенный
+        player.loans[loanType] = false;
+        
+        // Записываем в историю
+        const loanNames = {
+            car: 'Кредит на авто',
+            education: 'Образовательный кредит',
+            mortgage: 'Ипотека',
+            creditCards: 'Кредитные карты'
+        };
+        
+        pushHistory(roomId, {
+            from: username,
+            to: 'Банк',
+            amount: payoffAmount,
+            roomId: roomId,
+            reason: `погашение ${loanNames[loanType] || loanType}`,
+            timestamp: Date.now(),
+            type: 'loan_payoff'
+        });
+        
+        // Сохраняем в базу
+        saveRoomToSQLite(room);
+        
+        res.json({
+            success: true,
+            message: `${loanNames[loanType] || loanType} погашен`,
+            balance: bankBalance.amount,
+            loans: player.loans
+        });
+        
+    } catch (error) {
+        console.error('Ошибка погашения кредита:', error);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
+    }
+});
+
 // Registration API endpoint
 app.post('/api/auth/register', async (req, res) => {
     try {

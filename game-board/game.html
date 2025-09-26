@@ -1272,16 +1272,38 @@
                         </div>
                         <div class="expenses-details" id="expensesDetails" style="display: none;">
                             <div class="financial-subitem">
-                                <span class="financial-label">Базовые расходы:</span>
-                                <span class="financial-value expense" id="baseExpensesAmount">$0</span>
+                                <span class="financial-label">Налоги:</span>
+                                <span class="financial-value expense" id="taxesAmount">$1,300</span>
+                                <span class="expense-note">(13% - не погашаются)</span>
+                            </div>
+                            <div class="financial-subitem">
+                                <span class="financial-label">Прочие расходы:</span>
+                                <span class="financial-value expense" id="otherExpensesAmount">$1,500</span>
+                                <span class="expense-note">(не погашаются)</span>
+                            </div>
+                            <div class="financial-subitem loan-item">
+                                <span class="financial-label">Кредит на авто:</span>
+                                <span class="financial-value expense" id="carLoanAmount">$700</span>
+                                <button class="payoff-btn" onclick="payoffLoan('car')" id="carLoanPayoffBtn">Погасить $14,000</button>
+                            </div>
+                            <div class="financial-subitem loan-item">
+                                <span class="financial-label">Образовательный кредит:</span>
+                                <span class="financial-value expense" id="educationLoanAmount">$500</span>
+                                <button class="payoff-btn" onclick="payoffLoan('education')" id="educationLoanPayoffBtn">Погасить $10,000</button>
+                            </div>
+                            <div class="financial-subitem loan-item">
+                                <span class="financial-label">Ипотека:</span>
+                                <span class="financial-value expense" id="mortgageAmount">$1,200</span>
+                                <button class="payoff-btn" onclick="payoffLoan('mortgage')" id="mortgagePayoffBtn">Погасить $120,000</button>
+                            </div>
+                            <div class="financial-subitem loan-item">
+                                <span class="financial-label">Кредитные карты:</span>
+                                <span class="financial-value expense" id="creditCardsAmount">$1,000</span>
+                                <button class="payoff-btn" onclick="payoffLoan('creditCards')" id="creditCardsPayoffBtn">Погасить $10,000</button>
                             </div>
                             <div class="financial-subitem">
                                 <span class="financial-label">Расходы на детей:</span>
                                 <span class="financial-value expense" id="childrenExpensesAmount">$0</span>
-                            </div>
-                            <div class="financial-subitem">
-                                <span class="financial-label">Платежи по кредитам:</span>
-                                <span class="financial-value expense" id="creditPaymentAmount">$0</span>
                             </div>
                             <div class="profession-expenses" id="professionExpensesList">
                                 <!-- Детали расходов из карточки профессии будут добавлены динамически -->

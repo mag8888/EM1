@@ -768,3 +768,50 @@
     padding: 4px 0;
     font-size: 13px;
 }
+
+/* Loan items and payoff buttons */
+.financial-subitem.loan-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 0;
+}
+
+.financial-subitem.loan-item .financial-label {
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.expense-note {
+    font-size: 11px;
+    color: #94a3b8;
+    font-style: italic;
+    margin-left: 8px;
+}
+
+.payoff-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+    align-self: flex-end;
+}
+
+.payoff-btn:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
+}
+
+.payoff-btn:disabled {
+    background: #6b7280;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
