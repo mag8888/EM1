@@ -1596,6 +1596,14 @@ app.post('/api/bank/credit/repay', (req, res) => {
         // Update state
         loan.amount -= sum;
         
+        // Получаем игрока
+        const room = rooms.get(roomId);
+        const player = (room?.players || []).find(p => p.name === username || p.username === username);
+        
+        if (!player) {
+            return res.status(404).json({ error: 'Игрок не найден' });
+        }
+        
         // Списываем с баланса игрока
         player.cash = Math.max(0, (player.cash || 0) - sum);
         
@@ -1603,18 +1611,14 @@ app.post('/api/bank/credit/repay', (req, res) => {
         syncPlayerBalance(roomId, username);
 
         // Restore cashflow on player (пассивный доход или зарплату)
-        const room = rooms.get(roomId);
-        const player = (room?.players || []).find(p => p.name === username || p.username === username);
-        if (player) {
-            const passiveIncome = Number(player.passiveIncome || 0);
-            const salary = Number(player.profession?.salary || 0);
-            const restoredAmount = (sum / 1000) * 100;
-            
-            if (passiveIncome > 0) {
-                player.passiveIncome = passiveIncome + restoredAmount;
-            } else {
-                player.profession.salary = salary + restoredAmount;
-            }
+        const passiveIncome = Number(player.passiveIncome || 0);
+        const salary = Number(player.profession?.salary || 0);
+        const restoredAmount = (sum / 1000) * 100;
+        
+        if (passiveIncome > 0) {
+            player.passiveIncome = passiveIncome + restoredAmount;
+        } else {
+            player.profession.salary = salary + restoredAmount;
         }
 
         pushHistory(roomId, { 
