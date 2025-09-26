@@ -813,13 +813,11 @@ class BankModuleV4 {
             if (netIncomeEl) {
                 const childrenCount = this.getChildrenCount();
                 const childrenExpenses = childrenCount * 400;
-                // Каждые $1000 кредита уменьшают чистый доход на $100/мес
-                const creditPenalty = Math.floor((this.data.credit || 0) / 1000) * 100;
                 const income = Number(this.data.income || 0);
                 const passiveIncome = Number(this.data.passiveIncome || 0);
-                // Используем базовые расходы без штрафа по кредиту
-                const baseExpenses = this.getTotalExpenses() - creditPenalty;
-                const netIncome = (income + passiveIncome) - (baseExpenses + childrenExpenses);
+                // Чистый доход = доходы - все расходы (включая штраф по кредиту)
+                const totalExpenses = this.getTotalExpenses() + childrenExpenses;
+                const netIncome = (income + passiveIncome) - totalExpenses;
                 netIncomeEl.textContent = `$${netIncome.toLocaleString()}`;
             }
             
@@ -828,13 +826,11 @@ class BankModuleV4 {
             if (paydayEl) {
                 const childrenCount = this.getChildrenCount();
                 const childrenExpenses = childrenCount * 400;
-                // Каждые $1000 кредита уменьшают PAYDAY на $100/мес
-                const creditPenalty = Math.floor((this.data.credit || 0) / 1000) * 100;
                 const income = Number(this.data.income || 0);
                 const passiveIncome = Number(this.data.passiveIncome || 0);
-                // Используем базовые расходы без штрафа по кредиту
-                const baseExpenses = this.getTotalExpenses() - creditPenalty;
-                const payday = (income + passiveIncome) - (baseExpenses + childrenExpenses);
+                // PAYDAY = доходы - все расходы (включая штраф по кредиту)
+                const totalExpenses = this.getTotalExpenses() + childrenExpenses;
+                const payday = (income + passiveIncome) - totalExpenses;
                 paydayEl.textContent = `$${payday.toLocaleString()}/мес`;
             }
             
