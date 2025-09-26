@@ -204,7 +204,13 @@ class DataStoreAdapter {
             passiveIncomeEl.textContent = `$${data.passiveIncome.toLocaleString()}`;
         }
         
-        console.log('🎨 DataStoreAdapter: Внешняя панель обновлена');
+        console.log('🎨 DataStoreAdapter: Внешняя панель обновлена', {
+            income: data.income,
+            expenses: data.expenses,
+            payday: data.payday,
+            credit: data.credit,
+            passiveIncome: data.passiveIncome
+        });
     }
     
     /**

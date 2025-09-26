@@ -110,28 +110,64 @@ class GameModule {
         playerSummary.init();
         this.modules.push(playerSummary);
 
-        // Обновляем баланс из банковского API при каждом изменении состояния
+        // Обновляем баланс через DataStore при каждом изменении состояния
         this.state.on('change', async () => {
             try {
                 const user = this.state.api?.getCurrentUser?.();
                 const roomId = this.roomId;
                 if (!user?.username || !roomId) return;
-                const res = await fetch(`/api/bank/balance/${encodeURIComponent(user.username)}/${encodeURIComponent(roomId)}`);
-                const data = await res.json();
-                const el = document.getElementById('bankBalanceValue');
-                if (el && data && typeof data.amount === 'number') {
-                    el.textContent = `$${Number(data.amount).toLocaleString()}`;
-                }
-                // Кредит: для учета в расходах и PAYDAY
-                try {
+                
+                // Используем DataStore для обновления данных
+                if (window.dataStore && window.dataStoreAdapter) {
+                    // Синхронизируем данные через DataStore
+                    const res = await fetch(`/api/bank/balance/${encodeURIComponent(user.username)}/${encodeURIComponent(roomId)}`);
+                    const balanceData = await res.json();
+                    
                     const cr = await fetch(`/api/bank/credit/status/${encodeURIComponent(user.username)}/${encodeURIComponent(roomId)}`);
-                    const cs = await cr.json();
-                    const loanMonthly = Number(cs?.loanAmount || 0) / 1000 * 100; // 100$ за каждую 1000
-                    window._creditExpense = Number.isFinite(loanMonthly) ? loanMonthly : 0;
-                } catch (_) {
-                    window._creditExpense = 0;
+                    const creditData = await cr.json();
+                    
+                    const financialsRes = await fetch(`/api/bank/financials/${encodeURIComponent(user.username)}/${encodeURIComponent(roomId)}`);
+                    const financialsData = await financialsRes.json();
+                    
+                    // Обновляем DataStore
+                    window.dataStore.update({
+                        balance: Number(balanceData?.amount || 0),
+                        credit: Number(creditData?.loanAmount || 0),
+                        salary: Number(financialsData?.salary || 0),
+                        passiveIncome: Number(financialsData?.passiveIncome || 0)
+                    });
+                    
+                    // Пересчитываем производные значения
+                    window.dataStore.calculateDerivedValues();
+                    
+                    // Обновляем UI через DataStoreAdapter
+                    window.dataStoreAdapter.updateUI();
+                    
+                    console.log('🔄 GameModule: Данные синхронизированы через DataStore');
+                } else {
+                    // Fallback к старой логике, если DataStore недоступен
+                    const res = await fetch(`/api/bank/balance/${encodeURIComponent(user.username)}/${encodeURIComponent(roomId)}`);
+                    const data = await res.json();
+                    
+                    // Обновляем элементы внешней панели банка
+                    const balanceEl = document.getElementById('bankBalanceValue');
+                    if (balanceEl && data && typeof data.amount === 'number') {
+                        balanceEl.textContent = `$${Number(data.amount).toLocaleString()}`;
+                    }
+                    
+                    // Кредит: для учета в расходах и PAYDAY
+                    try {
+                        const cr = await fetch(`/api/bank/credit/status/${encodeURIComponent(user.username)}/${encodeURIComponent(roomId)}`);
+                        const cs = await cr.json();
+                        const loanMonthly = Number(cs?.loanAmount || 0) / 1000 * 100; // 100$ за каждую 1000
+                        window._creditExpense = Number.isFinite(loanMonthly) ? loanMonthly : 0;
+                    } catch (_) {
+                        window._creditExpense = 0;
+                    }
                 }
-            } catch (_) {}
+            } catch (error) {
+                console.error('GameModule: Ошибка обновления данных:', error);
+            }
         });
     }
 
