@@ -920,6 +920,17 @@ class BankModuleV4 {
                 return;
             }
 
+            // Отладочная информация о транзакциях
+            console.log(`🔍 BankModuleV4: Анализ транзакций для игрока ${this.playerName}:`, this.data.transfers.map(t => ({
+                from: t.from,
+                to: t.to,
+                sender: t.sender,
+                recipient: t.recipient,
+                amount: t.amount,
+                reason: t.reason || t.description,
+                playerName: this.playerName
+            })));
+
             // Фильтруем дубликаты и проблемные записи
             const uniqueTransfers = this.data.transfers.filter((transfer, index, self) => {
                 const key = `${transfer.amount}_${transfer.description || transfer.reason}_${transfer.timestamp}`;
@@ -937,7 +948,18 @@ class BankModuleV4 {
                                             transfer.sender !== this.playerName && 
                                             transfer.recipient !== this.playerName;
                 
-                return !isDuplicate && !isNegativeStartingSavings && !isNotForCurrentPlayer;
+                // Для "стартовые сбережения" - показываем только положительные суммы
+                const isStartingSavings = (transfer.description || transfer.reason) === 'стартовые сбережения';
+                const shouldShowStartingSavings = isStartingSavings && Number(transfer.amount) > 0;
+                
+                // Показываем транзакции, которые относятся к игроку ИЛИ являются положительными стартовыми сбережениями
+                const shouldShow = (!isNotForCurrentPlayer || shouldShowStartingSavings) && !isDuplicate && !isNegativeStartingSavings;
+                
+                if (isStartingSavings) {
+                    console.log(`🔍 Стартовые сбережения: amount=${transfer.amount}, shouldShow=${shouldShow}, isNotForCurrentPlayer=${isNotForCurrentPlayer}, shouldShowStartingSavings=${shouldShowStartingSavings}`);
+                }
+                
+                return shouldShow;
             });
 
             const orderedTransfers = [...uniqueTransfers].sort((a, b) => {
