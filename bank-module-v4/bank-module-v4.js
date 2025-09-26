@@ -1352,7 +1352,7 @@ async function executeTransferV4() {
         
         console.log('🔍 executeTransferV4: Данные формы:', { recipientIndex, amount });
         
-        if (!recipientIndex || !amount) {
+        if (recipientIndex === null || recipientIndex === undefined || !amount) {
             alert('Пожалуйста, выберите получателя и укажите сумму');
             return;
         }
