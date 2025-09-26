@@ -22,66 +22,14 @@ function syncDataFromBankV4() {
     
     const data = bankModuleV4.getData();
     
-    // Обновляем глобальные переменные
-    window.currentBalance = data.balance;
-    window.monthlyIncome = data.income;
-    window.monthlyExpenses = data.expenses;
-    window.totalCredit = data.credit;
-    
-    // Обновляем отображение в table.html
-    updateBalanceDisplay();
-    updateFinancesDisplay();
-    updateCreditDisplay();
-    
-    // Обновляем PlayerSummary если он доступен
+    // Обновляем только PlayerSummary - единственный источник истины
     updatePlayerSummary();
     
     console.log('🔄 Данные синхронизированы из BankModuleV4:', data);
 }
 
-/**
- * Обновление баланса в table.html
- */
-function updateBalanceDisplay() {
-    const balanceEl = document.getElementById('currentBalance');
-    if (balanceEl) {
-        balanceEl.textContent = `$${window.currentBalance.toLocaleString()}`;
-    }
-    
-    // Обновляем в банковском модуле
-    if (bankModuleV4) {
-        bankModuleV4.updateUI();
-    }
-}
-
-/**
- * Обновление финансов в table.html
- */
-function updateFinancesDisplay() {
-    const incomeEl = document.getElementById('monthlyIncome');
-    if (incomeEl) {
-        const payday = Math.max(0, window.monthlyIncome - window.monthlyExpenses);
-        incomeEl.textContent = `$${payday.toLocaleString()}/мес`;
-    }
-    
-    console.log(`💰 PAYDAY: доход $${window.monthlyIncome.toLocaleString()} - расходы $${window.monthlyExpenses.toLocaleString()} = $${Math.max(0, window.monthlyIncome - window.monthlyExpenses).toLocaleString()}`);
-}
-
-/**
- * Обновление кредита в table.html
- */
-function updateCreditDisplay() {
-    const creditEl = document.getElementById('currentCredit');
-    if (creditEl) {
-        creditEl.textContent = `$${window.totalCredit.toLocaleString()}`;
-    }
-    
-    const maxCreditEl = document.getElementById('maxCredit');
-    if (maxCreditEl) {
-        const maxCredit = Math.max(0, window.monthlyIncome * 10);
-        maxCreditEl.textContent = `$${maxCredit.toLocaleString()}`;
-    }
-}
+// Удалены функции updateBalanceDisplay, updateFinancesDisplay, updateCreditDisplay
+// Теперь все обновления происходят только через BankModuleV4 и PlayerSummary
 
 /**
  * Обновление PlayerSummary из банковского модуля
@@ -125,59 +73,8 @@ function updatePlayerSummary() {
     }
 }
 
-/**
- * Добавление баланса (совместимость с table.html)
- */
-async function addBalance(amount, description) {
-    console.log(`💰 Добавление баланса: $${amount.toLocaleString()} - ${description}`);
-    
-    // Обновляем глобальную переменную
-    window.currentBalance += amount;
-    
-    // Обновляем отображение
-    updateBalanceDisplay();
-    
-    // Синхронизируем с банковским модулем
-    if (bankModuleV4) {
-        await bankModuleV4.loadData();
-    }
-}
-
-/**
- * Вычитание баланса (совместимость с table.html)
- */
-async function subtractBalance(amount, description) {
-    console.log(`💸 Вычитание баланса: $${amount.toLocaleString()} - ${description}`);
-    
-    // Обновляем глобальную переменную
-    window.currentBalance = Math.max(0, window.currentBalance - amount);
-    
-    // Обновляем отображение
-    updateBalanceDisplay();
-    
-    // Синхронизируем с банковским модулем
-    if (bankModuleV4) {
-        await bankModuleV4.loadData();
-    }
-}
-
-/**
- * Добавление месячного дохода (совместимость с table.html)
- */
-function addMonthlyIncome(amount, description) {
-    console.log(`📈 Добавление месячного дохода: $${amount.toLocaleString()} - ${description}`);
-    
-    window.monthlyIncome += amount;
-    
-    // Обновляем отображение
-    updateFinancesDisplay();
-    updateCreditDisplay();
-    
-    // Синхронизируем с банковским модулем
-    if (bankModuleV4) {
-        bankModuleV4.loadData();
-    }
-}
+// Удалены функции addBalance, subtractBalance, addMonthlyIncome
+// Все финансовые операции теперь происходят только через BankModuleV4
 
 /**
  * Запрос кредита (совместимость с table.html)
@@ -247,26 +144,10 @@ function closeBankModal() {
 function initializeFinances() {
     console.log('💰 Инициализация финансов');
     
-    // Инициализируем переменные
-    window.currentBalance = window.currentBalance || 0;
-    window.monthlyIncome = window.monthlyIncome || 0;
-    window.monthlyExpenses = window.monthlyExpenses || 0;
-    window.totalCredit = window.totalCredit || 0;
-    window.creditPayment = window.creditPayment || 0;
-    
-    if (!window.expensesBreakdown) {
-        window.expensesBreakdown = { base: 0, credit: 0 };
-    }
-    
-    // Синхронизируем с банковским модулем
+    // Синхронизируем с банковским модулем - единственный источник истины
     if (bankModuleV4) {
         syncDataFromBankV4();
     }
-    
-    // Обновляем отображение
-    updateBalanceDisplay();
-    updateFinancesDisplay();
-    updateCreditDisplay();
 }
 
 /**
@@ -287,15 +168,7 @@ function safeCallBankFunction(functionName, ...args) {
 }
 
 // Экспорт функций в глобальную область для совместимости
-// Переменные уже объявлены выше
-
-window.updateBalanceDisplay = updateBalanceDisplay;
-window.updateFinancesDisplay = updateFinancesDisplay;
-window.updateCreditDisplay = updateCreditDisplay;
 window.updatePlayerSummary = updatePlayerSummary;
-window.addBalance = addBalance;
-window.subtractBalance = subtractBalance;
-window.addMonthlyIncome = addMonthlyIncome;
 window.requestCreditLocal = requestCreditLocal;
 window.payoffCredit = payoffCredit;
 window.openBankModal = openBankModal;
