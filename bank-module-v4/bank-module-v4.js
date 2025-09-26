@@ -1,10 +1,12 @@
 /**
  * Bank Module v4 - Complete Rewrite
  * Простой, надежный и эффективный банковский модуль
+ * VERSION: 4.1-DEBUG (с синхронизацией баланса)
  */
 
 class BankModuleV4 {
     constructor() {
+        console.log('🏦 BankModuleV4 v4.1-DEBUG: Инициализация модуля');
         this.roomId = null;
         this.userId = null;
         this.playerName = null;
