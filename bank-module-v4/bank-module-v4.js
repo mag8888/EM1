@@ -1607,7 +1607,7 @@ async function takeCreditV4() {
     }
 }
 
-async function payoffCreditV4() {
+async function payoffCreditV4Button() {
     try {
         const success = await payoffCreditV4();
         if (success) {
@@ -1621,7 +1621,7 @@ async function payoffCreditV4() {
 }
 
 window.takeCreditV4 = takeCreditV4;
-window.payoffCreditV4 = payoffCreditV4;
+window.payoffCreditV4 = payoffCreditV4Button;
 window.getBankDataV4 = getBankDataV4;
 
 // Автоматическая инициализация при загрузке
