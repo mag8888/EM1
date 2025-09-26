@@ -303,6 +303,14 @@ window.initializeFinances = initializeFinances;
 window.safeCallBankFunction = safeCallBankFunction;
 window.syncDataFromBankV4 = syncDataFromBankV4;
 
+// Инициализация DataStore при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.dataStore) {
+        console.log('📊 DataStore: Инициализация при загрузке страницы');
+        window.dataStore.initialize();
+    }
+});
+
 // Автоматическая синхронизация каждые 10 секунд
 setInterval(async () => {
     if (bankModuleV4) {

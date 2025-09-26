@@ -67,6 +67,8 @@ class DataStoreAdapter {
         
         // Пересчитываем производные значения
         this.dataStore.calculateDerivedValues();
+        
+        console.log('🔄 DataStoreAdapter: Синхронизация завершена', this.dataStore.getAll());
     }
     
     /**

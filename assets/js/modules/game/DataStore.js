@@ -293,7 +293,11 @@ class DataStore {
     initialize() {
         this.isInitialized = true;
         this.data.lastUpdated = Date.now();
-        console.log('📊 DataStore: Инициализирован и готов к работе');
+        console.log('📊 DataStore: Инициализирован и готов к работе', {
+            isInitialized: this.isInitialized,
+            isReady: this.isReady(),
+            data: this.getAll()
+        });
     }
     
     /**

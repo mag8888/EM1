@@ -354,6 +354,17 @@ class BankModuleV4 {
             
             // 5. Синхронизируем с DataStore, если доступен
             if (window.dataStore) {
+                // Инициализируем DataStore, если еще не инициализирован
+                if (!window.dataStore.isReady()) {
+                    window.dataStore.initialize();
+                }
+                
+                // Устанавливаем игровую информацию
+                if (this.roomId && this.playerName) {
+                    window.dataStore.setGameInfo(this.roomId, this.playerName, this.userId);
+                }
+                
+                // Обновляем данные в DataStore
                 window.dataStore.update({
                     balance: this.data.balance,
                     income: this.data.income,
@@ -365,12 +376,15 @@ class BankModuleV4 {
                     transfers: this.data.transfers
                 });
                 
-                // Устанавливаем игровую информацию
-                if (this.roomId && this.playerName) {
-                    window.dataStore.setGameInfo(this.roomId, this.playerName, this.userId);
-                }
-                
-                console.log('🔄 BankModuleV4: Данные синхронизированы с DataStore');
+                console.log('🔄 BankModuleV4: Данные синхронизированы с DataStore', {
+                    balance: this.data.balance,
+                    income: this.data.income,
+                    expenses: this.data.expenses,
+                    payday: this.data.payday,
+                    credit: this.data.credit
+                });
+            } else {
+                console.warn('⚠️ BankModuleV4: DataStore недоступен, используем локальные данные');
             }
 
             // 6. Обновляем кэш
@@ -1361,12 +1375,15 @@ class BankModuleV4 {
      * Получение текущих данных
      */
     getData() {
-        // Если доступен DataStore, используем его как источник истины
-        if (window.dataStore) {
-            return window.dataStore.getBankModuleData();
+        // Если доступен DataStore и он готов, используем его как источник истины
+        if (window.dataStore && window.dataStore.isReady()) {
+            const dataStoreData = window.dataStore.getBankModuleData();
+            console.log('📊 BankModuleV4: Данные получены из DataStore', dataStoreData);
+            return dataStoreData;
         }
         
         // Fallback к локальным данным
+        console.log('📊 BankModuleV4: Данные получены из локального кэша', this.data);
         return { ...this.data };
     }
 
