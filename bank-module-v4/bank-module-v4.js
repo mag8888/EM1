@@ -959,7 +959,7 @@ class BankModuleV4 {
                 const shouldShow = (isRegularTransactionForCurrentPlayer || shouldShowStartingSavings) && !isDuplicate && !isNegativeStartingSavings;
                 
                 if (isStartingSavings) {
-                    console.log(`🔍 Стартовые сбережения: amount=${transfer.amount}, to=${transfer.to}, playerName=${this.playerName}, shouldShow=${shouldShow}, isStartingSavingsForCurrentPlayer=${isStartingSavingsForCurrentPlayer}`);
+                    console.log(`🔍 Стартовые сбережения: amount=${transfer.amount}, to=${transfer.to}, playerName=${this.playerName}, shouldShow=${shouldShow}, isStartingSavingsForCurrentPlayer=${isStartingSavingsForCurrentPlayer}, isDuplicate=${isDuplicate}, isNegativeStartingSavings=${isNegativeStartingSavings}, isRegularTransactionForCurrentPlayer=${isRegularTransactionForCurrentPlayer}`);
                 }
                 
                 return shouldShow;
