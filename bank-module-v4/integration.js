@@ -108,19 +108,19 @@ function updatePlayerSummary() {
         const data = bankModuleV4.getData();
         
         if (incomeEl) {
-            incomeEl.textContent = `$${data.income.toLocaleString()}`;
+            incomeEl.textContent = `$${(data.income || 0).toLocaleString()}`;
         }
         if (expenseEl) {
-            expenseEl.textContent = `$${data.expenses.toLocaleString()}`;
+            expenseEl.textContent = `$${(data.expenses || 0).toLocaleString()}`;
         }
         if (paydayEl) {
-            paydayEl.textContent = `$${data.payday.toLocaleString()}/мес`;
+            paydayEl.textContent = `$${(data.payday || 0).toLocaleString()}/мес`;
         }
         if (loanEl) {
-            loanEl.textContent = `$${data.credit.toLocaleString()}`;
+            loanEl.textContent = `$${(data.credit || 0).toLocaleString()}`;
         }
         if (passiveIncomeEl) {
-            passiveIncomeEl.textContent = `$${data.passiveIncome.toLocaleString()}`;
+            passiveIncomeEl.textContent = `$${(data.passiveIncome || 0).toLocaleString()}`;
         }
     }
 }

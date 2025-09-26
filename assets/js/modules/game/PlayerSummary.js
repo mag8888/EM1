@@ -44,13 +44,13 @@ export default class PlayerSummary {
 
         if (bankData) {
             // Данные из банковского модуля
-            this.setText(this.incomeEl, `$${bankData.income.toLocaleString()}`);
+            this.setText(this.incomeEl, `$${(bankData.income || 0).toLocaleString()}`);
             if (this.passiveIncomeEl) {
-                this.passiveIncomeEl.textContent = `$${bankData.passiveIncome.toLocaleString()}`;
+                this.passiveIncomeEl.textContent = `$${(bankData.passiveIncome || 0).toLocaleString()}`;
             }
-            this.setText(this.expenseEl, `$${bankData.expenses.toLocaleString()}`);
-            this.setText(this.loanEl, `$${bankData.credit.toLocaleString()}`);
-            this.setText(this.paydayEl, `$${bankData.payday.toLocaleString()}/мес`);
+            this.setText(this.expenseEl, `$${(bankData.expenses || 0).toLocaleString()}`);
+            this.setText(this.loanEl, `$${(bankData.credit || 0).toLocaleString()}`);
+            this.setText(this.paydayEl, `$${(bankData.payday || 0).toLocaleString()}/мес`);
         } else {
             // Fallback к старой логике, если банковский модуль недоступен
             const passiveIncome = Number(player.passiveIncome || 0);
@@ -89,15 +89,19 @@ export default class PlayerSummary {
             this.professionExpensesEl.textContent = `$${Number(profession.expenses || 0).toLocaleString()}`;
         }
         if (this.professionPassiveEl) {
-            this.professionPassiveEl.textContent = `$${passiveIncome.toLocaleString()}`;
+            const passiveIncomeValue = bankData ? (bankData.passiveIncome || 0) : passiveIncome;
+            this.professionPassiveEl.textContent = `$${passiveIncomeValue.toLocaleString()}`;
         }
         if (this.professionCashflowEl) {
-            this.professionCashflowEl.textContent = `$${payday.toLocaleString()}`;
+            const paydayValue = bankData ? bankData.payday : (totalIncome - expenses);
+            this.professionCashflowEl.textContent = `$${paydayValue.toLocaleString()}`;
         }
 
         // Условие перехода на большой круг: пассивный доход > расходы
         // Здесь только отображение; сам переход запустим отдельным контроллером
-        const canGoOuter = passiveIncome > expenses;
+        const passiveIncomeValue = bankData ? (bankData.passiveIncome || 0) : passiveIncome;
+        const expensesValue = bankData ? bankData.expenses : expenses;
+        const canGoOuter = passiveIncomeValue > expensesValue;
         if (canGoOuter) {
             console.log('✅ Условие перехода на большой круг выполнено');
         }
