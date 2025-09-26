@@ -957,11 +957,26 @@ class DealsModule {
             addedToCatalogAt: Date.now()
         });
         
+        // Также добавляем в глобальный каталог для синхронизации
+        if (!window.globalCatalogAssets) {
+            window.globalCatalogAssets = [];
+        }
+        window.globalCatalogAssets.push({
+            ...asset,
+            originalOwnerId: playerId,
+            addedToCatalogAt: Date.now()
+        });
+        
         console.log(`🎴 Актив ${asset.name} перемещен в каталог игроком ${playerId}`);
         
         // Обновляем состояние игры
         if (window.gameState) {
             window.gameState.refresh();
+        }
+        
+        // Принудительно обновляем UI активов
+        if (window.assetsManager) {
+            window.assetsManager.render(window.gameState?.getSnapshot?.());
         }
     }
     
@@ -978,12 +993,36 @@ class DealsModule {
             });
         });
         
-        // Добавляем активы из каталога
+        // Добавляем активы из локального каталога
         if (this.catalogAssets) {
             this.catalogAssets.forEach(asset => {
                 allAssets.push({...asset, ownerId: 'catalog', type: 'catalog'});
             });
         }
+        
+        // Добавляем активы из глобального каталога
+        if (window.globalCatalogAssets) {
+            window.globalCatalogAssets.forEach(asset => {
+                allAssets.push({...asset, ownerId: 'catalog', type: 'catalog'});
+            });
+        }
+        
+        // Добавляем активы из состояния игры (серверные данные)
+        if (window.gameState?.state?.room?.catalogAssets) {
+            window.gameState.state.room.catalogAssets.forEach(asset => {
+                allAssets.push({...asset, ownerId: 'catalog', type: 'catalog'});
+            });
+        }
+        
+        // Убираем дубликаты по ID актива
+        const uniqueAssets = [];
+        const seenIds = new Set();
+        allAssets.forEach(asset => {
+            if (!seenIds.has(asset.id)) {
+                seenIds.add(asset.id);
+                uniqueAssets.push(asset);
+            }
+        });
         
         modal.innerHTML = `
             <div class="deals-modal-content assets-catalog-modal">
@@ -995,23 +1034,23 @@ class DealsModule {
                     <div class="assets-stats">
                         <div class="stat-item">
                             <span>Всего активов:</span>
-                            <span>${allAssets.length}</span>
+                            <span>${uniqueAssets.length}</span>
                         </div>
                         <div class="stat-item">
                             <span>Общая стоимость:</span>
-                            <span>$${allAssets.reduce((sum, asset) => sum + asset.cost, 0).toLocaleString()}</span>
+                            <span>$${uniqueAssets.reduce((sum, asset) => sum + (asset.cost || asset.purchasePrice || 0), 0).toLocaleString()}</span>
                         </div>
                     </div>
                     <div class="assets-list">
-                        ${allAssets.map(asset => `
+                        ${uniqueAssets.map(asset => `
                             <div class="asset-item">
                                 <div class="asset-icon">${asset.icon}</div>
                                 <div class="asset-info">
                                     <div class="asset-name">${asset.name}</div>
                                     <div class="asset-owner">Владелец: ${asset.ownerId}</div>
                                     <div class="asset-details">
-                                        <span>Стоимость: $${asset.cost.toLocaleString()}</span>
-                                        <span>Доход: $${asset.income.toLocaleString()}/мес</span>
+                                        <span>Стоимость: $${(asset.cost || asset.purchasePrice || 0).toLocaleString()}</span>
+                                        <span>Доход: $${(asset.income || asset.monthlyIncome || 0).toLocaleString()}/мес</span>
                                     </div>
                                 </div>
                             </div>
