@@ -829,10 +829,9 @@ class BankModuleV4 {
             if (maxLimitEl) {
                 const childrenCount = this.getChildrenCount();
                 const childrenExpenses = childrenCount * 400;
-                // Каждые $1000 кредита уменьшают чистый доход на $100/мес
-                const creditPenalty = Math.floor(this.data.credit / 1000) * 100;
-                const netIncome = 10000 - (this.getTotalExpenses() + childrenExpenses) - creditPenalty;
-                const maxCredit = Math.max(0, netIncome * 10);
+                // Максимальный лимит рассчитывается от базового PAYDAY без учета текущего кредита
+                const baseNetIncome = 10000 - (this.getTotalExpenses() + childrenExpenses);
+                const maxCredit = Math.max(0, baseNetIncome * 10);
                 maxLimitEl.textContent = `$${maxCredit.toLocaleString()}`;
             }
             
@@ -840,10 +839,9 @@ class BankModuleV4 {
             if (freeLimitEl) {
                 const childrenCount = this.getChildrenCount();
                 const childrenExpenses = childrenCount * 400;
-                // Каждые $1000 кредита уменьшают чистый доход на $100/мес
-                const creditPenalty = Math.floor(this.data.credit / 1000) * 100;
-                const netIncome = 10000 - (this.getTotalExpenses() + childrenExpenses) - creditPenalty;
-                const maxCredit = Math.max(0, netIncome * 10);
+                // Свободный лимит = Максимальный лимит - Текущий долг
+                const baseNetIncome = 10000 - (this.getTotalExpenses() + childrenExpenses);
+                const maxCredit = Math.max(0, baseNetIncome * 10);
                 const free = Math.max(0, maxCredit - this.data.credit);
                 freeLimitEl.textContent = `$${free.toLocaleString()}`;
             }
