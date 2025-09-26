@@ -598,7 +598,10 @@ class BankModuleV4 {
         const mortgage = this.getLoanAmount('mortgage');
         const creditCards = this.getLoanAmount('creditCards');
         
-        return taxes + otherExpenses + carLoan + educationLoan + mortgage + creditCards;
+        // Добавляем текущий кредит как ежемесячный платеж
+        const currentCreditPayment = Math.floor(this.data.credit / 1000) * 100;
+        
+        return taxes + otherExpenses + carLoan + educationLoan + mortgage + creditCards + currentCreditPayment;
     }
 
     /**
@@ -745,6 +748,13 @@ class BankModuleV4 {
             }
             
             // Обновляем детализированные расходы
+            const currentCreditEl = document.getElementById('currentCreditAmount');
+            if (currentCreditEl) {
+                // Каждые $1000 кредита = $100/мес платеж
+                const monthlyPayment = Math.floor(this.data.credit / 1000) * 100;
+                currentCreditEl.textContent = `$${monthlyPayment.toLocaleString()}`;
+            }
+            
             const taxesEl = document.getElementById('taxesAmount');
             if (taxesEl) {
                 taxesEl.textContent = `$1,300`;
