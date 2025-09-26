@@ -7,20 +7,24 @@
     "start": "node index.js",
     "dev": "nodemon index.js"
   },
-  "keywords": ["telegram", "bot", "game", "energy-money"],
+  "keywords": [
+    "telegram",
+    "bot",
+    "game",
+    "energy-money"
+  ],
   "author": "Energy Money Team",
   "license": "MIT",
   "dependencies": {
-    "node-telegram-bot-api": "^0.64.0",
+    "axios": "^1.6.0",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "sqlite3": "^5.1.6",
-    "axios": "^1.6.0",
+    "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.3.0",
-    "jsonwebtoken": "^9.0.2"
+    "node-telegram-bot-api": "^0.66.0",
+    "sqlite3": "^5.1.6"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
   }
 }
-
