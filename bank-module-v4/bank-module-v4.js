@@ -872,7 +872,7 @@ class BankModuleV4 {
 
             const historyCountEl = document.getElementById('historyCount');
             if (historyCountEl) {
-                historyCountEl.textContent = data.transfers.length;
+                historyCountEl.textContent = (data.transfers || []).length;
             }
 
             // Восстанавливаем значения полей ввода
@@ -941,7 +941,7 @@ class BankModuleV4 {
             // Очищаем контейнер
             historyContainer.innerHTML = '';
 
-            if (!this.data.transfers.length) {
+            if (!this.data.transfers || !this.data.transfers.length) {
                 historyContainer.innerHTML = '<div class="transfer-empty">Нет операций</div>';
                 console.log('📋 BankModuleV4: История пуста');
                 return;
@@ -1004,10 +1004,10 @@ class BankModuleV4 {
                 historyContainer.appendChild(transferEl);
             });
 
-            console.log(`📋 BankModuleV4: История обновлена (${uniqueTransfers.length} уникальных записей из ${this.data.transfers.length})`);
+            console.log(`📋 BankModuleV4: История обновлена (${uniqueTransfers.length} уникальных записей из ${(this.data.transfers || []).length})`);
             
             // Отладочная информация о фильтрации
-            const filteredOut = this.data.transfers.length - uniqueTransfers.length;
+            const filteredOut = (this.data.transfers || []).length - uniqueTransfers.length;
             if (filteredOut > 0) {
                 console.log(`🔍 BankModuleV4: Отфильтровано ${filteredOut} записей (дубликаты, не для игрока, отрицательные стартовые сбережения)`);
             }
@@ -1727,7 +1727,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     expenses: 0,
                     credit: 0,
                     payday: 0,
-                    maxCredit: 0
+                    maxCredit: 0,
+                    transfers: [],
+                    gameInfo: {
+                        roomId: null,
+                        playerName: null,
+                        userId: null
+                    }
                 },
                 isReady: () => true,
                 initialize: () => {},
@@ -1737,7 +1743,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 get: (key) => window.dataStore.data[key],
                 getAll: () => window.dataStore.data,
                 getPlayerSummaryData: () => window.dataStore.data,
-                getBankModuleData: () => window.dataStore.data
+                getBankModuleData: () => window.dataStore.data,
+                setGameInfo: (roomId, playerName, userId) => {
+                    window.dataStore.data.gameInfo = { roomId, playerName, userId };
+                },
+                calculateDerivedValues: () => {
+                    // Простой расчет производных значений
+                    const data = window.dataStore.data;
+                    data.payday = (data.income || 0) - (data.expenses || 0);
+                    data.maxCredit = Math.max(0, (data.payday || 0) * 10);
+                },
+                reset: () => {
+                    window.dataStore.data = {
+                        balance: 0,
+                        income: 0,
+                        passiveIncome: 0,
+                        expenses: 0,
+                        credit: 0,
+                        payday: 0,
+                        maxCredit: 0,
+                        transfers: [],
+                        gameInfo: { roomId: null, playerName: null, userId: null }
+                    };
+                }
             };
             
             // Создаем простой DataStoreAdapter
