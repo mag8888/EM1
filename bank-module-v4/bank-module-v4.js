@@ -817,8 +817,9 @@ class BankModuleV4 {
                 const creditPenalty = Math.floor((this.data.credit || 0) / 1000) * 100;
                 const income = Number(this.data.income || 0);
                 const passiveIncome = Number(this.data.passiveIncome || 0);
-                const baseNetIncome = (income + passiveIncome) - (this.getTotalExpenses() + childrenExpenses);
-                const netIncome = baseNetIncome - creditPenalty;
+                // Используем базовые расходы без штрафа по кредиту
+                const baseExpenses = this.getTotalExpenses() - creditPenalty;
+                const netIncome = (income + passiveIncome) - (baseExpenses + childrenExpenses);
                 netIncomeEl.textContent = `$${netIncome.toLocaleString()}`;
             }
             
@@ -831,8 +832,9 @@ class BankModuleV4 {
                 const creditPenalty = Math.floor((this.data.credit || 0) / 1000) * 100;
                 const income = Number(this.data.income || 0);
                 const passiveIncome = Number(this.data.passiveIncome || 0);
-                const basePayday = (income + passiveIncome) - (this.getTotalExpenses() + childrenExpenses);
-                const payday = basePayday - creditPenalty;
+                // Используем базовые расходы без штрафа по кредиту
+                const baseExpenses = this.getTotalExpenses() - creditPenalty;
+                const payday = (income + passiveIncome) - (baseExpenses + childrenExpenses);
                 paydayEl.textContent = `$${payday.toLocaleString()}/мес`;
             }
             
