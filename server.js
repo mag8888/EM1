@@ -2347,6 +2347,11 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
                 console.log(`💰 Новый баланс игрока: $${player.cash}`);
 
                 try {
+                    // Обновляем банковский баланс перед синхронизацией
+                    const bankBalance = ensureBalance(req.params.roomId, player.name || player.username);
+                    bankBalance.amount = player.cash;
+                    console.log(`💰 Банковский баланс обновлен: ${player.name || player.username} = $${bankBalance.amount}`);
+                    
                     // Синхронизируем с банковским балансом
                     console.log(`🔄 Синхронизация баланса для ${player.name || player.username}`);
                     syncPlayerBalance(req.params.roomId, player.name || player.username);
