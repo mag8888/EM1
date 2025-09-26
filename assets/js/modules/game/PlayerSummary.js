@@ -36,10 +36,13 @@ export default class PlayerSummary {
             return;
         }
 
-        // Используем данные из банковского модуля как единый источник истины
-        let bankData = null;
-        if (window.bankModuleV4) {
-            bankData = window.bankModuleV4.getData();
+        // Используем DataStore как единый источник истины
+        let data = null;
+        if (window.dataStore) {
+            data = window.dataStore.getPlayerSummaryData();
+        } else if (window.bankModuleV4) {
+            // Fallback к банковскому модулю
+            data = window.bankModuleV4.getData();
         }
 
         // Объявляем переменные для использования во всей функции
@@ -48,22 +51,22 @@ export default class PlayerSummary {
         let expenses = 0;
         let payday = 0;
 
-        if (bankData) {
-            // Данные из банковского модуля
-            passiveIncome = bankData.passiveIncome || 0;
-            totalIncome = bankData.income || 0;
-            expenses = bankData.expenses || 0;
-            payday = bankData.payday || 0;
+        if (data) {
+            // Данные из DataStore или банковского модуля
+            passiveIncome = data.passiveIncome || 0;
+            totalIncome = data.income || 0;
+            expenses = data.expenses || 0;
+            payday = data.payday || 0;
             
             this.setText(this.incomeEl, `$${totalIncome.toLocaleString()}`);
             if (this.passiveIncomeEl) {
                 this.passiveIncomeEl.textContent = `$${passiveIncome.toLocaleString()}`;
             }
             this.setText(this.expenseEl, `$${expenses.toLocaleString()}`);
-            this.setText(this.loanEl, `$${(bankData.credit || 0).toLocaleString()}`);
+            this.setText(this.loanEl, `$${(data.credit || 0).toLocaleString()}`);
             this.setText(this.paydayEl, `$${payday.toLocaleString()}/мес`);
         } else {
-            // Fallback к старой логике, если банковский модуль недоступен
+            // Fallback к старой логике, если модули недоступны
             passiveIncome = Number(player.passiveIncome || 0);
             const salary = Number(player.profession?.salary || 0);
             totalIncome = salary + passiveIncome;

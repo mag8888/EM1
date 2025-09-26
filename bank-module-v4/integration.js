@@ -1,6 +1,7 @@
 /**
  * Bank Module v4 - Integration with table.html
  * Интеграция нового банковского модуля с игровым полем
+ * Теперь использует единый DataStore для всех данных
  */
 
 // Переменные для совместимости (если они еще не объявлены)
@@ -16,25 +17,29 @@ if (typeof window.expensesBreakdown === 'undefined') window.expensesBreakdown = 
 
 /**
  * Синхронизация данных из банковского модуля v4
+ * Теперь использует единый DataStore
  */
 function syncDataFromBankV4() {
     if (!bankModuleV4) return;
     
     const data = bankModuleV4.getData();
     
-    // Обновляем глобальные переменные
-    window.currentBalance = data.balance;
-    window.monthlyIncome = data.income; // Это уже общий доход (зарплата + пассивный доход)
-    window.monthlyExpenses = data.expenses;
-    window.totalCredit = data.credit;
-    
-    // Обновляем отображение в table.html
-    updateBalanceDisplay();
-    updateFinancesDisplay();
-    updateCreditDisplay();
-    
-    // Обновляем PlayerSummary если он доступен
-    updatePlayerSummary();
+    // Используем DataStore для синхронизации
+    if (window.dataStoreAdapter) {
+        window.dataStoreAdapter.syncFromBankModule(data);
+        window.dataStoreAdapter.updateUI();
+    } else {
+        // Fallback к старой логике, если DataStore недоступен
+        window.currentBalance = data.balance;
+        window.monthlyIncome = data.income;
+        window.monthlyExpenses = data.expenses;
+        window.totalCredit = data.credit;
+        
+        updateBalanceDisplay();
+        updateFinancesDisplay();
+        updateCreditDisplay();
+        updatePlayerSummary();
+    }
     
     console.log('🔄 Данные синхронизированы из BankModuleV4:', data);
 }

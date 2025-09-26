@@ -351,15 +351,36 @@ class BankModuleV4 {
             this.data.credit = Number(creditData?.loanAmount || 0);
             this.data.maxCredit = Number(creditData?.maxAvailable || Math.max(0, this.data.payday * CREDIT_MULTIPLIER));
             this.data.transfers = Array.isArray(historyData) ? historyData : [];
+            
+            // 5. Синхронизируем с DataStore, если доступен
+            if (window.dataStore) {
+                window.dataStore.update({
+                    balance: this.data.balance,
+                    income: this.data.income,
+                    passiveIncome: this.data.passiveIncome,
+                    expenses: this.data.expenses,
+                    payday: this.data.payday,
+                    credit: this.data.credit,
+                    maxCredit: this.data.maxCredit,
+                    transfers: this.data.transfers
+                });
+                
+                // Устанавливаем игровую информацию
+                if (this.roomId && this.playerName) {
+                    window.dataStore.setGameInfo(this.roomId, this.playerName, this.userId);
+                }
+                
+                console.log('🔄 BankModuleV4: Данные синхронизированы с DataStore');
+            }
 
-            // 5. Обновляем кэш
+            // 6. Обновляем кэш
             this.cache.data = { ...this.data };
             this.cache.timestamp = Date.now();
 
-            // 6. Синхронизируем баланс игрока в игре
+            // 7. Синхронизируем баланс игрока в игре
             this.syncPlayerBalanceInGame();
 
-            // 7. Обновляем UI и список получателей
+            // 8. Обновляем UI и список получателей
             this.updateUI();
             this.initRecipientsList();
 
@@ -1340,6 +1361,12 @@ class BankModuleV4 {
      * Получение текущих данных
      */
     getData() {
+        // Если доступен DataStore, используем его как источник истины
+        if (window.dataStore) {
+            return window.dataStore.getBankModuleData();
+        }
+        
+        // Fallback к локальным данным
         return { ...this.data };
     }
 
