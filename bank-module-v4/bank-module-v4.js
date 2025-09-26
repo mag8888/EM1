@@ -37,6 +37,14 @@ class BankModuleV4 {
             ttl: 3000 // 3 seconds cache TTL
         };
         
+        // Отладочная информация о доступности DataStore
+        console.log('🔍 BankModuleV4: Проверка DataStore при инициализации', {
+            dataStoreExists: !!window.dataStore,
+            dataStoreReady: window.dataStore?.isReady?.() || false,
+            dataStoreAdapterExists: !!window.dataStoreAdapter,
+            dataStoreAdapterReady: window.dataStoreAdapter?.isReady?.() || false
+        });
+        
         // Инициализируем DataStore и DataStoreAdapter, если доступны
         if (window.dataStore && !window.dataStore.isReady()) {
             window.dataStore.initialize();
@@ -372,9 +380,16 @@ class BankModuleV4 {
             };
             
             // 5. Обновляем DataStore как единый источник истины
+            console.log('🔍 BankModuleV4: _loadDataInternal - проверка DataStore', {
+                dataStoreExists: !!window.dataStore,
+                dataStoreReady: window.dataStore?.isReady?.() || false,
+                newData: newData
+            });
+            
             if (window.dataStore) {
                 // Инициализируем DataStore, если еще не инициализирован
                 if (!window.dataStore.isReady()) {
+                    console.log('🔄 BankModuleV4: Инициализируем DataStore в _loadDataInternal');
                     window.dataStore.initialize();
                 }
                 
@@ -1326,6 +1341,13 @@ class BankModuleV4 {
      * Получение текущих данных
      */
     getData() {
+        // Отладочная информация о состоянии DataStore
+        console.log('🔍 BankModuleV4: getData() - проверка DataStore', {
+            dataStoreExists: !!window.dataStore,
+            dataStoreReady: window.dataStore?.isReady?.() || false,
+            dataStoreData: window.dataStore?.getAll?.() || 'N/A'
+        });
+        
         // Всегда используем DataStore как источник истины
         if (window.dataStore && window.dataStore.isReady()) {
             const dataStoreData = window.dataStore.getBankModuleData();
@@ -1335,6 +1357,7 @@ class BankModuleV4 {
         
         // Если DataStore недоступен, инициализируем его
         if (window.dataStore) {
+            console.log('🔄 BankModuleV4: Инициализируем DataStore в getData()');
             window.dataStore.initialize();
             if (window.dataStore.isReady()) {
                 const dataStoreData = window.dataStore.getBankModuleData();
