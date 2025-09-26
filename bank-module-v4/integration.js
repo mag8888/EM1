@@ -176,8 +176,8 @@ async function payoffCredit() {
 async function openBankModal() {
     console.log('🏦 Открытие банковского модального окна');
     
-    if (!bankModuleV4) {
-        await initBankModuleV4();
+    if (!bankModuleV4 && typeof window.initBankModuleV4 === 'function') {
+        await window.initBankModuleV4();
     }
     
     if (bankModuleV4) {
@@ -262,10 +262,10 @@ window.syncDataFromBankV4 = syncDataFromBankV4;
 setInterval(async () => {
     if (bankModuleV4) {
         syncDataFromBankV4();
-    } else {
+    } else if (typeof window.initBankModuleV4 === 'function') {
         // Попытка инициализации, если модуль не загружен
         try {
-            await initBankModuleV4();
+            await window.initBankModuleV4();
         } catch (error) {
             console.warn('⚠️ Не удалось инициализировать BankModuleV4:', error);
         }
