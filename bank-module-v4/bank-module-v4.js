@@ -22,14 +22,31 @@ class BankModuleV4 {
             transfers: []
         };
         this.isInitialized = false;
+        this.isInitializing = false;
         this.syncInterval = null;
         this.listeners = new Map();
+        this.isLoading = false;
+        this.lastLoadTime = 0;
+        this.loadDebounceTimer = null;
+        this.cache = {
+            data: null,
+            timestamp: 0,
+            ttl: 3000 // 3 seconds cache TTL
+        };
     }
 
     /**
      * Инициализация модуля
      */
     async init() {
+        // Предотвращаем множественную инициализацию
+        if (this.isInitialized || this.isInitializing) {
+            console.log('⏳ BankModuleV4: Инициализация уже выполняется или завершена');
+            return this.isInitialized;
+        }
+
+        this.isInitializing = true;
+        
         try {
             console.log('🏦 BankModuleV4: Инициализация...');
             
@@ -58,17 +75,19 @@ class BankModuleV4 {
             console.log('🏦 BankModuleV4: ID получены', { roomId: this.roomId, userId: this.userId });
             
             // Загружаем начальные данные
-            await this.loadData();
+            await this.loadData(true);
             
             // Настраиваем автоматическую синхронизацию
             this.startAutoSync();
             
             this.isInitialized = true;
+            this.isInitializing = false;
             console.log('✅ BankModuleV4: Инициализация завершена');
             
             return true;
         } catch (error) {
             console.error('❌ BankModuleV4: Ошибка инициализации:', error);
+            this.isInitializing = false;
             return false;
         }
     }
@@ -220,9 +239,47 @@ class BankModuleV4 {
     }
 
     /**
-     * Загрузка данных с сервера
+     * Загрузка данных с сервера (с дебаунсингом)
      */
-    async loadData() {
+    async loadData(force = false) {
+        // Проверяем кэш, если не принудительная загрузка
+        if (!force && this.cache.data && (Date.now() - this.cache.timestamp) < this.cache.ttl) {
+            console.log('📦 BankModuleV4: Используем кэшированные данные');
+            this.updateDataFromCache();
+            return true;
+        }
+
+        // Дебаунсинг - отменяем предыдущий запрос если он еще выполняется
+        if (this.loadDebounceTimer) {
+            clearTimeout(this.loadDebounceTimer);
+        }
+
+        // Если уже загружаем, не запускаем новый запрос
+        if (this.isLoading) {
+            console.log('⏳ BankModuleV4: Загрузка уже выполняется, пропускаем');
+            return false;
+        }
+
+        return new Promise((resolve) => {
+            this.loadDebounceTimer = setTimeout(async () => {
+                try {
+                    await this._loadDataInternal();
+                    resolve(true);
+                } catch (error) {
+                    console.error('❌ BankModuleV4: Ошибка загрузки данных:', error);
+                    resolve(false);
+                }
+            }, 100); // 100ms дебаунс
+        });
+    }
+
+    /**
+     * Внутренняя загрузка данных
+     */
+    async _loadDataInternal() {
+        this.isLoading = true;
+        this.lastLoadTime = Date.now();
+        
         try {
             if (!this.roomId || !this.userId) {
                 throw new Error('Не заданы идентификаторы комнаты или пользователя');
@@ -291,10 +348,14 @@ class BankModuleV4 {
             this.data.maxCredit = Number(creditData?.maxAvailable || Math.max(0, totalIncome * 10));
             this.data.transfers = Array.isArray(historyData) ? historyData : [];
 
-            // 5. Синхронизируем баланс игрока в игре
+            // 5. Обновляем кэш
+            this.cache.data = { ...this.data };
+            this.cache.timestamp = Date.now();
+
+            // 6. Синхронизируем баланс игрока в игре
             this.syncPlayerBalanceInGame();
 
-            // 6. Обновляем UI и список получателей
+            // 7. Обновляем UI и список получателей
             this.updateUI();
             if (typeof window.initRecipientsList === 'function') {
                 window.initRecipientsList();
@@ -304,6 +365,19 @@ class BankModuleV4 {
         } catch (error) {
             console.error('❌ BankModuleV4: Ошибка загрузки данных:', error);
             return false;
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    /**
+     * Обновление данных из кэша
+     */
+    updateDataFromCache() {
+        if (this.cache.data) {
+            this.data = { ...this.cache.data };
+            this.syncPlayerBalanceInGame();
+            this.updateUI();
         }
     }
 
@@ -657,8 +731,8 @@ class BankModuleV4 {
                 throw new Error('Не удалось получить кредит');
             }
 
-            // Обновляем данные
-            await this.loadData();
+            // Обновляем данные (принудительно)
+            await this.loadData(true);
 
             console.log(`✅ BankModuleV4: Кредит на $${amount} получен`);
             return true;
@@ -707,8 +781,8 @@ class BankModuleV4 {
                 throw new Error('Не удалось погасить кредит');
             }
 
-            // Обновляем данные
-            await this.loadData();
+            // Обновляем данные (принудительно)
+            await this.loadData(true);
 
             console.log('✅ BankModuleV4: Кредит погашен');
             return true;
@@ -771,8 +845,8 @@ class BankModuleV4 {
                 throw new Error('Не удалось выполнить перевод');
             }
 
-            // Обновляем данные
-            await this.loadData();
+            // Обновляем данные (принудительно)
+            await this.loadData(true);
 
             console.log(`✅ BankModuleV4: Перевод $${numericAmount} выполнен`);
             return true;
@@ -788,12 +862,17 @@ class BankModuleV4 {
      * Запуск автоматической синхронизации
      */
     startAutoSync() {
-        // Синхронизация каждые 5 секунд
+        // Синхронизация каждые 10 секунд (увеличено с 5)
         this.syncInterval = setInterval(() => {
-            this.loadData();
-        }, 5000);
+            // Проверяем, не загружаем ли мы уже данные
+            if (!this.isLoading) {
+                this.loadData();
+            } else {
+                console.log('⏳ BankModuleV4: Пропускаем автосинхронизацию - загрузка уже выполняется');
+            }
+        }, 10000);
         
-        console.log('🔄 BankModuleV4: Автосинхронизация запущена');
+        console.log('🔄 BankModuleV4: Автосинхронизация запущена (каждые 10 сек)');
     }
 
     /**
@@ -848,6 +927,7 @@ class BankModuleV4 {
 
 // Глобальный экземпляр
 let bankModuleV4 = null;
+let isInitializing = false;
 
 /**
  * Получение User ID из localStorage (вспомогательная функция)
@@ -872,6 +952,19 @@ function getUserIdFromStorage() {
  * Инициализация банковского модуля v4
  */
 async function initBankModuleV4() {
+    // Предотвращаем множественную инициализацию
+    if (bankModuleV4?.isInitialized) {
+        console.log('✅ BankModuleV4: Уже инициализирован');
+        return bankModuleV4;
+    }
+    
+    if (isInitializing) {
+        console.log('⏳ BankModuleV4: Инициализация уже выполняется');
+        return null;
+    }
+
+    isInitializing = true;
+    
     try {
         console.log('🚀 Инициализация BankModuleV4...');
         
@@ -888,6 +981,8 @@ async function initBankModuleV4() {
     } catch (error) {
         console.error('❌ BankModuleV4: Критическая ошибка:', error);
         return null;
+    } finally {
+        isInitializing = false;
     }
 }
 
@@ -895,6 +990,19 @@ async function initBankModuleV4() {
  * Принудительная инициализация с известным Room ID
  */
 async function forceInitBankModuleV4(roomId, userId) {
+    // Предотвращаем множественную инициализацию
+    if (bankModuleV4?.isInitialized) {
+        console.log('✅ BankModuleV4: Уже инициализирован');
+        return bankModuleV4;
+    }
+    
+    if (isInitializing) {
+        console.log('⏳ BankModuleV4: Инициализация уже выполняется');
+        return null;
+    }
+
+    isInitializing = true;
+    
     try {
         console.log('🚀 Принудительная инициализация BankModuleV4...', { roomId, userId });
         
@@ -914,6 +1022,8 @@ async function forceInitBankModuleV4(roomId, userId) {
     } catch (error) {
         console.error('❌ BankModuleV4: Критическая ошибка принудительной инициализации:', error);
         return null;
+    } finally {
+        isInitializing = false;
     }
 }
 
