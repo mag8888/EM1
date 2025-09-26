@@ -570,11 +570,11 @@ app.get('/health', (req, res) => {
     console.log('🏥 Health check requested');
     try {
         const healthData = {
-            status: 'ok',
-            service: 'EM1 Game Board v2.0',
-            version: '2.1.0',
-            timestamp: new Date().toISOString(),
-            database: 'Memory',
+        status: 'ok',
+        service: 'EM1 Game Board v2.0',
+        version: '2.1.0',
+        timestamp: new Date().toISOString(),
+        database: 'Memory',
             rooms: rooms ? rooms.size : 0,
             users: users ? users.size : 0,
             uptime: process.uptime(),
@@ -1480,7 +1480,7 @@ app.get('/api/bank/credit/status/:username/:roomId', (req, res) => {
         const childExpenses = Number(player?.children || 0) * 400;
         const totalExpenses = baseExpenses + childExpenses;
         const payday = Math.max(0, (salary + passiveIncome) - totalExpenses);
-
+        
         // Максимальный кредит = PAYDAY * 10
         const CREDIT_MULTIPLIER = 10;
         const maxAvailable = Math.max(0, payday * CREDIT_MULTIPLIER);
@@ -1611,14 +1611,14 @@ app.post('/api/bank/credit/repay', (req, res) => {
         syncPlayerBalance(roomId, username);
 
         // Restore cashflow on player (пассивный доход или зарплату)
-        const passiveIncome = Number(player.passiveIncome || 0);
-        const salary = Number(player.profession?.salary || 0);
-        const restoredAmount = (sum / 1000) * 100;
-        
-        if (passiveIncome > 0) {
-            player.passiveIncome = passiveIncome + restoredAmount;
-        } else {
-            player.profession.salary = salary + restoredAmount;
+            const passiveIncome = Number(player.passiveIncome || 0);
+            const salary = Number(player.profession?.salary || 0);
+            const restoredAmount = (sum / 1000) * 100;
+            
+            if (passiveIncome > 0) {
+                player.passiveIncome = passiveIncome + restoredAmount;
+            } else {
+                player.profession.salary = salary + restoredAmount;
         }
 
         pushHistory(roomId, { 

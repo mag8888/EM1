@@ -170,8 +170,29 @@ class BankManager {
         console.log('🏦 Закрыто модальное окно банка');
     }
 
-    // Финансовые данные теперь управляются только через BankModuleV4
-    // Метод updatePlayerInfo удален для предотвращения конфликтов
+    // Обновление информации о игроке
+    updatePlayerInfo() {
+        if (!window.playersManager) return;
+
+        this.currentPlayer = window.playersManager.getCurrentPlayer();
+        if (!this.currentPlayer) return;
+
+        const income = this.currentPlayer.income || 0;
+        const expenses = this.currentPlayer.expenses || 0;
+        const payday = income - expenses;
+        const credit = this.currentPlayer.credit || 0;
+
+        // Обновляем значения в модальном окне
+        const incomeElement = this.bankModal.querySelector('#bankIncome');
+        const expensesElement = this.bankModal.querySelector('#bankExpenses');
+        const paydayElement = this.bankModal.querySelector('#bankPayday');
+        const creditElement = this.bankModal.querySelector('#bankCredit');
+
+        if (incomeElement) incomeElement.textContent = `$${income.toLocaleString()}`;
+        if (expensesElement) expensesElement.textContent = `$${expenses.toLocaleString()}`;
+        if (paydayElement) paydayElement.textContent = `$${payday.toLocaleString()}/мес`;
+        if (creditElement) creditElement.textContent = `$${credit.toLocaleString()}`;
+    }
 
     // Обработка кредитов
     processCredit(creditType) {
