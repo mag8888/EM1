@@ -822,11 +822,8 @@ class DealsModule {
                         player.cash = Math.max(0, currentBalance - cardCost);
                     }
                     
-                    // Добавляем карту в активы игрока
-                    if (!player.assets) {
-                        player.assets = [];
-                    }
-                    player.assets.push({
+                    // Создаем объект актива
+                    const asset = {
                         id: card.id,
                         cardId: card.id,
                         name: card.name,
@@ -836,9 +833,31 @@ class DealsModule {
                         monthlyIncome: card.income || 0,
                         acquiredAt: Date.now(),
                         icon: card.icon || '📈'
-                    });
+                    };
+
+                    // Добавляем карту в активы игрока
+                    if (!player.assets) {
+                        player.assets = [];
+                    }
+                    player.assets.push(asset);
 
                     console.log(`🎴 DealsModule: Игрок ${playerId} купил карту ${card.name} за $${cardCost}`);
+                    
+                    // Сразу перемещаем актив в каталог
+                    if (window.dealsModule) {
+                        window.dealsModule.moveAssetToCatalog(asset, playerId);
+                        console.log(`📦 Актив ${card.name} автоматически перемещен в каталог`);
+                    }
+                    
+                    // Также добавляем в глобальный каталог для синхронизации с сервером
+                    if (!window.globalCatalogAssets) {
+                        window.globalCatalogAssets = [];
+                    }
+                    window.globalCatalogAssets.push({
+                        ...asset,
+                        originalOwnerId: playerId,
+                        addedToCatalogAt: Date.now()
+                    });
                     
                     // Обновляем состояние игры
                     if (window.gameState && window.gameState.refresh) {

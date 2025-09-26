@@ -2431,11 +2431,22 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
                     monthlyIncome: dealIncome,
                     type: deal.type || 'smallDeal',
                     category: deal.category,
-                    quantity: deal.quantity || 1
+                    quantity: deal.quantity || 1,
+                    acquiredAt: Date.now(),
+                    originalOwnerId: player.userId
                 };
                 player.assets.push(newAsset);
                 
-                console.log(`✅ Актив добавлен:`, newAsset);
+                // Сразу перемещаем актив в каталог
+                if (!room.catalogAssets) {
+                    room.catalogAssets = [];
+                }
+                room.catalogAssets.push({
+                    ...newAsset,
+                    addedToCatalogAt: Date.now()
+                });
+                
+                console.log(`✅ Актив добавлен и перемещен в каталог:`, newAsset);
                 console.log(`💰 Новый баланс игрока: $${player.cash}`);
 
                 try {
