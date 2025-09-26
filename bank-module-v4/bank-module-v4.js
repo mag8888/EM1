@@ -890,10 +890,24 @@ class BankModuleV4 {
      * Открытие банковского окна
      */
     openBank() {
+        console.log('🏦 BankModuleV4: openBank() вызван');
         const modal = document.getElementById('bankModal');
+        console.log('🏦 BankModuleV4: modal элемент найден:', !!modal);
         if (modal) {
-            modal.style.display = 'block';
+            console.log('🏦 BankModuleV4: Текущий display:', modal.style.display);
+            modal.style.display = 'flex';
+            console.log('🏦 BankModuleV4: Новый display установлен:', modal.style.display);
+            
+            // Добавляем обработчик клика по фону для закрытия
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.closeBank();
+                }
+            });
+            
             console.log('🏦 BankModuleV4: Банк открыт');
+        } else {
+            console.error('❌ BankModuleV4: Элемент bankModal не найден!');
         }
     }
 
