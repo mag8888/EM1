@@ -1197,6 +1197,83 @@ window.closeBankV4 = closeBankV4;
 window.requestCreditV4 = requestCreditV4;
 window.payoffCreditV4 = payoffCreditV4;
 window.transferMoneyV4 = transferMoneyV4;
+
+// Функция для выполнения перевода из формы
+async function executeTransferV4() {
+    try {
+        const recipientSelect = document.getElementById('recipientSelect');
+        const amountInput = document.getElementById('transferAmount');
+        
+        if (!recipientSelect || !amountInput) {
+            throw new Error('Элементы формы не найдены');
+        }
+        
+        const recipientIndex = parseInt(recipientSelect.value);
+        const amount = parseFloat(amountInput.value);
+        
+        if (!recipientIndex || !amount) {
+            alert('Пожалуйста, выберите получателя и укажите сумму');
+            return;
+        }
+        
+        if (amount <= 0) {
+            alert('Сумма должна быть положительной');
+            return;
+        }
+        
+        const success = await transferMoneyV4(recipientIndex, amount);
+        if (success) {
+            // Очищаем форму
+            recipientSelect.value = '';
+            amountInput.value = '';
+            alert('Перевод выполнен успешно!');
+        }
+        
+    } catch (error) {
+        console.error('Ошибка перевода:', error);
+        alert(`Ошибка перевода: ${error.message}`);
+    }
+}
+
+window.executeTransferV4 = executeTransferV4;
+
+// Функции для кнопок кредита
+async function takeCreditV4() {
+    try {
+        const amountInput = document.getElementById('creditAmount');
+        const amount = parseFloat(amountInput?.value) || 1000;
+        
+        if (amount <= 0) {
+            alert('Сумма кредита должна быть положительной');
+            return;
+        }
+        
+        const success = await requestCreditV4(amount);
+        if (success) {
+            alert(`Кредит $${amount} получен успешно!`);
+        }
+        
+    } catch (error) {
+        console.error('Ошибка получения кредита:', error);
+        alert(`Ошибка: ${error.message}`);
+    }
+}
+
+async function payoffCreditV4() {
+    try {
+        const success = await payoffCreditV4();
+        if (success) {
+            alert('Кредит погашен успешно!');
+        }
+        
+    } catch (error) {
+        console.error('Ошибка погашения кредита:', error);
+        alert(`Ошибка: ${error.message}`);
+    }
+}
+
+window.takeCreditV4 = takeCreditV4;
+window.payoffCreditV4 = payoffCreditV4;
 window.getBankDataV4 = getBankDataV4;
 
 // Автоматическая инициализация при загрузке
