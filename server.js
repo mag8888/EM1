@@ -135,20 +135,23 @@ async function initializeSQLite() {
     try {
         // Проверяем, что мы на Railway или принудительно включен режим Railway
         const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID || process.env.FORCE_RAILWAY_MODE;
-        if (!isRailway) {
-            console.log('🔄 Not on Railway, skipping SQLite initialization');
-            return;
-        }
         
         sqliteDb = new SQLiteDatabase();
         await sqliteDb.init();
-        console.log('✅ SQLite database initialized on Railway');
+        
+        if (isRailway) {
+            console.log('✅ SQLite database initialized on Railway');
+        } else {
+            console.log('✅ SQLite database initialized locally');
+        }
         
         // Load existing rooms from database
         await loadRoomsFromSQLite();
-        console.log('✅ Rooms loaded from Railway database');
+        console.log('✅ Rooms loaded from database');
     } catch (error) {
-        console.error('❌ Failed to initialize Railway database:', error);
+        console.error('❌ Failed to initialize database:', error);
+        // Не останавливаем сервер, если база данных не инициализировалась
+        console.log('⚠️ Continuing without database persistence');
     }
 }
 
@@ -198,6 +201,19 @@ async function saveRoomToSQLite(room) {
         console.log('✅ Room state saved successfully');
     } catch (error) {
         console.error('❌ Failed to save room to database:', error);
+    }
+}
+
+// Auto-save room when it's modified
+async function autoSaveRoom(roomId) {
+    if (!sqliteDb) return;
+    try {
+        const room = rooms.get(roomId);
+        if (room) {
+            await saveRoomToSQLite(room);
+        }
+    } catch (error) {
+        console.error('❌ Failed to auto-save room:', error);
     }
 }
 
@@ -605,6 +621,9 @@ app.post('/api/rooms', async (req, res) => {
         };
         rooms.set(room.id, room);
         
+        // Auto-save room
+        await autoSaveRoom(room.id);
+        
         // Save to database
         if (sqliteDb) {
             try {
@@ -763,6 +782,9 @@ app.post('/api/rooms/:roomId/join', async (req, res) => {
             room.updatedAt = new Date().toISOString();
             room.lastActivity = Date.now();
             
+            // Auto-save room
+            await autoSaveRoom(room.id);
+            
             // Save to database
             if (sqliteDb) {
                 try {
@@ -817,6 +839,9 @@ app.post('/api/rooms/:roomId/start', (req, res) => {
         // Случайно выбираем первого игрока
         const playersCount = (room.players || []).length || 1;
         room.activeIndex = Math.floor(Math.random() * playersCount);
+        
+        // Auto-save room
+        await autoSaveRoom(room.id);
         // Инициализация стартовых позиций на малом круге
         const order = (room.players || []).length;
         (room.players || []).forEach((p, idx) => {
@@ -1907,6 +1932,9 @@ app.post('/api/rooms/:roomId/end-turn', (req, res) => {
         room.activeIndex = (room.activeIndex + 1) % count;
         room.updatedAt = new Date().toISOString();
         
+        // Auto-save room
+        await autoSaveRoom(room.id);
+        
         // Restart timer for next player
         startTurnTimer(room.id, room.turnTime || 120);
         
@@ -2355,10 +2383,8 @@ const startServer = async () => {
         // Проверяем, что мы на Railway или принудительно включен режим Railway
         const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID || process.env.FORCE_RAILWAY_MODE;
         
-        // Initialize database first (only on Railway)
-        if (isRailway) {
-            await initializeSQLite();
-        }
+        // Initialize database first (always, not just on Railway)
+        await initializeSQLite();
         
         app.listen(PORT, () => {
             console.log('🎮 EM1 Game Board v2.0 Production Server запущен!');
