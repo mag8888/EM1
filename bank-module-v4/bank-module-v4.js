@@ -222,6 +222,12 @@ class BankModuleV4 {
 
             // 1. Получаем информацию о комнате и игроках
             const roomResponse = await this.makeApiRequest(`/api/rooms/${this.roomId}?user_id=${this.userId}`);
+            
+            if (roomResponse.status === 404) {
+                console.warn('⚠️ BankModuleV4: Комната не найдена на сервере, работаем в офлайн режиме');
+                return this.loadOfflineData();
+            }
+            
             const roomPayload = await roomResponse.json();
             const room = roomPayload?.room || roomPayload;
             console.log('📡 BankModuleV4: Данные комнаты получены', room);
@@ -285,6 +291,71 @@ class BankModuleV4 {
         } catch (error) {
             console.error('❌ BankModuleV4: Ошибка загрузки данных:', error);
             return false;
+        }
+    }
+
+    /**
+     * Загрузка данных в офлайн режиме (когда комната не найдена на сервере)
+     */
+    async loadOfflineData() {
+        try {
+            console.log('📱 BankModuleV4: Загрузка офлайн данных...');
+            
+            // Получаем данные пользователя из localStorage
+            const storedUser = this.getStoredUserInfo();
+            if (!storedUser) {
+                throw new Error('Данные пользователя не найдены в localStorage');
+            }
+            
+            // Устанавливаем имя игрока
+            this.playerName = storedUser.username || storedUser.name || 'Игрок';
+            
+            // Загружаем данные из localStorage или устанавливаем значения по умолчанию
+            this.data.balance = Number(localStorage.getItem('playerBalance') || 10000);
+            this.data.income = Number(localStorage.getItem('playerIncome') || 0);
+            this.data.expenses = Number(localStorage.getItem('playerExpenses') || 0);
+            this.data.payday = Math.max(0, this.data.income - this.data.expenses);
+            this.data.credit = Number(localStorage.getItem('playerCredit') || 0);
+            this.data.maxCredit = Math.max(0, this.data.income * 10);
+            this.data.transfers = JSON.parse(localStorage.getItem('playerTransfers') || '[]');
+            
+            // Создаем фиктивных игроков для списка получателей
+            this.players = [
+                { name: this.playerName, userId: this.userId, username: this.playerName }
+            ];
+            window.players = this.players;
+            
+            // Синхронизируем баланс игрока в игре
+            this.syncPlayerBalanceInGame();
+            
+            // Обновляем UI
+            this.updateUI();
+            if (typeof window.initRecipientsList === 'function') {
+                window.initRecipientsList();
+            }
+            
+            console.log('✅ BankModuleV4: Офлайн данные загружены', this.data);
+            return true;
+            
+        } catch (error) {
+            console.error('❌ BankModuleV4: Ошибка загрузки офлайн данных:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Сохранение данных в localStorage для офлайн режима
+     */
+    saveToLocalStorage() {
+        try {
+            localStorage.setItem('playerBalance', this.data.balance.toString());
+            localStorage.setItem('playerIncome', this.data.income.toString());
+            localStorage.setItem('playerExpenses', this.data.expenses.toString());
+            localStorage.setItem('playerCredit', this.data.credit.toString());
+            localStorage.setItem('playerTransfers', JSON.stringify(this.data.transfers));
+            console.log('💾 BankModuleV4: Данные сохранены в localStorage');
+        } catch (error) {
+            console.error('❌ BankModuleV4: Ошибка сохранения в localStorage:', error);
         }
     }
 
