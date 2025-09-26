@@ -2,6 +2,8 @@
  * Адаптер для интеграции DataStore с существующим кодом
  * Обеспечивает совместимость с текущими модулями
  */
+console.log('🔍 DataStoreAdapter.js: Скрипт загружен, создаем класс DataStoreAdapter');
+
 class DataStoreAdapter {
     constructor(dataStore) {
         this.dataStore = dataStore;
