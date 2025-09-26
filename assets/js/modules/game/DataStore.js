@@ -349,6 +349,16 @@ class DataStore {
 // Создаем глобальный экземпляр
 window.dataStore = new DataStore();
 
-console.log('📊 DataStore: Глобальный экземпляр создан');
+// Принудительно инициализируем DataStore
+if (window.dataStore) {
+    window.dataStore.initialize();
+    console.log('📊 DataStore: Глобальный экземпляр создан и инициализирован', {
+        dataStore: window.dataStore,
+        isReady: window.dataStore?.isReady?.() || false,
+        data: window.dataStore?.getAll?.() || 'N/A'
+    });
+} else {
+    console.error('❌ DataStore: Не удалось создать глобальный экземпляр');
+}
 
 export default DataStore;

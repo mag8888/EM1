@@ -1698,41 +1698,33 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('window.currentRoomId:', window.currentRoomId);
     console.log('window.roomId:', window.roomId);
     
-    // Ждем загрузки DataStore перед инициализацией BankModuleV4
-    function waitForDataStore() {
-        return new Promise((resolve) => {
-            const checkDataStore = () => {
-                if (window.dataStore) {
-                    console.log('✅ DataStore найден, инициализируем BankModuleV4');
-                    resolve(true);
-                } else {
-                    console.log('⏳ Ожидаем загрузки DataStore...');
-                    setTimeout(checkDataStore, 100);
-                }
-            };
-            checkDataStore();
-        });
-    }
-    
-    // Ждем DataStore, затем инициализируем BankModuleV4
-    waitForDataStore().then(() => {
+    // Проверяем доступность DataStore и инициализируем BankModuleV4
+    if (window.dataStore && window.dataStore.isReady()) {
+        console.log('✅ DataStore готов, инициализируем BankModuleV4');
         initBankModuleV4().then(result => {
             if (!result) {
-                // Если не удалось, ждем 2 секунды и пробуем принудительную инициализацию
+                console.warn('⚠️ BankModuleV4 не инициализирован, пробуем принудительную инициализацию');
                 setTimeout(async () => {
                     const roomId = window.gameState?.roomId || window.gameState?.state?.roomId;
-                    const userId = getUserIdFromStorage(); // Получаем реальный user_id
-                    
+                    const userId = getUserIdFromStorage();
                     if (userId) {
-                        console.log('🔄 Попытка принудительной инициализации...', { roomId, userId });
                         await forceInitBankModuleV4(roomId, userId);
-                    } else {
-                        console.warn('⚠️ Не удалось получить User ID для принудительной инициализации');
                     }
-                }, 2000);
+                }, 1000);
             }
         });
-    });
+    } else {
+        console.warn('⚠️ DataStore не готов, ждем 1 секунду и пробуем снова');
+        setTimeout(() => {
+            if (window.dataStore && window.dataStore.isReady()) {
+                console.log('✅ DataStore готов после ожидания, инициализируем BankModuleV4');
+                initBankModuleV4();
+            } else {
+                console.error('❌ DataStore все еще не готов, инициализируем BankModuleV4 без DataStore');
+                initBankModuleV4();
+            }
+        }, 1000);
+    }
 });
 
 // Глобальные функции для переключения деталей

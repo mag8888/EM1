@@ -270,6 +270,16 @@ class DataStoreAdapter {
 // Создаем глобальный экземпляр адаптера
 window.dataStoreAdapter = new DataStoreAdapter(window.dataStore);
 
-console.log('🔄 DataStoreAdapter: Глобальный экземпляр создан');
+// Принудительно инициализируем DataStoreAdapter
+if (window.dataStoreAdapter) {
+    window.dataStoreAdapter.initialize();
+    console.log('🔄 DataStoreAdapter: Глобальный экземпляр создан и инициализирован', {
+        dataStoreAdapter: window.dataStoreAdapter,
+        isReady: window.dataStoreAdapter?.isReady?.() || false,
+        dataStore: window.dataStore
+    });
+} else {
+    console.error('❌ DataStoreAdapter: Не удалось создать глобальный экземпляр');
+}
 
 export default DataStoreAdapter;
