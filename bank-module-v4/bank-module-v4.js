@@ -350,12 +350,6 @@ class BankModuleV4 {
             this.data.credit = Number(creditData?.loanAmount || 0);
             this.data.maxCredit = Number(creditData?.maxAvailable || Math.max(0, this.data.payday * CREDIT_MULTIPLIER));
             this.data.transfers = Array.isArray(historyData) ? historyData : [];
-            
-            console.log(`💰 BankModuleV4: Обновленные данные после загрузки:`, {
-                balance: this.data.balance,
-                payday: this.data.payday,
-                transfersCount: this.data.transfers.length
-            });
 
             // 5. Обновляем кэш
             this.cache.data = { ...this.data };
@@ -606,12 +600,6 @@ class BankModuleV4 {
                 currentDebtEl.textContent = `$${this.data.credit.toLocaleString()}`;
             }
             
-            const availableLimitEl = document.getElementById('availableLimit');
-            if (availableLimitEl) {
-                // Доступный лимит = Максимальный лимит - Текущий долг
-                const available = Math.max(0, this.data.maxCredit - this.data.credit);
-                availableLimitEl.textContent = `$${available.toLocaleString()}`;
-            }
             
             const maxLimitEl = document.getElementById('maxLimit');
             if (maxLimitEl) {
@@ -801,7 +789,7 @@ class BankModuleV4 {
             // Проверяем лимит
             const availableCredit = Math.max(0, this.data.maxCredit - this.data.credit);
             if (amount > availableCredit) {
-                throw new Error(`Превышен лимит кредита. Доступно: $${availableCredit.toLocaleString()}`);
+                throw new Error(`Превышен максимальный лимит кредита. Максимум: $${this.data.maxCredit.toLocaleString()}, уже взято: $${this.data.credit.toLocaleString()}`);
             }
 
             // Отправляем запрос через сервер банка
@@ -918,8 +906,6 @@ class BankModuleV4 {
                 throw new Error('Нельзя перевести средства самому себе');
             }
 
-            console.log(`💸 BankModuleV4: Отправка перевода: ${this.playerName} → ${recipientName}, $${numericAmount}`);
-            
             const response = await this.makeApiRequest('/api/bank/transfer', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -931,8 +917,6 @@ class BankModuleV4 {
             });
 
             const result = await response.json();
-            console.log(`📡 BankModuleV4: Ответ сервера на перевод:`, result);
-            
             if (result?.error) {
                 throw new Error(result.error);
             }

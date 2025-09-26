@@ -534,7 +534,7 @@ class BankModuleV5 {
         this.data.expenses = totalExpenses;
         this.data.payday = Number.isFinite(netIncome) ? netIncome : Math.max(0, totalIncome - totalExpenses);
         this.data.credit = Number(creditData?.loanAmount || 0);
-        this.data.maxCredit = Number(creditData?.maxAvailable || Math.max(0, this.data.payday * BANK_CONSTANTS.DEFAULT_CREDIT_MULTIPLIER));
+        this.data.maxCredit = Number(creditData?.maxAvailable || Math.max(0, totalIncome * BANK_CONSTANTS.DEFAULT_CREDIT_MULTIPLIER));
         this.data.transfers = Array.isArray(historyData) ? historyData : [];
 
         this.updateCache();
@@ -604,7 +604,7 @@ class BankModuleV5 {
         this.data.expenses = Number(localStorage.getItem('playerExpenses') || 0);
         this.data.payday = Math.max(0, this.data.income - this.data.expenses);
         this.data.credit = Number(localStorage.getItem('playerCredit') || 0);
-        this.data.maxCredit = Math.max(0, this.data.payday * BANK_CONSTANTS.DEFAULT_CREDIT_MULTIPLIER);
+        this.data.maxCredit = Math.max(0, this.data.income * BANK_CONSTANTS.DEFAULT_CREDIT_MULTIPLIER);
         this.data.transfers = JSON.parse(localStorage.getItem('playerTransfers') || '[]');
 
         this.players = [{ name: this.playerName, userId: this.userId, username: this.playerName }];
