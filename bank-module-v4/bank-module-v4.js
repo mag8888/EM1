@@ -7,6 +7,9 @@ class BankModuleV4 {
     constructor() {
         this.roomId = null;
         this.userId = null;
+        this.playerName = null;
+        this.playerIndex = 0;
+        this.players = [];
         this.data = {
             balance: 0,
             income: 0,
@@ -147,6 +150,21 @@ class BankModuleV4 {
     }
 
     /**
+     * Получение данных пользователя из localStorage
+     */
+    getStoredUserInfo() {
+        try {
+            const raw = localStorage.getItem('user');
+            if (raw) {
+                return JSON.parse(raw);
+            }
+        } catch (error) {
+            console.warn('⚠️ BankModuleV4: Ошибка парсинга user из localStorage', error);
+        }
+        return null;
+    }
+
+    /**
      * Прокси-функция для API запросов через локальный сервер
      */
     async makeApiRequest(endpoint, options = {}) {
@@ -191,22 +209,73 @@ class BankModuleV4 {
      */
     async loadData() {
         try {
-            console.log('📡 BankModuleV4: Загрузка данных через локальный сервер...');
-            console.log('📡 BankModuleV4: Room ID:', this.roomId);
-            console.log('📡 BankModuleV4: User ID:', this.userId);
-            
-            const endpoint = `/api/rooms/${this.roomId}?user_id=${this.userId}`;
-            const response = await this.makeApiRequest(endpoint);
-            
-            const roomData = await response.json();
-            console.log('📡 BankModuleV4: Данные получены:', roomData);
-            
-            // Обрабатываем данные
-            this.processRoomData(roomData);
-            
-            // Обновляем UI
+            if (!this.roomId || !this.userId) {
+                throw new Error('Не заданы идентификаторы комнаты или пользователя');
+            }
+
+            console.log('📡 BankModuleV4: Загрузка данных через сервер банка...', {
+                roomId: this.roomId,
+                userId: this.userId
+            });
+
+            // 1. Получаем информацию о комнате и игроках
+            const roomResponse = await this.makeApiRequest(`/api/rooms/${this.roomId}?user_id=${this.userId}`);
+            const roomPayload = await roomResponse.json();
+            const room = roomPayload?.room || roomPayload;
+            console.log('📡 BankModuleV4: Данные комнаты получены', room);
+
+            // 2. Сохраняем информацию об игроках и определяем имя текущего игрока
+            this.processRoomData(room);
+
+            if (!this.playerName) {
+                throw new Error('Не удалось определить имя игрока');
+            }
+
+            const encodedName = encodeURIComponent(this.playerName);
+
+            // 3. Загружаем банковские данные параллельно
+            const [balanceRes, financialsRes, historyRes, creditRes] = await Promise.all([
+                this.makeApiRequest(`/api/bank/balance/${encodedName}/${this.roomId}`),
+                this.makeApiRequest(`/api/bank/financials/${encodedName}/${this.roomId}`),
+                this.makeApiRequest(`/api/bank/history/${this.roomId}`),
+                this.makeApiRequest(`/api/bank/credit/status/${encodedName}/${this.roomId}`)
+            ]);
+
+            const [balanceData, financialsData, historyData, creditData] = await Promise.all([
+                balanceRes.json(),
+                financialsRes.json(),
+                historyRes.json(),
+                creditRes.json()
+            ]);
+
+            console.log('📊 BankModuleV4: Банковские данные получены', {
+                balanceData,
+                financialsData,
+                historyData,
+                creditData
+            });
+
+            // 4. Обновляем локальное состояние модуля
+            const salary = Number(financialsData?.salary || 0);
+            const passiveIncome = Number(financialsData?.passiveIncome || 0);
+            const totalIncome = Number.isFinite(salary + passiveIncome) ? salary + passiveIncome : 0;
+            const totalExpenses = Number(financialsData?.totalExpenses || 0);
+            const netIncome = Number(financialsData?.netIncome ?? (totalIncome - totalExpenses));
+
+            this.data.balance = Number(balanceData?.amount || 0);
+            this.data.income = totalIncome;
+            this.data.expenses = totalExpenses;
+            this.data.payday = Number.isFinite(netIncome) ? netIncome : Math.max(0, totalIncome - totalExpenses);
+            this.data.credit = Number(creditData?.loanAmount || 0);
+            this.data.maxCredit = Number(creditData?.maxAvailable || Math.max(0, totalIncome * 10));
+            this.data.transfers = Array.isArray(historyData) ? historyData : [];
+
+            // 5. Обновляем UI и список получателей
             this.updateUI();
-            
+            if (typeof window.initRecipientsList === 'function') {
+                window.initRecipientsList();
+            }
+
             return true;
         } catch (error) {
             console.error('❌ BankModuleV4: Ошибка загрузки данных:', error);
@@ -219,32 +288,31 @@ class BankModuleV4 {
      */
     processRoomData(roomData) {
         try {
-            const playerIndex = this.findPlayerIndex(roomData.players);
-            const gameData = roomData.game_data || {};
-            
-            // Баланс
-            this.data.balance = gameData.player_balances?.[playerIndex] || 0;
-            
-            // Доходы и расходы
-            this.data.income = gameData.player_income?.[playerIndex] || 0;
-            this.data.expenses = gameData.player_expenses?.[playerIndex] || 0;
-            
-            // Кредит
-            this.data.credit = gameData.credit_data?.player_credits?.[playerIndex] || 0;
-            
-            // Максимальный кредит (10% от дохода)
-            this.data.maxCredit = Math.max(0, this.data.income * 10);
-            
-            // PAYDAY (доход - расходы)
-            this.data.payday = Math.max(0, this.data.income - this.data.expenses);
-            
-            // История переводов
-            this.data.transfers = gameData.transfers_history || [];
-            
-            console.log('📊 BankModuleV4: Данные обработаны:', this.data);
-            
+            const room = roomData || {};
+            this.players = Array.isArray(room.players) ? room.players : [];
+            window.players = this.players;
+
+            const resolvedIndex = this.findPlayerIndex(this.players);
+            this.playerIndex = resolvedIndex >= 0 ? resolvedIndex : 0;
+
+            const playerFromRoom = this.players[this.playerIndex] || null;
+            const storedUser = this.getStoredUserInfo();
+
+            const resolvedName = playerFromRoom?.name ||
+                storedUser?.username ||
+                storedUser?.name ||
+                localStorage.getItem('username');
+
+            this.playerName = resolvedName || this.playerName || playerFromRoom?.userId || null;
+
+            console.log('📊 BankModuleV4: Игрок определен', {
+                playerIndex: this.playerIndex,
+                playerName: this.playerName,
+                playersCount: this.players.length
+            });
+
         } catch (error) {
-            console.error('❌ BankModuleV4: Ошибка обработки данных:', error);
+            console.error('❌ BankModuleV4: Ошибка обработки данных комнаты:', error);
         }
     }
 
@@ -256,8 +324,11 @@ class BankModuleV4 {
             if (players[i].user_id === this.userId) {
                 return i;
             }
+            if (players[i].userId === this.userId) {
+                return i;
+            }
         }
-        return 0;
+        return -1;
     }
 
     /**
@@ -303,7 +374,12 @@ class BankModuleV4 {
             
             // Обновляем историю переводов
             this.updateTransfersHistory();
-            
+
+            const historyCountEl = document.getElementById('historyCount');
+            if (historyCountEl) {
+                historyCountEl.textContent = this.data.transfers.length;
+            }
+
             console.log('🎨 BankModuleV4: UI обновлен');
             
         } catch (error) {
@@ -321,13 +397,24 @@ class BankModuleV4 {
             
             // Очищаем контейнер
             historyContainer.innerHTML = '';
-            
-            // Добавляем переводы
-            this.data.transfers.forEach(transfer => {
+
+            if (!this.data.transfers.length) {
+                historyContainer.innerHTML = '<div class="transfer-empty">Нет операций</div>';
+                console.log('📋 BankModuleV4: История пуста');
+                return;
+            }
+
+            const orderedTransfers = [...this.data.transfers].sort((a, b) => {
+                const aTime = new Date(a?.timestamp || 0).getTime();
+                const bTime = new Date(b?.timestamp || 0).getTime();
+                return bTime - aTime;
+            });
+
+            orderedTransfers.forEach(transfer => {
                 const transferEl = this.createTransferElement(transfer);
                 historyContainer.appendChild(transferEl);
             });
-            
+
             console.log(`📋 BankModuleV4: История обновлена (${this.data.transfers.length} записей)`);
             
         } catch (error) {
@@ -341,22 +428,49 @@ class BankModuleV4 {
     createTransferElement(transfer) {
         const element = document.createElement('div');
         element.className = 'transfer-item';
-        
-        const amount = transfer.amount || 0;
-        const isReceived = transfer.recipient_index === this.findPlayerIndex(window.players || []);
-        
+
+        const rawAmount = Number(transfer?.amount || 0);
+        const type = transfer?.type || '';
+        const from = transfer?.from || transfer?.sender || 'Банк';
+        const to = transfer?.to || transfer?.recipient || '';
+
+        const isNotification = type === 'notification';
+        const isCreditTake = type === 'credit_take';
+        const isCreditRepay = type === 'credit_repay';
+
+        const isReceived = isNotification
+            ? rawAmount >= 0
+            : to === this.playerName;
+
+        const amountClass = isReceived ? 'received' : 'sent';
+        const absoluteAmount = Math.abs(rawAmount);
+        const amountPrefix = isReceived ? '+' : '-';
+        const displayAmount = `${amountPrefix}$${absoluteAmount.toLocaleString()}`;
+
+        let description = transfer?.reason || transfer?.description || '';
+
+        if (!description) {
+            if (isCreditTake) {
+                description = `Кредит от банка`;
+            } else if (isCreditRepay) {
+                description = `Погашение кредита`;
+            } else if (isNotification) {
+                description = isReceived ? 'Поступление' : 'Списание';
+            } else if (isReceived) {
+                description = `Получено от ${from}`;
+            } else {
+                description = `Перевод ${to || 'Банк'}`;
+            }
+        }
+
+        const timeLabel = transfer?.timestamp ? this.formatTime(transfer.timestamp) : '—';
+
         element.innerHTML = `
-            <div class="transfer-amount ${isReceived ? 'received' : 'sent'}">
-                ${isReceived ? '+' : '-'}$${amount.toLocaleString()}
-            </div>
-            <div class="transfer-description">
-                ${transfer.description || 'Перевод'}
-            </div>
-            <div class="transfer-time">
-                ${this.formatTime(transfer.timestamp)}
-            </div>
+            <div class="transfer-amount ${amountClass}">${displayAmount}</div>
+            <div class="transfer-description">${description}</div>
+            <div class="transfer-time">${timeLabel}</div>
         `;
-        
+
         return element;
     }
 
@@ -365,6 +479,9 @@ class BankModuleV4 {
      */
     formatTime(timestamp) {
         const date = new Date(timestamp);
+        if (Number.isNaN(date.getTime())) {
+            return '—';
+        }
         const now = new Date();
         const diff = now - date;
         
@@ -379,27 +496,39 @@ class BankModuleV4 {
      */
     async requestCredit(amount = 1000) {
         try {
-            console.log(`💰 BankModuleV4: Запрос кредита на $${amount} через локальный сервер`);
+            console.log(`💰 BankModuleV4: Запрос кредита на $${amount} через банковский сервер`);
             
+            if (!this.playerName) {
+                throw new Error('Не удалось определить имя текущего игрока');
+            }
+
             // Проверяем лимит
-            const availableCredit = this.data.maxCredit - this.data.credit;
+            const availableCredit = Math.max(0, this.data.maxCredit - this.data.credit);
             if (amount > availableCredit) {
                 throw new Error(`Превышен лимит кредита. Доступно: $${availableCredit.toLocaleString()}`);
             }
-            
-            // Отправляем запрос через прокси
-            const endpoint = `/api/rooms/${this.roomId}/take-credit`;
-            const response = await this.makeApiRequest(endpoint, {
+
+            // Отправляем запрос через сервер банка
+            const response = await this.makeApiRequest('/api/bank/credit/take', {
                 method: 'POST',
                 body: JSON.stringify({
-                    amount: amount,
-                    player_index: this.findPlayerIndex(window.players || [])
+                    username: this.playerName,
+                    roomId: this.roomId,
+                    amount: amount
                 })
             });
-            
+
+            const result = await response.json();
+            if (result?.error) {
+                throw new Error(result.error);
+            }
+            if (result?.success === false) {
+                throw new Error('Не удалось получить кредит');
+            }
+
             // Обновляем данные
             await this.loadData();
-            
+
             console.log(`✅ BankModuleV4: Кредит на $${amount} получен`);
             return true;
             
@@ -413,26 +542,43 @@ class BankModuleV4 {
     /**
      * Погашение кредита
      */
-    async payoffCredit() {
+    async payoffCredit(amount = null) {
         try {
-            console.log('💰 BankModuleV4: Погашение кредита через локальный сервер');
+            console.log('💰 BankModuleV4: Погашение кредита через банковский сервер');
             
             if (this.data.credit <= 0) {
                 throw new Error('У вас нет активных кредитов');
             }
-            
-            // Отправляем запрос через прокси
-            const endpoint = `/api/rooms/${this.roomId}/payoff-credit`;
-            const response = await this.makeApiRequest(endpoint, {
+
+            if (!this.playerName) {
+                throw new Error('Не удалось определить имя текущего игрока');
+            }
+
+            const payoffAmount = Number(amount || this.data.credit);
+            if (!Number.isFinite(payoffAmount) || payoffAmount <= 0) {
+                throw new Error('Некорректная сумма погашения');
+            }
+
+            const response = await this.makeApiRequest('/api/bank/credit/repay', {
                 method: 'POST',
                 body: JSON.stringify({
-                    player_index: this.findPlayerIndex(window.players || [])
+                    username: this.playerName,
+                    roomId: this.roomId,
+                    amount: payoffAmount
                 })
             });
-            
+
+            const result = await response.json();
+            if (result?.error) {
+                throw new Error(result.error);
+            }
+            if (result?.success === false) {
+                throw new Error('Не удалось погасить кредит');
+            }
+
             // Обновляем данные
             await this.loadData();
-            
+
             console.log('✅ BankModuleV4: Кредит погашен');
             return true;
             
@@ -446,29 +592,58 @@ class BankModuleV4 {
     /**
      * Перевод средств
      */
-    async transferMoney(recipientIndex, amount) {
+    async transferMoney(recipientRef, amount) {
         try {
-            console.log(`💸 BankModuleV4: Перевод $${amount} игроку ${recipientIndex} через локальный сервер`);
-            
-            if (amount > this.data.balance) {
+            const numericAmount = Number(amount);
+            console.log(`💸 BankModuleV4: Перевод $${numericAmount} через банковский сервер`);
+
+            if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+                throw new Error('Укажите корректную сумму перевода');
+            }
+
+            if (numericAmount > this.data.balance) {
                 throw new Error('Недостаточно средств');
             }
-            
-            // Отправляем запрос через прокси
-            const endpoint = `/api/rooms/${this.roomId}/transfer`;
-            const response = await this.makeApiRequest(endpoint, {
+
+            if (!this.playerName) {
+                throw new Error('Не удалось определить имя текущего игрока');
+            }
+
+            let recipientName = recipientRef;
+            if (typeof recipientRef === 'number') {
+                recipientName = this.players?.[recipientRef]?.name;
+            }
+
+            if (!recipientName) {
+                throw new Error('Получатель не найден');
+            }
+
+            if (recipientName === this.playerName) {
+                throw new Error('Нельзя перевести средства самому себе');
+            }
+
+            const response = await this.makeApiRequest('/api/bank/transfer', {
                 method: 'POST',
                 body: JSON.stringify({
-                    recipient_index: recipientIndex,
-                    amount: amount,
-                    sender_index: this.findPlayerIndex(window.players || [])
+                    from: this.playerName,
+                    to: recipientName,
+                    amount: numericAmount,
+                    roomId: this.roomId
                 })
             });
-            
+
+            const result = await response.json();
+            if (result?.error) {
+                throw new Error(result.error);
+            }
+            if (result?.success === false) {
+                throw new Error('Не удалось выполнить перевод');
+            }
+
             // Обновляем данные
             await this.loadData();
-            
-            console.log(`✅ BankModuleV4: Перевод выполнен`);
+
+            console.log(`✅ BankModuleV4: Перевод $${numericAmount} выполнен`);
             return true;
             
         } catch (error) {
