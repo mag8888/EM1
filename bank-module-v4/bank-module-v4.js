@@ -928,7 +928,8 @@ class BankModuleV4 {
                 recipient: t.recipient,
                 amount: t.amount,
                 reason: t.reason || t.description,
-                playerName: this.playerName
+                playerName: this.playerName,
+                fullTransfer: t
             })));
 
             // Фильтруем дубликаты и проблемные записи
@@ -948,11 +949,13 @@ class BankModuleV4 {
                                             transfer.sender !== this.playerName && 
                                             transfer.recipient !== this.playerName;
                 
-                // Для "стартовые сбережения" - показываем только положительные суммы
+                // Для "стартовые сбережения" - показываем только положительные суммы для текущего игрока
                 const isStartingSavings = (transfer.description || transfer.reason) === 'стартовые сбережения';
-                const shouldShowStartingSavings = isStartingSavings && Number(transfer.amount) > 0;
+                const isStartingSavingsForCurrentPlayer = isStartingSavings && 
+                    (transfer.to === this.playerName || transfer.recipient === this.playerName);
+                const shouldShowStartingSavings = isStartingSavingsForCurrentPlayer && Number(transfer.amount) > 0;
                 
-                // Показываем транзакции, которые относятся к игроку ИЛИ являются положительными стартовыми сбережениями
+                // Показываем транзакции, которые относятся к игроку ИЛИ являются стартовыми сбережениями для текущего игрока
                 const shouldShow = (!isNotForCurrentPlayer || shouldShowStartingSavings) && !isDuplicate && !isNegativeStartingSavings;
                 
                 if (isStartingSavings) {
