@@ -1108,10 +1108,17 @@ class BankModuleV4 {
                 throw new Error('Не удалось определить имя текущего игрока');
             }
 
-            // Проверяем лимит
-            const availableCredit = Math.max(0, this.data.maxCredit - this.data.credit);
-            if (amount > availableCredit) {
-                throw new Error(`Превышен максимальный лимит кредита. Максимум: $${this.data.maxCredit.toLocaleString()}, уже взято: $${this.data.credit.toLocaleString()}`);
+            // Проверяем лимит на основе базового PAYDAY (без штрафа по кредиту)
+            const childrenCount = this.getChildrenCount();
+            const childrenExpenses = childrenCount * 400;
+            const income = Number(this.data.income || 0);
+            const passiveIncome = Number(this.data.passiveIncome || 0);
+            const baseExpenses = this.getTotalExpenses() + childrenExpenses;
+            const baseNetIncome = (income + passiveIncome) - baseExpenses;
+            const maxCredit = Math.max(0, baseNetIncome * 10);
+            
+            if (amount > maxCredit) {
+                throw new Error(`Превышен максимальный лимит кредита. Максимум: $${maxCredit.toLocaleString()}`);
             }
 
             // Отправляем запрос через сервер банка
