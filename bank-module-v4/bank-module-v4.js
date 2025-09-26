@@ -561,7 +561,7 @@ class BankModuleV4 {
             const salaryEl = document.getElementById('salaryAmount');
             if (salaryEl) {
                 // Показываем базовую зарплату $10,000
-                salaryEl.textContent = `$${10000.toLocaleString()}`;
+                salaryEl.textContent = `$${(10000).toLocaleString()}`;
             }
             
             const passiveIncomeEl = document.getElementById('passiveIncomeAmount');
