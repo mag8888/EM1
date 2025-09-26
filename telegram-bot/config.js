@@ -6,6 +6,8 @@ module.exports = {
     
     // Database Configuration
     DATABASE_URL: process.env.DATABASE_URL || './database.sqlite',
+    MONGODB_URI: process.env.MONGODB_URI,
+    MONGODB_DB_NAME: process.env.MONGODB_DB_NAME || 'em_bot',
     
     // Game Server Configuration
     GAME_SERVER_URL: process.env.GAME_SERVER_URL || 'http://localhost:3001',
