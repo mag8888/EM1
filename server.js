@@ -543,6 +543,16 @@ function autoEndTurn(roomId) {
     console.log(`Auto-ended turn for room ${roomId}, now active: ${room.activeIndex}`);
 }
 
+// Root endpoint (can also serve as health check)
+app.get('/', (req, res) => {
+    res.json({
+        status: 'ok',
+        service: 'EM1 Game Board v2.0',
+        message: 'Server is running',
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Health Check endpoint
 app.get('/health', (req, res) => {
     console.log('🏥 Health check requested');
@@ -553,14 +563,16 @@ app.get('/health', (req, res) => {
             version: '2.1.0',
             timestamp: new Date().toISOString(),
             database: 'Memory',
-            rooms: rooms.size,
-            users: users.size,
+            rooms: rooms ? rooms.size : 0,
+            users: users ? users.size : 0,
             uptime: process.uptime(),
             memory: process.memoryUsage(),
-            port: PORT
+            port: PORT,
+            nodeVersion: process.version,
+            platform: process.platform
         };
         console.log('✅ Health check response:', healthData);
-        res.json(healthData);
+        res.status(200).json(healthData);
     } catch (error) {
         console.error('❌ Health check error:', error);
         res.status(500).json({
