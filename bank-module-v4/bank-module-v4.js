@@ -795,7 +795,7 @@ class BankModuleV4 {
             // Обновляем общие суммы доходов и расходов
             const totalIncomeEl = document.getElementById('totalIncomeAmount');
             if (totalIncomeEl) {
-                const totalIncome = 10000 + 0; // зарплата + пассивный доход
+                const totalIncome = this.data.income + this.data.passiveIncome;
                 totalIncomeEl.textContent = `$${totalIncome.toLocaleString()}`;
             }
             
@@ -813,7 +813,8 @@ class BankModuleV4 {
                 const childrenExpenses = childrenCount * 400;
                 // Каждые $1000 кредита уменьшают чистый доход на $100/мес
                 const creditPenalty = Math.floor(this.data.credit / 1000) * 100;
-                const netIncome = 10000 - (this.getTotalExpenses() + childrenExpenses) - creditPenalty;
+                const baseNetIncome = (this.data.income + this.data.passiveIncome) - (this.getTotalExpenses() + childrenExpenses);
+                const netIncome = baseNetIncome - creditPenalty;
                 netIncomeEl.textContent = `$${netIncome.toLocaleString()}`;
             }
             
@@ -824,7 +825,8 @@ class BankModuleV4 {
                 const childrenExpenses = childrenCount * 400;
                 // Каждые $1000 кредита уменьшают PAYDAY на $100/мес
                 const creditPenalty = Math.floor(this.data.credit / 1000) * 100;
-                const payday = 10000 - (this.getTotalExpenses() + childrenExpenses) - creditPenalty;
+                const basePayday = (this.data.income + this.data.passiveIncome) - (this.getTotalExpenses() + childrenExpenses);
+                const payday = basePayday - creditPenalty;
                 paydayEl.textContent = `$${payday.toLocaleString()}/мес`;
             }
             
