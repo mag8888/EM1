@@ -15,6 +15,15 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET || 'em1-production-secret-key-2024-railway';
 
+// Immediate health check for Railway
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.get('/', (req, res) => {
+    res.status(200).json({ status: 'ok', message: 'EM1 Game Board v2.0', timestamp: new Date().toISOString() });
+});
+
 // MongoDB Configuration
 let dbConnected = false;
 
@@ -543,17 +552,7 @@ function autoEndTurn(roomId) {
     console.log(`Auto-ended turn for room ${roomId}, now active: ${room.activeIndex}`);
 }
 
-// Root endpoint (can also serve as health check)
-app.get('/', (req, res) => {
-    res.json({
-        status: 'ok',
-        service: 'EM1 Game Board v2.0',
-        message: 'Server is running',
-        timestamp: new Date().toISOString()
-    });
-});
-
-// Health Check endpoint
+// Enhanced Health Check endpoint (replaces the simple one above)
 app.get('/health', (req, res) => {
     console.log('🏥 Health check requested');
     try {

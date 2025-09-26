@@ -259,9 +259,16 @@ window.safeCallBankFunction = safeCallBankFunction;
 window.syncDataFromBankV4 = syncDataFromBankV4;
 
 // Автоматическая синхронизация каждые 10 секунд
-setInterval(() => {
+setInterval(async () => {
     if (bankModuleV4) {
         syncDataFromBankV4();
+    } else {
+        // Попытка инициализации, если модуль не загружен
+        try {
+            await initBankModuleV4();
+        } catch (error) {
+            console.warn('⚠️ Не удалось инициализировать BankModuleV4:', error);
+        }
     }
 }, 10000);
 
