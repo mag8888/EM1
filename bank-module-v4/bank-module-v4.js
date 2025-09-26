@@ -795,7 +795,9 @@ class BankModuleV4 {
             // Обновляем общие суммы доходов и расходов
             const totalIncomeEl = document.getElementById('totalIncomeAmount');
             if (totalIncomeEl) {
-                const totalIncome = this.data.income + this.data.passiveIncome;
+                const income = Number(this.data.income || 0);
+                const passiveIncome = Number(this.data.passiveIncome || 0);
+                const totalIncome = income + passiveIncome;
                 totalIncomeEl.textContent = `$${totalIncome.toLocaleString()}`;
             }
             
@@ -812,8 +814,10 @@ class BankModuleV4 {
                 const childrenCount = this.getChildrenCount();
                 const childrenExpenses = childrenCount * 400;
                 // Каждые $1000 кредита уменьшают чистый доход на $100/мес
-                const creditPenalty = Math.floor(this.data.credit / 1000) * 100;
-                const baseNetIncome = (this.data.income + this.data.passiveIncome) - (this.getTotalExpenses() + childrenExpenses);
+                const creditPenalty = Math.floor((this.data.credit || 0) / 1000) * 100;
+                const income = Number(this.data.income || 0);
+                const passiveIncome = Number(this.data.passiveIncome || 0);
+                const baseNetIncome = (income + passiveIncome) - (this.getTotalExpenses() + childrenExpenses);
                 const netIncome = baseNetIncome - creditPenalty;
                 netIncomeEl.textContent = `$${netIncome.toLocaleString()}`;
             }
@@ -824,8 +828,10 @@ class BankModuleV4 {
                 const childrenCount = this.getChildrenCount();
                 const childrenExpenses = childrenCount * 400;
                 // Каждые $1000 кредита уменьшают PAYDAY на $100/мес
-                const creditPenalty = Math.floor(this.data.credit / 1000) * 100;
-                const basePayday = (this.data.income + this.data.passiveIncome) - (this.getTotalExpenses() + childrenExpenses);
+                const creditPenalty = Math.floor((this.data.credit || 0) / 1000) * 100;
+                const income = Number(this.data.income || 0);
+                const passiveIncome = Number(this.data.passiveIncome || 0);
+                const basePayday = (income + passiveIncome) - (this.getTotalExpenses() + childrenExpenses);
                 const payday = basePayday - creditPenalty;
                 paydayEl.textContent = `$${payday.toLocaleString()}/мес`;
             }
@@ -833,7 +839,7 @@ class BankModuleV4 {
             // Обновляем кредитную информацию
             const currentDebtEl = document.getElementById('currentDebt');
             if (currentDebtEl) {
-                currentDebtEl.textContent = `$${this.data.credit.toLocaleString()}`;
+                currentDebtEl.textContent = `$${(this.data.credit || 0).toLocaleString()}`;
             }
             
             
@@ -842,7 +848,9 @@ class BankModuleV4 {
                 const childrenCount = this.getChildrenCount();
                 const childrenExpenses = childrenCount * 400;
                 // Максимальный лимит рассчитывается от базового PAYDAY без учета текущего кредита
-                const baseNetIncome = 10000 - (this.getTotalExpenses() + childrenExpenses);
+                const income = Number(this.data.income || 0);
+                const passiveIncome = Number(this.data.passiveIncome || 0);
+                const baseNetIncome = (income + passiveIncome) - (this.getTotalExpenses() + childrenExpenses);
                 const maxCredit = Math.max(0, baseNetIncome * 10);
                 maxLimitEl.textContent = `$${maxCredit.toLocaleString()}`;
             }
@@ -852,9 +860,11 @@ class BankModuleV4 {
                 const childrenCount = this.getChildrenCount();
                 const childrenExpenses = childrenCount * 400;
                 // Свободный лимит = Максимальный лимит - Текущий долг
-                const baseNetIncome = 10000 - (this.getTotalExpenses() + childrenExpenses);
+                const income = Number(this.data.income || 0);
+                const passiveIncome = Number(this.data.passiveIncome || 0);
+                const baseNetIncome = (income + passiveIncome) - (this.getTotalExpenses() + childrenExpenses);
                 const maxCredit = Math.max(0, baseNetIncome * 10);
-                const free = Math.max(0, maxCredit - this.data.credit);
+                const free = Math.max(0, maxCredit - (this.data.credit || 0));
                 freeLimitEl.textContent = `$${free.toLocaleString()}`;
             }
             
