@@ -67,22 +67,13 @@ function syncDataFromBankV4() {
  * Обновление баланса в table.html
  */
 function updateBalanceDisplay() {
-    const balanceEl = document.getElementById('currentBalance');
     const bankBalanceEl = document.getElementById('bankBalanceValue');
     
     console.log('💰 updateBalanceDisplay:', {
-        balanceEl: !!balanceEl,
         bankBalanceEl: !!bankBalanceEl,
         currentBalance: window.currentBalance,
-        elementId: 'currentBalance'
+        elementId: 'bankBalanceValue'
     });
-    
-    if (balanceEl) {
-        balanceEl.textContent = `$${window.currentBalance.toLocaleString()}`;
-        console.log('✅ Баланс обновлен в DOM (currentBalance):', balanceEl.textContent);
-    } else {
-        console.warn('⚠️ Элемент currentBalance не найден');
-    }
     
     if (bankBalanceEl) {
         bankBalanceEl.textContent = `$${window.currentBalance.toLocaleString()}`;
