@@ -1854,13 +1854,45 @@
                       console.warn('⚠️ ProfessionManager not found');
                   }
                   
-                  // Инициализируем ProfessionUI
-                  if (typeof ProfessionUI !== 'undefined' && window.professionManager) {
-                      window.professionUI = new ProfessionUI(window.professionManager);
-                      console.log('✅ ProfessionUI initialized');
-                  } else {
-                      console.warn('⚠️ ProfessionUI not found or ProfessionManager not initialized');
-                  }
+                // Инициализируем ProfessionUI
+                if (typeof ProfessionUI !== 'undefined' && window.professionManager) {
+                    window.professionUI = new ProfessionUI(window.professionManager);
+                    console.log('✅ ProfessionUI initialized');
+                } else {
+                    console.warn('⚠️ ProfessionUI not found or ProfessionManager not initialized');
+                }
+                
+                // Добавляем обработчики для кнопок банка
+                const bankButton = document.getElementById('bankButton');
+                if (bankButton) {
+                    bankButton.addEventListener('click', () => {
+                        console.log('🏦 Bank button clicked, opening BankModuleV4...');
+                        if (typeof window.openBankV4 === 'function') {
+                            window.openBankV4();
+                        } else {
+                            console.error('❌ openBankV4 function not found!');
+                        }
+                    });
+                    console.log('✅ Bank button event listener added');
+                } else {
+                    console.warn('⚠️ Bank button not found');
+                }
+                
+                // Также добавляем обработчик для второй кнопки банка
+                const bankBtn = document.getElementById('bankBtn');
+                if (bankBtn) {
+                    bankBtn.addEventListener('click', () => {
+                        console.log('🏦 Bank btn clicked, opening BankModuleV4...');
+                        if (typeof window.openBankV4 === 'function') {
+                            window.openBankV4();
+                        } else {
+                            console.error('❌ openBankV4 function not found!');
+                        }
+                    });
+                    console.log('✅ Bank btn event listener added');
+                } else {
+                    console.warn('⚠️ Bank btn not found');
+                }
                 
             } catch (error) {
                 console.error('❌ Failed to initialize game:', error);
