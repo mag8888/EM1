@@ -560,7 +560,8 @@ class BankModuleV4 {
             // Обновляем финансовые детали
             const salaryEl = document.getElementById('salaryAmount');
             if (salaryEl) {
-                salaryEl.textContent = `$${this.data.income.toLocaleString()}`;
+                // Показываем базовую зарплату $10,000
+                salaryEl.textContent = `$${10000.toLocaleString()}`;
             }
             
             const passiveIncomeEl = document.getElementById('passiveIncomeAmount');
@@ -1237,8 +1238,7 @@ async function executeTransferV4() {
         
         const success = await transferMoneyV4(recipientIndex, amount);
         if (success) {
-            // Очищаем форму
-            recipientSelect.value = '';
+            // Очищаем только сумму, оставляем получателя
             amountInput.value = '';
             
             // Принудительно обновляем данные

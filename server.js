@@ -1302,18 +1302,22 @@ app.get('/api/bank/financials/:username/:roomId', (req, res) => {
             return res.status(404).json({ error: 'Player not found' });
         }
         
-        const salary = Number(player?.profession?.salary || 0);
+        // Показываем базовую зарплату всегда, даже если есть кредиты
+        const baseSalary = 10000; // Базовая зарплата предпринимателя
+        const actualSalary = Number(player?.profession?.salary || 0);
+        const creditPayment = Math.max(0, baseSalary - actualSalary); // Платеж по кредитам
         const passiveIncome = Number(player?.passiveIncome || 0);
         const baseExpenses = Number(player?.profession?.expenses || 0);
         const childExpenses = Number(player?.children || 0) * 1000;
-        const totalExpenses = baseExpenses + childExpenses;
-        const netIncome = (salary + passiveIncome) - totalExpenses;
+        const totalExpenses = baseExpenses + childExpenses + creditPayment;
+        const netIncome = (baseSalary + passiveIncome) - totalExpenses;
         
         res.json({
-            salary,
+            salary: baseSalary,
             passiveIncome,
             baseExpenses,
             childExpenses,
+            creditPayment,
             totalExpenses,
             netIncome,
             cash: player.cash || 0,

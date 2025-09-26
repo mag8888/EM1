@@ -57,6 +57,10 @@
                         <span class="financial-value expense" id="childrenExpensesAmount">$0</span>
                     </div>
                     <div class="financial-item">
+                        <span class="financial-label">Платежи по кредитам:</span>
+                        <span class="financial-value expense" id="creditPaymentAmount">$0</span>
+                    </div>
+                    <div class="financial-item">
                         <span class="financial-label">Общие расходы:</span>
                         <span class="financial-value expense" id="totalExpensesAmount">$0</span>
                     </div>
@@ -195,8 +199,7 @@ async function executeTransferV5(event) {
     try {
         const success = await transferMoneyV5(recipientIndex, amount);
         if (success) {
-            // Очищаем форму
-            recipientSelect.value = '';
+            // Очищаем только сумму, оставляем получателя
             amountInput.value = '';
             alert('Перевод выполнен успешно!');
         }

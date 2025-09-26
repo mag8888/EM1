@@ -224,9 +224,14 @@ class BankUIManager {
     }
 
     updateFinancialDetails(data) {
-        this.updateElement(BANK_SELECTORS.SALARY, BankUtils.formatCurrency(data.income));
+        // Показываем базовую зарплату $10,000
+        this.updateElement(BANK_SELECTORS.SALARY, BankUtils.formatCurrency(10000));
         this.updateElement(BANK_SELECTORS.PASSIVE_INCOME, BankUtils.formatCurrency(0)); // Пока нет пассивного дохода
         this.updateElement(BANK_SELECTORS.BASE_EXPENSES, BankUtils.formatCurrency(data.expenses));
+        
+        // Показываем платежи по кредитам
+        const creditPayment = data.creditPayment || 0;
+        this.updateElement('#creditPaymentAmount', BankUtils.formatCurrency(creditPayment));
         this.updateElement(BANK_SELECTORS.CHILDREN_EXPENSES, BankUtils.formatCurrency(0)); // Пока нет расходов на детей
         this.updateElement(BANK_SELECTORS.TOTAL_EXPENSES, BankUtils.formatCurrency(data.expenses));
         this.updateElement(BANK_SELECTORS.NET_INCOME, BankUtils.formatCurrency(data.payday));
