@@ -237,6 +237,19 @@ export class EventModule {
             if (babyDice <= 4) {
                 // Ребенок родился (1-4)
                 const currentChildren = player.children || 0;
+                
+                // Проверяем максимум 3 детей
+                if (currentChildren >= 3) {
+                    console.log(`👶 У игрока ${player.name} уже максимальное количество детей (3), ребенок не родился`);
+                    return {
+                        success: true,
+                        message: `У вас уже максимальное количество детей (3)`,
+                        babyBorn: false,
+                        diceResult: babyDice,
+                        childrenCount: currentChildren
+                    };
+                }
+                
                 const newChildrenCount = currentChildren + 1;
                 
                 // Обновляем количество детей

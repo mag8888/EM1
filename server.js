@@ -476,6 +476,19 @@ function processBabyBorn(player) {
     if (babyDice <= 4) {
         // Ребенок родился
         const currentChildren = player.children || 0;
+        
+        // Проверяем максимум 3 детей
+        if (currentChildren >= 3) {
+            console.log(`👶 У ${player.name} уже максимальное количество детей (3), ребенок не родился`);
+            return {
+                type: 'baby_born',
+                babyBorn: false,
+                diceResult: babyDice,
+                childrenCount: currentChildren,
+                message: 'У вас уже максимальное количество детей (3)'
+            };
+        }
+        
         player.children = currentChildren + 1;
         
         // Выплачиваем подарок
@@ -1330,7 +1343,7 @@ app.get('/api/bank/financials/:username/:roomId', (req, res) => {
         const creditPayment = Math.max(0, baseSalary - actualSalary); // Платеж по кредитам
         const passiveIncome = Number(player?.passiveIncome || 0);
         const baseExpenses = Number(player?.profession?.expenses || 0);
-        const childExpenses = Number(player?.children || 0) * 1000;
+        const childExpenses = Number(player?.children || 0) * 400;
         const totalExpenses = baseExpenses + childExpenses + creditPayment;
         const netIncome = (baseSalary + passiveIncome) - totalExpenses;
         
@@ -1464,7 +1477,7 @@ app.get('/api/bank/credit/status/:username/:roomId', (req, res) => {
         const passiveIncome = Number(player?.passiveIncome || 0);
         const salary = Number(player?.profession?.salary || 0);
         const baseExpenses = Number(player?.profession?.expenses || 0);
-        const childExpenses = Number(player?.children || 0) * 1000;
+        const childExpenses = Number(player?.children || 0) * 400;
         const totalExpenses = baseExpenses + childExpenses;
         const payday = Math.max(0, (salary + passiveIncome) - totalExpenses);
 

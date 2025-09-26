@@ -547,6 +547,32 @@ class BankModuleV4 {
     }
 
     /**
+     * Получение количества детей у игрока
+     */
+    getChildrenCount() {
+        try {
+            // Ищем игрока в комнате
+            const room = window.gameState?.state?.room || window.gameState?.room;
+            if (!room || !room.players) return 0;
+            
+            const player = room.players.find(p => 
+                p.name === this.playerName || 
+                p.username === this.playerName ||
+                String(p.userId) === String(this.userId)
+            );
+            
+            if (player) {
+                return Math.min(Number(player.children || 0), 3); // Максимум 3 ребенка
+            }
+            
+            return 0;
+        } catch (error) {
+            console.error('❌ BankModuleV4: Ошибка получения количества детей:', error);
+            return 0;
+        }
+    }
+
+    /**
      * Переключение деталей доходов
      */
     toggleIncomeDetails() {
@@ -621,7 +647,9 @@ class BankModuleV4 {
             
             const childrenExpensesEl = document.getElementById('childrenExpensesAmount');
             if (childrenExpensesEl) {
-                childrenExpensesEl.textContent = `$0`; // Пока нет расходов на детей
+                const childrenCount = this.getChildrenCount();
+                const childrenExpenses = childrenCount * 400;
+                childrenExpensesEl.textContent = `$${childrenExpenses.toLocaleString()}`;
             }
             
             // Обновляем общие суммы доходов и расходов
@@ -633,18 +661,27 @@ class BankModuleV4 {
             
             const totalExpensesEl = document.getElementById('totalExpensesAmount');
             if (totalExpensesEl) {
-                totalExpensesEl.textContent = `$${this.data.expenses.toLocaleString()}`;
+                const childrenCount = this.getChildrenCount();
+                const childrenExpenses = childrenCount * 400;
+                const totalExpenses = this.data.expenses + childrenExpenses;
+                totalExpensesEl.textContent = `$${totalExpenses.toLocaleString()}`;
             }
             
             const netIncomeEl = document.getElementById('netIncomeAmount');
             if (netIncomeEl) {
-                netIncomeEl.textContent = `$${this.data.payday.toLocaleString()}`;
+                const childrenCount = this.getChildrenCount();
+                const childrenExpenses = childrenCount * 400;
+                const netIncome = 10000 - (this.data.expenses + childrenExpenses);
+                netIncomeEl.textContent = `$${netIncome.toLocaleString()}`;
             }
             
             // Обновляем PAYDAY
             const paydayEl = document.getElementById('paydayAmount');
             if (paydayEl) {
-                paydayEl.textContent = `$${this.data.payday.toLocaleString()}/мес`;
+                const childrenCount = this.getChildrenCount();
+                const childrenExpenses = childrenCount * 400;
+                const payday = 10000 - (this.data.expenses + childrenExpenses);
+                paydayEl.textContent = `$${payday.toLocaleString()}/мес`;
             }
             
             // Обновляем кредитную информацию
@@ -656,13 +693,20 @@ class BankModuleV4 {
             
             const maxLimitEl = document.getElementById('maxLimit');
             if (maxLimitEl) {
-                // Максимальный лимит = PAYDAY * 10
-                maxLimitEl.textContent = `$${this.data.maxCredit.toLocaleString()}`;
+                const childrenCount = this.getChildrenCount();
+                const childrenExpenses = childrenCount * 400;
+                const netIncome = 10000 - (this.data.expenses + childrenExpenses);
+                const maxCredit = Math.max(0, netIncome * 10);
+                maxLimitEl.textContent = `$${maxCredit.toLocaleString()}`;
             }
             
             const freeLimitEl = document.getElementById('freeLimit');
             if (freeLimitEl) {
-                const free = Math.max(0, this.data.maxCredit - this.data.credit);
+                const childrenCount = this.getChildrenCount();
+                const childrenExpenses = childrenCount * 400;
+                const netIncome = 10000 - (this.data.expenses + childrenExpenses);
+                const maxCredit = Math.max(0, netIncome * 10);
+                const free = Math.max(0, maxCredit - this.data.credit);
                 freeLimitEl.textContent = `$${free.toLocaleString()}`;
             }
             
