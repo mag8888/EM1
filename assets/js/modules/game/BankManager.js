@@ -18,12 +18,11 @@ class BankManager {
         // Обработчик кнопки банка
         if (this.bankBtn) {
             this.bankBtn.addEventListener('click', () => {
-                // Используем новый банковский модуль v4
+                // Используем банковский модуль v4
                 if (typeof window.openBankV4 === 'function') {
                     window.openBankV4();
                 } else {
-                    // Fallback на старый модуль
-                    this.openBankModal();
+                    console.error('BankModuleV4 не доступен! Убедитесь, что модуль загружен.');
                 }
             });
         }

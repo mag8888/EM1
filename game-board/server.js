@@ -522,9 +522,7 @@ app.get('/game-board', (req, res) => {
     res.sendFile(path.join(__dirname, 'game-board.html'));
 });
 
-app.get('/bank-module', (req, res) => {
-    res.sendFile(path.join(__dirname, 'bank-module.html'));
-});
+// Старый маршрут банковского модуля удален - используется v4
 
 app.get('/profession-card', (req, res) => {
     res.sendFile(path.join(__dirname, 'profession-card.html'));

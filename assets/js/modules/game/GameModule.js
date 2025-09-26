@@ -148,12 +148,11 @@ class GameModule {
             
             const v = Date.now();
             const features = 'width=720,height=840,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no';
-            // Открываем новый банковский модуль v4
+            // Открываем банковский модуль v4
             if (typeof window.openBankV4 === 'function') {
                 window.openBankV4();
             } else {
-                console.warn('BankModuleV4 не доступен, используем старый модуль');
-                window.bankWindow = window.open(`/game-board/bank-module.html?v=${v}`, 'bankModule', features);
+                console.error('BankModuleV4 не доступен! Убедитесь, что модуль загружен.');
             }
             
             // Фокусируем новое окно
