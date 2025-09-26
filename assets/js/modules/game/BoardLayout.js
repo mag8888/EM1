@@ -181,12 +181,17 @@ function createCellElement(index, sizeClass, isInner = false) {
             iconClass = window.getIconStyleClass ? window.getIconStyleClass('emoji') : 'icon-emoji';
         }
         
-        // Проверяем, является ли эта клетка выбранной мечтой
-        if (window.currentRoom?.currentPlayer?.selectedDream) {
-            isSelectedDream = cellData.id === window.currentRoom.currentPlayer.selectedDream;
-            console.log('🔍 BoardLayout: Checking dream match:', {
+        // Проверяем, является ли эта клетка выбранной мечтой (любой игрок в комнате)
+        const selectedDreams = Array.isArray(window.currentRoom?.players)
+            ? window.currentRoom.players
+                .map(p => p?.selectedDream)
+                .filter(Boolean)
+            : [];
+        if (selectedDreams.length > 0) {
+            isSelectedDream = selectedDreams.includes(cellData.id);
+            console.log('🔍 BoardLayout: Checking dream match (any player):', {
                 cellId: cellData.id,
-                selectedDream: window.currentRoom.currentPlayer.selectedDream,
+                selectedDreams,
                 isSelectedDream
             });
         }
