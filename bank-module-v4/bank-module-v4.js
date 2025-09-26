@@ -849,7 +849,10 @@ class BankModuleV4 {
             const income = Number(this.data.income || 0);
             const passiveIncome = Number(this.data.passiveIncome || 0);
             // Максимальный лимит рассчитывается от базового PAYDAY без учета текущего кредита
-            const baseNetIncome = (income + passiveIncome) - (this.getTotalExpenses() + childrenExpenses);
+            // Исключаем штраф по кредиту из расчета максимального лимита
+            const creditPenalty = Math.floor((this.data.credit || 0) / 1000) * 100;
+            const baseExpenses = this.getTotalExpenses() + childrenExpenses;
+            const baseNetIncome = (income + passiveIncome) - baseExpenses + creditPenalty;
             const maxCredit = Math.max(0, baseNetIncome * 10);
             
             const maxLimitEl = document.getElementById('maxLimit');
@@ -859,9 +862,9 @@ class BankModuleV4 {
             
             const freeLimitEl = document.getElementById('freeLimit');
             if (freeLimitEl) {
-                // Свободный лимит = Максимальный лимит - Текущий долг
-                const free = Math.max(0, maxCredit - (this.data.credit || 0));
-                freeLimitEl.textContent = `$${free.toLocaleString()}`;
+                // Свободный лимит = Максимальный лимит (не вычитаем текущий долг)
+                // Текущий долг уже учтен в расходах и платежах
+                freeLimitEl.textContent = `$${maxCredit.toLocaleString()}`;
             }
             
             // Обновляем историю переводов
