@@ -270,7 +270,10 @@ class BankModuleV4 {
             this.data.maxCredit = Number(creditData?.maxAvailable || Math.max(0, totalIncome * 10));
             this.data.transfers = Array.isArray(historyData) ? historyData : [];
 
-            // 5. Обновляем UI и список получателей
+            // 5. Синхронизируем баланс игрока в игре
+            this.syncPlayerBalanceInGame();
+
+            // 6. Обновляем UI и список получателей
             this.updateUI();
             if (typeof window.initRecipientsList === 'function') {
                 window.initRecipientsList();
@@ -280,6 +283,48 @@ class BankModuleV4 {
         } catch (error) {
             console.error('❌ BankModuleV4: Ошибка загрузки данных:', error);
             return false;
+        }
+    }
+
+    /**
+     * Синхронизация баланса игрока в игре
+     */
+    syncPlayerBalanceInGame() {
+        try {
+            if (!this.playerName || !this.data.balance) return;
+
+            // Обновляем баланс в глобальном состоянии игры
+            if (window.gameState?.state?.players) {
+                const player = window.gameState.state.players.find(p => 
+                    p.name === this.playerName || 
+                    p.username === this.playerName ||
+                    String(p.userId) === String(this.userId)
+                );
+                
+                if (player) {
+                    const oldBalance = player.cash || 0;
+                    player.cash = this.data.balance;
+                    console.log(`🔄 BankModuleV4: Синхронизация баланса игрока ${this.playerName}: $${oldBalance} → $${this.data.balance}`);
+                }
+            }
+
+            // Обновляем баланс в массиве игроков
+            if (window.players && Array.isArray(window.players)) {
+                const player = window.players.find(p => 
+                    p.name === this.playerName || 
+                    p.username === this.playerName ||
+                    String(p.userId) === String(this.userId)
+                );
+                
+                if (player) {
+                    const oldBalance = player.cash || 0;
+                    player.cash = this.data.balance;
+                    console.log(`🔄 BankModuleV4: Синхронизация в массиве игроков ${this.playerName}: $${oldBalance} → $${this.data.balance}`);
+                }
+            }
+
+        } catch (error) {
+            console.error('❌ BankModuleV4: Ошибка синхронизации баланса игрока:', error);
         }
     }
 
