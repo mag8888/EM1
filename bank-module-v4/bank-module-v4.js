@@ -1378,7 +1378,7 @@ async function executeTransferV4() {
                 await bankModuleV4.updateTransfersHistory();
             }
             
-            alert('Перевод выполнен успешно!');
+            // alert('Перевод выполнен успешно!'); // Убрано по запросу пользователя
         } else {
             alert('Перевод не удался. Проверьте консоль для подробностей.');
         }
