@@ -1322,7 +1322,8 @@ app.get('/api/bank/financials/:username/:roomId', (req, res) => {
             netIncome,
             cash: player.cash || 0,
             children: player.children || 0,
-            profession: player.profession
+            profession: player.profession,
+            assets: player.assets || []
         });
     } catch (error) {
         console.error('Error getting financials:', error);

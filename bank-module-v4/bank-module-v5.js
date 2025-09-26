@@ -236,6 +236,67 @@ class BankUIManager {
         this.updateElement(BANK_SELECTORS.TOTAL_EXPENSES, BankUtils.formatCurrency(data.expenses));
         this.updateElement(BANK_SELECTORS.NET_INCOME, BankUtils.formatCurrency(data.payday));
         this.updateElement(BANK_SELECTORS.PAYDAY, `${BankUtils.formatCurrency(data.payday)}/мес`);
+        
+        // Обновляем общий доход
+        const totalIncome = 10000 + (data.passiveIncome || 0);
+        this.updateElement('#totalIncomeAmount', BankUtils.formatCurrency(totalIncome));
+        
+        // Обновляем детали доходов (активы)
+        this.updateAssetsIncome(data.assets || []);
+        
+        // Обновляем детали расходов (из карточки профессии)
+        this.updateProfessionExpenses(data.profession || {});
+    }
+    
+    updateAssetsIncome(assets) {
+        const container = document.getElementById('assetsIncomeList');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (assets.length === 0) {
+            container.innerHTML = '<div class="asset-income-item"><span class="asset-name">Нет активов</span><span class="asset-income">$0</span></div>';
+            return;
+        }
+        
+        assets.forEach(asset => {
+            const item = document.createElement('div');
+            item.className = 'asset-income-item';
+            item.innerHTML = `
+                <span class="asset-name">${asset.name || 'Актив'}</span>
+                <span class="asset-income">$${(asset.income || 0).toLocaleString()}</span>
+            `;
+            container.appendChild(item);
+        });
+    }
+    
+    updateProfessionExpenses(profession) {
+        const container = document.getElementById('professionExpensesList');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        // Добавляем детали расходов из карточки профессии
+        const expenses = [
+            { name: 'Налоги', amount: profession.taxes || 1300 },
+            { name: 'Прочие расходы', amount: profession.otherExpenses || 1500 },
+            { name: 'Кредит на авто', amount: profession.carLoan || 700 },
+            { name: 'Образовательный кредит', amount: profession.educationLoan || 500 },
+            { name: 'Ипотека', amount: profession.mortgage || 1200 },
+            { name: 'Кредитные карты', amount: profession.creditCards || 1000 }
+        ];
+        
+        expenses.forEach(expense => {
+            if (expense.amount > 0) {
+                const item = document.createElement('div');
+                item.className = 'profession-expense-item';
+                item.innerHTML = `
+                    <span class="expense-name">${expense.name}</span>
+                    <span class="expense-amount">$${expense.amount.toLocaleString()}</span>
+                `;
+                container.appendChild(item);
+            }
+        });
     }
 
     updateCreditInfo(data) {

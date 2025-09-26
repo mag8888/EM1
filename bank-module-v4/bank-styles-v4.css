@@ -627,6 +627,81 @@
     opacity: 0.8;
 }
 
+/* Стили для разворачиваемых секций */
+.financial-item.expandable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.financial-item.expandable:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+}
+
+.expand-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: #94a3b8;
+    transition: transform 0.2s ease;
+}
+
+.financial-item.expandable.expanded .expand-icon {
+    transform: translateY(-50%) rotate(90deg);
+}
+
+.income-details,
+.expenses-details {
+    margin-left: 20px;
+    margin-top: 8px;
+    padding-left: 16px;
+    border-left: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.financial-subitem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 14px;
+    color: #cbd5e1;
+}
+
+.financial-subitem .financial-label {
+    color: #94a3b8;
+}
+
+.assets-income,
+.profession-expenses {
+    margin-top: 8px;
+}
+
+.asset-income-item,
+.profession-expense-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 13px;
+    color: #cbd5e1;
+    margin-left: 16px;
+}
+
+.asset-income-item .asset-name,
+.profession-expense-item .expense-name {
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.asset-income-item .asset-income,
+.profession-expense-item .expense-amount {
+    color: #10b981;
+    font-weight: 500;
+}
+
 .form-input:focus::placeholder,
 .form-select:focus::placeholder {
     opacity: 0.6;
