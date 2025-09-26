@@ -1438,6 +1438,164 @@
         </div>
     </div>
 
+    <!-- Bank Module v4 Modal -->
+    <div id="bankModal" class="bank-modal" style="display: none;">
+        <div class="bank-modal-content">
+            <!-- Header -->
+            <div class="bank-modal-header">
+                <div class="bank-header-left">
+                    <div class="bank-icon">🏦</div>
+                    <h2 class="bank-modal-title">Банковские операции <span style="color: #ff6b6b; font-size: 12px; font-weight: normal;">[v4-DEBUG]</span></h2>
+                </div>
+                <button class="bank-modal-close" onclick="closeBankV4()">&times;</button>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="bank-modal-body">
+                <!-- Left Column - Financial Summary -->
+                <div class="bank-info-column">
+                    <!-- Bank Status -->
+                    <div class="bank-status-section">
+                        <div class="bank-status-header">
+                            <div class="bank-icon-small">🏦</div>
+                            <span class="bank-status-label">Банк</span>
+                            <span class="bank-status-badge active">Активен</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Balance -->
+                    <div class="balance-section">
+                        <div class="current-balance" id="currentBalance">$0</div>
+                        <div class="balance-label">Доступно для операций</div>
+                    </div>
+                    
+                    <!-- Financial Details -->
+                    <div class="financial-details">
+                        <div class="financial-header">
+                            <div class="bank-icon-small">💰</div>
+                            <span>Финансовые детали</span>
+                        </div>
+                        <div class="financial-item">
+                            <span class="financial-label">Зарплата:</span>
+                            <span class="financial-value income" id="salaryAmount">$0</span>
+                        </div>
+                        <div class="financial-item">
+                            <span class="financial-label">Пассивный доход:</span>
+                            <span class="financial-value income" id="passiveIncomeAmount">$0</span>
+                        </div>
+                        <div class="financial-item">
+                            <span class="financial-label">Базовые расходы:</span>
+                            <span class="financial-value expense" id="baseExpensesAmount">$0</span>
+                        </div>
+                        <div class="financial-item">
+                            <span class="financial-label">Расходы на детей:</span>
+                            <span class="financial-value expense" id="childrenExpensesAmount">$0</span>
+                        </div>
+                        <div class="financial-item">
+                            <span class="financial-label">Общие расходы:</span>
+                            <span class="financial-value expense" id="totalExpensesAmount">$0</span>
+                        </div>
+                        <div class="financial-item total">
+                            <span class="financial-label">Чистый доход:</span>
+                            <span class="financial-value income" id="netIncomeAmount">$0</span>
+                        </div>
+                        <div class="payday-info">
+                            <span class="payday-label">PAYDAY:</span>
+                            <span class="payday-amount" id="paydayAmount">$0/мес</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Credit Information -->
+                    <div class="credit-info">
+                        <div class="credit-header">
+                            <div class="bank-icon-small">🏦</div>
+                            <span>Кредитная информация</span>
+                        </div>
+                        <div class="credit-item">
+                            <span class="credit-label">Текущий долг:</span>
+                            <span class="credit-value" id="currentDebt">$0</span>
+                        </div>
+                        <div class="credit-item">
+                            <span class="credit-label">Доступный лимит:</span>
+                            <span class="credit-value available" id="availableLimit">$0</span>
+                        </div>
+                        <div class="credit-item">
+                            <span class="credit-label">Максимальный лимит:</span>
+                            <span class="credit-value" id="maxLimit">$0</span>
+                        </div>
+                        <div class="credit-item">
+                            <span class="credit-label">Свободный лимит:</span>
+                            <span class="credit-value available" id="freeLimit">$0</span>
+                        </div>
+                        <div class="credit-rule">
+                            Каждые $1000 кредита уменьшают PAYDAY на $100/мес
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column - Operations -->
+                <div class="bank-operations-column">
+                    <!-- Transfer Section -->
+                    <div class="transfer-section">
+                        <div class="section-header">
+                            <div class="bank-icon-small">💸</div>
+                            <span>Переводы</span>
+                        </div>
+                        <div class="transfer-form">
+                            <div class="form-group">
+                                <label for="recipientSelect">Получатель:</label>
+                                <select id="recipientSelect" class="form-select">
+                                    <option value="">Выберите получателя</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="transferAmount">Сумма:</label>
+                                <input type="number" id="transferAmount" class="form-input" placeholder="0" min="1">
+                            </div>
+                            <button class="btn btn-primary" id="transferBtn" onclick="executeTransferV4()">
+                                Отправить
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Credit Section -->
+                    <div class="credit-section">
+                        <div class="section-header">
+                            <div class="bank-icon-small">💳</div>
+                            <span>Кредиты</span>
+                        </div>
+                        <div class="credit-actions">
+                            <div class="form-group">
+                                <label for="creditAmount">Сумма кредита:</label>
+                                <input type="number" id="creditAmount" class="form-input" placeholder="1000" min="1">
+                            </div>
+                            <div class="credit-buttons">
+                                <button class="btn btn-success" id="takeCreditBtn" onclick="takeCreditV4()">
+                                    Взять кредит
+                                </button>
+                                <button class="btn btn-warning" id="payoffCreditBtn" onclick="payoffCreditV4()">
+                                    Погасить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- History Section -->
+                    <div class="history-section">
+                        <div class="section-header">
+                            <div class="bank-icon-small">📋</div>
+                            <span>История операций</span>
+                            <span class="history-count" id="historyCount">0</span>
+                        </div>
+                        <div class="transfers-history" id="transfersHistory">
+                            <div class="transfer-empty">Нет операций</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="game-toast" id="gameToast"></div>
 
     <!-- Загружаем конфигурацию игры -->
@@ -1559,6 +1717,12 @@
         </script>
         <script src="assets/js/modules/game/DealsManager.js?v=11"></script>
         <script src="assets/js/modules/game/BankManager.js?v=11"></script>
+        
+        <!-- Bank Module v4 -->
+        <link rel="stylesheet" href="bank-module-v4/bank-styles-v4.css?v=4.1">
+        <script src="bank-module-v4/bank-module-v4.js?v=4.1"></script>
+        <script src="bank-module-v4/integration.js?v=4.1"></script>
+        
         <script src="game-board/professions-data.js"></script>
     
     <!-- Инициализируем игру -->
