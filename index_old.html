@@ -198,8 +198,14 @@
         }
 
         function openBank() {
-            window.open('/bank', '_blank');
-            showStatus('Банк открыт в новой вкладке!', 'success');
+            // Используем новый банковский модуль v4
+            if (typeof window.openBankV4 === 'function') {
+                window.openBankV4();
+                showStatus('Банковский модуль v4 открыт!', 'success');
+            } else {
+                window.open('/bank', '_blank');
+                showStatus('Банк открыт в новой вкладке!', 'success');
+            }
         }
 
         function openAuth() {
@@ -252,5 +258,10 @@
             checkAuthStatus();
         });
     </script>
+    
+    <!-- Bank Module v4 -->
+    <link rel="stylesheet" href="bank-module-v4/bank-styles-v4.css?v=4.1">
+    <script src="bank-module-v4/bank-module-v4.js?v=4.1"></script>
+    <script src="bank-module-v4/integration.js?v=4.1"></script>
 </body>
 </html>

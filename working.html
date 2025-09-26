@@ -1156,9 +1156,26 @@
             } else {
                 console.error('❌ DealsModule не найден');
             }
+            
+            // Обработчик кнопки банка
+            const bankBtn = document.getElementById('bankButton');
+            if (bankBtn) {
+                bankBtn.addEventListener('click', () => {
+                    if (typeof window.openBankV4 === 'function') {
+                        window.openBankV4();
+                    } else {
+                        console.warn('BankModuleV4 не доступен');
+                    }
+                });
+            }
         });
     </script>
     <script src="assets/js/core/GameCore.js"></script>
+    
+    <!-- Bank Module v4 -->
+    <link rel="stylesheet" href="bank-module-v4/bank-styles-v4.css?v=4.1">
+    <script src="bank-module-v4/bank-module-v4.js?v=4.1"></script>
+    <script src="bank-module-v4/integration.js?v=4.1"></script>
     
     <!-- Инициализируем рабочую версию -->
     <script src="assets/js/working-version.js"></script>
