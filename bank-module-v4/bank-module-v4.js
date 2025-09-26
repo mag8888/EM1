@@ -1607,9 +1607,18 @@ async function takeCreditV4() {
 
 async function payoffCreditV4Button() {
     try {
-        const success = await payoffCreditV4();
-        if (success) {
-            alert('Кредит погашен успешно!');
+        // Вызываем основную функцию погашения кредита напрямую
+        if (!bankModuleV4) {
+            await initBankModuleV4();
+        }
+        
+        if (bankModuleV4) {
+            const success = await bankModuleV4.payoffCredit();
+            if (success) {
+                alert('Кредит погашен успешно!');
+            }
+        } else {
+            alert('Банковский модуль не инициализирован');
         }
         
     } catch (error) {
