@@ -1697,6 +1697,78 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
+// Telegram Auth endpoint
+app.get('/auth/telegram', async (req, res) => {
+    try {
+        const { token } = req.query;
+        
+        if (!token) {
+            return res.redirect('/login?error=no_token');
+        }
+        
+        // Verify JWT token
+        const decoded = jwt.verify(token, JWT_SECRET);
+        
+        if (decoded.type !== 'telegram') {
+            return res.redirect('/login?error=invalid_token');
+        }
+        
+        const telegramId = decoded.telegramId;
+        console.log(`🔐 Telegram auth attempt: ${telegramId}`);
+        
+        // Find or create user
+        let user = null;
+        for (let u of users.values()) {
+            if (u.telegramId === telegramId) {
+                user = u;
+                break;
+            }
+        }
+        
+        if (!user) {
+            // Create new user from Telegram
+            const userId = Date.now().toString();
+            user = {
+                id: userId,
+                username: `telegram_${telegramId}`,
+                email: `telegram_${telegramId}@telegram.local`,
+                telegramId: telegramId,
+                createdAt: new Date(),
+                isTelegramUser: true
+            };
+            
+            users.set(userId, user);
+            console.log(`✅ New Telegram user created: ${telegramId}`);
+        }
+        
+        // Create session token
+        const sessionToken = jwt.sign(
+            { 
+                userId: user.id,
+                username: user.username,
+                email: user.email,
+                telegramId: user.telegramId
+            },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+        
+        // Set cookie and redirect
+        res.cookie('authToken', sessionToken, { 
+            httpOnly: true, 
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+        
+        console.log(`✅ Telegram user authenticated: ${telegramId}`);
+        res.redirect('/game.html?auth=telegram');
+        
+    } catch (error) {
+        console.error('❌ Telegram auth error:', error);
+        res.redirect('/login?error=auth_failed');
+    }
+});
+
 // Profile API endpoint
 app.get('/api/user/profile/:username', (req, res) => {
     try {

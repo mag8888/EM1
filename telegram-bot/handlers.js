@@ -122,6 +122,7 @@ class Handlers {
         const chatId = callbackQuery.message.chat.id;
         const messageId = callbackQuery.message.message_id;
         const data = callbackQuery.data;
+        const telegramId = callbackQuery.from.id;
 
         try {
             await this.bot.answerCallbackQuery(callbackQuery.id);
@@ -144,7 +145,7 @@ class Handlers {
                     break;
 
                 case 'play_game':
-                    await this.showPlayGame(chatId, messageId);
+                    await this.showPlayGame(chatId, messageId, telegramId);
                     break;
 
                 case 'community':
@@ -205,6 +206,7 @@ class Handlers {
     async handleMessage(msg) {
         if (!msg || !msg.text) return;
         const chatId = msg.chat.id;
+        const telegramId = msg.from.id;
         const text = (msg.text || '').trim();
 
         try {
@@ -224,7 +226,7 @@ class Handlers {
             }
 
             if (text.includes('Играть')) {
-                await this.showPlayGame(chatId);
+                await this.showPlayGame(chatId, null, telegramId);
                 return;
             }
 
@@ -311,18 +313,18 @@ class Handlers {
         }
     }
 
-    async showPlayGame(chatId, messageId) {
+    async showPlayGame(chatId, messageId, telegramId = null) {
         const payload = {
             chat_id: chatId,
             ...(messageId ? { message_id: messageId } : {}),
-            ...Keyboards.getPlayGameKeyboard()
+            ...Keyboards.getPlayGameKeyboard(telegramId)
         };
         if (messageId) {
             await this.bot.editMessageText(config.MESSAGES.PLAY_GAME, payload);
         } else {
             await this.bot.sendPhoto(chatId, config.MEDIA.PLAY_GAME, {
                 caption: config.MESSAGES.PLAY_GAME,
-                ...Keyboards.getPlayGameKeyboard()
+                ...Keyboards.getPlayGameKeyboard(telegramId)
             });
         }
     }

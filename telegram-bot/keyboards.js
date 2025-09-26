@@ -92,12 +92,41 @@ class Keyboards {
     }
 
     // Кнопки для раздела "Играть"
-    static getPlayGameKeyboard() {
+    static getPlayGameKeyboard(telegramId = null, gameUrl = null) {
+        // Генерируем ссылку для входа в игру
+        let gameLink = gameUrl || process.env.GAME_SERVER_URL || 'https://em1-production.up.railway.app';
+        
+        if (telegramId) {
+            // Создаем JWT токен для авторизации
+            const jwt = require('jsonwebtoken');
+            const JWT_SECRET = process.env.JWT_SECRET || 'em1-production-secret-key-2024-railway';
+            
+            try {
+                const token = jwt.sign(
+                    { 
+                        telegramId: telegramId,
+                        type: 'telegram',
+                        timestamp: Date.now()
+                    },
+                    JWT_SECRET,
+                    { expiresIn: '1h' }
+                );
+                
+                gameLink = `${gameLink}/auth/telegram?token=${token}`;
+            } catch (error) {
+                console.error('Error creating JWT token:', error);
+                // Fallback на обычную ссылку
+                gameLink = `${gameLink}/game.html`;
+            }
+        } else {
+            gameLink = `${gameLink}/game.html`;
+        }
+
         return {
             reply_markup: {
                 inline_keyboard: [
                     [
-                        { text: '🎮 Начать игру', url: 'http://localhost:3001/working' }
+                        { text: '🎮 Начать игру', url: gameLink }
                     ],
                     [
                         { text: '📹 Смотреть видео', callback_data: 'watch_game_video' }

@@ -10,7 +10,7 @@ module.exports = {
     MONGODB_DB_NAME: process.env.MONGODB_DB_NAME || 'em_bot',
     
     // Game Server Configuration
-    GAME_SERVER_URL: process.env.GAME_SERVER_URL || 'http://localhost:3001',
+    GAME_SERVER_URL: process.env.GAME_SERVER_URL || 'https://em1-production.up.railway.app',
     
     // Referral System
     REFERRAL_BONUS: parseInt(process.env.REFERRAL_BONUS) || 10,
