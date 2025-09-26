@@ -943,23 +943,23 @@ class BankModuleV4 {
                 const isNegativeStartingSavings = (transfer.description || transfer.reason) === 'стартовые сбережения' && 
                                                 Number(transfer.amount) < 0;
                 
-                // Исключаем записи, которые не относятся к текущему игроку
-                const isNotForCurrentPlayer = transfer.from !== this.playerName && 
-                                            transfer.to !== this.playerName && 
-                                            transfer.sender !== this.playerName && 
-                                            transfer.recipient !== this.playerName;
-                
                 // Для "стартовые сбережения" - показываем только положительные суммы для текущего игрока
                 const isStartingSavings = (transfer.description || transfer.reason) === 'стартовые сбережения';
                 const isStartingSavingsForCurrentPlayer = isStartingSavings && 
                     (transfer.to === this.playerName || transfer.recipient === this.playerName);
                 const shouldShowStartingSavings = isStartingSavingsForCurrentPlayer && Number(transfer.amount) > 0;
                 
+                // Для обычных транзакций - показываем только те, которые относятся к текущему игроку
+                const isRegularTransaction = !isStartingSavings;
+                const isRegularTransactionForCurrentPlayer = isRegularTransaction && 
+                    (transfer.from === this.playerName || transfer.to === this.playerName || 
+                     transfer.sender === this.playerName || transfer.recipient === this.playerName);
+                
                 // Показываем транзакции, которые относятся к игроку ИЛИ являются стартовыми сбережениями для текущего игрока
-                const shouldShow = (!isNotForCurrentPlayer || shouldShowStartingSavings) && !isDuplicate && !isNegativeStartingSavings;
+                const shouldShow = (isRegularTransactionForCurrentPlayer || shouldShowStartingSavings) && !isDuplicate && !isNegativeStartingSavings;
                 
                 if (isStartingSavings) {
-                    console.log(`🔍 Стартовые сбережения: amount=${transfer.amount}, shouldShow=${shouldShow}, isNotForCurrentPlayer=${isNotForCurrentPlayer}, shouldShowStartingSavings=${shouldShowStartingSavings}`);
+                    console.log(`🔍 Стартовые сбережения: amount=${transfer.amount}, to=${transfer.to}, playerName=${this.playerName}, shouldShow=${shouldShow}, isStartingSavingsForCurrentPlayer=${isStartingSavingsForCurrentPlayer}`);
                 }
                 
                 return shouldShow;

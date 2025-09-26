@@ -350,6 +350,12 @@ class DealsModule {
             return;
         }
         
+        // Проверяем, не открыто ли уже модальное окно выбора сделки
+        if (document.querySelector('.deals-modal')) {
+            console.log('🎴 DealsModule: Модальное окно выбора сделки уже открыто');
+            return;
+        }
+        
         const modal = this.createDealChoiceModal();
         document.body.appendChild(modal);
         
@@ -573,6 +579,13 @@ class DealsModule {
     
     // Показать карту сделки всем игрокам
     showDealCard(card, playerId) {
+        // Проверяем, не открыто ли уже модальное окно с этой картой
+        const existingModal = document.querySelector('.deals-modal .deal-card-modal');
+        if (existingModal) {
+            console.log('🎴 DealsModule: Модальное окно карты сделки уже открыто');
+            return;
+        }
+        
         const myId = String(this.getCurrentPlayerId());
         const isOwner = myId === String(playerId);
         const modal = this.createDealCardModal(card, { isOwner: isOwner && !this.viewOnlyMode, originalOwnerId: playerId });
