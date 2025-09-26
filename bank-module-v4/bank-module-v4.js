@@ -801,7 +801,9 @@ class BankModuleV4 {
             if (netIncomeEl) {
                 const childrenCount = this.getChildrenCount();
                 const childrenExpenses = childrenCount * 400;
-                const netIncome = 10000 - (this.getTotalExpenses() + childrenExpenses);
+                // Каждые $1000 кредита уменьшают чистый доход на $100/мес
+                const creditPenalty = Math.floor(this.data.credit / 1000) * 100;
+                const netIncome = 10000 - (this.getTotalExpenses() + childrenExpenses) - creditPenalty;
                 netIncomeEl.textContent = `$${netIncome.toLocaleString()}`;
             }
             
@@ -810,7 +812,9 @@ class BankModuleV4 {
             if (paydayEl) {
                 const childrenCount = this.getChildrenCount();
                 const childrenExpenses = childrenCount * 400;
-                const payday = 10000 - (this.getTotalExpenses() + childrenExpenses);
+                // Каждые $1000 кредита уменьшают PAYDAY на $100/мес
+                const creditPenalty = Math.floor(this.data.credit / 1000) * 100;
+                const payday = 10000 - (this.getTotalExpenses() + childrenExpenses) - creditPenalty;
                 paydayEl.textContent = `$${payday.toLocaleString()}/мес`;
             }
             
@@ -825,7 +829,9 @@ class BankModuleV4 {
             if (maxLimitEl) {
                 const childrenCount = this.getChildrenCount();
                 const childrenExpenses = childrenCount * 400;
-                const netIncome = 10000 - (this.getTotalExpenses() + childrenExpenses);
+                // Каждые $1000 кредита уменьшают чистый доход на $100/мес
+                const creditPenalty = Math.floor(this.data.credit / 1000) * 100;
+                const netIncome = 10000 - (this.getTotalExpenses() + childrenExpenses) - creditPenalty;
                 const maxCredit = Math.max(0, netIncome * 10);
                 maxLimitEl.textContent = `$${maxCredit.toLocaleString()}`;
             }
@@ -834,7 +840,9 @@ class BankModuleV4 {
             if (freeLimitEl) {
                 const childrenCount = this.getChildrenCount();
                 const childrenExpenses = childrenCount * 400;
-                const netIncome = 10000 - (this.getTotalExpenses() + childrenExpenses);
+                // Каждые $1000 кредита уменьшают чистый доход на $100/мес
+                const creditPenalty = Math.floor(this.data.credit / 1000) * 100;
+                const netIncome = 10000 - (this.getTotalExpenses() + childrenExpenses) - creditPenalty;
                 const maxCredit = Math.max(0, netIncome * 10);
                 const free = Math.max(0, maxCredit - this.data.credit);
                 freeLimitEl.textContent = `$${free.toLocaleString()}`;
