@@ -551,6 +551,15 @@ class BankModuleV4 {
      */
     updateUI() {
         try {
+            // Сохраняем текущие значения полей ввода
+            const recipientSelect = document.getElementById('recipientSelect');
+            const amountInput = document.getElementById('transferAmount');
+            const creditAmountInput = document.getElementById('creditAmount');
+            
+            const currentRecipient = recipientSelect?.value || '';
+            const currentAmount = amountInput?.value || '';
+            const currentCreditAmount = creditAmountInput?.value || '';
+
             // Обновляем баланс
             const balanceEl = document.getElementById('currentBalance');
             if (balanceEl) {
@@ -622,6 +631,17 @@ class BankModuleV4 {
                 historyCountEl.textContent = this.data.transfers.length;
             }
 
+            // Восстанавливаем значения полей ввода
+            if (recipientSelect && currentRecipient) {
+                recipientSelect.value = currentRecipient;
+            }
+            if (amountInput && currentAmount) {
+                amountInput.value = currentAmount;
+            }
+            if (creditAmountInput && currentCreditAmount) {
+                creditAmountInput.value = currentCreditAmount;
+            }
+
             console.log('🎨 BankModuleV4: UI обновлен');
             
         } catch (error) {
@@ -637,6 +657,9 @@ class BankModuleV4 {
             const recipientSelect = document.getElementById('recipientSelect');
             if (!recipientSelect) return;
 
+            // Сохраняем текущий выбор
+            const currentSelection = recipientSelect.value;
+
             // Очищаем список
             recipientSelect.innerHTML = '<option value="">Выберите получателя</option>';
 
@@ -650,6 +673,11 @@ class BankModuleV4 {
                         recipientSelect.appendChild(option);
                     }
                 });
+            }
+
+            // Восстанавливаем выбор, если он все еще валиден
+            if (currentSelection && recipientSelect.querySelector(`option[value="${currentSelection}"]`)) {
+                recipientSelect.value = currentSelection;
             }
 
             console.log('👥 BankModuleV4: Список получателей обновлен');
