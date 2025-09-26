@@ -1553,7 +1553,6 @@ app.post('/api/bank/credit/take', (req, res) => {
             type: 'credit_take' 
         });
 
-        const bankBalance = ensureBalance(roomId, username);
         res.json({ success: true, loanAmount: loan.amount, newBalance: bankBalance, cashflow: player.passiveIncome });
     } catch (error) {
         console.error('Credit take error:', error);
