@@ -357,9 +357,7 @@ class BankModuleV4 {
 
             // 7. Обновляем UI и список получателей
             this.updateUI();
-            if (typeof window.initRecipientsList === 'function') {
-                window.initRecipientsList();
-            }
+            this.initRecipientsList();
 
             return true;
         } catch (error) {
@@ -547,34 +545,64 @@ class BankModuleV4 {
                 balanceEl.textContent = `$${this.data.balance.toLocaleString()}`;
             }
             
-            // Обновляем доходы
-            const incomeEl = document.getElementById('totalIncome');
-            if (incomeEl) {
-                incomeEl.textContent = `$${this.data.income.toLocaleString()}`;
+            // Обновляем финансовые детали
+            const salaryEl = document.getElementById('salaryAmount');
+            if (salaryEl) {
+                salaryEl.textContent = `$${this.data.income.toLocaleString()}`;
             }
             
-            // Обновляем расходы
-            const expensesEl = document.getElementById('totalExpenses');
-            if (expensesEl) {
-                expensesEl.textContent = `$${this.data.expenses.toLocaleString()}`;
+            const passiveIncomeEl = document.getElementById('passiveIncomeAmount');
+            if (passiveIncomeEl) {
+                passiveIncomeEl.textContent = `$0`; // Пока нет пассивного дохода
+            }
+            
+            const baseExpensesEl = document.getElementById('baseExpensesAmount');
+            if (baseExpensesEl) {
+                baseExpensesEl.textContent = `$${this.data.expenses.toLocaleString()}`;
+            }
+            
+            const childrenExpensesEl = document.getElementById('childrenExpensesAmount');
+            if (childrenExpensesEl) {
+                childrenExpensesEl.textContent = `$0`; // Пока нет расходов на детей
+            }
+            
+            const totalExpensesEl = document.getElementById('totalExpensesAmount');
+            if (totalExpensesEl) {
+                totalExpensesEl.textContent = `$${this.data.expenses.toLocaleString()}`;
+            }
+            
+            const netIncomeEl = document.getElementById('netIncomeAmount');
+            if (netIncomeEl) {
+                netIncomeEl.textContent = `$${this.data.payday.toLocaleString()}`;
             }
             
             // Обновляем PAYDAY
-            const paydayEl = document.getElementById('monthlyIncome');
+            const paydayEl = document.getElementById('paydayAmount');
             if (paydayEl) {
                 paydayEl.textContent = `$${this.data.payday.toLocaleString()}/мес`;
             }
             
-            // Обновляем кредит
-            const creditEl = document.getElementById('currentCredit');
-            if (creditEl) {
-                creditEl.textContent = `$${this.data.credit.toLocaleString()}`;
+            // Обновляем кредитную информацию
+            const currentDebtEl = document.getElementById('currentDebt');
+            if (currentDebtEl) {
+                currentDebtEl.textContent = `$${this.data.credit.toLocaleString()}`;
             }
             
-            // Обновляем максимальный кредит
-            const maxCreditEl = document.getElementById('maxCredit');
-            if (maxCreditEl) {
-                maxCreditEl.textContent = `$${this.data.maxCredit.toLocaleString()}`;
+            const availableLimitEl = document.getElementById('availableLimit');
+            if (availableLimitEl) {
+                const available = Math.max(0, this.data.maxCredit - this.data.credit);
+                availableLimitEl.textContent = `$${available.toLocaleString()}`;
+            }
+            
+            const maxLimitEl = document.getElementById('maxLimit');
+            if (maxLimitEl) {
+                maxLimitEl.textContent = `$${this.data.maxCredit.toLocaleString()}`;
+            }
+            
+            const freeLimitEl = document.getElementById('freeLimit');
+            if (freeLimitEl) {
+                const free = Math.max(0, this.data.maxCredit - this.data.credit);
+                freeLimitEl.textContent = `$${free.toLocaleString()}`;
             }
             
             // Обновляем историю переводов
@@ -589,6 +617,35 @@ class BankModuleV4 {
             
         } catch (error) {
             console.error('❌ BankModuleV4: Ошибка обновления UI:', error);
+        }
+    }
+
+    /**
+     * Инициализация списка получателей
+     */
+    initRecipientsList() {
+        try {
+            const recipientSelect = document.getElementById('recipientSelect');
+            if (!recipientSelect) return;
+
+            // Очищаем список
+            recipientSelect.innerHTML = '<option value="">Выберите получателя</option>';
+
+            // Добавляем игроков
+            if (this.players && this.players.length > 0) {
+                this.players.forEach((player, index) => {
+                    if (player.name !== this.playerName) {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = player.name;
+                        recipientSelect.appendChild(option);
+                    }
+                });
+            }
+
+            console.log('👥 BankModuleV4: Список получателей обновлен');
+        } catch (error) {
+            console.error('❌ BankModuleV4: Ошибка инициализации списка получателей:', error);
         }
     }
 
@@ -609,7 +666,21 @@ class BankModuleV4 {
                 return;
             }
 
-            const orderedTransfers = [...this.data.transfers].sort((a, b) => {
+            // Фильтруем дубликаты и проблемные записи
+            const uniqueTransfers = this.data.transfers.filter((transfer, index, self) => {
+                const key = `${transfer.amount}_${transfer.description || transfer.reason}_${transfer.timestamp}`;
+                const isDuplicate = self.findIndex(t => 
+                    `${t.amount}_${t.description || t.reason}_${t.timestamp}` === key
+                ) !== index;
+                
+                // Исключаем отрицательные записи "стартовые сбережения"
+                const isNegativeStartingSavings = (transfer.description || transfer.reason) === 'стартовые сбережения' && 
+                                                Number(transfer.amount) < 0;
+                
+                return !isDuplicate && !isNegativeStartingSavings;
+            });
+
+            const orderedTransfers = [...uniqueTransfers].sort((a, b) => {
                 const aTime = new Date(a?.timestamp || 0).getTime();
                 const bTime = new Date(b?.timestamp || 0).getTime();
                 return bTime - aTime;
@@ -620,7 +691,7 @@ class BankModuleV4 {
                 historyContainer.appendChild(transferEl);
             });
 
-            console.log(`📋 BankModuleV4: История обновлена (${this.data.transfers.length} записей)`);
+            console.log(`📋 BankModuleV4: История обновлена (${uniqueTransfers.length} уникальных записей из ${this.data.transfers.length})`);
             
         } catch (error) {
             console.error('❌ BankModuleV4: Ошибка обновления истории:', error);
