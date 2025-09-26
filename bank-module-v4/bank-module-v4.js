@@ -427,8 +427,8 @@ class BankModuleV4 {
             
             // Обновляем UI
             this.updateUI();
-            if (typeof window.initRecipientsList === 'function') {
-                window.initRecipientsList();
+            if (typeof window.initRecipientsListGlobal === 'function') {
+                window.initRecipientsListGlobal();
             }
             
             console.log('✅ BankModuleV4: Офлайн данные загружены', this.data);
@@ -642,6 +642,12 @@ class BankModuleV4 {
             const recipientSelect = document.getElementById('recipientSelect');
             if (!recipientSelect) return;
 
+            // Защита от повторной инициализации
+            if (recipientSelect.dataset.initialized === 'true') {
+                console.log('👥 BankModuleV4: Список получателей уже инициализирован');
+                return;
+            }
+
             // Очищаем список
             recipientSelect.innerHTML = '<option value="">Выберите получателя</option>';
 
@@ -656,6 +662,14 @@ class BankModuleV4 {
                     }
                 });
             }
+
+            // Отмечаем как инициализированный
+            recipientSelect.dataset.initialized = 'true';
+
+            // Добавляем обработчик изменения выбора
+            recipientSelect.addEventListener('change', (event) => {
+                console.log('👥 BankModuleV4: Выбран получатель:', event.target.value, event.target.textContent);
+            });
 
             console.log('👥 BankModuleV4: Список получателей обновлен');
         } catch (error) {
