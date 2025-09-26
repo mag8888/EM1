@@ -545,15 +545,30 @@ function autoEndTurn(roomId) {
 
 // Health Check endpoint
 app.get('/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        service: 'EM1 Game Board v2.0',
-        version: '2.1.0',
-        timestamp: new Date().toISOString(),
-        database: 'Memory',
-        rooms: rooms.size,
-        users: users.size
-    });
+    console.log('🏥 Health check requested');
+    try {
+        const healthData = {
+            status: 'ok',
+            service: 'EM1 Game Board v2.0',
+            version: '2.1.0',
+            timestamp: new Date().toISOString(),
+            database: 'Memory',
+            rooms: rooms.size,
+            users: users.size,
+            uptime: process.uptime(),
+            memory: process.memoryUsage(),
+            port: PORT
+        };
+        console.log('✅ Health check response:', healthData);
+        res.json(healthData);
+    } catch (error) {
+        console.error('❌ Health check error:', error);
+        res.status(500).json({
+            status: 'error',
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
 });
 
 // API Health Check
@@ -2592,11 +2607,12 @@ const startServer = async () => {
         // Initialize database first (always, not just on Railway)
         await initializeSQLite();
         
-        app.listen(PORT, () => {
+        app.listen(PORT, '0.0.0.0', () => {
             console.log('🎮 EM1 Game Board v2.0 Production Server запущен!');
             console.log(`🚀 Сервер работает на порту ${PORT}`);
             console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
             console.log(`🔗 URL: ${process.env.RAILWAY_ENVIRONMENT ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : `http://localhost:${PORT}`}`);
+            console.log(`🏥 Health check: ${process.env.RAILWAY_ENVIRONMENT ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/health` : `http://localhost:${PORT}/health`}`);
             
             if (isRailway) {
                 console.log('🚂 Railway deployment detected');
