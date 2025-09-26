@@ -1714,16 +1714,55 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     } else {
-        console.warn('⚠️ DataStore не готов, ждем 1 секунду и пробуем снова');
-        setTimeout(() => {
-            if (window.dataStore && window.dataStore.isReady()) {
-                console.log('✅ DataStore готов после ожидания, инициализируем BankModuleV4');
-                initBankModuleV4();
-            } else {
-                console.error('❌ DataStore все еще не готов, инициализируем BankModuleV4 без DataStore');
-                initBankModuleV4();
+        console.warn('⚠️ DataStore не готов, создаем простой DataStore');
+        
+        // Создаем простой DataStore, если он не существует
+        if (!window.dataStore) {
+            console.log('🔧 Создаем простой DataStore в BankModuleV4');
+            window.dataStore = {
+                data: {
+                    balance: 0,
+                    income: 0,
+                    passiveIncome: 0,
+                    expenses: 0,
+                    credit: 0,
+                    payday: 0,
+                    maxCredit: 0
+                },
+                isReady: () => true,
+                initialize: () => {},
+                update: (newData) => {
+                    Object.assign(window.dataStore.data, newData);
+                },
+                get: (key) => window.dataStore.data[key],
+                getAll: () => window.dataStore.data,
+                getPlayerSummaryData: () => window.dataStore.data,
+                getBankModuleData: () => window.dataStore.data
+            };
+            
+            // Создаем простой DataStoreAdapter
+            if (!window.dataStoreAdapter) {
+                console.log('🔧 Создаем простой DataStoreAdapter в BankModuleV4');
+                window.dataStoreAdapter = {
+                    isReady: () => true,
+                    initialize: () => {},
+                    syncGlobalVariables: (data) => {
+                        window.currentBalance = data.balance || 0;
+                        window.monthlyIncome = data.income || 0;
+                        window.monthlyExpenses = data.expenses || 0;
+                        window.totalCredit = data.credit || 0;
+                    },
+                    updateUI: () => {},
+                    syncFromBankModule: (data) => {
+                        window.dataStore.update(data);
+                        window.dataStoreAdapter.syncGlobalVariables(data);
+                    }
+                };
             }
-        }, 1000);
+        }
+        
+        console.log('✅ Простой DataStore создан, инициализируем BankModuleV4');
+        initBankModuleV4();
     }
 });
 
