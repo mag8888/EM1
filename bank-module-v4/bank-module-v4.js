@@ -36,6 +36,17 @@ class BankModuleV4 {
             timestamp: 0,
             ttl: 3000 // 3 seconds cache TTL
         };
+        
+        // Инициализируем DataStore и DataStoreAdapter, если доступны
+        if (window.dataStore && !window.dataStore.isReady()) {
+            window.dataStore.initialize();
+            console.log('🔄 BankModuleV4: DataStore инициализирован в конструкторе');
+        }
+        
+        if (window.dataStoreAdapter && !window.dataStoreAdapter.isReady()) {
+            window.dataStoreAdapter.initialize();
+            console.log('🔄 BankModuleV4: DataStoreAdapter инициализирован в конструкторе');
+        }
     }
 
     /**
@@ -284,6 +295,12 @@ class BankModuleV4 {
         this.lastLoadTime = Date.now();
         
         try {
+            // Убеждаемся, что DataStore инициализирован
+            if (window.dataStore && !window.dataStore.isReady()) {
+                window.dataStore.initialize();
+                console.log('🔄 BankModuleV4: DataStore инициализирован перед загрузкой данных');
+            }
+            
             if (!this.roomId || !this.userId) {
                 throw new Error('Не заданы идентификаторы комнаты или пользователя');
             }
@@ -370,6 +387,9 @@ class BankModuleV4 {
                 window.dataStore.update(newData);
                 
                 console.log('🔄 BankModuleV4: Данные обновлены в DataStore', newData);
+                
+                // Обновляем локальные данные из DataStore для совместимости
+                this.data = { ...window.dataStore.getAll() };
             } else {
                 console.warn('⚠️ BankModuleV4: DataStore недоступен, используем локальные данные');
                 // Fallback к локальным данным только если DataStore недоступен
