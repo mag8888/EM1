@@ -4,6 +4,9 @@
  * VERSION: 4.1-DEBUG (с синхронизацией баланса)
  */
 
+// Константы
+const CREDIT_MULTIPLIER = 10; // Максимальный кредит = PAYDAY * 10
+
 class BankModuleV4 {
     constructor() {
         console.log('🏦 BankModuleV4 v4.1-DEBUG: Инициализация модуля');
@@ -345,7 +348,7 @@ class BankModuleV4 {
             this.data.expenses = totalExpenses;
             this.data.payday = Number.isFinite(netIncome) ? netIncome : Math.max(0, totalIncome - totalExpenses);
             this.data.credit = Number(creditData?.loanAmount || 0);
-            this.data.maxCredit = Number(creditData?.maxAvailable || Math.max(0, totalIncome * 10));
+            this.data.maxCredit = Number(creditData?.maxAvailable || Math.max(0, this.data.payday * CREDIT_MULTIPLIER));
             this.data.transfers = Array.isArray(historyData) ? historyData : [];
 
             // 5. Обновляем кэш
@@ -401,7 +404,7 @@ class BankModuleV4 {
             this.data.expenses = Number(localStorage.getItem('playerExpenses') || 0);
             this.data.payday = Math.max(0, this.data.income - this.data.expenses);
             this.data.credit = Number(localStorage.getItem('playerCredit') || 0);
-            this.data.maxCredit = Math.max(0, this.data.income * 10);
+            this.data.maxCredit = Math.max(0, this.data.payday * CREDIT_MULTIPLIER);
             this.data.transfers = JSON.parse(localStorage.getItem('playerTransfers') || '[]');
             
             // Создаем фиктивных игроков для списка получателей
@@ -590,12 +593,14 @@ class BankModuleV4 {
             
             const availableLimitEl = document.getElementById('availableLimit');
             if (availableLimitEl) {
+                // Доступный лимит = Максимальный лимит - Текущий долг
                 const available = Math.max(0, this.data.maxCredit - this.data.credit);
                 availableLimitEl.textContent = `$${available.toLocaleString()}`;
             }
             
             const maxLimitEl = document.getElementById('maxLimit');
             if (maxLimitEl) {
+                // Максимальный лимит = PAYDAY * 10
                 maxLimitEl.textContent = `$${this.data.maxCredit.toLocaleString()}`;
             }
             
