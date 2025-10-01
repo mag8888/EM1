@@ -653,10 +653,54 @@
         function goBack() {
             window.history.back();
         }
+        
+        // Переход к игре с таймером
+        function startGame() {
+            // Создаем countdown элемент
+            const countdownEl = document.createElement('div');
+            countdownEl.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+                color: white;
+                padding: 40px 60px;
+                border-radius: 20px;
+                font-size: 48px;
+                font-weight: bold;
+                z-index: 10000;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+                text-align: center;
+            `;
+            countdownEl.innerHTML = `
+                <div style="font-size: 20px; margin-bottom: 20px;">Начинаем игру через</div>
+                <div id="countdownNumber">3</div>
+            `;
+            document.body.appendChild(countdownEl);
+            
+            let counter = 3;
+            const countdownNumber = document.getElementById('countdownNumber');
+            
+            const interval = setInterval(() => {
+                counter--;
+                if (counter > 0) {
+                    countdownNumber.textContent = counter;
+                } else {
+                    clearInterval(interval);
+                    window.location.href = '/game.html';
+                }
+            }, 1000);
+        }
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
             loadProfile();
+            
+            // Автоматически переходим к игре через 3 секунды
+            setTimeout(() => {
+                startGame();
+            }, 3000);
         });
     </script>
 </body>
