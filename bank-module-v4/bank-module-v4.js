@@ -769,6 +769,12 @@ class BankModuleV4 {
                 balanceEl.textContent = `$${data.balance.toLocaleString()}`;
             }
             
+            // Обновляем баланс в заголовке
+            const headerBalanceEl = document.getElementById('bankHeaderBalance');
+            if (headerBalanceEl) {
+                headerBalanceEl.textContent = `$${data.balance.toLocaleString()}`;
+            }
+            
             // Обновляем финансовые детали
             const salaryEl = document.getElementById('salaryAmount');
             if (salaryEl) {

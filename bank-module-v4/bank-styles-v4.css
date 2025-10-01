@@ -43,6 +43,16 @@
     gap: 16px;
 }
 
+.bank-header-balance {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 8px 16px;
+    border-radius: 10px;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+}
+
 .bank-icon {
     font-size: 32px;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
