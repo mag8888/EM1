@@ -1970,26 +1970,47 @@ app.get('/api/user/profile/:username', (req, res) => {
 });
 
 // Current user profile (requires user ID)
-app.get('/api/user/profile', (req, res) => {
+app.get('/api/user/profile', async (req, res) => {
     try {
         // Get user ID from headers
         const userId = req.headers['x-user-id'] || req.query.user_id;
+        console.log('📋 Profile request - userId:', userId);
+        console.log('📋 Headers:', req.headers['x-user-id']);
+        console.log('📋 Query:', req.query.user_id);
+        
         if (!userId) {
+            console.log('❌ No user ID provided');
             return res.status(401).json({ error: 'User ID required' });
         }
 
-        // Find user by ID
+        // Try to find user in MongoDB first
         let user = null;
-        for (let u of users.values()) {
-            if (String(u.id) === String(userId)) {
-                user = u;
-                break;
+        if (dbConnected && db) {
+            try {
+                user = await db.findUserById(userId);
+                console.log('📋 User from MongoDB:', user ? 'found' : 'not found');
+            } catch (err) {
+                console.log('⚠️ MongoDB query failed:', err.message);
             }
         }
         
+        // Fallback to memory
         if (!user) {
+            for (let u of users.values()) {
+                if (String(u.id) === String(userId)) {
+                    user = u;
+                    break;
+                }
+            }
+            console.log('📋 User from memory:', user ? 'found' : 'not found');
+        }
+        
+        if (!user) {
+            console.log('❌ User not found:', userId);
             return res.status(404).json({ error: 'User not found' });
         }
+        
+        console.log('✅ Profile found for user:', user.username);
         
         res.json({
             id: user.id,
