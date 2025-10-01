@@ -21,7 +21,7 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-    res.status(200).json({ status: 'ok', message: 'EM1 Game Board v2.0', timestamp: new Date().toISOString() });
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // MongoDB Configuration
