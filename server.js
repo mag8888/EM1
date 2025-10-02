@@ -286,79 +286,78 @@ async function autoSaveRoom(roomId) {
     }
 }
 
+const BOARD_SIZE = 24;
+
+function ensurePlayerStats(player) {
+    player.stats = player.stats || {};
+    player.stats.diceRolled = Number(player.stats.diceRolled || 0);
+    player.stats.totalMoves = Number(player.stats.totalMoves || 0);
+    player.stats.timesPassedGo = Number(player.stats.timesPassedGo || 0);
+    player.stats.totalMoneyEarned = Number(player.stats.totalMoneyEarned || 0);
+    return player.stats;
+}
+
+function calculatePaydayAmount(player) {
+    const salary = Number(player?.profession?.salary || 0);
+    const passiveIncome = Number(player?.passiveIncome || 0);
+    const baseExpenses = Number(player?.profession?.expenses || 0);
+    const childExpenses = Number(player?.children || 0) * 1000;
+    const netIncome = Math.max(0, (salary + passiveIncome) - (baseExpenses + childExpenses));
+    return netIncome;
+}
+
+function applyPaydayBonus(room, player, reason = 'pass_start') {
+    const payday = calculatePaydayAmount(player);
+    if (!payday) {
+        return 0;
+    }
+
+    player.cash = Number(player.cash || 0) + payday;
+    const stats = ensurePlayerStats(player);
+    stats.totalMoneyEarned += payday;
+
+    if (room && typeof ensureBalance === 'function') {
+        try {
+            const username = player.name || player.username || String(player.userId);
+            const bankBalance = ensureBalance(room.id, username, 0);
+            bankBalance.amount = Number(bankBalance.amount || 0) + payday;
+            pushHistory(room.id, {
+                type: 'payday',
+                username,
+                amount: payday,
+                reason: reason === 'cell' ? 'PAYDAY клетка' : 'PAYDAY за круг',
+                timestamp: Date.now()
+            });
+        } catch (error) {
+            console.warn('⚠️ Failed to sync PAYDAY bonus with bank:', error?.message || error);
+        }
+    }
+
+    return payday;
+}
+
 // Cell event processing
-function processCellEvent(player, position, roomId) {
-    // Определяем тип клетки по позиции (1-24)
+function applyCellEffects(room, player, position) {
     const cellType = getCellTypeByPosition(position);
-    
+
     switch (cellType) {
-        case 'yellow_payday':
-            return processSalaryDay(player, roomId);
-        case 'purple_baby':
-            return processBabyBorn(player);
+        case 'yellow_payday': {
+            const amount = applyPaydayBonus(room, player, 'cell');
+            return { type: 'yellow_payday', amount };
+        }
         case 'green_opportunity':
-            return processDealOpportunity(player, position);
-        case 'blue_market':
-            return processMarketEvent(player, position);
-        case 'pink_expense':
-            return processExpenseEvent(player, position);
         case 'orange_charity':
-            return processCharityEvent(player, roomId);
+            return { type: 'green_opportunity', playerId: player.userId, position };
+        case 'blue_market':
+        case 'blue_opportunity':
+            return { type: 'blue_opportunity', playerId: player.userId, position };
+        case 'pink_expense':
         case 'black_loss':
-            return processLossEvent(player, roomId);
+        case 'purple_baby':
+            return { type: 'pink_expense', playerId: player.userId, position };
         default:
             return null;
     }
-}
-
-// Обработка возможности сделки
-function processDealOpportunity(player, position) {
-    console.log(`💼 Возможность сделки для ${player.name} на позиции ${position}`);
-    return {
-        type: 'deal_opportunity',
-        playerId: player.userId,
-        position: position,
-        cellType: 'green_opportunity'
-    };
-}
-
-// Обработка события рынка
-function processMarketEvent(player, position) {
-    console.log(`🎯 Событие рынка для ${player.name} на позиции ${position}`);
-    return {
-        type: 'market_event',
-        playerId: player.userId,
-        position: position,
-        cellType: 'blue_market'
-    };
-}
-
-// Обработка события расходов
-function processExpenseEvent(player, position) {
-    console.log(`💸 Событие расходов для ${player.name} на позиции ${position}`);
-    return {
-        type: 'expense_event',
-        playerId: player.userId,
-        position: position,
-        cellType: 'pink_expense'
-    };
-}
-
-// Black Loss (Downsize): one-time choice: either pay 3x monthly expenses now OR 1x now
-function processLossEvent(player, roomId) {
-    const baseExpenses = Number(player?.profession?.expenses || 0);
-    const childExpenses = Number(player?.children || 0) * 1000;
-    const monthly = baseExpenses + childExpenses;
-    return {
-        type: 'loss_event',
-        playerId: player.userId,
-        cellType: 'black_loss',
-        monthlyExpenses: monthly,
-        options: [
-            { id: 'pay3', label: 'Оплатить 3 платежа сразу', amount: monthly * 3 },
-            { id: 'pay1', label: 'Оплатить 1 платеж сразу', amount: monthly }
-        ]
-    };
 }
 
 // Get cell type by position (1-24)
@@ -394,127 +393,6 @@ function getCellTypeByPosition(position) {
     return cellMap[position] || null;
 }
 
-// Charity event: pay 10% of total income to gain 3 power turns (1 or 2 dice)
-function processCharityEvent(player, roomId) {
-    console.log(`❤️ Charity opportunity for ${player.name}`);
-    const income = Number((player?.profession?.salary || 0) + (player?.passiveIncome || 0));
-    const donation = Math.floor(income * 0.10);
-    return {
-        type: 'charity',
-        playerId: player.userId,
-        cellType: 'orange_charity',
-        canDonate: donation > 0 && (player.cash || 0) >= donation,
-        donation,
-        income
-    };
-}
-
-// Process salary day event
-function processSalaryDay(player, roomId) {
-    console.log(`💰 PAYDAY: Обработка зарплаты для ${player.name}`);
-    console.log(`💰 PAYDAY: Профессия:`, player.profession);
-    console.log(`💰 PAYDAY: Текущий баланс: $${player.cash || 0}`);
-    
-    const salary = player.profession?.salary || 0;
-    const passiveIncome = player.passiveIncome || 0;
-    const totalIncome = salary + passiveIncome;
-    
-    console.log(`💰 PAYDAY: Зарплата: $${salary}, Пассивный доход: $${passiveIncome}, Итого: $${totalIncome}`);
-    
-    // Добавляем зарплату
-    const oldCash = player.cash || 0;
-    player.cash = oldCash + totalIncome;
-    
-    // Обрабатываем расходы (базовые + дети)
-    const baseExpenses = player.profession?.expenses || 0;
-    const childExpenses = (player.children || 0) * 1000;
-    const totalExpenses = baseExpenses + childExpenses;
-    
-    console.log(`💰 PAYDAY: Базовые расходы: $${baseExpenses}, Расходы на детей: $${childExpenses}, Итого расходов: $${totalExpenses}`);
-    
-    if (totalExpenses > 0) {
-        player.cash = Math.max(0, player.cash - totalExpenses);
-    }
-    
-    console.log(`💰 PAYDAY для ${player.name}: +$${totalIncome}, -$${totalExpenses}, баланс: $${oldCash} → $${player.cash}`);
-
-    // Синхронизируем с банковским балансом (интерфейс /api/bank)
-    try {
-        if (roomId && typeof ensureBalance === 'function') {
-            const username = player.name || player.username || String(player.userId);
-            const bankBal = ensureBalance(roomId, username, 0);
-            const delta = (totalIncome - totalExpenses);
-            bankBal.amount = Number(bankBal.amount || 0) + Number(delta || 0);
-            pushHistory(roomId, { 
-                type: 'payday', 
-                username, 
-                amount: delta, 
-                reason: 'зарплата',
-                timestamp: Date.now() 
-            });
-            console.log(`💰 PAYDAY Bank sync: ${username} ${delta >= 0 ? '+' : ''}${delta}, new bank balance: ${bankBal.amount}`);
-        }
-    } catch (e) {
-        console.warn('⚠️ PAYDAY bank sync failed:', e?.message || e);
-    }
-    
-    return {
-        type: 'salary_day',
-        income: totalIncome,
-        expenses: totalExpenses,
-        newBalance: player.cash,
-        oldBalance: oldCash
-    };
-}
-
-// Process baby born event
-function processBabyBorn(player) {
-    // Бросаем кубик (1-6)
-    const babyDice = Math.floor(Math.random() * 6) + 1;
-    console.log(`👶 Бросок кубика для рождения ребенка: ${babyDice}`);
-    
-    if (babyDice <= 4) {
-        // Ребенок родился
-        const currentChildren = player.children || 0;
-        
-        // Проверяем максимум 3 детей
-        if (currentChildren >= 3) {
-            console.log(`👶 У ${player.name} уже максимальное количество детей (3), ребенок не родился`);
-            return {
-                type: 'baby_born',
-                babyBorn: false,
-                diceResult: babyDice,
-                childrenCount: currentChildren,
-                message: 'У вас уже максимальное количество детей (3)'
-            };
-        }
-        
-        player.children = currentChildren + 1;
-        
-        // Выплачиваем подарок
-        player.cash = (player.cash || 0) + 5000;
-        
-        console.log(`👶 Ребенок родился у ${player.name}! Всего детей: ${player.children}, +$5000`);
-        
-        return {
-            type: 'baby_born',
-            babyBorn: true,
-            diceResult: babyDice,
-            childrenCount: player.children,
-            bonus: 5000
-        };
-    } else {
-        // Ребенок не родился
-        console.log(`👶 Ребенок не родился у ${player.name} (кубик: ${babyDice})`);
-        
-        return {
-            type: 'baby_born',
-            babyBorn: false,
-            diceResult: babyDice
-        };
-    }
-}
-
 // Turn timer management
 function startTurnTimer(roomId, turnTimeSec = 120) {
     clearTurnTimer(roomId);
@@ -523,6 +401,11 @@ function startTurnTimer(roomId, turnTimeSec = 120) {
         autoEndTurn(roomId);
     }, turnTimeSec * 1000);
     turnTimers.set(roomId, { timeout, deadline });
+
+    const room = rooms.get(roomId);
+    if (room) {
+        room.hasRolledThisTurn = false;
+    }
 }
 
 function clearTurnTimer(roomId) {
@@ -554,8 +437,9 @@ function autoEndTurn(roomId) {
     // Advance to next player
     const count = (room.players || []).length || 1;
     room.activeIndex = (room.activeIndex + 1) % count;
+    room.hasRolledThisTurn = false;
     room.updatedAt = new Date().toISOString();
-    
+
     // Start timer for next player
     startTurnTimer(roomId, room.turnTime || 120);
     
@@ -1242,6 +1126,7 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
             phase: 'waiting',
             diceResult: null,
             pendingDeal: null,
+            hasRolledThisTurn: !!room.hasRolledThisTurn,
             turnTimeLeft: turnTimeLeft
         };
 
@@ -2127,25 +2012,30 @@ app.post('/api/rooms/:roomId/roll', (req, res) => {
             return res.status(403).json({ success: false, message: 'Сейчас не ваш ход' });
         }
 
-        // Dice roll: single by default; double=true for charity
-        const useDouble = String(req.query.double || req.body?.double || '').toLowerCase() === 'true'
-            || Number(activePlayer?.charityTurns || 0) > 0; // благотворительность позволяет 1 или 2 кубика
-        const d1 = Math.floor(Math.random() * 6) + 1;
-        const d2 = useDouble ? (Math.floor(Math.random() * 6) + 1) : null;
-        const total = useDouble ? d1 + (d2 || 0) : d1;
-        const isDouble = useDouble && d1 === d2;
-
-        // Списываем один заряд благотворительности, если был активен
-        if (Number(activePlayer?.charityTurns || 0) > 0) {
-            activePlayer.charityTurns = Math.max(0, Number(activePlayer.charityTurns) - 1);
+        if (room.hasRolledThisTurn) {
+            return res.status(409).json({ success: false, message: 'Кубик уже был брошен в этом ходу' });
         }
+
+        const firstDie = Math.floor(Math.random() * 6) + 1;
+        const secondDie = Math.floor(Math.random() * 6) + 1;
+        const total = firstDie + secondDie;
+
+        room.hasRolledThisTurn = true;
+        ensurePlayerStats(activePlayer).diceRolled += 1;
+        room.lastRoll = {
+            playerId: activePlayer.userId,
+            dice1: firstDie,
+            dice2: secondDie,
+            total,
+            rolledAt: Date.now()
+        };
 
         // Ensure activeIndex is always a number
         const activeIndex = typeof room.activeIndex === 'number' ? room.activeIndex : 0;
         
         res.json({ 
             success: true, 
-            result: { dice1: d1, dice2: d2, total, isDouble },
+            result: { dice1: firstDie, dice2: secondDie, total },
             state: {
                 roomId: room.id,
                 status: room.status,
@@ -2154,8 +2044,9 @@ app.post('/api/rooms/:roomId/roll', (req, res) => {
                 players: room.players || [],
                 currentTurn: 1,
                 phase: 'moving',
-                diceResult: { dice1: d1, dice2: d2, total, isDouble },
+                diceResult: { dice1: firstDie, dice2: secondDie, total },
                 pendingDeal: null,
+                hasRolledThisTurn: true,
                 turnTimeLeft: getTurnTimeLeft(room.id),
                 turnTime: room.turnTime || 120
             }
@@ -2182,51 +2073,40 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
         if (!Number.isFinite(steps) || steps <= 0) {
             return res.status(400).json({ success: false, message: 'Некорректные шаги' });
         }
-        const INNER_COUNT = 24;
         const from = Number(activePlayer.position || 0);
         const path = [];
         for (let i = 1; i <= steps; i++) {
-            path.push((from + i) % INNER_COUNT);
+            path.push((from + i) % BOARD_SIZE);
         }
-        activePlayer.position = path[path.length - 1];
+
+        const newPosition = path[path.length - 1];
+        const rawPosition = from + steps;
+        const lapsCompleted = Math.floor(rawPosition / BOARD_SIZE);
+
+        activePlayer.position = newPosition;
+        const stats = ensurePlayerStats(activePlayer);
+        stats.totalMoves += steps;
+
+        let paydayBonus = 0;
+        if (lapsCompleted > 0) {
+            for (let i = 0; i < lapsCompleted; i++) {
+                paydayBonus += applyPaydayBonus(room, activePlayer, 'pass_start');
+            }
+            stats.timesPassedGo += lapsCompleted;
+        }
         room.updatedAt = new Date().toISOString();
 
-        // Обработка события клетки
-        console.log(`🎯 Обработка события клетки для игрока ${activePlayer.name} на позиции ${activePlayer.position}`);
-        const cellEvent = processCellEvent(activePlayer, activePlayer.position, room.id);
-        if (cellEvent) {
-            console.log(`⚡ Событие клетки: ${cellEvent.type} для игрока ${activePlayer.name}`);
-            console.log(`⚡ Детали события:`, cellEvent);
-            
-            // Применяем результат события к игроку
-            if (cellEvent.type === 'salary_day') {
-                console.log(`💰 Начислена зарплата: +$${cellEvent.income}, расходы: -$${cellEvent.expenses}`);
-                console.log(`💰 Новый баланс игрока: $${activePlayer.cash}`);
-                // Зарплата уже начислена в processSalaryDay
-            } else if (cellEvent.type === 'baby_born') {
-                console.log(`👶 Родился ребенок: +1 ребенок`);
-                // Ребенок уже добавлен в processBabyBorn
-            } else if (cellEvent.type === 'deal_opportunity') {
-                console.log(`💼 Возможность сделки на позиции ${activePlayer.position}`);
-                // Устанавливаем флаг ожидания выбора сделки
-                room.gameState.pendingDeal = {
-                    playerId: activePlayer.userId,
-                    stage: 'size',
-                    cellId: activePlayer.position
-                };
-                room.gameState.phase = 'awaiting_deal_choice';
-            } else if (cellEvent.type === 'market_event') {
-                console.log(`🎯 Событие рынка на позиции ${activePlayer.position}`);
-                // Здесь можно добавить логику для событий рынка
-            } else if (cellEvent.type === 'expense_event') {
-                console.log(`💸 Событие расходов на позиции ${activePlayer.position}`);
-                // Здесь можно добавить логику для событий расходов
-            } else if (cellEvent.type === 'charity') {
-                // Для благотворительности пока только сообщаем клиенту детали,
-                // само списание и активация выполняется отдельным POST /charity
-            }
-        } else {
-            console.log(`⚡ Нет события для позиции ${activePlayer.position}`);
+        const cellEffect = applyCellEffects(room, activePlayer, activePlayer.position);
+        room.gameState.pendingDeal = null;
+        room.gameState.phase = 'awaiting_end';
+
+        if (cellEffect?.type === 'green_opportunity') {
+            room.gameState.pendingDeal = {
+                playerId: activePlayer.userId,
+                stage: 'size',
+                cellId: activePlayer.position
+            };
+            room.gameState.phase = 'awaiting_deal_choice';
         }
 
         // Save to database (без падения обработчика)
@@ -2260,14 +2140,17 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
             currentTurn: 1,
             phase: 'waiting',
             diceResult: null,
-            pendingDeal: null,
+            pendingDeal: room.gameState.pendingDeal || null,
+            hasRolledThisTurn: room.hasRolledThisTurn,
             turnTimeLeft: getTurnTimeLeft(room.id),
             turnTime: room.turnTime || 120,
             moveResult: {
                 from,
                 to: activePlayer.position,
                 path,
-                steps
+                steps,
+                lapsCompleted,
+                paydayBonus
             }
         };
 
@@ -2277,6 +2160,9 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
             from,
             to: activePlayer.position,
             path,
+            effect: cellEffect,
+            paydayBonus,
+            lapsCompleted,
             message: `Игрок ${activePlayer.name} прошел ${steps} шагов`
         });
     } catch (error) {
@@ -2314,6 +2200,7 @@ app.post('/api/rooms/:roomId/end-turn', async (req, res) => {
         // Advance active player in round-robin
         const count = (room.players || []).length || 1;
         room.activeIndex = (room.activeIndex + 1) % count;
+        room.hasRolledThisTurn = false;
         room.updatedAt = new Date().toISOString();
         
         // Auto-save room
@@ -2336,6 +2223,7 @@ app.post('/api/rooms/:roomId/end-turn', async (req, res) => {
             phase: 'waiting',
             diceResult: null,
             pendingDeal: null,
+            hasRolledThisTurn: room.hasRolledThisTurn,
             turnTimeLeft: getTurnTimeLeft(room.id),
             turnTime: room.turnTime || 120
         };
