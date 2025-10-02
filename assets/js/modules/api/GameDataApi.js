@@ -31,8 +31,29 @@ class GameDataApi {
     }
 
     // Получить данные игроков
+    resolveRoomId(roomId) {
+        if (roomId) return roomId;
+        if (typeof window !== 'undefined') {
+            const fromWindow = window.currentRoom?.id || window.currentRoomId;
+            if (fromWindow) return fromWindow;
+
+            try {
+                const stored = localStorage.getItem('currentRoomId');
+                if (stored) return stored;
+            } catch (_) {}
+
+            const searchParams = new URLSearchParams(window.location.search || '');
+            if (searchParams.has('roomId')) return searchParams.get('roomId');
+
+            const pathMatch = window.location.pathname.match(/game\/?([^\/]*)/);
+            if (pathMatch && pathMatch[1]) return pathMatch[1];
+        }
+        return null;
+    }
+
     async getPlayersData(roomId = null) {
-        const cacheKey = `players_${roomId || 'default'}`;
+        const resolvedRoomId = this.resolveRoomId(roomId);
+        const cacheKey = `players_${resolvedRoomId || 'default'}`;
         
         // Проверяем кэш
         if (this.cache.has(cacheKey)) {
@@ -44,7 +65,9 @@ class GameDataApi {
         }
 
         try {
-            const endpoint = roomId ? `/api/rooms/${roomId}/players` : '/api/players';
+            const endpoint = resolvedRoomId
+                ? `/api/players?roomId=${encodeURIComponent(resolvedRoomId)}`
+                : '/api/players';
             const data = await this.request(endpoint);
             
             // Кэшируем данные
