@@ -506,6 +506,46 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Get players list (fallback for GameDataApi)
+app.get('/api/players', (req, res) => {
+    try {
+        // Get roomId from query parameter
+        const roomId = req.query.roomId;
+        
+        if (!roomId) {
+            return res.status(400).json({ error: 'Room ID required' });
+        }
+        
+        const room = rooms.get(roomId);
+        if (!room) {
+            return res.status(404).json({ error: 'Room not found' });
+        }
+        
+        // Return players from room
+        const players = (room.players || []).map(player => ({
+            id: player.id || player.userId,
+            name: player.name,
+            username: player.username || player.name,
+            profession: player.profession || {
+                name: "Предприниматель",
+                salary: 10000,
+                expenses: 6200
+            },
+            avatar: player.avatar || (player.name ? player.name.charAt(0).toUpperCase() : '?'),
+            isReady: player.isReady || false,
+            position: player.position || 0,
+            cash: player.cash || 0,
+            passiveIncome: player.passiveIncome || 0,
+            assets: player.assets || []
+        }));
+        
+        res.json(players);
+    } catch (error) {
+        console.error('Ошибка получения игроков:', error);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
 // List rooms (minimal implementation)
 app.get('/api/rooms', async (req, res) => {
     try {
