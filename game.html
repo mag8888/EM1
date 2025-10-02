@@ -1325,6 +1325,7 @@
                 <div class="finance-actions">
                     <button class="btn btn-primary" id="bankButton">🏦 Банк</button>
                     <button class="btn btn-primary" id="dealsButton">🃏 Сделки</button>
+                    <button class="btn btn-danger" id="exitButton">🚪 Выйти</button>
                 </div>
             </div>
 
@@ -1902,6 +1903,56 @@
                     console.log('✅ Bank btn event listener added');
                 } else {
                     console.warn('⚠️ Bank btn not found');
+                }
+                
+                // Добавляем обработчик для кнопки выхода в правой панели
+                const exitButton = document.getElementById('exitButton');
+                if (exitButton) {
+                    exitButton.addEventListener('click', async () => {
+                        try {
+                            console.log('🚪 Exit button clicked — clearing session and redirecting to auth');
+                            exitButton.disabled = true;
+                            exitButton.textContent = '🚪 Выход...';
+
+                            // Останавливаем таймеры/анимации на странице
+                            try { window._isAnimatingMove = false; } catch (_) {}
+
+                            // Полная очистка sessionStorage/localStorage
+                            try { sessionStorage.clear(); } catch (_) {}
+                            try { localStorage.clear(); } catch (_) {}
+
+                            // На всякий случай очистим ключевые записи снова адресно
+                            const keysToClear = [
+                                'user',
+                                'token',
+                                'currentRoom',
+                                'rooms',
+                                'roomId',
+                                'turnState',
+                                'gameState',
+                                'playersState'
+                            ];
+                            keysToClear.forEach(k => { try { localStorage.removeItem(k); } catch (_) {} });
+
+                            // Удаляем все куки (если есть)
+                            try {
+                                document.cookie.split(';').forEach(c => {
+                                    const eqPos = c.indexOf('=');
+                                    const name = eqPos > -1 ? c.substr(0, eqPos).trim() : c.trim();
+                                    if (name) document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+                                });
+                            } catch (_) {}
+
+                            // Жесткий редирект без сохранения в истории назад
+                            window.location.replace('auth.html');
+                        } catch (e) {
+                            console.error('❌ Failed to handle exit action:', e);
+                            window.location.href = 'auth.html';
+                        }
+                    });
+                    console.log('✅ Exit button event listener added');
+                } else {
+                    console.warn('⚠️ Exit button not found');
                 }
                 
                 // Обработчик выхода: очистить данные сессии и перейти на авторизацию
