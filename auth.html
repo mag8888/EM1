@@ -447,12 +447,7 @@
                 if (!target) return;
                 const tab = target.getAttribute('data-tab');
                 if (!tab) return;
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-                target.classList.add('active');
-                const form = document.getElementById(`${tab}Form`);
-                if (form) form.classList.add('active');
-                hideMessages();
+                switchTab(tab);
             });
         })();
 
@@ -495,6 +490,20 @@
         function hideMessages() {
             document.getElementById('errorMessage').style.display = 'none';
             document.getElementById('successMessage').style.display = 'none';
+        }
+
+        // Программное переключение табов (используется после регистрации)
+        function switchTab(tabName) {
+            if (!tabName) return;
+            document.querySelectorAll('.tab').forEach(tab => {
+                const isActive = tab.getAttribute('data-tab') === tabName;
+                tab.classList.toggle('active', isActive);
+            });
+            document.querySelectorAll('.auth-form').forEach(form => {
+                const isTargetForm = form.id === `${tabName}Form`;
+                form.classList.toggle('active', isTargetForm);
+            });
+            hideMessages();
         }
 
         // Показать/скрыть загрузку
@@ -698,8 +707,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             const token = localStorage.getItem('authToken');
             if (token) {
-                // Пользователь уже авторизован, перенаправляем
-                window.location.href = '/';
+                // Пользователь уже авторизован, перенаправляем в лобби (избегаем цикла auth → / → auth)
+                window.location.href = '/lobby.html';
             } else {
                 // Загружаем сохраненные данные для формы входа
                 loadSavedCredentials();
@@ -719,6 +728,12 @@
                 document.getElementById('rememberMe').checked = true;
             }
         }
+
+        // Экспортируем функции в глобальную область видимости для inline-обработчиков
+        window.handleLogin = handleLogin;
+        window.handleRegister = handleRegister;
+        window.switchTab = switchTab;
+        window.showTerms = showTerms;
     </script>
     
     <!-- Отладочная панель (отключена на проде во избежание CSP/навиг. конфликтов) -->
