@@ -1941,11 +1941,19 @@
                                 });
                             } catch (_) {}
 
-                            // Жесткий редирект без сохранения в истории назад
-                            window.location.replace('auth.html');
+                            // Жесткий редирект без сохранения в истории назад (используем абсолютный путь)
+                            if (location.pathname !== '/auth' && location.pathname !== '/auth.html') {
+                                window.location.replace('/auth.html');
+                                // Фолбэк на /auth (если настроен роутер без расширения)
+                                setTimeout(() => {
+                                    if (!/\/auth(\.html)?$/.test(location.pathname)) {
+                                        window.location.replace('/auth');
+                                    }
+                                }, 150);
+                            }
                         } catch (e) {
                             console.error('❌ Failed to handle leave action:', e);
-                            window.location.href = 'auth.html';
+                            window.location.href = '/auth.html';
                         }
                     });
                     console.log('✅ Leave button event listener added');
