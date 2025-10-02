@@ -645,8 +645,18 @@ app.post('/api/rooms', async (req, res) => {
                     assignProfessions: false
                 });
                 
-                // Create host player in database
-                await sqliteDb.addPlayerToRoom(room.id, String(user.id), creatorName, user.avatar || null, true);
+                // Create host player in database (new signature expects object)
+                await sqliteDb.addPlayerToRoom(room.id, {
+                    userId: String(user.id),
+                    name: creatorName,
+                    avatar: user.avatar || null,
+                    isHost: true,
+                    isReady: false,
+                    position: 0,
+                    track: 'small',
+                    cash: 10000,
+                    passiveIncome: 0
+                });
             } catch (dbError) {
                 console.error('❌ Failed to save room to SQLite:', dbError);
             }
@@ -835,7 +845,17 @@ app.post('/api/rooms/:roomId/join', async (req, res) => {
             if (sqliteDb) {
                 try {
                     const playerName = req.headers['x-user-name'] || user.username || user.email || 'Игрок';
-                    await sqliteDb.addPlayerToRoom(room.id, String(user.id), playerName, user.avatar || null, false);
+                    await sqliteDb.addPlayerToRoom(room.id, {
+                        userId: String(user.id),
+                        name: playerName,
+                        avatar: user.avatar || null,
+                        isHost: false,
+                        isReady: false,
+                        position: 0,
+                        track: 'small',
+                        cash: 10000,
+                        passiveIncome: 0
+                    });
                 } catch (dbError) {
                     console.error('❌ Failed to add player to database:', dbError);
                 }
