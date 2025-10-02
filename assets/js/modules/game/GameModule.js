@@ -110,63 +110,32 @@ class GameModule {
         playerSummary.init();
         this.modules.push(playerSummary);
 
-        // Обновляем баланс через DataStore при каждом изменении состояния
+        // Инициализируем debounce для банковских запросов
+        this.bankUpdateDebounce = null;
+        this.lastBankUpdate = 0;
+        this.BANK_UPDATE_INTERVAL = 5000; // 5 секунд между обновлениями
+        
+        // Инициализируем push-уведомления
+        this.pushService = window.pushNotificationService;
+        this.setupPushNotifications();
+
+        // Обновляем баланс только при критических изменениях (не при каждом изменении состояния)
         this.state.on('change', async () => {
             try {
                 const user = this.state.api?.getCurrentUser?.();
                 const roomId = this.roomId;
                 if (!user?.username || !roomId) return;
                 
-                // Используем DataStore для обновления данных
-                if (window.dataStore && window.dataStoreAdapter) {
-                    // Синхронизируем данные через DataStore
-                    const res = await fetch(`/api/bank/balance/${encodeURIComponent(user.username)}/${encodeURIComponent(roomId)}`);
-                    const balanceData = await res.json();
-                    
-                    const cr = await fetch(`/api/bank/credit/status/${encodeURIComponent(user.username)}/${encodeURIComponent(roomId)}`);
-                    const creditData = await cr.json();
-                    
-                    const financialsRes = await fetch(`/api/bank/financials/${encodeURIComponent(user.username)}/${encodeURIComponent(roomId)}`);
-                    const financialsData = await financialsRes.json();
-                    
-                    // Обновляем DataStore
-                    window.dataStore.update({
-                        balance: Number(balanceData?.amount || 0),
-                        credit: Number(creditData?.loanAmount || 0),
-                        salary: Number(financialsData?.salary || 0),
-                        passiveIncome: Number(financialsData?.passiveIncome || 0)
-                    });
-                    
-                    // Пересчитываем производные значения
-                    window.dataStore.calculateDerivedValues();
-                    
-                    // Обновляем UI через DataStoreAdapter
-                    window.dataStoreAdapter.updateUI();
-                    
-                    console.log('🔄 GameModule: Данные синхронизированы через DataStore');
-                } else {
-                    // Fallback к старой логике, если DataStore недоступен
-                    const res = await fetch(`/api/bank/balance/${encodeURIComponent(user.username)}/${encodeURIComponent(roomId)}`);
-                    const data = await res.json();
-                    
-                    // Обновляем элементы внешней панели банка
-                    const balanceEl = document.getElementById('bankBalanceValue');
-                    if (balanceEl && data && typeof data.amount === 'number') {
-                        balanceEl.textContent = `$${Number(data.amount).toLocaleString()}`;
-                    }
-                    
-                    // Кредит: для учета в расходах и PAYDAY
-                    try {
-                        const cr = await fetch(`/api/bank/credit/status/${encodeURIComponent(user.username)}/${encodeURIComponent(roomId)}`);
-                        const cs = await cr.json();
-                        const loanMonthly = Number(cs?.loanAmount || 0) / 1000 * 100; // 100$ за каждую 1000
-                        window._creditExpense = Number.isFinite(loanMonthly) ? loanMonthly : 0;
-                    } catch (_) {
-                        window._creditExpense = 0;
-                    }
+                // Проверяем, нужно ли обновлять банковские данные
+                const snapshot = this.state.getSnapshot();
+                const shouldUpdateBank = this.shouldUpdateBankData(snapshot);
+                
+                if (shouldUpdateBank && window.dataStore && window.dataStoreAdapter) {
+                    // Debounce банковских запросов - обновляем максимум раз в 5 секунд
+                    this.debouncedBankUpdate(user.username, roomId);
                 }
             } catch (error) {
-                console.error('GameModule: Ошибка обновления данных:', error);
+                console.error('❌ GameModule: Ошибка обновления банковских данных:', error);
             }
         });
     }
@@ -175,6 +144,156 @@ class GameModule {
         this.state.on('error', (error) => {
             this.notifier.show(error.message || 'Произошла ошибка', { type: 'error' });
         });
+    }
+
+    /**
+     * Проверяет, нужно ли обновлять банковские данные
+     * @param {Object} snapshot - Снимок состояния игры
+     * @returns {boolean}
+     */
+    shouldUpdateBankData(snapshot) {
+        // Обновляем только при критических изменениях:
+        // 1. Смена хода (активный игрок изменился)
+        // 2. Изменение состояния игры (начало/конец)
+        // 3. Изменение состава игроков
+        
+        const currentTime = Date.now();
+        const timeSinceLastUpdate = currentTime - this.lastBankUpdate;
+        
+        // Минимальный интервал между обновлениями
+        if (timeSinceLastUpdate < this.BANK_UPDATE_INTERVAL) {
+            return false;
+        }
+        
+        // Проверяем критические изменения
+        const hasTurnChanged = this.lastActiveIndex !== snapshot.activeIndex;
+        const hasGameStateChanged = this.lastGameState !== snapshot.gameState;
+        const hasPlayersChanged = this.lastPlayersCount !== (snapshot.players?.length || 0);
+        
+        if (hasTurnChanged || hasGameStateChanged || hasPlayersChanged) {
+            // Обновляем кэш
+            this.lastActiveIndex = snapshot.activeIndex;
+            this.lastGameState = snapshot.gameState;
+            this.lastPlayersCount = snapshot.players?.length || 0;
+            this.lastBankUpdate = currentTime;
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Debounced обновление банковских данных
+     * @param {string} username - Имя пользователя
+     * @param {string} roomId - ID комнаты
+     */
+    debouncedBankUpdate(username, roomId) {
+        // Очищаем предыдущий таймер
+        if (this.bankUpdateDebounce) {
+            clearTimeout(this.bankUpdateDebounce);
+        }
+        
+        // Устанавливаем новый таймер
+        this.bankUpdateDebounce = setTimeout(async () => {
+            try {
+                console.log('🔄 GameModule: Обновление банковских данных (debounced)');
+                
+                // Параллельно загружаем все данные
+                const [balanceRes, creditRes, financialsRes] = await Promise.all([
+                    fetch(`/api/bank/balance/${encodeURIComponent(username)}/${encodeURIComponent(roomId)}`),
+                    fetch(`/api/bank/credit/status/${encodeURIComponent(username)}/${encodeURIComponent(roomId)}`),
+                    fetch(`/api/bank/financials/${encodeURIComponent(username)}/${encodeURIComponent(roomId)}`)
+                ]);
+                
+                const [balanceData, creditData, financialsData] = await Promise.all([
+                    balanceRes.json(),
+                    creditRes.json(),
+                    financialsRes.json()
+                ]);
+                
+                // Обновляем DataStore
+                window.dataStore.update({
+                    balance: Number(balanceData?.amount || 0),
+                    credit: Number(creditData?.loanAmount || 0),
+                    salary: Number(financialsData?.salary || 0),
+                    passiveIncome: Number(financialsData?.passiveIncome || 0)
+                });
+                
+                // Пересчитываем производные значения
+                window.dataStore.calculateDerivedValues();
+                
+                // Обновляем UI через DataStoreAdapter
+                window.dataStoreAdapter.updateUI();
+                
+                console.log('✅ GameModule: Банковские данные обновлены (debounced)');
+            } catch (error) {
+                console.error('❌ GameModule: Ошибка debounced обновления банковских данных:', error);
+            }
+        }, 1000); // 1 секунда задержки
+    }
+
+    /**
+     * Настраивает push-уведомления
+     */
+    setupPushNotifications() {
+        if (!this.pushService) return;
+
+        // Подписываемся на критические события
+        this.pushService.on('balanceChanged', (data) => {
+            console.log('🔔 GameModule: Получено уведомление об изменении баланса', data);
+            // Обновляем UI только при критических изменениях
+            if (window.dataStoreAdapter) {
+                window.dataStoreAdapter.updateUI();
+            }
+        });
+
+        this.pushService.on('turnChanged', (data) => {
+            console.log('🔔 GameModule: Получено уведомление о смене хода', data);
+            // Принудительно обновляем банковские данные при смене хода
+            const user = this.state.api?.getCurrentUser?.();
+            if (user?.username && this.roomId) {
+                this.debouncedBankUpdate(user.username, this.roomId);
+            }
+        });
+
+        this.pushService.on('assetPurchased', (data) => {
+            console.log('🔔 GameModule: Получено уведомление о покупке актива', data);
+            // Обновляем UI актива
+            this.updateAssetsUI(data);
+        });
+
+        this.pushService.on('transferCompleted', (data) => {
+            console.log('🔔 GameModule: Получено уведомление о переводе', data);
+            // Обновляем баланс после перевода
+            const user = this.state.api?.getCurrentUser?.();
+            if (user?.username && this.roomId) {
+                this.debouncedBankUpdate(user.username, this.roomId);
+            }
+        });
+    }
+
+    /**
+     * Обновляет UI актива после покупки
+     * @param {Object} data - Данные о покупке
+     */
+    updateAssetsUI(data) {
+        try {
+            // Обновляем панель активов
+            const assetsPanel = document.querySelector('.assets-panel');
+            if (assetsPanel && data.asset) {
+                // Добавляем новый актив в UI
+                const assetElement = document.createElement('div');
+                assetElement.className = 'asset-item';
+                assetElement.innerHTML = `
+                    <div class="asset-name">${data.asset.name}</div>
+                    <div class="asset-value">$${data.asset.value?.toLocaleString() || 0}</div>
+                    <div class="asset-income">+$${data.asset.income || 0}/мес</div>
+                `;
+                assetsPanel.appendChild(assetElement);
+            }
+        } catch (error) {
+            console.error('❌ GameModule: Ошибка обновления UI актива:', error);
+        }
     }
 
     setupUiShortcuts() {

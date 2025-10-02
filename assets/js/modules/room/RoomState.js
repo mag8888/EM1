@@ -6,7 +6,7 @@ if (window.RoomState) {
 // EventEmitter будет доступен глобально
 
 class RoomState extends EventEmitter {
-    constructor({ roomId, api, pollInterval = 4000 } = {}) {
+    constructor({ roomId, api, pollInterval = 8000 } = {}) {
         super();
         this.api = api;
         this.roomId = roomId;

@@ -11,6 +11,20 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const SQLiteDatabase = require('./database-sqlite.js');
 
+// Инициализируем push-сервис (простая версия для сервера)
+global.pushNotificationService = {
+    emitAssetPurchase: (data) => {
+        console.log('🔔 Server: Push-уведомление о покупке актива', data);
+        // Здесь можно добавить WebSocket или Server-Sent Events
+    },
+    emitBalanceChange: (data) => {
+        console.log('🔔 Server: Push-уведомление об изменении баланса', data);
+    },
+    emitTurnChange: (data) => {
+        console.log('🔔 Server: Push-уведомление о смене хода', data);
+    }
+};
+
 const app = express();
 const PORT = process.env.PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET || 'em1-production-secret-key-2024-railway';
@@ -2371,6 +2385,17 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
                     originalOwnerId: player.userId
                 };
                 player.assets.push(newAsset);
+                
+                // Отправляем push-уведомление о покупке актива
+                if (global.pushNotificationService) {
+                    global.pushNotificationService.emitAssetPurchase({
+                        playerId: player.userId,
+                        playerName: player.name,
+                        asset: newAsset,
+                        roomId: roomId,
+                        timestamp: Date.now()
+                    });
+                }
                 
                 // Сразу перемещаем актив в каталог
                 if (!room.catalogAssets) {

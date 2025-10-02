@@ -34,7 +34,7 @@ class BankModuleV4 {
         this.cache = {
             data: null,
             timestamp: 0,
-            ttl: 3000 // 3 seconds cache TTL
+            ttl: 10000 // 10 seconds cache TTL
         };
         
         // Отладочная информация о доступности DataStore

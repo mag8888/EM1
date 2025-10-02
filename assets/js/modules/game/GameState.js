@@ -1,7 +1,7 @@
 // EventEmitter и RoomApi будут доступны глобально
 
 class GameState extends EventEmitter {
-    constructor({ roomId, pollInterval = 3500 } = {}) {
+    constructor({ roomId, pollInterval = 7000 } = {}) {
         super();
         this.roomId = roomId;
         this.api = new RoomApi();
