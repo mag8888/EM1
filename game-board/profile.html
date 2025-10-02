@@ -352,7 +352,11 @@
         </div>
         
         <div class="content">
-            <a href="/game" class="btn btn-primary">🎮 к игре</a>
+            <div id="gameTimer" class="btn btn-primary" style="cursor: pointer;">
+                <span id="timerIcon">🎮</span>
+                <span id="timerText">к игре</span>
+                <span id="timerCountdown" style="margin-left: 8px; font-weight: bold;">3</span>
+            </div>
             
             <div id="loadingState" class="loading">
                 <p>Загрузка профиля...</p>
@@ -456,8 +460,67 @@
             }
         }
         
+        // Авто переход к игре с таймером
+        function startGameTimer() {
+            const timerElement = document.getElementById('gameTimer');
+            const countdownElement = document.getElementById('timerCountdown');
+            const timerTextElement = document.getElementById('timerText');
+            const timerIconElement = document.getElementById('timerIcon');
+            
+            let countdown = 3;
+            let isCancelled = false;
+            
+            // Обновляем таймер каждую секунду
+            const timerInterval = setInterval(() => {
+                if (isCancelled) {
+                    clearInterval(timerInterval);
+                    return;
+                }
+                
+                countdown--;
+                
+                if (countdown > 0) {
+                    countdownElement.textContent = countdown;
+                } else {
+                    // Переход к игре
+                    countdownElement.textContent = '0';
+                    timerTextElement.textContent = 'Переход...';
+                    timerIconElement.textContent = '🚀';
+                    
+                    clearInterval(timerInterval);
+                    
+                    // Переход через небольшую задержку
+                    setTimeout(() => {
+                        window.location.href = '/game.html';
+                    }, 500);
+                }
+            }, 1000);
+            
+            // Возможность отмены по клику
+            timerElement.addEventListener('click', () => {
+                if (!isCancelled) {
+                    isCancelled = true;
+                    clearInterval(timerInterval);
+                    
+                    // Возвращаем к исходному состоянию
+                    countdownElement.textContent = '';
+                    timerTextElement.textContent = 'к игре';
+                    timerIconElement.textContent = '🎮';
+                    
+                    // Переход по клику
+                    setTimeout(() => {
+                        window.location.href = '/game.html';
+                    }, 200);
+                }
+            });
+        }
+        
         // Load profile on page load
-        loadProfile();
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProfile();
+            // Запускаем таймер сразу
+            startGameTimer();
+        });
     </script>
 </body>
 </html>
