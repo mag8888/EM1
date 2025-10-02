@@ -126,6 +126,18 @@ const noCacheStatic = (dir) => express.static(dir, {
 app.use(noCacheStatic(path.join(__dirname)));
 app.use('/game-board', noCacheStatic(path.join(__dirname, 'game-board')));
 
+// Favicon handling: serve svg for /favicon.ico to avoid 404
+app.get('/favicon.ico', (req, res) => {
+    const svgPath = path.join(__dirname, 'favicon.svg');
+    res.type('image/svg+xml');
+    res.sendFile(svgPath, (err) => {
+        if (err) {
+            // If favicon.svg is missing, respond with empty 204 to silence console warnings
+            res.status(204).end();
+        }
+    });
+});
+
 // In-memory storage for minimal functionality
 const users = new Map();
 const rooms = new Map();
