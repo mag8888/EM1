@@ -1906,11 +1906,23 @@
                 // Обработчик выхода: очистить данные сессии и перейти на авторизацию
                 const leaveRoomBtn = document.getElementById('leaveRoomBtn');
                 if (leaveRoomBtn) {
-                    leaveRoomBtn.addEventListener('click', () => {
+                    leaveRoomBtn.addEventListener('click', async () => {
                         try {
-                            console.log('🚪 Leave button clicked — redirecting to auth.html');
-                            // Мягкая очистка ключей, связанных с комнатой/игрой
+                            console.log('🚪 Leave button clicked — clearing session and redirecting');
+                            leaveRoomBtn.disabled = true;
+                            leaveRoomBtn.dataset.loading = 'true';
+
+                            // Останавливаем таймеры/анимации на странице
+                            try { window._isAnimatingMove = false; } catch (_) {}
+
+                            // Полная очистка sessionStorage/localStorage
+                            try { sessionStorage.clear(); } catch (_) {}
+                            try { localStorage.clear(); } catch (_) {}
+
+                            // На всякий случай очистим ключевые записи снова адресно
                             const keysToClear = [
+                                'user',
+                                'token',
                                 'currentRoom',
                                 'rooms',
                                 'roomId',
@@ -1918,14 +1930,19 @@
                                 'gameState',
                                 'playersState'
                             ];
-                            keysToClear.forEach(k => localStorage.removeItem(k));
+                            keysToClear.forEach(k => { try { localStorage.removeItem(k); } catch (_) {} });
 
-                            // При желании можно оставить пользователя авторизованным
-                            // Если нужно разлогинить полностью — раскомментируйте:
-                            // localStorage.removeItem('user');
+                            // Удаляем все куки (если есть)
+                            try {
+                                document.cookie.split(';').forEach(c => {
+                                    const eqPos = c.indexOf('=');
+                                    const name = eqPos > -1 ? c.substr(0, eqPos).trim() : c.trim();
+                                    if (name) document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+                                });
+                            } catch (_) {}
 
-                            // Переход на страницу авторизации
-                            window.location.assign('auth.html');
+                            // Жесткий редирект без сохранения в истории назад
+                            window.location.replace('auth.html');
                         } catch (e) {
                             console.error('❌ Failed to handle leave action:', e);
                             window.location.href = 'auth.html';
