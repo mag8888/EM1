@@ -360,9 +360,9 @@
             </div>
 
             <!-- Табы авторизации -->
-            <div class="auth-tabs">
-                <div class="tab active" onclick="switchTab('login', this)">Вход</div>
-                <div class="tab" onclick="switchTab('register', this)">Регистрация</div>
+            <div class="auth-tabs" id="authTabs">
+                <div class="tab active" data-tab="login">Вход</div>
+                <div class="tab" data-tab="register">Регистрация</div>
             </div>
 
             <!-- Сообщения об ошибках/успехе -->
@@ -379,7 +379,7 @@
                     <label class="form-label">Пароль</label>
                     <div class="input-group">
                         <input type="password" class="form-input" id="loginPassword" name="password" autocomplete="current-password" data-lastpass-icon="disable" placeholder="Введите пароль">
-                        <span class="input-icon password-toggle" onclick="togglePassword('loginPassword', this)">👁</span>
+                        <span class="input-icon password-toggle" data-toggle-target="loginPassword">👁</span>
                     </div>
                 </div>
                 <div class="form-checkbox">
@@ -406,14 +406,14 @@
                     <label class="form-label">Пароль</label>
                     <div class="input-group">
                         <input type="password" class="form-input" id="registerPassword" name="password" autocomplete="new-password" placeholder="Введите пароль" required>
-                        <span class="input-icon password-toggle" onclick="togglePassword('registerPassword', this)">👁</span>
+                        <span class="input-icon password-toggle" data-toggle-target="registerPassword">👁</span>
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Подтвердите пароль</label>
                     <div class="input-group">
                         <input type="password" class="form-input" id="registerConfirmPassword" name="confirmPassword" autocomplete="new-password" placeholder="Подтвердите пароль" required>
-                        <span class="input-icon password-toggle" onclick="togglePassword('registerConfirmPassword', this)">👁</span>
+                        <span class="input-icon password-toggle" data-toggle-target="registerConfirmPassword">👁</span>
                     </div>
                 </div>
                 <div class="form-group">
@@ -438,37 +438,42 @@
     </div>
 
     <script>
-        // Переключение между табами
-        function switchTab(tab, element) {
-            // Убираем активный класс со всех табов и форм
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-            
-            // Активируем выбранный таб и форму
-            if (element) {
-                element.classList.add('active');
-            } else {
-                document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
-            }
-            document.getElementById(tab + 'Form').classList.add('active');
-            
-            // Очищаем сообщения
-            hideMessages();
-        }
+        // Переключение между табами (без inline-обработчиков для CSP)
+        (function setupTabs(){
+            const tabs = document.getElementById('authTabs');
+            if (!tabs) return;
+            tabs.addEventListener('click', (e) => {
+                const target = e.target.closest('.tab');
+                if (!target) return;
+                const tab = target.getAttribute('data-tab');
+                if (!tab) return;
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+                target.classList.add('active');
+                const form = document.getElementById(`${tab}Form`);
+                if (form) form.classList.add('active');
+                hideMessages();
+            });
+        })();
 
-        // Переключение видимости пароля
-        function togglePassword(inputId, element) {
-            const input = document.getElementById(inputId);
-            const icon = element;
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.textContent = '🙈';
-            } else {
-                input.type = 'password';
-                icon.textContent = '👁';
-            }
-        }
+        // Переключение видимости пароля (через делегирование событий)
+        (function setupPasswordToggles(){
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('.password-toggle');
+                if (!btn) return;
+                const inputId = btn.getAttribute('data-toggle-target');
+                if (!inputId) return;
+                const input = document.getElementById(inputId);
+                if (!input) return;
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    btn.textContent = '🙈';
+                } else {
+                    input.type = 'password';
+                    btn.textContent = '👁';
+                }
+            });
+        })();
 
         // Показать сообщение об ошибке
         function showError(message) {
@@ -716,7 +721,16 @@
         }
     </script>
     
-    <!-- Отладочная панель -->
-    <script src="/assets/js/debug/DebugPanel.js"></script>
+    <!-- Отладочная панель (отключена на проде во избежание CSP/навиг. конфликтов) -->
+    <script>
+        (function(){
+            const isProd = /railway\.app$/.test(location.hostname);
+            if (!isProd) {
+                const s = document.createElement('script');
+                s.src = '/assets/js/debug/DebugPanel.js';
+                document.body.appendChild(s);
+            }
+        })();
+    </script>
 </body>
 </html>
