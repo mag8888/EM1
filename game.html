@@ -1820,6 +1820,9 @@
                 // Инициализируем панель выбора стиля иконок
                 initIconStylePanel();
                 
+                // Добавляем автоматический переход к игре через 3 секунды
+                addAutoGameTransition();
+                
                 // Инициализируем CellPopup
                 if (typeof CellPopup !== 'undefined') {
                     window.cellPopup = new CellPopup();
@@ -2020,6 +2023,201 @@
                 activeOption.classList.add('active');
             }
         }
+        
+        // Функция для автоматического перехода к игре через 3 секунды
+        function addAutoGameTransition() {
+            // Проверяем настройки пользователя
+            const autoTransitionEnabled = localStorage.getItem('autoGameTransition') !== 'false';
+            const transitionDelay = parseInt(localStorage.getItem('autoGameTransitionDelay')) || 3;
+            
+            if (!autoTransitionEnabled) {
+                console.log('⏰ Auto game transition disabled by user settings');
+                return;
+            }
+            
+            console.log(`⏰ Setting up auto game transition in ${transitionDelay} seconds...`);
+            
+            // Обновляем статус для показа обратного отсчета
+            const statusElement = document.getElementById('turnState');
+            if (statusElement) {
+                statusElement.textContent = `Переход к игре через ${transitionDelay} секунды...`;
+            }
+            
+            // Создаем визуальный индикатор обратного отсчета
+            const countdownElement = document.createElement('div');
+            countdownElement.id = 'countdownTimer';
+            countdownElement.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.9);
+                color: #00ff00;
+                font-size: 48px;
+                font-weight: bold;
+                padding: 30px 50px;
+                border-radius: 20px;
+                border: 2px solid #00ff00;
+                z-index: 9999;
+                text-align: center;
+                box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+                min-width: 300px;
+            `;
+            
+            // Создаем контейнер для текста и кнопки
+            const contentDiv = document.createElement('div');
+            contentDiv.style.cssText = `
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            `;
+            
+            const countdownText = document.createElement('div');
+            countdownText.id = 'countdownText';
+            countdownText.textContent = '3';
+            countdownText.style.cssText = `
+                font-size: 48px;
+                font-weight: bold;
+                color: #00ff00;
+            `;
+            
+            const countdownLabel = document.createElement('div');
+            countdownLabel.textContent = 'Переход к игре через...';
+            countdownLabel.style.cssText = `
+                font-size: 16px;
+                color: #ffffff;
+                margin-bottom: 10px;
+            `;
+            
+            // Кнопка отмены
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Отменить';
+            cancelBtn.style.cssText = `
+                background: linear-gradient(135deg, #ff6b6b 0%, #ff3b3b 100%);
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 10px;
+                font-size: 14px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            `;
+            
+            // Добавляем hover эффект для кнопки
+            cancelBtn.addEventListener('mouseenter', () => {
+                cancelBtn.style.transform = 'translateY(-2px)';
+                cancelBtn.style.boxShadow = '0 4px 12px rgba(255, 59, 59, 0.4)';
+            });
+            
+            cancelBtn.addEventListener('mouseleave', () => {
+                cancelBtn.style.transform = 'translateY(0)';
+                cancelBtn.style.boxShadow = 'none';
+            });
+            
+            contentDiv.appendChild(countdownLabel);
+            contentDiv.appendChild(countdownText);
+            contentDiv.appendChild(cancelBtn);
+            countdownElement.appendChild(contentDiv);
+            document.body.appendChild(countdownElement);
+            
+            // Обратный отсчет
+            let countdown = transitionDelay;
+            let isCancelled = false;
+            
+            const countdownInterval = setInterval(() => {
+                if (isCancelled) {
+                    clearInterval(countdownInterval);
+                    return;
+                }
+                
+                countdown--;
+                if (countdown > 0) {
+                    countdownText.textContent = countdown.toString();
+                } else {
+                    countdownText.textContent = 'Переход к игре...';
+                    clearInterval(countdownInterval);
+                    
+                    // Переход к игре через небольшую задержку
+                    setTimeout(() => {
+                        if (isCancelled) return;
+                        
+                        // Удаляем индикатор
+                        if (countdownElement.parentNode) {
+                            countdownElement.parentNode.removeChild(countdownElement);
+                        }
+                        
+                        // Выполняем переход к игре
+                        console.log('🎮 Auto transitioning to game...');
+                        
+                        // Обновляем статус
+                        if (statusElement) {
+                            statusElement.textContent = 'Запуск игры...';
+                        }
+                        
+                        // Симулируем клик по кнопке "Бросить кубик" для начала игры
+                        const rollDiceBtn = document.getElementById('rollDiceBtn');
+                        if (rollDiceBtn && !rollDiceBtn.disabled) {
+                            console.log('🎲 Auto clicking roll dice button...');
+                            rollDiceBtn.click();
+                        } else {
+                            console.log('⚠️ Roll dice button not available, trying alternative game start...');
+                            
+                            // Альтернативный способ - попробуем запустить игру через GameCore
+                            if (window.gameCore && typeof window.gameCore.startGame === 'function') {
+                                window.gameCore.startGame().then(() => {
+                                    console.log('✅ Game started via GameCore');
+                                }).catch(error => {
+                                    console.error('❌ Failed to start game via GameCore:', error);
+                                });
+                            }
+                        }
+                    }, 500);
+                }
+            }, 1000);
+            
+            // Обработчик отмены
+            cancelBtn.addEventListener('click', () => {
+                isCancelled = true;
+                clearInterval(countdownInterval);
+                
+                // Удаляем индикатор
+                if (countdownElement.parentNode) {
+                    countdownElement.parentNode.removeChild(countdownElement);
+                }
+                
+                // Обновляем статус
+                if (statusElement) {
+                    statusElement.textContent = 'Готов к игре';
+                }
+                
+                console.log('❌ Auto game transition cancelled by user');
+            });
+        }
+        
+        // Функции для управления настройками автоматического перехода
+        window.setAutoGameTransition = function(enabled, delay = 3) {
+            localStorage.setItem('autoGameTransition', enabled.toString());
+            localStorage.setItem('autoGameTransitionDelay', delay.toString());
+            console.log(`⏰ Auto game transition ${enabled ? 'enabled' : 'disabled'}, delay: ${delay}s`);
+        };
+        
+        window.getAutoGameTransitionSettings = function() {
+            return {
+                enabled: localStorage.getItem('autoGameTransition') !== 'false',
+                delay: parseInt(localStorage.getItem('autoGameTransitionDelay')) || 3
+            };
+        };
+        
+        // Добавляем команды в консоль для удобства
+        console.log('🎮 Auto game transition commands available:');
+        console.log('  setAutoGameTransition(true, 5) - включить с задержкой 5 секунд');
+        console.log('  setAutoGameTransition(false) - отключить');
+        console.log('  getAutoGameTransitionSettings() - посмотреть текущие настройки');
     </script>
 
     <!-- Дополнительная диагностика -->
