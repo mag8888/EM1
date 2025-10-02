@@ -2045,7 +2045,7 @@ app.get('/room/:roomId', (req, res) => {
 
 // Game page route (return to game)
 app.get('/game', (req, res) => {
-    res.sendFile(path.join(__dirname, 'game-board', 'game.html'));
+    res.sendFile(path.join(__dirname, 'game.html'));
 });
 
 // Lobby routes aliases
