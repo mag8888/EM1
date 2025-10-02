@@ -1766,8 +1766,25 @@
                     // Загружаем данные комнаты и игроков
                     await loadRoomData(roomId);
                     
-                    // Инициализируем банковский клиент
-                    await initBankClient(roomId, getUserIdFromStorage(), getPlayerNameFromStorage());
+                    // Инициализируем банковский клиент после загрузки данных комнаты
+                    const userId = getUserIdFromStorage();
+                    let playerName = getPlayerNameFromStorage();
+                    
+                    // Если playerName не найден, попробуем получить из данных комнаты
+                    if (!playerName || playerName === 'Игрок') {
+                        const roomResponse = await fetch(`/api/rooms/${roomId}`);
+                        if (roomResponse.ok) {
+                            const roomData = await roomResponse.json();
+                            if (roomData.room && roomData.room.currentPlayer && roomData.room.currentPlayer.name) {
+                                playerName = roomData.room.currentPlayer.name;
+                                localStorage.setItem('playerName', playerName);
+                                console.log('👤 PlayerName получен из комнаты:', playerName);
+                            }
+                        }
+                    }
+                    
+                    console.log('🏦 Инициализация BankClient', { roomId, userId, playerName });
+                    await initBankClient(roomId, userId, playerName);
                     
                     // Добавляем обработчики для кнопок после загрузки DOM
                     setupButtonHandlers();
@@ -1816,6 +1833,13 @@
                         window.players = roomData.players; // Сохраняем для банковского клиента
                         renderPlayers(roomData.players);
                         console.log('👥 Игроки отображены:', roomData.players.length);
+                        
+                        // Обновляем playerName из данных комнаты, если есть currentPlayer
+                        if (roomData.currentPlayer && roomData.currentPlayer.name) {
+                            const currentPlayerName = roomData.currentPlayer.name;
+                            localStorage.setItem('playerName', currentPlayerName);
+                            console.log('👤 PlayerName обновлен из комнаты:', currentPlayerName);
+                        }
                     }
                     
                     // Отображаем фишки на поле
@@ -2696,7 +2720,7 @@
             console.log('🔍 Game: playersManager:', typeof window.playersManager);
             console.log('🔍 Game: professionCard:', typeof window.professionCard);
             console.log('🔍 Game: dealsManager:', typeof window.dealsManager);
-            console.log('🔍 Game: bankManager:', typeof window.bankManager);
+            console.log('🔍 Game: bankClient:', typeof window.bankClient);
             console.log('🔍 Game: gameDataApi:', typeof window.gameDataApi);
             
             // Проверяем DOM элементы

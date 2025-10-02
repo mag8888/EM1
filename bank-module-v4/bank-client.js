@@ -49,6 +49,8 @@ class BankClient {
             if (balanceResponse.ok) {
                 const balanceData = await balanceResponse.json();
                 this.data.balance = balanceData.amount || 0;
+            } else {
+                console.warn('⚠️ BankClient: Не удалось загрузить баланс:', balanceResponse.status);
             }
 
             // Загружаем финансовые данные
@@ -58,6 +60,8 @@ class BankClient {
                 this.data.income = financialsData.income || 0;
                 this.data.expenses = financialsData.expenses || 0;
                 this.data.payday = financialsData.payday || 0;
+            } else {
+                console.warn('⚠️ BankClient: Не удалось загрузить финансовые данные:', financialsResponse.status);
             }
 
             // Загружаем кредитные данные
@@ -66,12 +70,16 @@ class BankClient {
                 const creditData = await creditResponse.json();
                 this.data.credit = creditData.credit || 0;
                 this.data.maxCredit = creditData.maxCredit || 0;
+            } else {
+                console.warn('⚠️ BankClient: Не удалось загрузить кредитные данные:', creditResponse.status);
             }
 
             // Загружаем историю переводов
             const historyResponse = await fetch(`/api/bank/history/${this.roomId}`);
             if (historyResponse.ok) {
                 this.data.transfers = await historyResponse.json();
+            } else {
+                console.warn('⚠️ BankClient: Не удалось загрузить историю переводов:', historyResponse.status);
             }
 
             console.log('✅ BankClient: Данные загружены', this.data);
