@@ -1306,6 +1306,10 @@
                 <h3>Банковские операции</h3>
                 <div class="finance-grid">
                     <div class="finance-row">
+                        <span>Баланс:</span>
+                        <span class="finance-value" id="bankBalanceValue">$0</span>
+                    </div>
+                    <div class="finance-row">
                         <span>Доход:</span>
                         <span class="finance-value" id="incomeValue">$0</span>
                     </div>
@@ -1710,18 +1714,200 @@
         <script src="game-board/config/cards-config.js?v=1"></script>
         <script src="assets/js/modules/game/DealsModule.js?v=1"></script>
         <script>
-            // Инициализация DealsModule
-            document.addEventListener('DOMContentLoaded', function() {
-                if (typeof DealsModule !== 'undefined') {
-                    window.dealsModule = new DealsModule();
-                    console.log('🎴 DealsModule инициализирован');
-                } else {
-                    console.error('❌ DealsModule не найден');
+            // Инициализация игры
+            document.addEventListener('DOMContentLoaded', async function() {
+                console.log('🎮 Инициализация игры...');
+                
+                try {
+                    // Получаем roomId из URL или localStorage
+                    const roomId = getRoomIdFromUrl() || localStorage.getItem('currentRoomId');
+                    if (!roomId) {
+                        console.error('❌ RoomId не найден');
+                        showError('Ошибка: ID комнаты не найден');
+                        return;
+                    }
+                    
+                    console.log('🎮 RoomId:', roomId);
+                    
+                    // Инициализируем GameModule
+                    if (typeof GameModule !== 'undefined') {
+                        window.gameModule = new GameModule({ roomId });
+                        await window.gameModule.init();
+                        console.log('✅ GameModule инициализирован');
+                    } else {
+                        console.error('❌ GameModule не найден');
+                        showError('Ошибка: GameModule не найден');
+                    }
+                    
+                    // Инициализируем игровое поле
+                    if (typeof BoardLayout !== 'undefined') {
+                        window.boardLayout = new BoardLayout();
+                        console.log('✅ BoardLayout инициализирован');
+                    } else {
+                        console.error('❌ BoardLayout не найден');
+                    }
+                    
+                    // Инициализируем менеджер игроков
+                    if (typeof PlayersManager !== 'undefined') {
+                        window.playersManager = new PlayersManager();
+                        console.log('✅ PlayersManager инициализирован');
+                    } else {
+                        console.error('❌ PlayersManager не найден');
+                    }
+                    
+                    // Инициализируем DealsModule
+                    if (typeof DealsModule !== 'undefined') {
+                        window.dealsModule = new DealsModule();
+                        console.log('🎴 DealsModule инициализирован');
+                    } else {
+                        console.error('❌ DealsModule не найден');
+                    }
+                    
+                    // Загружаем данные комнаты и игроков
+                    await loadRoomData(roomId);
+                    
+                    // Добавляем обработчики для кнопок после загрузки DOM
+                    setupButtonHandlers();
+                    
+                    console.log('✅ Игра успешно инициализирована');
+                    
+                } catch (error) {
+                    console.error('❌ Ошибка инициализации игры:', error);
+                    showError('Ошибка инициализации: ' + error.message);
+                }
+            });
+            
+            function getRoomIdFromUrl() {
+                const path = window.location.pathname;
+                const match = path.match(/\/game\/([^\/]+)/);
+                return match ? match[1] : null;
+            }
+            
+            function showError(message) {
+                const statusElement = document.getElementById('turnState');
+                if (statusElement) {
+                    statusElement.textContent = message;
+                }
+            }
+            
+            async function loadRoomData(roomId) {
+                try {
+                    console.log('🔄 Загрузка данных комнаты:', roomId);
+                    
+                    // Загружаем данные комнаты
+                    const response = await fetch(`/api/rooms/${roomId}`);
+                    if (!response.ok) {
+                        throw new Error(`Ошибка загрузки комнаты: ${response.status}`);
+                    }
+                    
+                    const roomData = await response.json();
+                    console.log('📊 Данные комнаты загружены:', roomData);
+                    
+                    // Обновляем состояние игры
+                    if (window.gameModule && window.gameModule.state) {
+                        window.gameModule.state.updateFromSnapshot(roomData);
+                    }
+                    
+                    // Отображаем игроков
+                    if (roomData.players && Array.isArray(roomData.players)) {
+                        renderPlayers(roomData.players);
+                        console.log('👥 Игроки отображены:', roomData.players.length);
+                    }
+                    
+                    // Отображаем фишки на поле
+                    if (window.boardLayout && roomData.players) {
+                        renderPlayerTokens(roomData.players);
+                        console.log('🎯 Фишки отображены');
+                    }
+                    
+                    // Обновляем статус
+                    showSuccess('Игра загружена');
+                    
+                } catch (error) {
+                    console.error('❌ Ошибка загрузки данных комнаты:', error);
+                    showError('Ошибка загрузки: ' + error.message);
+                }
+            }
+            
+            function renderPlayers(players) {
+                const playersContainer = document.getElementById('playersPanelList');
+                if (!playersContainer) {
+                    console.warn('⚠️ Контейнер игроков не найден');
+                    return;
                 }
                 
-                // Добавляем обработчики для кнопок после загрузки DOM
-                setupButtonHandlers();
-            });
+                playersContainer.innerHTML = '';
+                
+                players.forEach((player, index) => {
+                    const playerElement = document.createElement('div');
+                    playerElement.className = 'player-card';
+                    playerElement.innerHTML = `
+                        <div class="player-card-header">
+                            <span class="player-card-name">${player.name || `Игрок ${index + 1}`}</span>
+                            <span class="player-card-cash">$${Number(player.cash || 0).toLocaleString()}</span>
+                        </div>
+                        <div class="player-card-position">
+                            Позиция: ${player.position || 0}
+                        </div>
+                    `;
+                    playersContainer.appendChild(playerElement);
+                });
+                
+                console.log('✅ Игроки отрендерены:', players.length);
+            }
+            
+            function renderPlayerTokens(players) {
+                if (!window.boardLayout) {
+                    console.warn('⚠️ BoardLayout не инициализирован');
+                    return;
+                }
+                
+                // Очищаем существующие фишки
+                const existingTokens = document.querySelectorAll('.player-token');
+                existingTokens.forEach(token => token.remove());
+                
+                // Добавляем фишки игроков
+                players.forEach((player, index) => {
+                    if (player.position !== undefined) {
+                        const cell = document.querySelector(`[data-cell-id="${player.position}"]`);
+                        if (cell) {
+                            const token = document.createElement('div');
+                            token.className = 'player-token';
+                            token.style.cssText = `
+                                position: absolute;
+                                width: 20px;
+                                height: 20px;
+                                background: ${getPlayerColor(index)};
+                                border-radius: 50%;
+                                border: 2px solid white;
+                                z-index: 10;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 12px;
+                                color: white;
+                                font-weight: bold;
+                            `;
+                            token.textContent = (index + 1).toString();
+                            cell.appendChild(token);
+                        }
+                    }
+                });
+                
+                console.log('✅ Фишки отрендерены');
+            }
+            
+            function getPlayerColor(index) {
+                const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'];
+                return colors[index % colors.length];
+            }
+            
+            function showSuccess(message) {
+                const statusElement = document.getElementById('turnState');
+                if (statusElement) {
+                    statusElement.textContent = message;
+                }
+            }
         </script>
         <script src="assets/js/modules/game/DealsManager.js?v=11"></script>
         
