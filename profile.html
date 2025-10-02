@@ -696,11 +696,8 @@
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
             loadProfile();
-            
-            // Автоматически переходим к игре через 3 секунды
-            setTimeout(() => {
-                startGame();
-            }, 3000);
+            // Запускаем обратный отсчет сразу, чтобы общее ожидание составило 3 секунды
+            startGame();
         });
     </script>
 </body>

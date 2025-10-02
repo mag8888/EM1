@@ -824,42 +824,17 @@ class DealsModule {
 
                     console.log(`🎴 DealsModule: Игрок ${playerId} купил карту ${card.name} за $${cardCost}`);
                     
-                    // Сразу перемещаем актив в каталог
-                    if (window.dealsModule) {
-                        window.dealsModule.moveAssetToCatalog(asset, playerId);
-                        console.log(`📦 Актив ${card.name} автоматически перемещен в каталог`);
-                    }
-                    
-                    // Также добавляем в глобальный каталог для синхронизации с сервером
-                    if (!window.globalCatalogAssets) {
-                        window.globalCatalogAssets = [];
-                    }
-                    window.globalCatalogAssets.push({
-                        ...asset,
-                        originalOwnerId: playerId,
-                        addedToCatalogAt: Date.now()
-                    });
-                    
-                    // Обновляем состояние игры
-                    if (window.gameState && window.gameState.refresh) {
+                    // Обновляем локальное состояние игры
+                    if (responseData.state && window.gameState?.applyState) {
+                        window.gameState.applyState(responseData.state);
+                    } else if (window.gameState?.refresh) {
                         window.gameState.refresh();
                     }
-                    
-                    // Принудительно обновляем UI активов
+
+                    // Принудительно обновляем UI активов, если он уже инициализирован
                     if (window.assetsManager) {
                         window.assetsManager.render(window.gameState?.getSnapshot?.());
                     }
-                    
-                    // Дополнительная синхронизация через небольшую задержку
-                    setTimeout(() => {
-                        if (window.gameState && window.gameState.refresh) {
-                            window.gameState.refresh();
-                        }
-                        // Повторное обновление UI активов
-                        if (window.assetsManager) {
-                            window.assetsManager.render(window.gameState?.getSnapshot?.());
-                        }
-                    }, 100);
                     
                     // Отправляем уведомление о покупке актива
                     if (window.notificationService) {

@@ -34,24 +34,19 @@ export default class DealController {
         const currentPlayer = snapshot.players?.find(player => player.userId === pending.playerId);
         const playerName = currentPlayer?.name || 'Игрок';
 
-        this.show();
-        if (this.headerEl) {
-            this.headerEl.textContent = isMine ? 'Вы попали на сделку' : `${playerName} выбирает сделку`;
-        }
-        if (!this.bodyEl || !this.actionsEl) {
-            return;
-        }
+        // Оповещаем другие модули о сделке, не показывая поп-ап
+        document.dispatchEvent(new CustomEvent('dealPending', {
+            detail: {
+                pending,
+                isMine,
+                playerName,
+                roomState: snapshot
+            }
+        }));
 
-        this.bodyEl.innerHTML = '';
-        this.actionsEl.innerHTML = '';
-
-        if (pending.stage === 'choice') {
-            this.renderChoice(pending, isMine, playerName);
-            return;
-        }
-
-        if (pending.stage === 'resolution' && pending.card) {
-            this.renderResolution(pending, isMine, playerName);
+        // Убеждаемся, что старый поп-ап скрыт
+        if (this.visible) {
+            this.hide();
         }
     }
 
