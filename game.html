@@ -1718,6 +1718,9 @@
                 } else {
                     console.error('❌ DealsModule не найден');
                 }
+                
+                // Добавляем обработчики для кнопок после загрузки DOM
+                setupButtonHandlers();
             });
         </script>
         <script src="assets/js/modules/game/DealsManager.js?v=11"></script>
@@ -1872,8 +1875,6 @@
                 } else {
                     console.warn('⚠️ ProfessionUI not found or ProfessionManager not initialized');
                 }
-                
-                // Добавляем обработчики для кнопок банка
                 const bankButton = document.getElementById('bankButton');
                 if (bankButton) {
                     bankButton.addEventListener('click', () => {
@@ -2014,6 +2015,150 @@
                 }
             }
         })();
+        
+        // Функция для настройки обработчиков кнопок
+        function setupButtonHandlers() {
+            console.log('🔧 Setting up button handlers...');
+            
+            try {
+                // Добавляем обработчики для кнопок банка
+                const bankButton = document.getElementById('bankButton');
+                if (bankButton) {
+                    bankButton.addEventListener('click', () => {
+                        console.log('🏦 Bank button clicked, opening BankModuleV4...');
+                        if (typeof window.openBankV4 === 'function') {
+                            window.openBankV4();
+                        } else {
+                            console.error('❌ openBankV4 function not found!');
+                        }
+                    });
+                    console.log('✅ Bank button event listener added');
+                } else {
+                    console.warn('⚠️ Bank button not found');
+                }
+                
+                // Также добавляем обработчик для второй кнопки банка
+                const bankBtn = document.getElementById('bankBtn');
+                if (bankBtn) {
+                    bankBtn.addEventListener('click', () => {
+                        console.log('🏦 Bank btn clicked, opening BankModuleV4...');
+                        if (typeof window.openBankV4 === 'function') {
+                            window.openBankV4();
+                        } else {
+                            console.error('❌ openBankV4 function not found!');
+                        }
+                    });
+                    console.log('✅ Bank btn event listener added');
+                } else {
+                    console.warn('⚠️ Bank btn not found');
+                }
+                
+                // Добавляем обработчик для кнопки выхода в правой панели
+                const exitButton = document.getElementById('exitButton');
+                if (exitButton) {
+                    exitButton.addEventListener('click', async () => {
+                        try {
+                            console.log('🚪 Exit button clicked — clearing session and redirecting to auth');
+                            exitButton.disabled = true;
+                            exitButton.textContent = '🚪 Выход...';
+
+                            // Останавливаем таймеры/анимации на странице
+                            try { window._isAnimatingMove = false; } catch (_) {}
+
+                            // Полная очистка sessionStorage/localStorage
+                            try { sessionStorage.clear(); } catch (_) {}
+                            try { localStorage.clear(); } catch (_) {}
+
+                            // На всякий случай очистим ключевые записи снова адресно
+                            const keysToClear = [
+                                'user',
+                                'token',
+                                'currentRoom',
+                                'rooms',
+                                'roomId',
+                                'turnState',
+                                'gameState',
+                                'playersState'
+                            ];
+                            keysToClear.forEach(k => { try { localStorage.removeItem(k); } catch (_) {} });
+
+                            // Удаляем все куки (если есть)
+                            try {
+                                document.cookie.split(';').forEach(c => {
+                                    const eqPos = c.indexOf('=');
+                                    const name = eqPos > -1 ? c.substr(0, eqPos).trim() : c.trim();
+                                    if (name) document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+                                });
+                            } catch (_) {}
+
+                            // Жесткий редирект без сохранения в истории назад
+                            window.location.replace('auth.html');
+                        } catch (e) {
+                            console.error('❌ Failed to handle exit action:', e);
+                            window.location.href = 'auth.html';
+                        }
+                    });
+                    console.log('✅ Exit button event listener added');
+                } else {
+                    console.warn('⚠️ Exit button not found');
+                }
+                
+                // Обработчик выхода: очистить данные сессии и перейти на авторизацию
+                const leaveRoomBtn = document.getElementById('leaveRoomBtn');
+                if (leaveRoomBtn) {
+                    leaveRoomBtn.addEventListener('click', async () => {
+                        try {
+                            console.log('🚪 Leave button clicked — clearing session and redirecting');
+                            leaveRoomBtn.disabled = true;
+                            leaveRoomBtn.dataset.loading = 'true';
+
+                            // Останавливаем таймеры/анимации на странице
+                            try { window._isAnimatingMove = false; } catch (_) {}
+
+                            // Полная очистка sessionStorage/localStorage
+                            try { sessionStorage.clear(); } catch (_) {}
+                            try { localStorage.clear(); } catch (_) {}
+
+                            // На всякий случай очистим ключевые записи снова адресно
+                            const keysToClear = [
+                                'user',
+                                'token',
+                                'currentRoom',
+                                'rooms',
+                                'roomId',
+                                'turnState',
+                                'gameState',
+                                'playersState'
+                            ];
+                            keysToClear.forEach(k => { try { localStorage.removeItem(k); } catch (_) {} });
+
+                            // Удаляем все куки (если есть)
+                            try {
+                                document.cookie.split(';').forEach(c => {
+                                    const eqPos = c.indexOf('=');
+                                    const name = eqPos > -1 ? c.substr(0, eqPos).trim() : c.trim();
+                                    if (name) document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+                                });
+                            } catch (_) {}
+
+                            // Жесткий редирект без сохранения в истории назад
+                            window.location.replace('auth.html');
+                        } catch (e) {
+                            console.error('❌ Failed to handle leave action:', e);
+                            window.location.href = 'auth.html';
+                        }
+                    });
+                    console.log('✅ Leave button event listener added');
+                } else {
+                    console.warn('⚠️ Leave button not found');
+                }
+                
+                console.log('✅ Button handlers setup completed');
+                
+            } catch (error) {
+                console.error('❌ Error setting up button handlers:', error);
+            }
+        }
         
         // Функция ожидания загрузки конфигураций
         async function waitForConfigs() {
