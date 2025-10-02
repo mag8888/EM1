@@ -95,6 +95,29 @@ export class TurnController {
             if (this.notifier) {
                 this.notifier.show('Кубик брошен', { type: 'info' });
             }
+
+            // Попытка загрузить движение и анимировать
+            try {
+                const roomId = this.state?.roomId;
+                const userId = this.state?.getUserId?.();
+                if (roomId && userId && typeof total === 'number' && total > 0) {
+                    const moveRes = await fetch(`/api/rooms/${roomId}/move`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+                        body: JSON.stringify({ steps: total, user_id: userId })
+                    });
+                    const moveData = await moveRes.json().catch(() => ({}));
+                    if (moveRes.ok && moveData?.state) {
+                        this.state.applyState(moveData.state);
+                        const path = moveData?.state?.moveResult?.path || moveData?.path || [];
+                        if (Array.isArray(path) && path.length > 0 && typeof window.animateInnerMove === 'function') {
+                            window.animateInnerMove(path, 500, userId);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('⚠️ Move animation fallback failed:', e);
+            }
         } catch (error) {
             console.error('Ошибка броска кубика:', error);
             this.hasRolledThisTurn = false;
