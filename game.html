@@ -1766,6 +1766,9 @@
                     // Загружаем данные комнаты и игроков
                     await loadRoomData(roomId);
                     
+                    // Инициализируем банковский клиент
+                    await initBankClient(roomId, getUserIdFromStorage(), getPlayerNameFromStorage());
+                    
                     // Добавляем обработчики для кнопок после загрузки DOM
                     setupButtonHandlers();
                     
@@ -1810,6 +1813,7 @@
                     
                     // Отображаем игроков
                     if (roomData.players && Array.isArray(roomData.players)) {
+                        window.players = roomData.players; // Сохраняем для банковского клиента
                         renderPlayers(roomData.players);
                         console.log('👥 Игроки отображены:', roomData.players.length);
                     }
@@ -1908,17 +1912,21 @@
                     statusElement.textContent = message;
                 }
             }
+            
+            function getUserIdFromStorage() {
+                return localStorage.getItem('userId') || localStorage.getItem('user_id') || null;
+            }
+            
+            function getPlayerNameFromStorage() {
+                return localStorage.getItem('playerName') || localStorage.getItem('username') || 'Игрок';
+            }
         </script>
         <script src="assets/js/modules/game/DealsManager.js?v=11"></script>
         
         <!-- Bank Module -->
         <link rel="stylesheet" href="bank-module-v4/bank-styles.css?v=4.1">
-        <!-- DataStore - единое место хранения данных -->
-        <script src="assets/js/modules/game/DataStore.js?v=1"></script>
-        <script src="assets/js/modules/game/DataStoreAdapter.js?v=1"></script>
         
-        <script src="bank-module-v4/bank-module.js?v=4.1"></script>
-        <script src="bank-module-v4/integration.js?v=4.1"></script>
+        <script src="bank-module-v4/bank-client.js?v=4.1"></script>
         
         <script src="game-board/professions-data.js"></script>
     

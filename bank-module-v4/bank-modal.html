@@ -148,27 +148,22 @@ function resetTransferForm() {
 // Инициализация списка получателей
 function initRecipientsList() {
     const select = document.getElementById('recipientSelect');
+    if (!select) return;
+    
     const players = window.players || [];
-    const currentUserId = bankModuleV4?.userId;
-    const currentPlayerName = bankModuleV4?.playerName;
+    const currentPlayerName = bankClient?.playerName;
     
     select.innerHTML = '<option value="">Выберите получателя</option>';
     
     players.forEach((player, index) => {
-        const playerId = player.user_id || player.userId;
         const playerName = player.name || player.username || `Игрок ${index + 1}`;
 
-        const isSameById = currentUserId && playerId && String(playerId) === String(currentUserId);
-        const isSameByName = currentPlayerName && playerName === currentPlayerName;
-
-        if (isSameById || isSameByName) {
-            return;
+        if (playerName !== currentPlayerName) {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = playerName;
+            select.appendChild(option);
         }
-
-        const option = document.createElement('option');
-        option.value = index;
-        option.textContent = playerName;
-        select.appendChild(option);
     });
 }
 
