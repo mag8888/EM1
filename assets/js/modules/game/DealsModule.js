@@ -570,9 +570,12 @@ class DealsModule {
         const card = this.decks[deckType].shift();
         this.currentDeal = card;
         this.isDealActive = true;
-        
+
         console.log(`🎴 DealsModule: Игрок ${playerId} взял карту ${card.name} из ${deckType}`);
-        
+
+        // Обновляем счетчики после взятия карты из колоды
+        this.updateDeckCounters();
+
         // Показываем карту игроку
         this.showDealCard(card, playerId);
     }
@@ -882,14 +885,17 @@ class DealsModule {
     // Отказ от карты (карта идет в отбой)
     passCard(card, deckType) {
         this.discardPiles[deckType].push(card);
-        
+
         // Сбрасываем текущую сделку
         this.currentDeal = null;
         this.isDealActive = false;
-        
+
         console.log(`🎴 DealsModule: Карта ${card.name} отправлена в отбой ${deckType}`);
+
+        // Обновляем видимые счетчики
+        this.updateDeckCounters();
     }
-    
+
     // Перемешивание колоды из отбоя
     reshuffleDeck(deckType) {
         if (this.discardPiles[deckType].length === 0) {
@@ -900,11 +906,14 @@ class DealsModule {
         // Перемещаем карты из отбоя в основную колоду
         this.decks[deckType] = [...this.discardPiles[deckType]];
         this.discardPiles[deckType] = [];
-        
+
         // Перемешиваем
         this.shuffleDeck(deckType);
-        
+
         console.log(`🎴 DealsModule: Колода ${deckType} перемешана из отбоя`);
+
+        // Обновляем счетчики после перемешивания
+        this.updateDeckCounters();
     }
     
     // Показать каталог активов
@@ -1051,9 +1060,68 @@ class DealsModule {
     }
     
     // Показать малое кредитное окно
-    showCreditModal(card) {
+    async showCreditModal(card) {
         const modal = this.createCreditModal(card);
         document.body.appendChild(modal);
+
+        const snapshot = window.gameState?.getSnapshot?.() || {};
+        const roomId = snapshot?.roomId || window.gameState?.roomId;
+        const currentPlayerId = this.getCurrentPlayerId();
+        const currentPlayer = snapshot?.players?.find?.(p => String(p.userId) === String(currentPlayerId));
+        const username = currentPlayer?.name || currentPlayer?.username;
+
+        if (!roomId || !username) {
+            console.warn('⚠️ DealsModule: не удалось определить данные игрока для кредита');
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/bank/credit/status/${encodeURIComponent(username)}/${encodeURIComponent(roomId)}`);
+            const data = await res.json();
+
+            const step = Number(data?.step || 1000);
+            const ratePerStep = Number(data?.ratePerStep || 100);
+            const maxAvailable = Number(data?.maxAvailable || 0);
+
+            const creditInput = modal.querySelector('#credit-amount');
+            const maxLimitEl = modal.querySelector('.max-limit');
+            const monthlyPaymentEl = modal.querySelector('.monthly-payment');
+            const takeBtn = modal.querySelector('.take-credit-btn');
+
+            if (creditInput) {
+                creditInput.dataset.step = step;
+                creditInput.dataset.rate = ratePerStep;
+                creditInput.dataset.max = maxAvailable;
+                creditInput.max = Math.max(step, maxAvailable || step);
+
+                if (maxAvailable > 0) {
+                    creditInput.value = Math.min(Number(creditInput.value || step), maxAvailable);
+                    if (takeBtn) takeBtn.disabled = false;
+                } else {
+                    creditInput.value = 0;
+                    if (takeBtn) takeBtn.disabled = true;
+                }
+
+                creditInput.addEventListener('input', () => {
+                    const amount = Number(creditInput.value || 0);
+                    if (maxAvailable && amount > maxAvailable) {
+                        creditInput.value = maxAvailable;
+                    }
+                    this.updateMonthlyPaymentDisplay(creditInput, monthlyPaymentEl);
+                    if (takeBtn) {
+                        takeBtn.disabled = (maxAvailable <= 0) || Number(creditInput.value || 0) < step;
+                    }
+                });
+            }
+
+            if (maxLimitEl) {
+                maxLimitEl.textContent = `$${maxAvailable.toLocaleString()}`;
+            }
+
+            this.updateMonthlyPaymentDisplay(creditInput, monthlyPaymentEl);
+        } catch (error) {
+            console.error('❌ DealsModule: ошибка загрузки статуса кредита', error);
+        }
     }
     
     // Создание малого кредитного окна
@@ -1115,15 +1183,6 @@ class DealsModule {
         });
         
         // Обработчик изменения суммы кредита
-        const creditInput = modal.querySelector('#credit-amount');
-        const monthlyPayment = modal.querySelector('.monthly-payment');
-        
-        creditInput.addEventListener('input', (e) => {
-            const amount = parseInt(e.target.value) || 0;
-            const monthly = Math.floor(amount * 0.1); // 10% ежемесячный платеж
-            monthlyPayment.textContent = `$${monthly.toLocaleString()}`;
-        });
-        
         // Обработчик клика по overlay для закрытия
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
@@ -1133,7 +1192,20 @@ class DealsModule {
         
         return modal;
     }
-    
+
+    updateMonthlyPaymentDisplay(inputEl, outputEl) {
+        if (!inputEl || !outputEl) return;
+        const amount = Number(inputEl.value || 0);
+        const step = Number(inputEl.dataset.step || 1000);
+        const rate = Number(inputEl.dataset.rate || 100);
+        if (amount <= 0 || step <= 0) {
+            outputEl.textContent = '$0';
+            return;
+        }
+        const monthly = Math.max(0, Math.ceil(amount / step) * rate);
+        outputEl.textContent = `$${monthly.toLocaleString()}`;
+    }
+
     // Добавление стилей для кредитного окна
     addCreditModalStyles() {
         if (document.getElementById('credit-modal-styles')) return;
@@ -1258,28 +1330,44 @@ class DealsModule {
     // Взять кредит
     async takeCredit(card, modal) {
         try {
-            const creditAmount = parseInt(modal.querySelector('#credit-amount').value) || 0;
-            
-            if (creditAmount < 1000) {
-                alert('Минимальная сумма кредита: $1,000');
+            const creditInput = modal.querySelector('#credit-amount');
+            if (!creditInput) {
+                alert('Ошибка: поле суммы кредита не найдено');
                 return;
             }
-            
+
+            const step = Number(creditInput.dataset.step || 1000);
+            const maxAvailable = Number(creditInput.dataset.max || 0);
+            const creditAmount = parseInt(creditInput.value, 10) || 0;
+
+            if (creditAmount < step) {
+                alert(`Минимальная сумма кредита: $${step.toLocaleString()}`);
+                return;
+            }
+
+            if (maxAvailable && creditAmount > maxAvailable) {
+                alert(`Максимальный лимит: $${maxAvailable.toLocaleString()}`);
+                return;
+            }
+
             const roomId = window.gameState?.roomId;
             const playerId = this.getCurrentPlayerId();
-            
-            if (!roomId || !playerId) {
+            const snapshot = window.gameState?.getSnapshot?.();
+            const player = snapshot?.players?.find?.(p => String(p.userId) === String(playerId));
+            const username = player?.name || player?.username;
+
+            if (!roomId || !playerId || !username) {
                 alert('Ошибка: не удалось получить данные игры');
                 return;
             }
-            
+
             // Отправляем запрос на сервер для взятия кредита
             const response = await fetch(`/api/bank/credit/take`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    roomId: roomId,
-                    userId: playerId,
+                    roomId,
+                    username,
                     amount: creditAmount
                 })
             });
@@ -1297,16 +1385,29 @@ class DealsModule {
                 }
                 
                 // Показываем уведомление
-                alert(`Кредит на сумму $${creditAmount.toLocaleString()} взят успешно!`);
-                
+                if (this.notifier) {
+                    this.notifier.show(`Кредит $${creditAmount.toLocaleString()} оформлен`, { type: 'success' });
+                } else {
+                    alert(`Кредит на сумму $${creditAmount.toLocaleString()} взят успешно!`);
+                }
+
             } else {
                 const errorData = await response.json();
-                alert(`Ошибка при взятии кредита: ${errorData.message || 'Неизвестная ошибка'}`);
+                const message = errorData.error || errorData.message || 'Не удалось взять кредит';
+                if (this.notifier) {
+                    this.notifier.show(message, { type: 'error' });
+                } else {
+                    alert(`Ошибка при взятии кредита: ${message}`);
+                }
             }
             
         } catch (error) {
             console.error('Ошибка при взятии кредита:', error);
-            alert('Ошибка при взятии кредита');
+            if (this.notifier) {
+                this.notifier.show('Ошибка при взятии кредита', { type: 'error' });
+            } else {
+                alert('Ошибка при взятии кредита');
+            }
         }
     }
 
