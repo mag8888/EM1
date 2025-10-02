@@ -1903,6 +1903,39 @@
                     console.warn('⚠️ Bank btn not found');
                 }
                 
+                // Обработчик выхода: очистить данные сессии и перейти на авторизацию
+                const leaveRoomBtn = document.getElementById('leaveRoomBtn');
+                if (leaveRoomBtn) {
+                    leaveRoomBtn.addEventListener('click', () => {
+                        try {
+                            console.log('🚪 Leave button clicked — redirecting to auth.html');
+                            // Мягкая очистка ключей, связанных с комнатой/игрой
+                            const keysToClear = [
+                                'currentRoom',
+                                'rooms',
+                                'roomId',
+                                'turnState',
+                                'gameState',
+                                'playersState'
+                            ];
+                            keysToClear.forEach(k => localStorage.removeItem(k));
+
+                            // При желании можно оставить пользователя авторизованным
+                            // Если нужно разлогинить полностью — раскомментируйте:
+                            // localStorage.removeItem('user');
+
+                            // Переход на страницу авторизации
+                            window.location.assign('auth.html');
+                        } catch (e) {
+                            console.error('❌ Failed to handle leave action:', e);
+                            window.location.href = 'auth.html';
+                        }
+                    });
+                    console.log('✅ Leave button event listener added');
+                } else {
+                    console.warn('⚠️ Leave button not found');
+                }
+
             } catch (error) {
                 console.error('❌ Failed to initialize game:', error);
                 
