@@ -1772,7 +1772,9 @@
                     
                     // Если playerName не найден, попробуем получить из данных комнаты
                     if (!playerName || playerName === 'Игрок') {
-                        const roomResponse = await fetch(`/api/rooms/${roomId}`);
+                        const headers = {};
+                        if (userId) headers['X-User-ID'] = userId;
+                        const roomResponse = await fetch(`/api/rooms/${roomId}`, { headers });
                         if (roomResponse.ok) {
                             const roomData = await roomResponse.json();
                             if (roomData.room && roomData.room.currentPlayer && roomData.room.currentPlayer.name) {
@@ -1815,7 +1817,15 @@
                     console.log('🔄 Загрузка данных комнаты:', roomId);
                     
                     // Загружаем данные комнаты
-                    const response = await fetch(`/api/rooms/${roomId}`);
+                    const roomHeaders = {};
+                    const storedUserId = getUserIdFromStorage();
+                    if (storedUserId) {
+                        roomHeaders['X-User-ID'] = storedUserId;
+                    }
+
+                    const response = await fetch(`/api/rooms/${roomId}`, {
+                        headers: roomHeaders
+                    });
                     if (!response.ok) {
                         throw new Error(`Ошибка загрузки комнаты: ${response.status}`);
                     }

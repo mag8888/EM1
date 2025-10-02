@@ -43,9 +43,11 @@ class BankClient {
 
         try {
             console.log('🔄 BankClient: Загрузка данных с сервера');
+            const encodedName = encodeURIComponent(this.playerName || '');
+            const encodedRoom = encodeURIComponent(this.roomId || '');
             
             // Загружаем баланс
-            const balanceResponse = await fetch(`/api/bank/balance/${this.playerName}/${this.roomId}`);
+            const balanceResponse = await fetch(`/api/bank/balance/${encodedName}/${encodedRoom}`);
             if (balanceResponse.ok) {
                 const balanceData = await balanceResponse.json();
                 this.data.balance = balanceData.amount || 0;
@@ -54,7 +56,7 @@ class BankClient {
             }
 
             // Загружаем финансовые данные
-            const financialsResponse = await fetch(`/api/bank/financials/${this.playerName}/${this.roomId}`);
+            const financialsResponse = await fetch(`/api/bank/financials/${encodedName}/${encodedRoom}`);
             if (financialsResponse.ok) {
                 const financialsData = await financialsResponse.json();
                 this.data.income = financialsData.income || 0;
@@ -65,7 +67,7 @@ class BankClient {
             }
 
             // Загружаем кредитные данные
-            const creditResponse = await fetch(`/api/bank/credit/status/${this.playerName}/${this.roomId}`);
+            const creditResponse = await fetch(`/api/bank/credit/status/${encodedName}/${encodedRoom}`);
             if (creditResponse.ok) {
                 const creditData = await creditResponse.json();
                 this.data.credit = creditData.credit || 0;
@@ -75,7 +77,7 @@ class BankClient {
             }
 
             // Загружаем историю переводов
-            const historyResponse = await fetch(`/api/bank/history/${this.roomId}`);
+            const historyResponse = await fetch(`/api/bank/history/${encodedRoom}`);
             if (historyResponse.ok) {
                 this.data.transfers = await historyResponse.json();
             } else {
@@ -313,6 +315,7 @@ async function initBankClient(roomId, userId, playerName) {
     
     bankClient = new BankClient();
     await bankClient.init(roomId, userId, playerName);
+    window.bankClient = bankClient;
     
     return bankClient;
 }

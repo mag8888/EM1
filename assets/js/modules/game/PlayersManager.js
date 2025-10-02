@@ -32,6 +32,23 @@ class PlayersManager {
                 playersData.forEach(playerData => {
                     this.addPlayer(playerData);
                 });
+
+                // Обновляем локальное имя игрока на основе userId
+                try {
+                    const storedUserId = localStorage.getItem('userId') || localStorage.getItem('user_id');
+                    if (storedUserId) {
+                        const matchedPlayer = playersData.find(player => {
+                            const candidateId = player.userId || player.id;
+                            return candidateId && String(candidateId) === String(storedUserId);
+                        });
+                        if (matchedPlayer && matchedPlayer.name) {
+                            localStorage.setItem('playerName', matchedPlayer.name);
+                            console.log('👤 PlayersManager: playerName synchronised from server list:', matchedPlayer.name);
+                        }
+                    }
+                } catch (syncError) {
+                    console.warn('⚠️ PlayersManager: unable to sync playerName from server data', syncError);
+                }
                 
                 console.log('🎮 PlayersManager: Players loaded successfully:', this.players.length);
             } catch (error) {
