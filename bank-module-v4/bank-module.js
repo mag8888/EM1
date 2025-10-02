@@ -1,5 +1,5 @@
 /**
- * Bank Module v4 - Complete Rewrite
+ * Bank Module - Complete Rewrite
  * Простой, надежный и эффективный банковский модуль
  * VERSION: 4.1-DEBUG (с синхронизацией баланса)
  */
@@ -1478,9 +1478,9 @@ async function forceInitBankModuleV4(roomId, userId) {
 }
 
 /**
- * Открытие банка v4
+ * Открытие банка
  */
-async function openBankV4() {
+async function openBank() {
     if (!bankModuleV4) {
         await initBankModuleV4();
     }
@@ -1491,9 +1491,9 @@ async function openBankV4() {
 }
 
 /**
- * Закрытие банка v4
+ * Закрытие банка
  */
-function closeBankV4() {
+function closeBank() {
     if (bankModuleV4) {
         bankModuleV4.closeBank();
     }
@@ -1560,13 +1560,13 @@ function getBankDataV4() {
 }
 
 // Экспорт функций в глобальную область
-window.initBankModuleV4 = initBankModuleV4;
-window.forceInitBankModuleV4 = forceInitBankModuleV4;
-window.openBankV4 = openBankV4;
-window.closeBankV4 = closeBankV4;
-window.requestCreditV4 = requestCreditV4;
-window.payoffCreditV4 = payoffCreditV4;
-window.transferMoneyV4 = transferMoneyV4;
+window.initBankModule = initBankModuleV4;
+window.forceInitBankModule = forceInitBankModuleV4;
+window.openBank = openBank;
+window.closeBank = closeBank;
+window.requestCredit = requestCreditV4;
+window.payoffCredit = payoffCreditV4;
+window.transferMoney = transferMoneyV4;
 window.payoffLoan = (loanType) => {
     if (window.bankModuleV4) {
         window.bankModuleV4.payoffLoan(loanType);

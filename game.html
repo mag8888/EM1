@@ -1911,13 +1911,13 @@
         </script>
         <script src="assets/js/modules/game/DealsManager.js?v=11"></script>
         
-        <!-- Bank Module v4 -->
-        <link rel="stylesheet" href="bank-module-v4/bank-styles-v4.css?v=4.1">
+        <!-- Bank Module -->
+        <link rel="stylesheet" href="bank-module-v4/bank-styles.css?v=4.1">
         <!-- DataStore - единое место хранения данных -->
         <script src="assets/js/modules/game/DataStore.js?v=1"></script>
         <script src="assets/js/modules/game/DataStoreAdapter.js?v=1"></script>
         
-        <script src="bank-module-v4/bank-module-v4.js?v=4.1"></script>
+        <script src="bank-module-v4/bank-module.js?v=4.1"></script>
         <script src="bank-module-v4/integration.js?v=4.1"></script>
         
         <script src="game-board/professions-data.js"></script>
@@ -2064,11 +2064,11 @@
                 const bankButton = document.getElementById('bankButton');
                 if (bankButton) {
                     bankButton.addEventListener('click', () => {
-                        console.log('🏦 Bank button clicked, opening BankModuleV4...');
-                        if (typeof window.openBankV4 === 'function') {
-                            window.openBankV4();
+                        console.log('🏦 Bank button clicked, opening BankModule...');
+                        if (typeof window.openBank === 'function') {
+                            window.openBank();
                         } else {
-                            console.error('❌ openBankV4 function not found!');
+                            console.error('❌ openBank function not found!');
                         }
                     });
                     console.log('✅ Bank button event listener added');
@@ -2080,11 +2080,11 @@
                 const bankBtn = document.getElementById('bankBtn');
                 if (bankBtn) {
                     bankBtn.addEventListener('click', () => {
-                        console.log('🏦 Bank btn clicked, opening BankModuleV4...');
-                        if (typeof window.openBankV4 === 'function') {
-                            window.openBankV4();
+                        console.log('🏦 Bank btn clicked, opening BankModule...');
+                        if (typeof window.openBank === 'function') {
+                            window.openBank();
                         } else {
-                            console.error('❌ openBankV4 function not found!');
+                            console.error('❌ openBank function not found!');
                         }
                     });
                     console.log('✅ Bank btn event listener added');
@@ -2211,11 +2211,11 @@
                 const bankButton = document.getElementById('bankButton');
                 if (bankButton) {
                     bankButton.addEventListener('click', () => {
-                        console.log('🏦 Bank button clicked, opening BankModuleV4...');
-                        if (typeof window.openBankV4 === 'function') {
-                            window.openBankV4();
+                        console.log('🏦 Bank button clicked, opening BankModule...');
+                        if (typeof window.openBank === 'function') {
+                            window.openBank();
                         } else {
-                            console.error('❌ openBankV4 function not found!');
+                            console.error('❌ openBank function not found!');
                         }
                     });
                     console.log('✅ Bank button event listener added');
@@ -2227,11 +2227,11 @@
                 const bankBtn = document.getElementById('bankBtn');
                 if (bankBtn) {
                     bankBtn.addEventListener('click', () => {
-                        console.log('🏦 Bank btn clicked, opening BankModuleV4...');
-                        if (typeof window.openBankV4 === 'function') {
-                            window.openBankV4();
+                        console.log('🏦 Bank btn clicked, opening BankModule...');
+                        if (typeof window.openBank === 'function') {
+                            window.openBank();
                         } else {
-                            console.error('❌ openBankV4 function not found!');
+                            console.error('❌ openBank function not found!');
                         }
                     });
                     console.log('✅ Bank btn event listener added');

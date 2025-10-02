@@ -1,13 +1,13 @@
-<!-- Bank Module v4 - Clean and Simple Interface -->
+<!-- Bank Module - Clean and Simple Interface -->
 <div id="bankModal" class="bank-modal" style="display: none;">
     <div class="bank-modal-content">
         <!-- Header -->
         <div class="bank-modal-header">
             <div class="bank-header-left">
                 <div class="bank-icon">🏦</div>
-                <h2 class="bank-modal-title">Банковские операции <span style="color: #ff6b6b; font-size: 12px; font-weight: normal;">[v4-DEBUG]</span></h2>
+                <h2 class="bank-modal-title">Банковские операции</h2>
             </div>
-            <button class="bank-modal-close" onclick="closeBankV4()">&times;</button>
+            <button class="bank-modal-close" onclick="closeBank()">&times;</button>
         </div>
         
         <!-- Main Content -->
@@ -62,10 +62,10 @@
                         </div>
                     </div>
                     <div class="credit-buttons">
-                        <button class="credit-btn payoff" onclick="payoffCreditV4()" id="payoffBtn">
+                        <button class="credit-btn payoff" onclick="payoffCredit()" id="payoffBtn">
                             ✓ ПОГАСИТЬ
                         </button>
-                        <button class="credit-btn take" onclick="requestCreditV4(1000)" id="takeCreditBtn">
+                        <button class="credit-btn take" onclick="requestCredit(1000)" id="takeCreditBtn">
                             📄 ВЗЯТЬ
                         </button>
                     </div>
@@ -77,7 +77,7 @@
                 <!-- Transfer Form -->
                 <div class="transfer-section">
                     <h3 class="section-title">Перевод средств</h3>
-                    <form id="transferForm" class="transfer-form" onsubmit="event.preventDefault(); processTransferV4();">
+                    <form id="transferForm" class="transfer-form" onsubmit="event.preventDefault(); processTransfer();">
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="recipientSelect" class="form-label">Получатель</label>
@@ -95,7 +95,7 @@
                         </div>
                         <div class="form-buttons">
                             <button type="submit" class="transfer-btn primary">✈️ ВЫПОЛНИТЬ ПЕРЕВОД</button>
-                            <button type="button" class="transfer-btn secondary" onclick="resetTransferFormV4()">СБРОСИТЬ</button>
+                            <button type="button" class="transfer-btn secondary" onclick="resetTransferForm()">СБРОСИТЬ</button>
                         </div>
                     </form>
                 </div>
@@ -120,7 +120,7 @@
 
 <script>
 // Функции для работы с формой перевода
-function processTransferV4() {
+function processTransfer() {
     const recipientSelect = document.getElementById('recipientSelect');
     const amountInput = document.getElementById('transferAmount');
     
@@ -132,15 +132,15 @@ function processTransferV4() {
         return;
     }
     
-    transferMoneyV4(recipientIndex, amount).then(success => {
+    transferMoney(recipientIndex, amount).then(success => {
         if (success) {
-            resetTransferFormV4();
+            resetTransferForm();
             alert('Перевод выполнен успешно!');
         }
     });
 }
 
-function resetTransferFormV4() {
+function resetTransferForm() {
     // Очищаем только сумму, оставляем получателя
     document.getElementById('transferAmount').value = '';
 }
