@@ -2016,16 +2016,16 @@ app.post('/api/rooms/:roomId/roll', (req, res) => {
             return res.status(409).json({ success: false, message: 'Кубик уже был брошен в этом ходу' });
         }
 
+        // Бросаем один кубик 1-6
         const firstDie = Math.floor(Math.random() * 6) + 1;
-        const secondDie = Math.floor(Math.random() * 6) + 1;
-        const total = firstDie + secondDie;
+        const total = firstDie; // Теперь общий результат равен значению одного кубика
 
         room.hasRolledThisTurn = true;
         ensurePlayerStats(activePlayer).diceRolled += 1;
         room.lastRoll = {
             playerId: activePlayer.userId,
             dice1: firstDie,
-            dice2: secondDie,
+            dice2: null,
             total,
             rolledAt: Date.now()
         };
@@ -2035,7 +2035,7 @@ app.post('/api/rooms/:roomId/roll', (req, res) => {
         
         res.json({ 
             success: true, 
-            result: { dice1: firstDie, dice2: secondDie, total },
+            result: { dice1: firstDie, dice2: null, total },
             state: {
                 roomId: room.id,
                 status: room.status,
@@ -2044,7 +2044,7 @@ app.post('/api/rooms/:roomId/roll', (req, res) => {
                 players: room.players || [],
                 currentTurn: 1,
                 phase: 'moving',
-                diceResult: { dice1: firstDie, dice2: secondDie, total },
+                diceResult: { dice1: firstDie, dice2: null, total },
                 pendingDeal: null,
                 hasRolledThisTurn: true,
                 turnTimeLeft: getTurnTimeLeft(room.id),
